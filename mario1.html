@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình Tri Thức - Bảng Xếp Hạng</title>
+    <style>
+        /* --- CẤU HÌNH CHUNG --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(#2980b9, #6dd5fa);
+            margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; user-select: none;
+        }
+
+        /* --- PHÁO HOA --- */
+        .particle { position: absolute; width: 10px; height: 10px; border-radius: 50%; pointer-events: none; z-index: 9999; animation: explode 0.8s ease-out forwards; box-shadow: 0 0 10px currentColor; }
+        @keyframes explode { 0% { transform: translate(0, 0) scale(1.5); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
+
+        /* --- THANH TRẠNG THÁI ONLINE --- */
+        .online-status {
+            position: absolute; top: 15px; right: 20px;
+            background: rgba(0,0,0,0.5); color: #2ecc71;
+            padding: 8px 15px; border-radius: 20px;
+            font-weight: bold; font-size: 1.1em;
+            display: flex; align-items: center; gap: 10px;
+            z-index: 50; border: 1px solid #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+        .dot { height: 10px; width: 10px; background-color: #2ecc71; border-radius: 50%; display: inline-block; animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* --- LOGIN --- */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .login-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 0 50px rgba(243, 156, 18, 0.5); text-align: center; width: 450px; border: 6px solid #f39c12; animation: popIn 0.5s; }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .input-name { width: 100%; padding: 15px; margin-bottom: 25px; border: 3px solid #ddd; border-radius: 12px; font-size: 1.2em; outline: none; text-align: center; }
+        .btn-start { background: #2ecc71; color: white; border: none; padding: 15px 40px; font-size: 1.4em; border-radius: 50px; cursor: pointer; font-weight: bold; width: 100%; box-shadow: 0 6px 0 #27ae60; transition: 0.2s; }
+        .btn-start:hover { transform: translateY(-4px); }
+
+        /* --- SÂN KHẤU --- */
+        #game-wrapper { display: none; height: 100%; flex-direction: column; }
+        .stage-area { position: relative; flex: 1; width: 100%; background-image: url('https://i.imgur.com/P8d5s0H.png'); background-size: cover; background-position: center bottom; border-bottom: 25px solid #5d4037; }
+        .grass { position: absolute; bottom: 0; width: 100%; height: 55px; background: repeating-linear-gradient(45deg, #7cb342 0px, #7cb342 20px, #558b2f 20px, #558b2f 40px); z-index: 2; border-top: 6px solid #33691e; }
+        
+        #character { position: absolute; bottom: 50px; left: 5%; font-size: 90px; z-index: 15; filter: drop-shadow(5px 10px 5px rgba(0,0,0,0.4)); transform: scaleX(-1); transform-origin: bottom center; transition: left 1.0s cubic-bezier(0.25, 0.1, 0.25, 1); }
+        .running { animation: run-bob-smooth 0.7s infinite cubic-bezier(0.4, 0, 0.2, 1) alternate; }
+        @keyframes run-bob-smooth { 0% { transform: scaleX(-1) translateY(0) rotate(2deg) scaleY(0.98); } 100% { transform: scaleX(-1) translateY(-12px) rotate(-3deg) scaleY(1.02); } }
+        .jump-anim-smooth { animation: jump-squash-stretch 1.0s linear !important; }
+        @keyframes jump-squash-stretch { 0% { transform: scaleX(-1) scale(1, 1) translateY(0); } 15% { transform: scaleX(-1) scale(1.2, 0.8) translateY(10px); } 40% { transform: scaleX(-1) scale(0.9, 1.15) translateY(-200px) rotate(-5deg); } 75% { transform: scaleX(-1) scale(1.2, 0.8) translateY(15px); } 100% { transform: scaleX(-1) scale(1, 1) translateY(0); } }
+        .wrong-anim { animation: shake-hard 0.5s !important; }
+        @keyframes shake-hard { 0% { transform: scaleX(-1) translateX(0); } 25% { transform: scaleX(-1) translateX(-15px) rotate(5deg); } 75% { transform: scaleX(-1) translateX(15px) rotate(-5deg); } 100% { transform: scaleX(-1) translateX(0); } }
+
+        #castle { position: absolute; bottom: 50px; right: 1%; font-size: 130px; z-index: 5; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3)); }
+        .milestone { position: absolute; bottom: 65px; font-size: 45px; z-index: 4; filter: drop-shadow(2px 4px 2px rgba(0,0,0,0.3)); opacity: 0.8; animation: float-milestone 2.5s ease-in-out infinite alternate; }
+        @keyframes float-milestone { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+        .cloud { position: absolute; color: rgba(255,255,255,0.85); animation: float linear infinite; text-shadow: 0 0 25px rgba(255,255,255,0.9); }
+        @keyframes float { from { transform: translateX(100vw); } to { transform: translateX(-250px); } }
+
+        /* --- CÂU HỎI --- */
+        .quiz-area { height: 45%; background-color: #34495e; background-image: radial-gradient(#34495e, #2c3e50); color: white; padding: 10px 20px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); position: relative; border-top: 8px solid #f39c12; overflow-y: auto; }
+        .quiz-area::-webkit-scrollbar { width: 8px; } .quiz-area::-webkit-scrollbar-thumb { background: #f39c12; border-radius: 4px;}
+        .stats { position: absolute; top: 10px; left: 20px; font-size: 1.2em; color: #fff; font-weight: 900; background: linear-gradient(to right, #f39c12, #d35400); padding: 5px 20px; border-radius: 30px; box-shadow: 3px 5px 0 #8e44ad; border: 2px solid #fff; z-index: 20; }
+        .question-text { font-size: 1.3em; margin: 40px 0 15px 0; text-align: center; width: 90%; max-width: 900px; background: #fff; color: #2c3e50; padding: 15px 25px; border-radius: 15px; border: 4px solid #2980b9; box-shadow: 0 6px 0 #1a5276; font-weight: 700; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 900px; }
+        .btn { background-color: #ecf0f1; color: #34495e; border: none; padding: 15px; border-radius: 12px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: all 0.1s; box-shadow: 0 5px 0 #95a5a6; position: relative; top: 0; border: 2px solid #bdc3c7; }
+        .btn:hover:not(:disabled) { top: -3px; background-color: #f1c40f; color: #d35400; border-color: #d35400; }
+        .next-btn { display: none; margin-top: 20px; padding: 12px 40px; background-color: #e67e22; color: white; font-size: 1.3em; font-weight: bold; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 0 #d35400; animation: pulse 1.5s infinite; text-transform: uppercase; margin-bottom: 20px; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(230,126,34,0.7); } 70% { box-shadow: 0 0 0 15px rgba(230,126,34,0); } }
+
+        /* --- KẾT THÚC VÀ BẢNG XẾP HẠNG --- */
+        #end-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 15, 0.98); color: white; z-index: 10000; text-align: center; flex-direction: column; justify-content: flex-start; align-items: center; padding-top: 40px; overflow-y: auto; }
+        
+        .result-container { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; justify-content: center; width: 90%; }
+        
+        .score-panel { flex: 1; min-width: 300px; max-width: 400px; }
+        .leaderboard-panel { flex: 1; min-width: 350px; max-width: 500px; background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; border: 2px solid #f39c12; }
+        
+        .score-box { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 20px; border: 3px solid #fff; margin-bottom: 30px; }
+        
+        .btn-group { display: flex; gap: 20px; justify-content: center; }
+        .btn-end { padding: 15px 30px; font-size: 18px; color: white; border: 3px solid white; border-radius: 30px; cursor: pointer; font-weight: 900; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.2s; }
+        .btn-end:hover { transform: scale(1.1); }
+        .btn-replay { background: linear-gradient(#2ecc71, #27ae60); }
+        .btn-exit { background: linear-gradient(#e74c3c, #c0392b); }
+
+        /* Bảng xếp hạng Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; color: white; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        th { background: rgba(243, 156, 18, 0.8); color: black; font-weight: bold; text-transform: uppercase; }
+        .rank-1 { color: #f1c40f; font-weight: bold; font-size: 1.2em; text-shadow: 0 0 10px gold; }
+        .rank-2 { color: #bdc3c7; font-weight: bold; }
+        .rank-3 { color: #d35400; font-weight: bold; }
+        .current-player-row { background: rgba(46, 204, 113, 0.3); }
+
+        code { background: #eee; padding: 3px 6px; border-radius: 4px; color: #c0392b; font-family: Consolas, monospace; border: 1px solid #ccc; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <div class="online-status">
+        <span class="dot"></span>
+        <span>Đang chơi: <span id="online-count">12</span></span>
+    </div>
+
+    <div id="login-screen">
+        <div class="login-card">
+            <div style="font-size: 70px; margin-bottom: 10px;">🎒</div>
+            <h2 style="color: #d35400;">HÀNH TRÌNH TRI THỨC</h2>
+            <input type="text" id="player-name-input" class="input-name" placeholder="Nhập tên của bạn..." autocomplete="off">
+            <button class="btn-start" onclick="enterGame()">BẮT ĐẦU CHƠI ▶</button>
+        </div>
+    </div>
+
+    <div id="game-wrapper">
+        <div class="stage-area">
+            <div class="cloud" style="top: 15%; font-size: 90px; animation-duration: 40s;">☁️</div>
+            <div class="cloud" style="top: 5%; font-size: 70px; animation-duration: 28s; left: 30%;">☁️</div>
+            
+            <div class="milestone" style="left: 13%;">🍄</div>
+            <div class="milestone" style="left: 21%;">🥚</div>
+            <div class="milestone" style="left: 29%;">🐤</div>
+            <div class="milestone" style="left: 37%;">🍔</div>
+            <div class="milestone" style="left: 45%;">🚲</div>
+            <div class="milestone" style="left: 53%;">🎮</div>
+            <div class="milestone" style="left: 61%;">🎸</div>
+            <div class="milestone" style="left: 69%;">🛸</div>
+            <div class="milestone" style="left: 77%;">💎</div>
+            <div class="milestone" style="left: 85%; font-size: 55px;">🗝️</div>
+
+            <div id="character" class="running">🏃</div> 
+            
+            <div id="castle">🏰</div>
+            <div class="grass"></div>
+        </div>
+
+        <div class="quiz-area">
+            <div class="stats">👤 <span id="display-name">Bạn Nhỏ</span> | ⭐ ĐIỂM: <span id="score">0</span></div>
+            <div class="question-text" id="question-text">Sẵn sàng chưa?</div>
+            <div class="options-grid" id="options-area"></div>
+            <button id="next-btn" class="next-btn" onclick="handleNextQuestion()">CÂU TIẾP THEO ➡️</button>
+        </div>
+    </div>
+
+    <div id="end-screen">
+        <h1 style="color: #f1c40f; font-size: 3em; margin: 10px 0; text-shadow: 0 5px 15px black;">HOÀN THÀNH!</h1>
+        
+        <div class="result-container">
+            <div class="score-panel">
+                <h3 id="end-name" style="color: white; font-size: 2em; margin: 10px 0;"></h3>
+                <div class="score-box">
+                    <p style="font-size: 1.2em; margin: 0; color: #ddd;">Tổng điểm:</p>
+                    <h2 style="font-size: 5em; margin: 0; color: #2ecc71; text-shadow: 3px 3px 0 #000;" id="final-score">0</h2>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-end btn-replay" onclick="replayGame()">🔄 LÀM LẠI</button>
+                    <button class="btn-end btn-exit" onclick="exitGame()">🚪 THOÁT</button>
+                </div>
+            </div>
+
+            <div class="leaderboard-panel">
+                <h3 style="color: #f39c12; margin-top: 0; border-bottom: 1px solid #fff; padding-bottom: 10px;">🏆 BẢNG XẾP HẠNG (Top 5)</h3>
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Hạng</th>
+                            <th>Tên</th>
+                            <th>Điểm</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // --- GIẢ LẬP SỐ NGƯỜI CHƠI ---
+        function updateOnlineCount() {
+            const countEl = document.getElementById('online-count');
+            // Số người ngẫu nhiên từ 15 đến 35
+            let count = Math.floor(Math.random() * (35 - 15 + 1) + 15);
+            countEl.innerText = count;
+        }
+        setInterval(updateOnlineCount, 3000); // Cập nhật mỗi 3 giây
+        updateOnlineCount();
+
+        // --- PHÁO HOA ---
+        function createFireworks(x, y) {
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                document.body.appendChild(particle);
+                const colors = ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#e67e22', '#ffffff'];
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.left = x + 'px'; particle.style.top = y + 'px';
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 150 + Math.random() * 200;
+                particle.style.setProperty('--tx', `${Math.cos(angle) * velocity}px`);
+                particle.style.setProperty('--ty', `${Math.sin(angle) * velocity}px`);
+                setTimeout(() => particle.remove(), 800);
+            }
+        }
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'correct') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            } else {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        const questions = [
+            { q: "Câu 1: Trong Python, lệnh nào dùng để thêm phần tử vào CUỐI danh sách?", a: [ { t: "list.add(x)", c: false }, { t: "list.append(x)", c: true }, { t: "list.insert(x)", c: false }, { t: "list.input(x)", c: false } ] },
+            { q: "Câu 2: Để xóa TẤT CẢ các phần tử trong danh sách A, ta dùng lệnh nào?", a: [ { t: "A.clear()", c: true }, { t: "A.remove_all()", c: false }, { t: "A.delete()", c: false }, { t: "A.clean()", c: false } ] },
+            { q: "Câu 3: Cú pháp chèn phần tử x vào vị trí k trong danh sách A là:", a: [ { t: "A.insert(x, k)", c: false }, { t: "A.add(k, x)", c: false }, { t: "A.append(k, x)", c: false }, { t: "A.insert(k, x)", c: true } ] },
+            { q: "Câu 4: Toán tử <code>in</code> trong danh sách dùng để làm gì?", a: [ { t: "Kiểm tra phần tử có trong danh sách không", c: true }, { t: "Thêm phần tử vào danh sách", c: false }, { t: "Duyệt qua các phần tử", c: false }, { t: "Xóa phần tử khỏi danh sách", c: false } ] },
+            { q: "Câu 5: Lệnh <code>remove()</code> trong Python có tác dụng gì?", a: [ { t: "Xóa phần tử tại vị trí index", c: false }, { t: "Xóa phần tử cuối cùng", c: false }, { t: "Xóa phần tử đầu tiên tìm thấy có giá trị cụ thể", c: true }, { t: "Xóa toàn bộ danh sách", c: false } ] },
+            { q: "Câu 6: Cho <code>A = [1, 5, 1, 0, 2]</code>. Sau lệnh <code>A.remove(1)</code>, A là:", a: [ { t: "[5, 1, 0, 2]", c: true }, { t: "[5, 0, 2]", c: false }, { t: "[1, 5, 0, 2]", c: false }, { t: "[1, 5, 1, 0]", c: false } ] },
+            { q: "Câu 7: Cho <code>ds = [2, 4, 6]</code>. Kết quả <code>ds.insert(1, 10)</code> là:", a: [ { t: "[2, 4, 6, 10]", c: false }, { t: "[2, 10, 4, 6]", c: true }, { t: "[10, 2, 4, 6]", c: false }, { t: "[2, 4, 10, 6]", c: false } ] },
+            { q: "Câu 8: Đoạn code sau trả về gì?<br><code>A=[10,20,30,40]</code><br><code>if 20 in A: A.remove(20)</code><br><code>print(len(A))</code>", a: [ { t: "4", c: false }, { t: "3", c: true }, { t: "20", c: false }, { t: "Báo lỗi", c: false } ] },
+            { q: "Câu 9: Cho <code>A=[]</code>. Sau lệnh: <code>append(5)</code>, <code>append(10)</code>, <code>clear()</code>. Giá trị A là:", a: [ { t: "[5, 10]", c: false }, { t: "[10]", c: false }, { t: "[] (Rỗng)", c: true }, { t: "None", c: false } ] },
+            { q: "Câu 10: <code>hs=['Lan','Mai','Cúc']</code>. Thay 'Mai' bằng 'Đào' dùng lệnh nào?", a: [ { t: "hs.replace('Mai', 'Đào')", c: false }, { t: "hs[2] = 'Đào'", c: false }, { t: "hs[1] = 'Đào'", c: true }, { t: "hs.insert(1, 'Đào')", c: false } ] }
+        ];
+
+        let currentIdx = 0; let score = 0; let playerName = ""; let currentPos = 5;
+        const char = document.getElementById('character'); const qText = document.getElementById('question-text');
+        const optArea = document.getElementById('options-area'); const scoreDisplay = document.getElementById('score');
+        const nextBtn = document.getElementById('next-btn');
+
+        function enterGame() {
+            const inputName = document.getElementById('player-name-input').value;
+            if (inputName.trim() === "") { alert("Bạn ơi, hãy nhập tên để bắt đầu nhé!"); return; }
+            playerName = inputName;
+            document.getElementById('display-name').innerText = playerName;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('game-wrapper').style.display = 'flex';
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            optArea.innerHTML = ""; nextBtn.style.display = "none";
+            if (currentIdx >= questions.length) { finishGame(); return; }
+            const data = questions[currentIdx];
+            qText.innerHTML = data.q;
+            data.a.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn'; btn.innerHTML = opt.t;
+                btn.onclick = (e) => checkAnswer(opt.c, btn, data.a, e);
+                optArea.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(isCorrect, btnClicked, allOptions, event) {
+            const allBtns = optArea.querySelectorAll('.btn');
+            allBtns.forEach(b => b.disabled = true);
+            if (isCorrect) {
+                playSound('correct'); createFireworks(event.clientX, event.clientY);
+                btnClicked.style.backgroundColor = "#2ecc71"; btnClicked.style.color = "white";
+                score += 10; scoreDisplay.innerText = score;
+                char.classList.remove('running'); char.classList.add('jump-anim-smooth');
+                setTimeout(() => { char.classList.remove('jump-anim-smooth'); char.classList.add('running'); }, 1000);
+                currentPos += 8.3; char.style.left = currentPos + "%";
+            } else {
+                playSound('wrong');
+                btnClicked.style.backgroundColor = "#e74c3c"; btnClicked.style.color = "white";
+                char.classList.remove('running'); char.classList.add('wrong-anim'); char.innerText = "😵"; 
+                setTimeout(() => { char.classList.remove('wrong-anim'); char.classList.add('running'); char.innerText = "🏃"; }, 500);
+                allBtns.forEach((b, index) => { if (allOptions[index].c) { b.style.backgroundColor = "#2ecc71"; b.style.color = "white"; } });
+            }
+            nextBtn.style.display = "block";
+            if (currentIdx === questions.length - 1) { nextBtn.innerText = "XEM KẾT QUẢ 🏁"; } else { nextBtn.innerText = "CÂU TIẾP THEO ➡️"; }
+        }
+
+        function handleNextQuestion() { currentIdx++; loadQuestion(); }
+
+        // --- QUẢN LÝ BẢNG XẾP HẠNG (Local Storage) ---
+        function saveScore(name, score) {
+            let leaderboard = JSON.parse(localStorage.getItem('marioGameLeaderboard')) || [];
+            leaderboard.push({ name: name, score: score });
+            // Sắp xếp giảm dần theo điểm
+            leaderboard.sort((a, b) => b.score - a.score);
+            // Chỉ giữ lại Top 10
+            if (leaderboard.length > 10) leaderboard = leaderboard.slice(0, 10);
+            localStorage.setItem('marioGameLeaderboard', JSON.stringify(leaderboard));
+            return leaderboard;
+        }
+
+        function displayLeaderboard(leaderboard) {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = ""; // Xóa cũ
+            
+            leaderboard.forEach((entry, index) => {
+                const tr = document.createElement('tr');
+                // Highlight tên người đang chơi
+                if (entry.name === playerName && entry.score === score) {
+                    tr.classList.add('current-player-row');
+                }
+                
+                let rankDisplay = index + 1;
+                let rankClass = "";
+                if (index === 0) { rankDisplay = "🥇"; rankClass = "rank-1"; }
+                else if (index === 1) { rankDisplay = "🥈"; rankClass = "rank-2"; }
+                else if (index === 2) { rankDisplay = "🥉"; rankClass = "rank-3"; }
+
+                tr.innerHTML = `
+                    <td class="${rankClass}">${rankDisplay}</td>
+                    <td>${entry.name}</td>
+                    <td style="font-weight: bold;">${entry.score}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function finishGame() {
+            document.getElementById('end-screen').style.display = 'flex';
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('end-name').innerText = "Chúc mừng " + playerName + "!";
+            
+            if(score >= 80) { char.style.left = "88%"; char.innerText = "🤴"; char.style.fontSize = "110px"; char.style.zIndex = "20"; char.classList.add('jump-anim-smooth'); }
+            
+            // LƯU ĐIỂM VÀ HIỆN BẢNG XẾP HẠNG
+            const updatedLeaderboard = saveScore(playerName, score);
+            displayLeaderboard(updatedLeaderboard);
+        }
+
+        function replayGame() {
+            score = 0; currentIdx = 0; currentPos = 5; scoreDisplay.innerText = 0;
+            char.style.left = "5%"; char.innerText = "🏃"; char.style.fontSize = "90px"; char.style.zIndex = "15";
+            char.classList.remove('jump-anim-smooth', 'correct-anim'); char.classList.add('running');
+            document.getElementById('end-screen').style.display = 'none';
+            loadQuestion();
+        }
+
+        function exitGame() { location.reload(); }
+    </script>
+</body>
+</html>
