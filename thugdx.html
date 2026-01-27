@@ -3,7 +3,7 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KHÁM PHÁ GIMP - VŨ TRỤ TRI THỨC (MULTIPLAYER)</title>
+  <title>KHÁM PHÁ GIMP - ĐẤU TRƯỜNG VŨ TRỤ</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&amp;family=Exo+2:wght@300;400;600&amp;display=swap" rel="stylesheet">
@@ -12,41 +12,70 @@
   <script src="/_sdk/element_sdk.js"></script>
   <script src="/_sdk/data_sdk.js"></script>
 
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+        // Nếu sau khi tải trang mà không thấy dataSdk, ta tạo cái giả để chơi được game
+        if (!window.dataSdk) {
+            console.warn("⚠️ Không tìm thấy SDK thật, đang kích hoạt chế độ OFFLINE...");
+            
+            // Dữ liệu bot giả lập
+            let mockData = [
+                { name: "Bot Alpha", class: "AI", score: 80, is_finished: true, __backendId: 999 },
+                { name: "Bot Beta", class: "AI", score: 50, is_finished: false, __backendId: 888 }
+            ];
+
+            window.dataSdk = {
+                init: async ({ onDataChanged }) => {
+                    console.log("[OFFLINE] Khởi tạo giả lập");
+                    // Giả lập gửi dữ liệu về sau 500ms
+                    setTimeout(() => onDataChanged(mockData), 500);
+                    return { isOk: true };
+                },
+                create: async (player) => {
+                    console.log("[OFFLINE] Tạo người chơi:", player);
+                    player.__backendId = Date.now(); // Tạo ID giả
+                    mockData.push(player);
+                    return { isOk: true };
+                },
+                update: async (player) => {
+                    // Cập nhật vào mảng giả
+                    const idx = mockData.findIndex(p => p.__backendId === player.__backendId);
+                    if (idx !== -1) mockData[idx] = player;
+                    return { isOk: true };
+                }
+            };
+        }
+    });
+  </script>
+
   <style>
-    /* === CẤU HÌNH GIAO DIỆN VŨ TRỤ === */
+    /* === CẤU HÌNH GIAO DIỆN === */
     body { box-sizing: border-box; overflow: hidden; background-color: #000; color: white; }
     * { font-family: 'Exo 2', sans-serif; }
     .title-font { font-family: 'Orbitron', monospace; }
-    
     .space-bg { background: radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d1a 60%, #000000 100%); }
-    
     .screen { position: absolute; inset: 0; width: 100%; height: 100%; display: none; opacity: 0; transition: opacity 0.5s ease; z-index: 100; }
     .screen.active { display: flex; opacity: 1; z-index: 200; }
 
-    /* UI Panels - Kính mờ */
+    /* UI Panels */
     .glass-panel { background: rgba(16, 20, 35, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(100, 150, 255, 0.3); box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
     .input-field { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; transition: all 0.3s; }
     .input-field:focus { border-color: #60a5fa; box-shadow: 0 0 15px rgba(96, 165, 250, 0.5); outline: none; }
     .btn-cosmic { background: linear-gradient(90deg, #2563eb, #7c3aed); box-shadow: 0 0 20px rgba(37, 99, 235, 0.5); transition: all 0.3s; }
     .btn-cosmic:hover { transform: scale(1.05); }
 
-    /* === LEADERBOARD STYLES === */
+    /* Leaderboard */
     .leaderboard-item { transition: all 0.3s ease; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .leaderboard-item:hover { background: rgba(255,255,255,0.05); }
-    
-    /* Top 3 Ranks */
     .rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), transparent); border-left: 4px solid #ffd700; }
     .rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.2), transparent); border-left: 4px solid #c0c0c0; }
     .rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.2), transparent); border-left: 4px solid #cd7f32; }
-    
-    /* Highlight chính mình */
     .is-me { border: 2px solid #4ade80 !important; background: rgba(74, 222, 128, 0.1) !important; border-radius: 8px; }
 
-    /* === ANIMATION SAO & HÀNH TINH === */
+    /* Animation */
     .star { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--duration) ease-in-out infinite; opacity: 0.8; }
     @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
 
-    /* Kích thước hành tinh responsive */
+    /* Responsive Planets */
     :root { --sun-size: 144px; --mercury-size: 36px; --venus-size: 48px; --earth-size: 54px; --moon-size: 18px; --mars-size: 42px; --jupiter-size: 96px; --saturn-size: 84px; --uranus-size: 66px; --neptune-size: 63px; }
     @media (max-width: 768px) { :root { --sun-size: 108px; --mercury-size: 30px; --venus-size: 36px; --earth-size: 42px; --moon-size: 15px; --mars-size: 34px; --jupiter-size: 72px; --saturn-size: 66px; --uranus-size: 48px; --neptune-size: 46px; } }
 
@@ -79,28 +108,18 @@
     .neptune-bg { background: radial-gradient(circle at 30% 30%, #bae6fd, #3b82f6, #1e40af); }
     .moon-bg { background: radial-gradient(circle at 30% 30%, #f3f4f6, #d1d5db, #6b7280); }
 
-    .orbit-ring { border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; }
-    .planet-label { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; white-space: nowrap; pointer-events: none; text-shadow: 0 2px 4px black; z-index: 102; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; color: #e5e7eb; }
-    
     .info-panel { background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%); border: 2px solid #1e3a8a; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #1e293b; }
     .answer-btn { background: white; border: 1px solid #cbd5e1; padding: 12px 14px; border-radius: 8px; text-align: left; width: 100%; font-size: 16px; cursor: pointer; color: #334155; margin-bottom: 8px; font-weight: 600; transition: all 0.2s; }
     .answer-btn:hover:not(:disabled) { background: #eff6ff; border-color: #3b82f6; transform: translateX(5px); color: #1d4ed8; }
     .answer-btn.correct { background: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
     .answer-btn.wrong { background: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
-
     .connection-beam { position: absolute; height: 3px; background: linear-gradient(90deg, transparent, #4ade80, #ffffff, #4ade80, transparent); transform-origin: left center; z-index: 50; opacity: 0; pointer-events: none; box-shadow: 0 0 15px #4ade80; animation: beamShoot 1.5s ease-out forwards; }
     @keyframes beamShoot { 0% { width: 0; opacity: 1; } 50% { width: var(--dist); opacity: 1; } 100% { width: var(--dist); opacity: 0; } }
 
-    /* --- SIDEBAR LEADERBOARD (LIVE) --- */
-    #sidebar-rank {
-        position: absolute; right: 10px; top: 80px; width: 220px; 
-        background: rgba(16, 20, 35, 0.85); border: 1px solid #3b82f6; 
-        border-radius: 12px; padding: 10px; z-index: 60;
-        max-height: 60vh; overflow-y: auto;
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
+    /* Sidebar Rank */
+    #sidebar-rank { position: absolute; right: 10px; top: 80px; width: 220px; background: rgba(16, 20, 35, 0.85); border: 1px solid #3b82f6; border-radius: 12px; padding: 10px; z-index: 60; max-height: 60vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
     #sidebar-rank h3 { font-size: 12px; font-weight: bold; color: #60a5fa; text-transform: uppercase; border-bottom: 1px solid #334155; padding-bottom: 5px; margin-bottom: 5px; }
-    @media (max-width: 768px) { #sidebar-rank { display: none; } } /* Ẩn trên mobile để đỡ vướng */
+    @media (max-width: 768px) { #sidebar-rank { display: none; } }
   </style>
  </head>
  <body class="h-full w-full space-bg text-white">
@@ -112,17 +131,9 @@
       <p class="text-lg text-purple-300 mb-8 font-bold">Cuộc Đua Hệ Mặt Trời</p>
       
       <div class="space-y-5 text-left">
-        <div>
-           <label class="block text-gray-300 font-bold mb-2 text-sm uppercase">Họ và Tên</label>
-           <input type="text" id="input-name" class="input-field w-full px-5 py-3 rounded-xl text-lg" placeholder="Nhập tên của bạn...">
-        </div>
-        <div>
-           <label class="block text-gray-300 font-bold mb-2 text-sm uppercase">Lớp</label>
-           <input type="text" id="input-class" class="input-field w-full px-5 py-3 rounded-xl text-lg" placeholder="VD: 10A5...">
-        </div>
-        <button id="btn-start" class="btn-cosmic w-full py-4 rounded-xl text-white font-bold text-xl uppercase tracking-wider mt-4">
-           🚀 VÀO PHÒNG THI
-        </button>
+        <div><label class="block text-gray-300 font-bold mb-2 text-sm uppercase">Họ và Tên</label><input type="text" id="input-name" class="input-field w-full px-5 py-3 rounded-xl text-lg" placeholder="Nhập tên của bạn..."></div>
+        <div><label class="block text-gray-300 font-bold mb-2 text-sm uppercase">Lớp</label><input type="text" id="input-class" class="input-field w-full px-5 py-3 rounded-xl text-lg" placeholder="VD: 10A5..."></div>
+        <button id="btn-start" class="btn-cosmic w-full py-4 rounded-xl text-white font-bold text-xl uppercase tracking-wider mt-4">🚀 VÀO PHÒNG THI</button>
       </div>
       <p id="login-error" class="text-red-400 text-sm mt-4 hidden"></p>
     </div>
@@ -133,45 +144,29 @@
     <div id="beams-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
     <div class="absolute top-4 left-4 z-50 glass-panel rounded-lg p-3 text-sm flex items-center gap-4">
-      <div>
-         <div class="text-gray-400 text-[10px] uppercase">Phi Hành Gia</div>
-         <div class="title-font text-blue-300 font-bold" id="display-player-name">...</div>
-      </div>
+      <div><div class="text-gray-400 text-[10px] uppercase">Phi Hành Gia</div><div class="title-font text-blue-300 font-bold" id="display-player-name">...</div></div>
       <div class="w-px h-8 bg-gray-600"></div>
-      <div>
-         <div class="text-gray-400 text-[10px] uppercase">Điểm Số</div>
-         <div class="title-font text-2xl font-bold text-yellow-400" id="score-display">0</div>
-      </div>
+      <div><div class="text-gray-400 text-[10px] uppercase">Điểm Số</div><div class="title-font text-2xl font-bold text-yellow-400" id="score-display">0</div></div>
     </div>
 
     <div class="absolute top-4 right-4 z-50">
         <div class="bg-gradient-to-r from-red-600 to-orange-600 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg border border-red-400">
-            <i class="fas fa-clock animate-pulse"></i>
-            <span id="timer-display" class="title-font font-bold text-xl">05:00</span>
+            <i class="fas fa-clock animate-pulse"></i><span id="timer-display" class="title-font font-bold text-xl">05:00</span>
         </div>
     </div>
 
     <div id="sidebar-rank">
-        <div class="flex justify-between items-center mb-2">
-            <h3><i class="fas fa-list-ol"></i> Bảng Xếp Hạng</h3>
-            <span class="text-[10px] text-green-400 animate-pulse">● LIVE</span>
-        </div>
-        <div id="sidebar-rank-content" class="space-y-2 text-xs">
-            <div class="text-center text-gray-500">Đang kết nối...</div>
-        </div>
+        <div class="flex justify-between items-center mb-2"><h3><i class="fas fa-list-ol"></i> Bảng Xếp Hạng</h3><span class="text-[10px] text-green-400 animate-pulse">● LIVE</span></div>
+        <div id="sidebar-rank-content" class="space-y-2 text-xs"><div class="text-center text-gray-500">Đang kết nối...</div></div>
     </div>
 
     <div id="next-instruction" class="absolute top-24 left-1/2 transform -translate-x-1/2 rounded-full px-6 py-2 z-50 hidden border border-yellow-400 shadow-lg pointer-events-none bg-black/80">
-      <div class="text-center">
-       <span class="text-yellow-400 font-bold text-sm">NHIỆM VỤ: </span>
-       <span class="text-white text-sm">Tìm & Mở khóa <span id="next-planet-name" class="font-bold text-blue-300 uppercase"></span> 📡</span>
-      </div>
+      <div class="text-center"><span class="text-yellow-400 font-bold text-sm">NHIỆM VỤ: </span><span class="text-white text-sm">Tìm & Mở khóa <span id="next-planet-name" class="font-bold text-blue-300 uppercase"></span> 📡</span></div>
     </div>
 
     <div id="solar-system" class="absolute inset-0 flex items-center justify-center transform scale-50 md:scale-75 lg:scale-100 origin-center">
-        <div class="orbit-ring" style="width: 180px; height: 180px;"></div><div class="orbit-ring" style="width: 280px; height: 280px;"></div>
-        <div class="orbit-ring" style="width: 400px; height: 400px;"></div><div class="orbit-ring" style="width: 540px; height: 540px;"></div>
-        <div class="orbit-ring" style="width: 750px; height: 750px;"></div><div class="orbit-ring" style="width: 950px; height: 950px;"></div>
+        <div class="orbit-ring" style="width: 180px; height: 180px;"></div><div class="orbit-ring" style="width: 280px; height: 280px;"></div><div class="orbit-ring" style="width: 400px; height: 400px;"></div>
+        <div class="orbit-ring" style="width: 540px; height: 540px;"></div><div class="orbit-ring" style="width: 750px; height: 750px;"></div><div class="orbit-ring" style="width: 950px; height: 950px;"></div>
         <div class="orbit-ring" style="width: 1150px; height: 1150px;"></div><div class="orbit-ring" style="width: 1350px; height: 1350px;"></div>
 
         <div class="planet-container planet-clickable" data-planet="sun" data-question="9" style="z-index: 10; width: var(--sun-size); height: var(--sun-size);"><div class="sun-shape"></div> <div class="planet-label text-yellow-300">Mặt Trời</div></div>
@@ -188,23 +183,18 @@
 
     <div id="question-panel" class="info-panel absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 md:w-[600px] rounded-xl p-5 z-[9999] hidden">
         <div class="flex justify-between items-start mb-4 border-b border-gray-300 pb-2">
-            <div>
-                <h2 class="text-lg font-bold flex items-center gap-2"><span class="text-xl">📡</span> Tín hiệu từ <span id="panel-planet-name"></span></h2>
-                <div class="text-xs text-gray-500 mt-1 font-mono">Câu hỏi xác thực <span id="question-number"></span>/10</div>
-            </div>
+            <div><h2 class="text-lg font-bold flex items-center gap-2"><span class="text-xl">📡</span> Tín hiệu từ <span id="panel-planet-name"></span></h2><div class="text-xs text-gray-500 mt-1 font-mono">Câu hỏi xác thực <span id="question-number"></span>/10</div></div>
             <button id="close-question" class="text-gray-400 hover:text-red-600 text-3xl">&times;</button>
         </div>
         <div id="question-text" class="text-base md:text-lg mb-4 font-bold text-red-600"></div>
         <div id="answers-container" class="space-y-2"></div>
         <div id="feedback-message" class="mt-3 p-3 rounded-lg text-sm text-center font-bold hidden border"></div>
     </div>
-    
     <div id="error-toast" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white px-6 py-3 rounded-lg shadow-xl opacity-0 pointer-events-none transition-opacity font-bold z-[10000]"></div>
   </div>
 
   <div id="screen-result" class="screen flex-col items-center justify-center p-4 bg-black/90">
     <div class="glass-panel p-6 rounded-2xl w-full max-w-4xl text-center relative flex flex-col md:flex-row gap-6">
-        
         <div class="flex-1 flex flex-col items-center justify-center border-r border-gray-700 pr-6">
             <div class="text-6xl mb-2">🏆</div>
             <h2 class="text-3xl font-bold text-yellow-400 title-font mb-2">NHIỆM VỤ HOÀN TẤT</h2>
@@ -215,22 +205,14 @@
             </div>
             <button onclick="location.reload()" class="btn-cosmic px-8 py-3 rounded-lg text-white font-bold uppercase w-full">🔄 Thi Lại</button>
         </div>
-
         <div class="flex-1 flex flex-col h-[400px]">
-            <h3 class="text-lg font-bold text-blue-300 mb-3 flex items-center justify-center border-b border-gray-600 pb-2">
-                <i class="fas fa-list-ol mr-2"></i> BẢNG XẾP HẠNG
-            </h3>
-            <div id="leaderboard-content" class="space-y-1 overflow-y-auto flex-1 pr-2">
-                <p class="text-center text-gray-500 italic text-sm mt-10">Đang tải dữ liệu...</p>
-            </div>
+            <h3 class="text-lg font-bold text-blue-300 mb-3 flex items-center justify-center border-b border-gray-600 pb-2"><i class="fas fa-list-ol mr-2"></i> BẢNG XẾP HẠNG</h3>
+            <div id="leaderboard-content" class="space-y-1 overflow-y-auto flex-1 pr-2"><p class="text-center text-gray-500 italic text-sm mt-10">Đang tải dữ liệu...</p></div>
         </div>
     </div>
   </div>
 
   <script>
-    /* =========================================================
-       PHẦN 1: CẤU HÌNH CÂU HỎI & GAME LOGIC
-       ========================================================= */
     const questions = [
       { planetName: 'Sao Thủy', question: 'Câu 1: Trong phần mềm GIMP, các lệnh dùng để tinh chỉnh màu sắc nằm trong bảng chọn nào?', answers: ['A. Tools', 'B. Filters', 'C. Colors', 'D. Windows'], correct: 2 },
       { planetName: 'Sao Kim', question: 'Câu 2: Công cụ nào dùng để tạo vùng chọn hình chữ nhật hoặc hình vuông?', answers: ['A. Ellipse Select', 'B. Rectangle Select', 'C. Free Select', 'D. Fuzzy Select'], correct: 1 },
@@ -244,50 +226,52 @@
       { planetName: 'Mặt Trời', question: 'Câu 10: Công cụ nào dùng để di chuyển hình ảnh sang vị trí khác?', answers: ['A. Move Tool', 'B. Crop Tool', 'C. Rotate Tool', 'D. Scale Tool'], correct: 0 }
     ];
 
-    // State của Game
     let gameState = {
-        currentPlayerRecord: null, // Chứa thông tin người chơi hiện tại + ID từ server
+        currentPlayerRecord: null,
         score: 0,
         currentQuestionIdx: 0,
         answered: new Set(),
-        timeLeft: 300, // 5 phút
+        timeLeft: 300, 
         timerInterval: null,
-        allPlayers: [] // Danh sách toàn bộ người chơi từ server
+        allPlayers: [] 
     };
 
-    // Animation hành tinh
     const planetIds = ['mercury', 'venus', 'earth', 'moon', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'sun'];
     let planetIsMoving = { mercury: true, venus: true, earth: true, moon: true, mars: true, jupiter: true, saturn: true, uranus: true, neptune: true, sun: true };
     let angles = { mercury: 0, venus: 45, earth: 90, mars: 180, jupiter: 220, saturn: 270, uranus: 310, neptune: 0, moon: 0 };
     let currentPlanetElement = null;
 
-    /* =========================================================
-       PHẦN 2: KẾT NỐI SDK (QUAN TRỌNG NHẤT)
-       ========================================================= */
-    
-    // Khởi tạo SDK ngay khi load trang
+    // QUAN TRỌNG: Init SDK + Fallback
     (async () => {
+        // Chờ 1 chút để script SDK kịp load
+        await new Promise(r => setTimeout(r, 500));
+
         if (window.dataSdk) {
             await window.dataSdk.init({
-                // Hàm này sẽ chạy mỗi khi CÓ BẤT KỲ AI thay đổi điểm
                 onDataChanged: (data) => {
                     gameState.allPlayers = data;
-
-                    // Cập nhật lại thông tin bản thân (nếu server có thay đổi gì)
                     if (gameState.currentPlayerRecord && gameState.currentPlayerRecord.__backendId) {
                         const me = data.find(p => p.__backendId === gameState.currentPlayerRecord.__backendId);
                         if(me) gameState.currentPlayerRecord = me;
                     }
-
-                    // Gọi hàm vẽ lại bảng xếp hạng
-                    renderSidebarLeaderboard(data); // Bảng nhỏ bên phải lúc chơi
-                    renderMainLeaderboard(data);    // Bảng to lúc kết thúc
+                    renderSidebarLeaderboard(data);
+                    renderMainLeaderboard(data);
                 }
             });
+        } else {
+             console.log("⚠️ KHÔNG TÌM THẤY SDK MẠNG - CHẠY CHẾ ĐỘ OFFLINE");
+             // Fallback đơn giản để không bị lỗi JS
+             window.dataSdk = {
+                 create: async (p) => { 
+                     p.__backendId = Date.now(); 
+                     gameState.allPlayers.push(p); 
+                     return {isOk: true}; 
+                 },
+                 update: async (p) => { return {isOk: true}; }
+             }
         }
     })();
 
-    // Xử lý nút "VÀO PHÒNG THI"
     document.getElementById('btn-start').addEventListener('click', async () => {
         const name = document.getElementById('input-name').value.trim();
         const cls = document.getElementById('input-class').value.trim();
@@ -298,46 +282,45 @@
             return;
         }
 
-        // Hiển thị tên lên góc
         document.getElementById('display-player-name').textContent = `${name} - ${cls}`;
-        
-        // Tạo dữ liệu người chơi mới
         const newPlayer = {
-            name: name,
-            class: cls,
-            score: 0,
-            current_question: 0,
-            is_finished: false,
+            name: name, class: cls, score: 0,
+            current_question: 0, is_finished: false,
             last_updated: new Date().toISOString()
         };
 
         try {
-            // Gửi yêu cầu tạo người chơi lên Server
+            const btn = document.getElementById('btn-start');
+            btn.textContent = "Đang kết nối...";
+            btn.disabled = true;
+
             const res = await window.dataSdk.create(newPlayer);
+            
             if(res.isOk) {
-                // Đợi 1 chút để server phản hồi và onDataChanged chạy
-                // Ta cần lấy cái __backendId mà server tạo ra để sau này update điểm
+                // Đợi server sync
                 setTimeout(() => {
-                    // Tìm chính mình trong danh sách server trả về (lấy người mới nhất trùng tên/lớp)
-                    const me = gameState.allPlayers
-                        .filter(p => p.name === name && p.class === cls)
-                        .sort((a,b) => new Date(b.last_updated) - new Date(a.last_updated))[0];
+                    // Nếu online thì tìm ID từ server, nếu offline thì lấy luôn obj vừa tạo
+                    const me = gameState.allPlayers.length > 0 ? 
+                        gameState.allPlayers.filter(p => p.name === name && p.class === cls).sort((a,b) => new Date(b.last_updated) - new Date(a.last_updated))[0] 
+                        : newPlayer;
                     
                     if (me) gameState.currentPlayerRecord = me;
-                    
-                    // Bắt đầu game
                     initGame();
                 }, 800);
             } else {
                 alert("Lỗi kết nối! Vui lòng thử lại.");
+                btn.textContent = "🚀 VÀO PHÒNG THI";
+                btn.disabled = false;
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e);
+            alert("Có lỗi xảy ra: " + e.message);
+            document.getElementById('btn-start').disabled = false;
+        }
     });
 
-    // Hàm cập nhật điểm lên Server
     async function updateProgressToServer(isFinished = false) {
         if (!gameState.currentPlayerRecord) return;
-
         const data = {
             ...gameState.currentPlayerRecord,
             score: gameState.score,
@@ -345,14 +328,9 @@
             is_finished: isFinished,
             last_updated: new Date().toISOString()
         };
-        
-        // Gửi lệnh update
         await window.dataSdk.update(data);
     }
 
-    /* =========================================================
-       PHẦN 3: GAMEPLAY LOGIC (GIỮ NGUYÊN TỪ FILE CŨ)
-       ========================================================= */
     function initGame() {
         document.getElementById('screen-login').classList.remove('active');
         document.getElementById('screen-game').classList.add('active');
@@ -369,7 +347,6 @@
             const m = Math.floor(gameState.timeLeft / 60);
             const s = gameState.timeLeft % 60;
             document.getElementById('timer-display').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            
             if (gameState.timeLeft <= 0) {
                 clearInterval(gameState.timerInterval);
                 finishGame(true);
@@ -377,7 +354,6 @@
         }, 1000);
     }
 
-    // ... (Giữ nguyên phần animation hành tinh để tiết kiệm chỗ, không thay đổi gì) ...
     function createStars() { const container = document.getElementById('stars-container'); for (let i = 0; i < 150; i++) { const star = document.createElement('div'); star.className = 'star'; star.style.left = Math.random() * 100 + '%'; star.style.top = Math.random() * 100 + '%'; const size = Math.random() * 3 + 1; star.style.width = size + 'px'; star.style.height = size + 'px'; star.style.setProperty('--duration', (Math.random() * 3 + 1) + 's'); container.appendChild(star); } }
     function animateOrbit() {
         const orbits = { mercury: 90, venus: 140, earth: 200, moon: 50, mars: 270, jupiter: 375, saturn: 475, uranus: 575, neptune: 675 };
@@ -395,7 +371,6 @@
         requestAnimationFrame(animateOrbit);
     }
     
-    // Logic Click hành tinh & Trả lời
     function updateActivePlanet() {
         for (let p in planetIsMoving) planetIsMoving[p] = true;
         document.querySelectorAll('.planet-container[data-question]').forEach(planet => {
@@ -485,8 +460,6 @@
         const pid = currentPlanetElement.dataset.planet;
         planetIsMoving[pid] = true;
         if(pid === 'moon') planetIsMoving['earth'] = true;
-
-        // >>> GỬI ĐIỂM NGAY LẬP TỨC <<<
         updateProgressToServer();
 
         setTimeout(() => {
@@ -520,22 +493,16 @@
 
     async function finishGame(timeOut = false) {
         clearInterval(gameState.timerInterval);
-        
         if (!timeOut) {
             const sun = document.querySelector('.sun-shape');
             sun.style.filter = 'brightness(3.0) saturate(1.5)';
             sun.style.boxShadow = '0 0 100px #ff4500';
         }
-
-        // Cập nhật trạng thái ĐÃ XONG lên server
         await updateProgressToServer(true);
-
         document.getElementById('final-score').textContent = gameState.score;
-        
         setTimeout(() => {
             document.getElementById('screen-game').classList.remove('active');
             document.getElementById('screen-result').classList.add('active');
-            // Render lại lần cuối để chắc chắn bảng xếp hạng chuẩn
             renderMainLeaderboard(gameState.allPlayers);
         }, 2000);
     }
@@ -549,30 +516,21 @@
         }
     });
 
-    /* =========================================================
-       PHẦN 4: HÀM VẼ BẢNG XẾP HẠNG (QUAN TRỌNG)
-       ========================================================= */
-    
-    // Hàm sắp xếp người chơi: Điểm cao -> Xong trước -> Mới cập nhật
     function sortPlayers(players) {
         return [...players].sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score; // Ưu tiên điểm
-            if (a.is_finished !== b.is_finished) return b.is_finished - a.is_finished; // Ưu tiên đã xong
-            return new Date(a.last_updated) - new Date(b.last_updated); // Ưu tiên xong sớm
+            if (b.score !== a.score) return b.score - a.score;
+            if (a.is_finished !== b.is_finished) return b.is_finished - a.is_finished; 
+            return new Date(a.last_updated) - new Date(b.last_updated); 
         });
     }
 
-    // 4.1 Vẽ bảng nhỏ bên phải (Live Sidebar)
     function renderSidebarLeaderboard(data) {
         const container = document.getElementById('sidebar-rank-content');
         if(!container) return;
-        
         const sorted = sortPlayers(data);
-        
         container.innerHTML = sorted.map((p, i) => {
             const isMe = gameState.currentPlayerRecord && (p.__backendId === gameState.currentPlayerRecord.__backendId);
             const statusIcon = p.is_finished ? '✅' : '⏳';
-            
             return `
             <div class="flex justify-between items-center p-1 rounded ${isMe ? 'bg-blue-600/50' : ''}">
                 <div class="truncate w-24">
@@ -587,23 +545,18 @@
         }).join('');
     }
 
-    // 4.2 Vẽ bảng to lúc kết thúc (Main Result)
     function renderMainLeaderboard(data) {
         const container = document.getElementById('leaderboard-content');
         if(!container) return;
-
         const sorted = sortPlayers(data);
-
         container.innerHTML = sorted.map((p, i) => {
             let rankClass = '';
             let medal = `#${i+1}`;
             if(i===0) { rankClass = 'rank-1'; medal = '🥇'; }
             if(i===1) { rankClass = 'rank-2'; medal = '🥈'; }
             if(i===2) { rankClass = 'rank-3'; medal = '🥉'; }
-
             const isMe = gameState.currentPlayerRecord && (p.__backendId === gameState.currentPlayerRecord.__backendId);
             const statusText = p.is_finished ? '<span class="text-green-400 text-xs">✅ Đã xong</span>' : '<span class="text-yellow-500 text-xs">⏳ Đang thi</span>';
-
             return `
             <div class="leaderboard-item flex items-center justify-between p-3 ${rankClass} ${isMe ? 'is-me' : ''}">
                 <div class="flex items-center gap-3">
