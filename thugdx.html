@@ -3,129 +3,121 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>HỆ MẶT TRỜI - VŨ TRỤ RỘNG LỚN</title>
+  <title>HỆ MẶT TRỜI - COMPACT MODE</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
-    /* === CẤU HÌNH TỐI ƯU HIỆU SUẤT === */
+    /* === CẤU HÌNH CƠ BẢN === */
     html, body {
         width: 100%; height: 100%; margin: 0; padding: 0;
         background-color: #000;
         font-family: 'Exo 2', sans-serif;
         overflow: hidden; 
-        -webkit-tap-highlight-color: transparent; /* Tắt highlight mặc định */
-        user-select: none; /* Ngăn bôi đen văn bản khi bấm nhanh */
-        touch-action: manipulation; /* TẮT ĐỘ TRỄ 300MS QUAN TRỌNG */
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
     }
 
     #game-container {
         width: 100vw; height: 100vh; 
-        overflow: hidden; position: relative;
-        background: radial-gradient(ellipse at center, #0b0f19 0%, #000000 100%);
+        overflow: auto; /* Cho phép cuộn */
+        position: relative;
+        background: radial-gradient(ellipse at center, #05050a 0%, #000000 100%);
+        -webkit-overflow-scrolling: touch; 
+        cursor: grab;
     }
+    #game-container:active { cursor: grabbing; }
     
-    /* === SAO & THIÊN THẠCH === */
+    /* === SAO NỀN === */
     .star {
       position: absolute; background: white; border-radius: 50%;
-      animation: twinkle var(--duration) ease-in-out infinite; opacity: 0.8; z-index: 0;
-    }
-    @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
-
-    .meteor {
-      position: absolute; top: 0; right: 0; width: 150px; height: 2px;
-      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
-      transform: rotate(-45deg); pointer-events: none; z-index: 10;
-      opacity: 0; animation: meteorShoot 2s linear forwards;
-    }
-    .meteor::before {
-      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 4px; height: 4px; background: white; border-radius: 50%;
-      box-shadow: 0 0 10px white, 0 0 20px cyan;
-    }
-    @keyframes meteorShoot {
-      0% { transform: translate(100px, -100px) rotate(-45deg); opacity: 1; }
-      100% { transform: translate(-150vw, 150vh) rotate(-45deg); opacity: 0; }
+      opacity: 0.8; z-index: 0;
     }
 
     .orbit-ring {
-      border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       pointer-events: none; z-index: 1;
     }
     
     /* === HÀNH TINH === */
     .planet-container {
-      position: absolute; display: flex; justify-content: center; align-items: center;
-      z-index: 50; cursor: pointer; transition: transform 0.3s ease; 
-      touch-action: manipulation; /* Bấm là nhận ngay */
+      position: absolute; 
+      display: flex; justify-content: center; align-items: center;
+      z-index: 50; cursor: pointer; 
+      transition: transform 0.1s linear; 
+      touch-action: manipulation;
+      min-width: 70px; min-height: 70px; 
     }
 
     .planet-shape {
-      width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
+      border-radius: 50%; 
       box-shadow: inset -3px -3px 8px rgba(0,0,0,0.8);
-      transition: all 0.5s ease; filter: brightness(0.6) saturate(0.9);
+      transition: all 0.5s ease; 
+      filter: brightness(0.9);
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     }
     
     .planet-active { z-index: 100 !important; }
     .planet-active .planet-shape {
-      filter: brightness(1.1);
-      box-shadow: 0 0 15px #ffff00, 0 0 30px #ffff00;
-      animation: pulseActive 1s infinite alternate;
+      filter: brightness(1.3);
+      box-shadow: 0 0 20px #ffff00;
     }
     .planet-active::before {
-      content: '▼'; position: absolute; top: -70%; left: 50%; transform: translateX(-50%);
-      color: yellow; animation: bounce 0.8s infinite; font-weight: 900; font-size: 1.5rem;
-      text-shadow: 0 2px 0 black; pointer-events: none;
+      content: '▼'; position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+      color: #fbbf24; animation: bounce 0.8s infinite; font-weight: 900; font-size: 1.8rem;
+      text-shadow: 0 2px 0 black; pointer-events: none; z-index: 101;
     }
 
-    .planet-connected { pointer-events: none; }
     .planet-connected .planet-shape {
-      filter: brightness(1.5) saturate(1.2); box-shadow: 0 0 30px #4ade80; transform: scale(1.05);
+      filter: brightness(1.2); box-shadow: 0 0 25px #22c55e; 
     }
-    .planet-wrong { pointer-events: none; }
-    .planet-wrong .planet-shape { filter: grayscale(1.0) brightness(0.4); box-shadow: none; }
+    .planet-wrong .planet-shape { filter: grayscale(1.0) brightness(0.3); }
 
-    /* MẶT TRỜI */
-    .sun-victory .sun-shape {
-        filter: brightness(2.0) saturate(1.5) !important;
-        box-shadow: 0 0 100px #ff4500, 0 0 150px #ffd700 !important;
-        animation: sunPulse 2s infinite alternate;
-    }
+    /* === MẶT TRỜI === */
     .sun-shape {
-      width: 100%; height: 100%; border-radius: 50%;
-      background: radial-gradient(circle at center, #ffd700, #ff8c00, #ff4500);
-      box-shadow: 0 0 50px #ff4500; position: relative;
-      filter: brightness(0.7); transition: all 1s ease;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, #fffbeb, #fbbf24, #d97706);
+      box-shadow: 0 0 40px #d97706; 
+      position: relative;
+      filter: brightness(1.0); 
+      transition: all 1s ease;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     }
-    .sun-detail {
-        position: absolute; inset: -50%; width: 200%; height: 200%;
-        background-image: radial-gradient(circle, rgba(255,0,0,0.4) 10%, transparent 20%);
-        background-size: 20px 20px; animation: sunSpin 20s linear infinite; opacity: 0.6;
+    
+    .sun-shape.sun-victory {
+        filter: brightness(1.3) !important;
+        box-shadow: 0 0 80px 30px #f59e0b, 0 0 120px 50px rgba(251, 191, 36, 0.4) !important;
+        z-index: 999;
+        animation: sunBreathing 3s infinite alternate ease-in-out !important;
+    }
+
+    @keyframes sunBreathing {
+        from { transform: translate(-50%, -50%) scale(1.0); }
+        to { transform: translate(-50%, -50%) scale(1.1); }
     }
 
     /* MÀU SẮC HÀNH TINH */
-    .mercury-bg { background: radial-gradient(circle at 30% 30%, #e5e5e5, #737373); }
-    .venus-bg { background: radial-gradient(circle at 30% 30%, #fde047, #ca8a04); }
-    .earth-bg { background: radial-gradient(circle at 40% 40%, #4ade80 0%, #2563eb 60%); }
-    .mars-bg { background: radial-gradient(circle at 30% 30%, #fdba74, #ea580c); }
-    .jupiter-bg { background: radial-gradient(circle at 30% 30%, #ffedd5, #d97706, #92400e); }
-    .saturn-bg { background: radial-gradient(circle at 30% 30%, #fef9c3, #eab308, #854d0e); }
-    .uranus-bg { background: radial-gradient(circle at 30% 30%, #cffafe, #06b6d4, #155e75); }
-    .neptune-bg { background: radial-gradient(circle at 30% 30%, #bae6fd, #3b82f6, #1e3a8a); }
-    .moon-bg { background: radial-gradient(circle at 30% 30%, #f3f4f6, #9ca3af); }
+    .mercury-bg { background: radial-gradient(circle at 30% 30%, #a3a3a3, #525252); }
+    .venus-bg { background: radial-gradient(circle at 30% 30%, #fde047, #d97706); }
+    .earth-bg { background: radial-gradient(circle at 40% 40%, #22d3ee 0%, #1d4ed8 50%, #1e1b4b 100%); }
+    .mars-bg { background: radial-gradient(circle at 30% 30%, #fdba74, #9a3412); }
+    .jupiter-bg { background: radial-gradient(circle at 30% 30%, #ffedd5, #b45309, #78350f); }
+    .saturn-bg { background: radial-gradient(circle at 30% 30%, #fef08a, #ca8a04); }
+    .uranus-bg { background: radial-gradient(circle at 30% 30%, #cffafe, #06b6d4); }
+    .neptune-bg { background: radial-gradient(circle at 30% 30%, #60a5fa, #1e3a8a); }
+    .moon-bg { background: radial-gradient(circle at 30% 30%, #e5e7eb, #6b7280); }
 
     .planet-label {
-      position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%);
-      font-size: 14px; color: #fff; white-space: nowrap; text-shadow: 0 2px 2px black; font-weight: 700;
-      background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px; pointer-events: none;
+      position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%);
+      font-size: 13px; color: #e5e7eb; white-space: nowrap; font-weight: 700;
+      text-shadow: 0 1px 3px black; pointer-events: none; z-index: 60;
+      opacity: 0.9;
     }
 
-    @keyframes pulseActive { from { transform: scale(1); } to { transform: scale(1.1); } }
     @keyframes bounce { 0% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -10px); } 100% { transform: translate(-50%, 0); } }
-    @keyframes sunSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes sunPulse { from { transform: scale(1); } to { transform: scale(1.1); } }
 
-    /* === UI CƠ BẢN === */
+    /* === UI === */
     .ui-layer { position: fixed; top: 0; left: 0; width: 100%; z-index: 900; pointer-events: none; }
     .pointer-events-auto { pointer-events: auto; }
 
@@ -135,154 +127,81 @@
         display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
     }
     .glass-panel {
-      background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(59, 130, 246, 0.4);
       backdrop-filter: blur(10px);
     }
     
     #quiz-modal {
         position: fixed !important; top: 0; left: 0; right: 0; bottom: 0;
         width: 100vw; height: 100vh;
-        background-color: rgba(0, 0, 0, 0.7); z-index: 10000; 
+        background-color: rgba(0, 0, 0, 0.8); z-index: 10000; 
         backdrop-filter: blur(5px);
     }
 
-    /* === [NEW DESIGN] QUIZ PANEL PHẢN HỒI NHANH === */
-    
+    /* === QUIZ PANEL === */
     .quiz-modern-panel {
-      background: transparent;
-      position: relative;
-      width: 95%; max-width: 800px; max-height: 90vh;
-      overflow-y: auto; 
+      background: transparent; position: relative;
+      width: 95%; max-width: 700px; max-height: 90vh; overflow-y: auto; 
     }
 
     .question-box {
-        background: #ffffff;
-        border-top: 6px solid #3b82f6; 
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        text-align: center;
+        background: #ffffff; border-top: 5px solid #2563eb; border-radius: 12px;
+        padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center;
     }
 
-    .question-text {
-        color: #dc2626; /* ĐỎ */
-        font-weight: 900;
-        font-size: 1.5rem;
-    }
+    .question-text { color: #dc2626; font-weight: 800; font-size: 1.3rem; }
 
-    /* --- NÚT ĐÁP ÁN (TỐI ƯU CẢM ỨNG) --- */
     .answer-btn-modern {
-      width: 100%; text-align: center; 
-      padding: 20px;
-      
-      background: #f8fafc;
-      color: #334155; 
-      
-      border: 1px solid #cbd5e1;
-      border-radius: 10px; 
-      box-shadow: 0 6px 0 #94a3b8;
-      
-      font-weight: 700; font-size: 18px; 
-      cursor: pointer;
-      
-      /* QUAN TRỌNG: Tăng tốc độ phản hồi */
-      transition: transform 0.05s ease-out, box-shadow 0.05s ease-out; /* Nhanh hơn */
-      position: relative;
-      touch-action: manipulation; /* Loại bỏ delay 300ms trên mobile */
-      -webkit-user-select: none; /* Ngăn chọn văn bản khi bấm nhanh */
-      user-select: none;
+      width: 100%; text-align: center; padding: 16px;
+      background: #f1f5f9; color: #334155; 
+      border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 4px 0 #94a3b8;
+      font-weight: 700; font-size: 16px; cursor: pointer;
+      transition: transform 0.05s, box-shadow 0.05s; 
+      position: relative; touch-action: manipulation;
+      -webkit-user-select: none; user-select: none;
     }
+    .answer-btn-modern:active { transform: translateY(4px) !important; box-shadow: 0 0 0 #94a3b8 !important; }
     
-    /* Hiệu ứng bấm "lún" tức thì */
-    .answer-btn-modern:active { 
-        transform: translateY(6px) !important; 
-        box-shadow: 0 0 0 #94a3b8 !important; 
-    }
-    
-    /* Trạng thái Đúng/Sai */
-    .answer-btn-modern.correct { 
-        background: #22c55e !important; 
-        border-color: #16a34a !important; 
-        box-shadow: 0 6px 0 #14532d !important;
-        color: white !important; 
-    }
+    .answer-btn-modern.correct { background: #22c55e !important; border-color: #16a34a !important; box-shadow: 0 4px 0 #14532d !important; color: white !important; }
     .answer-btn-modern.correct:active { box-shadow: 0 0 0 #14532d !important; }
 
-    .answer-btn-modern.wrong { 
-        background: #ef4444 !important; 
-        border-color: #dc2626 !important; 
-        box-shadow: 0 6px 0 #991b1b !important;
-        color: white !important; 
-    }
+    .answer-btn-modern.wrong { background: #ef4444 !important; border-color: #dc2626 !important; box-shadow: 0 4px 0 #991b1b !important; color: white !important; }
     .answer-btn-modern.wrong:active { box-shadow: 0 0 0 #991b1b !important; }
 
-
-    /* Nút câu tiếp theo */
     .next-btn-modern {
-        width: 100%;
-        margin-top: 20px;
-        padding: 15px;
-        background: #2563eb; 
-        color: white;
-        font-weight: 900; text-transform: uppercase;
-        border: none; border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.5);
-        font-size: 18px;
-        
-        /* Tối ưu phản hồi */
-        transition: transform 0.05s;
-        touch-action: manipulation;
+        width: 100%; margin-top: 15px; padding: 14px;
+        background: #2563eb; color: white; font-weight: 800; text-transform: uppercase;
+        border: none; border-radius: 8px; box-shadow: 0 4px 0 #1e40af;
+        font-size: 16px; transition: transform 0.05s; touch-action: manipulation;
     }
-    .next-btn-modern:active { 
-        transform: scale(0.95); 
-    }
+    .next-btn-modern:active { transform: translateY(4px); box-shadow: none; }
 
     .center-btn {
         position: fixed; bottom: 20px; right: 20px; z-index: 900;
-        background: rgba(29, 78, 216, 0.9); color: white;
-        width: 50px; height: 50px; border-radius: 50%;
+        background: rgba(37, 99, 235, 0.9); color: white;
+        width: 45px; height: 45px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        border: 2px solid white; box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
-        font-size: 24px; cursor: pointer; pointer-events: auto;
+        border: 2px solid white; box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+        font-size: 20px; cursor: pointer; pointer-events: auto;
     }
 
-    #universe-wrapper { position: relative; overflow: hidden; min-width: 100vw; min-height: 100vh; }
+    #universe-wrapper { position: relative; min-width: 100vw; min-height: 100vh; overflow: hidden; }
     #stars-in-universe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
 
     /* === RESPONSIVE MOBILE === */
     @media (min-width: 769px) {
-        .quiz-options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+        .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     }
 
     @media (max-width: 768px) {
-        /* Giảm font chữ đi -2px */
-        body { font-size: 14px !important; } 
-        .title-font { font-size: 1.8rem !important; }
-        
-        .quiz-modern-panel { width: 95%; max-height: 85vh; }
-        .question-box { padding: 15px; margin-bottom: 15px; }
-        
-        /* Giảm nhẹ size câu hỏi trên mobile cho vừa vặn */
-        .question-text { font-size: 1.25rem !important; line-height: 1.4; } 
-        
-        .quiz-options-grid {
-            display: flex; flex-direction: column; gap: 12px;
-        }
-        
-        /* Nút đáp án mobile */
-        .answer-btn-modern { 
-            padding: 16px; 
-            font-size: 15px; 
-            box-shadow: 0 4px 0 #94a3b8; /* Giảm độ cao bóng 3D chút cho gọn */
-        }
-        .answer-btn-modern:active { transform: translateY(4px) !important; }
-        
-        #hud-player, #hud-score, #target-planet { font-size: 12px !important; }
+        body { font-size: 12px !important; } 
+        .title-font { font-size: 1.5rem !important; }
+        .quiz-modern-panel { width: 95%; }
+        .question-box { padding: 12px; margin-bottom: 12px; }
+        .question-text { font-size: 1.1rem !important; } 
+        .quiz-options-grid { display: flex; flex-direction: column; gap: 10px; }
+        .answer-btn-modern { padding: 14px; font-size: 14px; }
+        #hud-player, #hud-score, #target-planet { font-size: 11px !important; }
         .planet-label { font-size: 10px !important; }
     }
 
@@ -291,43 +210,41 @@
  <body class="text-white">
 
   <div id="login-screen">
-      <h1 class="title-font text-4xl md:text-6xl text-blue-500 font-black mb-6 text-center tracking-wider drop-shadow-[0_0_20px_rgba(59,130,246,0.8)]">HỆ MẶT TRỜI</h1>
-      <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center border-4 border-blue-600 shadow-2xl">
-          <input type="text" id="username" placeholder="Nhập tên phi hành gia..." class="w-full bg-gray-100 border-2 border-blue-300 rounded-xl p-4 text-blue-900 focus:border-blue-600 focus:outline-none font-bold text-center mb-4 text-lg placeholder-gray-400">
-          <button onclick="startGame()" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl border-b-4 border-red-800 active:border-b-0 active:translate-y-1 transition-all uppercase tracking-widest text-lg shadow-lg" style="touch-action: manipulation;">
+      <h1 class="title-font text-4xl md:text-5xl text-blue-500 font-black mb-6 text-center tracking-wider drop-shadow-[0_0_20px_rgba(59,130,246,0.8)]">HỆ MẶT TRỜI</h1>
+      <div class="bg-white p-5 rounded-2xl w-full max-w-xs text-center border-4 border-blue-600 shadow-2xl">
+          <input type="text" id="username" placeholder="Tên phi hành gia..." class="w-full bg-gray-100 border-2 border-blue-300 rounded-xl p-3 text-blue-900 focus:border-blue-600 focus:outline-none font-bold text-center mb-4 text-base">
+          <button onclick="startGame()" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl border-b-4 border-red-800 active:border-b-0 active:translate-y-1 transition-all uppercase tracking-widest text-base shadow-lg" style="touch-action: manipulation;">
               KHỞI HÀNH 🚀
           </button>
       </div>
   </div>
 
   <div id="game-container" class="hidden">
-      <div id="meteor-container" style="position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none;"></div>
-
       <div class="ui-layer p-2 flex justify-between items-start">
           <div class="pointer-events-auto flex flex-col items-start gap-2">
-              <div class="glass-panel px-3 py-2 rounded-lg border-l-4 border-blue-500 bg-gray-900/50">
+              <div class="glass-panel px-3 py-2 rounded-lg border-l-4 border-blue-500">
                   <div class="flex items-center gap-3">
                       <div>
-                          <div class="text-[10px] text-gray-300 uppercase font-bold">Phi hành gia</div>
-                          <div id="hud-player" class="font-bold text-white text-sm truncate max-w-[100px]">...</div>
+                          <div class="text-[9px] text-gray-400 uppercase font-bold">Phi hành gia</div>
+                          <div id="hud-player" class="font-bold text-white text-xs truncate max-w-[80px]">...</div>
                       </div>
-                      <div class="h-8 w-px bg-gray-500"></div>
+                      <div class="h-6 w-px bg-gray-500"></div>
                       <div>
-                          <div class="text-[10px] text-gray-300 uppercase font-bold">Điểm số</div>
-                          <div id="hud-score" class="font-bold text-yellow-400 text-xl title-font">0</div>
+                          <div class="text-[9px] text-gray-400 uppercase font-bold">Điểm</div>
+                          <div id="hud-score" class="font-bold text-yellow-400 text-lg title-font">0</div>
                       </div>
                   </div>
               </div>
 
               <div id="end-game-controls" class="hidden flex gap-2 animate-bounce">
-                  <button onclick="exitGame()" class="bg-gray-600 text-xs font-bold px-3 py-2 rounded border border-gray-400 shadow">🚪 Thoát</button>
-                  <button onclick="restartGame()" class="bg-blue-600 text-xs font-bold px-3 py-2 rounded border border-blue-400 shadow">🔄 Chơi lại</button>
+                  <button onclick="exitGame()" class="bg-gray-600 text-[10px] font-bold px-3 py-2 rounded border border-gray-400 shadow">🚪 Thoát</button>
+                  <button onclick="restartGame()" class="bg-blue-600 text-[10px] font-bold px-3 py-2 rounded border border-blue-400 shadow">🔄 Chơi lại</button>
               </div>
           </div>
           
-          <div id="instruction-box" class="glass-panel px-4 py-2 rounded-full hidden pointer-events-auto border-2 border-red-500 bg-gray-900/80 mr-2 mt-1 max-w-[200px] shadow-lg shadow-red-500/20">
-              <div class="text-red-400 font-black text-[10px] uppercase tracking-wide">👉 TÌM MỤC TIÊU:</div> 
-              <div id="target-planet" class="text-white font-bold text-sm truncate"></div>
+          <div id="instruction-box" class="glass-panel px-3 py-2 rounded-full hidden pointer-events-auto border-2 border-red-500 mr-2 mt-1 shadow-lg shadow-red-500/20">
+              <div class="text-red-400 font-black text-[9px] uppercase tracking-wide">👉 TÌM:</div> 
+              <div id="target-planet" class="text-white font-bold text-xs truncate"></div>
           </div>
       </div>
 
@@ -341,16 +258,14 @@
 
   <div id="quiz-modal" class="hidden flex items-center justify-center">
       <div class="quiz-modern-panel">
-          <button onclick="closeQuiz()" class="absolute top-0 right-0 m-4 text-gray-500 hover:text-red-600 text-3xl font-black z-50 transition-colors" style="touch-action: manipulation;">&times;</button>
-          
           <div class="question-box">
-              <div class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">TÍN HIỆU TỪ: <span id="quiz-planet" class="text-blue-600">PLANET</span></div>
+              <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">TÍN HIỆU TỪ: <span id="quiz-planet" class="text-blue-600">PLANET</span></div>
               <p id="quiz-question" class="question-text"></p>
           </div>
           
           <div id="quiz-options" class="quiz-options-grid"></div>
           
-          <div id="quiz-feedback" class="hidden mt-4 text-center font-black text-lg p-3 rounded-xl border-2 shadow-sm bg-white"></div>
+          <div id="quiz-feedback" class="hidden mt-3 text-center font-black text-base p-2 rounded-lg border-2 shadow-sm bg-white"></div>
           
           <button id="btn-next-question" onclick="nextQuestion()" class="next-btn-modern hidden">
               CÂU TIẾP THEO ➡
@@ -372,20 +287,25 @@
       { id: 'sun', name: 'Mặt Trời', q: 'Câu 10: Công cụ di chuyển hình ảnh?', a: ['A. Move Tool', 'B. Crop Tool', 'C. Rotate Tool', 'D. Scale Tool'], c: 0 }
     ];
 
+    // CẤU HÌNH COMPACT: CÁC HÀNH TINH NGOÀI SÁT LẠI GẦN HƠN
     const planetConfig = {
-        sun:     { ratio: 0.01, size: 0.14, speed:0.001,     color: 'sun', label: 'Mặt Trời' },
-        mercury: { ratio: 0.14, size: 0.04, speed: 0.046,  color: 'mercury-bg', label: 'Sao Thủy' },
-        venus:   { ratio: 0.28, size: 0.05, speed: 0.0020, color: 'venus-bg',   label: 'Sao Kim' },
-        earth:   { ratio: 0.38, size: 0.06, speed: 0.023, color: 'earth-bg',   label: 'Trái Đất' },
-        mars:    { ratio: 0.46, size: 0.05, speed: 0.02,  color: 'mars-bg',    label: 'Sao Hỏa' },
-        jupiter: { ratio: 0.58, size: 0.10, speed: 0.018, color: 'jupiter-bg', label: 'Sao Mộc' },
-        saturn:  { ratio: 0.68, size: 0.09, speed: 0.015, color: 'saturn-bg',  label: 'Sao Thổ', ring: true },
-        uranus:  { ratio: 0.78, size: 0.07, speed: 0.022, color: 'uranus-bg',  label: 'Sao Thiên Vương' },
-        neptune: { ratio: 0.90, size: 0.07, speed: 0.02, color: 'neptune-bg', label: 'Sao Hải Vương' }
+        sun:     { au: 0,    size: 80, speed: 0,        color: 'sun', label: 'Mặt Trời' },
+        
+        // Nhóm trong: GIỮ SIZE X2 (Đã to sẵn)
+        mercury: { au: 0.6,  size: 16,  speed: 0.015,    color: 'mercury-bg', label: 'Sao Thủy' }, 
+        venus:   { au: 0.9,  size: 32,  speed: 0.005,    color: 'venus-bg',   label: 'Sao Kim' },  
+        earth:   { au: 1.3,  size: 34,  speed: 0.003,    color: 'earth-bg',   label: 'Trái Đất' }, 
+        mars:    { au: 1.8,  size: 20,  speed: 0.002,   color: 'mars-bg',    label: 'Sao Hỏa' },  
+        
+        // Nhóm ngoài: KÉO GẦN LẠI ĐÁNG KỂ (au giảm) nhưng SIZE VẪN TO
+        jupiter: { au: 2.2,  size: 60,  speed: 0.0015,   color: 'jupiter-bg', label: 'Sao Mộc' }, // Cũ 3.5 -> 2.2
+        saturn:  { au: 2.9,  size: 50,  speed: 0.005,   color: 'saturn-bg',  label: 'Sao Thổ', ring: true }, // Cũ 5.0 -> 2.9
+        uranus:  { au: 3.5,  size: 30,  speed: 0.0002,  color: 'uranus-bg',  label: 'Sao Thiên Vương' }, // Cũ 5.8 -> 3.5
+        neptune: { au: 3.5,  size: 28,  speed: 0.0002,  color: 'neptune-bg', label: 'Sao Hải Vương' } // Cũ 6.8 -> 4.0
     };
     
-    const orbitExpand = 1.8; 
-    const moonConfig = { size: 0.3, speed: 0.05, dist: 1.8 };
+    // Mặt trăng: X2 size
+    const moonConfig = { size: 8, speed: 0.04, dist: 50 }; 
 
     let state = {
         playerName: '', score: 0, currentQ: 0,
@@ -394,7 +314,6 @@
     };
 
     function init() {
-        setInterval(createMeteor, 3000); 
         Object.keys(planetConfig).forEach(k => {
             state.angles[k] = Math.random() * Math.PI * 2;
             state.moving[k] = true;
@@ -409,114 +328,108 @@
     function renderSolarSystem() {
         const system = document.getElementById('solar-system');
         system.innerHTML = '<div id="sun-center-point" style="position:absolute;width:1px;height:1px;"></div>';
+        
         Object.keys(planetConfig).forEach((key) => {
             const cfg = planetConfig[key];
+            
             if (key !== 'sun') {
                 const ring = document.createElement('div');
                 ring.className = 'orbit-ring';
                 ring.id = `ring-${key}`;
                 system.appendChild(ring);
             }
+
             const pDiv = document.createElement('div');
             pDiv.className = 'planet-container';
             pDiv.id = `planet-${key}`;
             pDiv.dataset.id = key;
-            pDiv.onclick = (e) => handlePlanetClick(e, key);
+            pDiv.onclick = (e) => handlePlanetClick(e, key); 
+            
             let shapeHTML = '';
             if (key === 'sun') {
-                 shapeHTML = `<div class="sun-shape" id="planet-sun-shape"><div class="sun-detail"></div></div>`;
+                 shapeHTML = `<div class="sun-shape" id="planet-sun-shape" style="width:${cfg.size*2}px; height:${cfg.size*2}px;"><div class="sun-detail"></div></div>`;
             } else if (cfg.ring) {
                  shapeHTML = `
-                    <div style="position: relative; width: 100%; height: 100%;">
-                        <div class="planet-shape ${cfg.color}" style="z-index: 2;"></div>
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 160%; height: 40%; border: 4px solid rgba(220, 200, 150, 0.6); border-radius: 50%;"></div>
+                    <div style="position:absolute; width:${cfg.size*2}px; height:${cfg.size*2}px; top:50%; left:50%; transform:translate(-50%,-50%);">
+                        <div class="planet-shape ${cfg.color}" style="width:100%; height:100%;"></div>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180%; height: 50%; border: 6px solid rgba(200, 180, 140, 0.7); border-radius: 50%;"></div>
                     </div>`;
             } else {
-                shapeHTML = `<div class="planet-shape ${cfg.color}"></div>`;
+                shapeHTML = `<div class="planet-shape ${cfg.color}" style="width:${cfg.size*2}px; height:${cfg.size*2}px;"></div>`;
             }
+            
             pDiv.innerHTML = shapeHTML + `<div class="planet-label">${cfg.label}</div>`;
             system.appendChild(pDiv);
+
             if (key === 'earth') {
                 const mDiv = document.createElement('div');
                 mDiv.id = 'planet-moon';
                 mDiv.className = 'planet-container';
-                mDiv.dataset.id = 'moon';
+                // Vùng bấm mặt trăng
+                mDiv.style.width = '50px'; mDiv.style.height = '50px';
                 mDiv.onclick = (e) => handlePlanetClick(e, 'moon');
-                mDiv.innerHTML = `<div class="planet-shape moon-bg"></div><div class="planet-label" style="font-size: 8px; bottom: -12px">M.Trăng</div>`;
+                mDiv.innerHTML = `<div class="planet-shape moon-bg" style="width:${moonConfig.size*2}px; height:${moonConfig.size*2}px;"></div><div class="planet-label" style="bottom:-15px; font-size:10px;">M.Trăng</div>`;
                 system.appendChild(mDiv); 
             }
         });
     }
 
     function resizeSystem() {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        const minDim = Math.min(w, h);
-        const isMobile = w < 768;
-        const mobileScaleFactor = isMobile ? 0.9 : 1.0; 
+        const baseUnit = Math.min(window.innerWidth, window.innerHeight) / 4; 
+        const maxDist = baseUnit * planetConfig.neptune.au;
+        const totalSize = (maxDist * 2) + 400; // Giảm lề vì đã thu gọn
         
-        state.radiusBase = minDim < 600 ? minDim * 0.6 : minDim / 2; 
-        const maxOrbit = state.radiusBase * planetConfig.neptune.ratio * orbitExpand;
-        const totalSize = (maxOrbit * 2) + 400; 
         const wrapper = document.getElementById('universe-wrapper');
         wrapper.style.width = totalSize + 'px';
         wrapper.style.height = totalSize + 'px';
         
-        createUniverseStars();
-
-        const baseExpand = 1.5; 
-        const sizeExpand = baseExpand * mobileScaleFactor;
+        createUniverseStars(totalSize);
 
         Object.keys(planetConfig).forEach(key => {
             if (key !== 'sun') {
-                const r = state.radiusBase * planetConfig[key].ratio * orbitExpand;
+                const r = baseUnit * planetConfig[key].au;
                 const ring = document.getElementById(`ring-${key}`);
                 if (ring) { ring.style.width = (r * 2) + 'px'; ring.style.height = (r * 2) + 'px'; }
             }
-            const pSize = state.radiusBase * planetConfig[key].size * 2 * sizeExpand;
-            const pDiv = document.getElementById(`planet-${key}`);
-            if (pDiv) { pDiv.style.width = pSize + 'px'; pDiv.style.height = pSize + 'px'; }
         });
-        const earthSize = state.radiusBase * planetConfig.earth.size * 2 * sizeExpand;
-        const moonSize = earthSize * moonConfig.size;
-        const mDiv = document.getElementById('planet-moon');
-        if (mDiv) { mDiv.style.width = moonSize + 'px'; mDiv.style.height = moonSize + 'px'; }
+        
+        state.baseUnit = baseUnit; 
     }
 
-    function createUniverseStars() {
+    function createUniverseStars(size) {
         const c = document.getElementById('stars-in-universe');
         c.innerHTML = '';
-        for(let i=0; i<3000; i++) {
+        for(let i=0; i<1500; i++) {
             const s = document.createElement('div');
             s.className = 'star';
             s.style.left = Math.random()*100 + '%';
             s.style.top = Math.random()*100 + '%';
-            const size = Math.random()*2.5 + 0.5;
-            s.style.width = size+'px'; s.style.height = size+'px';
+            const sz = Math.random()*2 + 1;
+            s.style.width = sz+'px'; s.style.height = sz+'px';
             s.style.setProperty('--duration', (Math.random()*3+2)+'s');
             c.appendChild(s);
         }
     }
 
     function gameLoop() {
-        const w = window.innerWidth;
-        const isMobile = w < 768;
-        const mobileScaleFactor = isMobile ? 0.9 : 1.0; 
-        const sizeExpand = 1.5 * mobileScaleFactor;
+        if (!state.baseUnit) return requestAnimationFrame(gameLoop);
 
         Object.keys(planetConfig).forEach(key => {
             if (key === 'sun') return;
             if (state.moving[key]) state.angles[key] += planetConfig[key].speed;
-            const r = state.radiusBase * planetConfig[key].ratio * orbitExpand;
+            
+            const r = state.baseUnit * planetConfig[key].au;
             const x = Math.cos(state.angles[key]) * r;
             const y = Math.sin(state.angles[key]) * r;
+            
             const pDiv = document.getElementById(`planet-${key}`);
             if (pDiv) pDiv.style.transform = `translate(${x}px, ${y}px)`;
+            
             if (key === 'earth') {
                 if (state.moving.moon && state.moving.earth) state.angles.moon += moonConfig.speed;
-                const rMoon = (state.radiusBase * planetConfig.earth.size * sizeExpand) * moonConfig.dist + 20; 
-                const mx = x + Math.cos(state.angles.moon) * rMoon;
-                const my = y + Math.sin(state.angles.moon) * rMoon;
+                const mx = x + Math.cos(state.angles.moon) * moonConfig.dist;
+                const my = y + Math.sin(state.angles.moon) * moonConfig.dist;
+                
                 const mDiv = document.getElementById('planet-moon');
                 if (mDiv) mDiv.style.transform = `translate(${mx}px, ${my}px)`;
             }
@@ -566,7 +479,8 @@
         const currentTargetId = questions[state.currentQ].id;
         if (id !== currentTargetId) {
             const el = document.getElementById(id === 'moon' ? 'planet-moon' : `planet-${id}`);
-            el.style.animation = 'none'; el.offsetHeight; el.style.animation = 'bounce 0.4s ease-in-out';
+            el.style.transform += " scale(1.2)";
+            setTimeout(() => { el.style.transform = el.style.transform.replace(" scale(1.2)", ""); }, 100);
             return;
         }
         openQuiz();
@@ -603,18 +517,23 @@
 
         if (idx === q.c) {
             btns[idx].classList.add('correct');
-            feedback.textContent = 'CHÍNH XÁC! TUYỆT VỜI 🚀';
-            feedback.className = 'mt-4 text-center font-black text-lg p-3 rounded-xl bg-green-100 text-green-700 border-2 border-green-500 block shadow';
+            feedback.textContent = 'CHÍNH XÁC!';
+            feedback.className = 'mt-3 text-center font-black text-base p-2 rounded-lg bg-green-100 text-green-700 border-2 border-green-500 block shadow';
             state.score += 10;
             document.getElementById('hud-score').textContent = state.score;
             pEl.classList.add('planet-connected'); 
-            if (pid === 'sun') document.getElementById('planet-sun-shape').classList.add('sun-victory');
+            
+            if (pid === 'sun') {
+                const sunShape = document.querySelector('#planet-sun .sun-shape') || document.getElementById('planet-sun-shape');
+                if(sunShape) sunShape.classList.add('sun-victory');
+            }
+            
             isCorrect = true;
         } else {
             btns[idx].classList.add('wrong');
             btns[q.c].classList.add('correct');
-            feedback.textContent = 'RẤT TIẾC, SAI RỒI! 💥';
-            feedback.className = 'mt-4 text-center font-black text-lg p-3 rounded-xl bg-red-100 text-red-700 border-2 border-red-500 block shadow';
+            feedback.textContent = 'SAI RỒI!';
+            feedback.className = 'mt-3 text-center font-black text-base p-2 rounded-lg bg-red-100 text-red-700 border-2 border-red-500 block shadow';
             pEl.classList.add('planet-wrong');
         }
 
@@ -635,10 +554,7 @@
         updateTarget();
     }
 
-    function closeQuiz() { 
-        document.getElementById('quiz-modal').classList.add('hidden'); 
-    }
-
+    function closeQuiz() { document.getElementById('quiz-modal').classList.add('hidden'); }
     function endGame() {
         document.getElementById('instruction-box').classList.add('hidden');
         document.getElementById('end-game-controls').classList.remove('hidden');
@@ -646,18 +562,6 @@
     }
     function exitGame() { location.reload(); }
     function restartGame() { location.reload(); }
-
-    function createMeteor() {
-        const container = document.getElementById('meteor-container');
-        const m = document.createElement('div');
-        m.className = 'meteor';
-        const top = Math.random() * 50; 
-        const right = Math.random() * 30; 
-        m.style.top = top + '%';
-        m.style.right = right + '%';
-        container.appendChild(m);
-        setTimeout(() => { if (container.contains(m)) container.removeChild(m); }, 2500);
-    }
 
     init();
   </script>
