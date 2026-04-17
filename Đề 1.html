@@ -1,13 +1,16 @@
-
 <!doctype html>
 <html lang="vi" class="w-full h-full m-0 p-0">
  <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <title>Kiểm Tra Trắc Nghiệm - Tin Học 12</title>
+  <title>Kiểm Tra Trắc Nghiệm - Tin Học 12 (Đề 1)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <style>
     * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
@@ -81,7 +84,7 @@
     /* LÀM ĐẸP ĐOẠN CODE (NỀN SÁNG, CHỮ XANH ĐẬM) */
     .code-block { 
         background: #f8fafc; 
-        color: #1e3a8a; /* Xanh dương đậm */
+        color: #1e3a8a; 
         padding: 15px 20px; 
         border-radius: 10px; 
         font-family: 'Consolas', 'Courier New', monospace; 
@@ -93,6 +96,12 @@
         border-left: 5px solid #3b82f6; 
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
     }
+
+    /* CSS bảng dữ liệu */
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; font-size: 0.95rem; }
+    .data-table th, .data-table td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+    .data-table th { background-color: #f1f5f9; font-weight: bold; color: #334155; }
+    .data-table tr:nth-child(even) { background-color: #f8fafc; }
 
     /* CSS chế độ xem lại (Review Mode) */
     body.is-reviewing #app { padding-bottom: 100px; } 
@@ -110,7 +119,7 @@
       <div class="w-24 h-24 bg-gradient-to-br from-pink-500 to-orange-400 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
       </div>
-      <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 mb-1">Kiểm Tra Tin Học</h1>
+      <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 mb-1">Đề thi thử TN THPT Tin Học 12</h1>
       <p class="text-gray-600 font-bold">Thời gian làm bài: 45 Phút</p>
      </div>
      
@@ -158,7 +167,7 @@
     <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative">
      <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
       <div>
-       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Số 1</h2>
+       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Số 3</h2>
        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
       </div>
       <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
@@ -193,7 +202,7 @@
         <tr>
          <th class="px-3 sm:px-5 py-4 text-left font-extrabold">#</th>
          <th class="px-3 sm:px-5 py-4 text-left font-extrabold">Họ tên</th>
-         <th class="px-3 sm:px-5 py-4 text-left font-extrabold">Hướng</th>
+         <th class="px-3 sm:px-5 py-4 text-left font-extrabold">Lớp</th> <th class="px-3 sm:px-5 py-4 text-left font-extrabold">Hướng</th>
          <th class="px-3 sm:px-5 py-4 text-center font-extrabold">Ý Đúng</th>
          <th class="px-3 sm:px-5 py-4 text-center font-extrabold">Điểm (10)</th>
          <th class="px-3 sm:px-5 py-4 text-right font-extrabold">Ngày nộp</th>
@@ -223,78 +232,93 @@
         event.preventDefault();
     });
 
-    // ==================== NGÂN HÀNG CÂU HỎI ====================
+    // ==================== CẤU HÌNH FIREBASE ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+        messagingSenderId: "1046142513655",
+        appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tin12_de1');
+
+      // ==================== NGÂN HÀNG CÂU HỎI ĐỀ 1 ====================
     const rawQuestions = [
-        // PHẦN 1
-        { id: 1, type: "single", question: "Phát biểu nào sau đây đúng khi nói về khả năng của AI?", options: ["Hệ thống AI vận dụng các quy tắc logic và tri thức đã tích luỹ để đưa ra kết luận dựa trên các thông tin đang có.", "Hệ thống AI có các kĩ thuật và phương pháp thu thập dữ liệu từ đó trích xuất được tri thức, đề xuất cách giải quyết vấn đề để đạt được mục tiêu đề ra.", "Trong quá trình hoạt động, hệ thống AI sử dụng các cảm biến để tiếp nhận, lưu trữ dữ liệu, từ đó đưa ra hành vi phù hợp với những thay đổi của môi trường xung quanh.", "Hệ thống AI có các mô hình ngôn ngữ giúp máy tính giao tiếp với con người bằng ngôn ngữ tự nhiên, nhận và trả lời mọi câu hỏi với độ chính xác tuyệt đối."], correct: 1 },
-        { id: 2, type: "single", question: "Ứng dụng nào sau đây của AI được thể hiện rõ trong lĩnh vực ngân hàng?", options: ["Tự động sao lưu dữ liệu.", "Thanh toán hoá đơn tự động.", "Tư vấn khách hàng tự động.", "Đăng nhập tài khoản bằng dấu vân tay."], correct: 2 },
-        { id: 3, type: "single", question: "Rủi ro nào sau đây có thể xảy ra khi AI trở nên phổ biến?", options: ["Chi phí sản xuất giảm.", "Tạo ra sự phụ thuộc quá mức vào công nghệ.", "Cải thiện khả năng giao tiếp giữa các quốc gia.", "Tăng cường kết nối giữa con người trong xã hội."], correct: 1 },
-        { id: 4, type: "single", question: "Giao thức nào sau đây được sử dụng để gửi thư điện tử?", options: ["SMTP.", "TCP.", "POP3.", "HTTP."], correct: 0 },
-        { id: 5, type: "single", question: "Thực hiện kết nối hai máy tính thuộc hai LAN khác nhau qua Internet, người ta sử dụng thiết bị nào sau đây?", options: ["Modem.", "Router.", "Switch.", "Access Point."], correct: 1 },
-        { id: 6, type: "single", question: "Kĩ năng nào sau đây không cần thiết đối với chuyên gia bảo mật mạng?", options: ["Xử lí sự tấn công mạng.", "Thiết kế website.", "Phân tích, đánh giá rủi ro bảo mật.", "Bảo mật CSDL."], correct: 1 },
-        { id: 7, type: "single", question: "Điểm nào sau đây có thể ảnh hưởng đến hiệu quả trong giao tiếp ảo?", options: ["Không có rào cản về ngôn ngữ trong giao tiếp.", "Dễ dàng truyền tải cảm xúc và tâm trạng thông qua tin nhắn.", "Thiếu sự giao tiếp phi ngôn ngữ như ánh mắt, cử chỉ.", "Luôn đảm bảo mọi thông tin được truyền đạt đầy đủ và rõ ràng."], correct: 2 },
-        { id: 8, type: "single", question: "CSDL đặt tại một máy, các thành phần của hệ QTCSDL tương tác với nhau tạo nên hệ thống gồm thành phần yêu cầu tài nguyên và thành phần cấp tài nguyên có trong kiến trúc hệ CSDL nào?", options: ["Hệ CSDL phân tán.", "Hệ CSDL khách - chủ.", "Hệ CSDL trung tâm.", "Hệ CSDL cá nhân."], correct: 1 },
-        { id: 9, type: "single", question: "Hiện nay, bộ giao thức TCP/IP đang được sử dụng rất phổ biến trong mạng máy tính. Phương án nào sau đây không là chức năng của bộ giao thức TCP/IP?", options: ["Thiết lập kết nối giữa hai máy tính để gửi và nhận dữ liệu trong mạng.", "Chia nhỏ, định danh các gói tin; Định tuyến và gửi các gói tin đến máy đích.", "Kiểm soát lỗi, điều chỉnh tốc độ truyền dữ liệu giữa nguồn và đích.", "Tạo, tổ chức lưu trữ và quản lí tập tin trên bộ nhớ ngoài của thiết bị."], correct: 3 },
-        { id: 10, type: "single", question: "Thẻ nào trong cửa sổ Properties cho phép thiết lập chức năng chia sẻ?", options: ["Security.", "Sharing.", "General.", "Details."], correct: 1 },
-        { id: 11, type: "single", question: "Phương án nào sau đây không thể hiện tính nhân văn khi ứng xử trong không gian mạng?", options: ["Chỉ đăng thông tin rõ nguồn gốc, thông tin đã kiểm chứng, thông tin không vi phạm pháp luật.", "Lan toả những thông tin đẹp, hình ảnh đẹp, các hoạt động vì cộng đồng.", "Đăng những tin sốc nhằm tăng tương tác, số lượng theo dõi cho bài viết.", "Khi bình luận hoặc viết bài chia sẻ suy nghĩ về người khác, luôn đặt mình vào vị trí của họ thấu hiểu và đồng cảm."], correct: 2 },
-        { id: 12, type: "single", question: "Bạn Anh có tài khoản TikTok với hơn 1000 người theo dõi. Theo em, hành động nào sau đây của bạn Anh là không ứng xử nhân văn trên không gian mạng?", options: ["Thường xuyên viết bài chia sẻ thông tin từ các nguồn trên Internet (bất chấp nguồn gốc).", "Bày tỏ sự không đồng tình, phê phán, phản đối việc bắt nạt quấy rối.", "Thể hiện sự đồng cảm khi đọc các bài viết có tin tức về thiên tai, thảm hoạ gây thiệt hại về tài sản vật chất hay tính mạng con người.", "Đưa tin phản ánh chân thật và ca ngợi người tốt việc tốt."], correct: 0 },
-        { id: 13, type: "single", question: "Hành động nào sau đây là nhân văn khi nhận được thông tin trên mạng xã hội chê bai trình độ tiếng Anh của ca sĩ A?", options: ["Chia sẻ bài viết cho nhiều người được biết và khuyến cáo mọi người tránh dùng tiếng Anh khi chưa thật sự giỏi.", "Thể hiện sự ghi nhận của bản thân về việc cố gắng học và sử dụng ngoại ngữ của ca sĩ A. Khuyến khích ca sĩ A trau dồi thêm để có thể nói tiếng Anh tốt hơn.", "Tham gia vào các nhóm phản đối ca sĩ A để thể hiện sự đồng tình của mình.", "Viết một bài đăng phân tích những lỗi sai trong các câu trả lời phỏng vấn của ca sĩ A để khẳng định trình độ tiếng Anh của bản thân."], correct: 1 },
-        { id: 14, type: "single", question: "Theo em, nghề nào sau đây không yêu cầu có kiến thức sâu về lập trình?", options: ["Thiết kế phần mềm.", "Lập trình viên.", "Chuyên viên phát triển ứng dụng.", "Kiểm thử viên."], correct: 3 },
-        { id: 15, type: "single", question: "Bạn Linh muốn trở thành kĩ sư quản trị mạng. Bạn Linh cần chọn cơ sở giáo dục và đào tạo có ngành nào sau đây?", options: ["Thương mại điện tử.", "Mạng máy tính và truyền thông dữ liệu.", "Khoa học dữ liệu.", "Thiết kế vi mạch."], correct: 1 },
-        { id: 16, type: "single", question: "Ngành học nào sau đây liên quan đến nhóm nghề quản trị mạng ở bậc học tiếp theo?", options: ["Hệ thống thông tin.", "Công nghệ phần mềm.", "Kĩ thuật mạng máy tính.", "Khoa học máy tính."], correct: 2 },
-        { id: 17, type: "single", question: "Nếu cần kết nối máy tính với switch để có thể truy cập Internet và chia sẻ tài nguyên thì cần sử dụng loại cáp nào sau đây?", options: ["Dây cáp USB (USB cable).", "Dây cáp mạng Ethernet (Ethernet cable).", "Dây cáp quang (Fiber optic cable).", "Dây cáp HDMI (HDMI cable)."], correct: 1 },
-        { id: 18, type: "single", question: "Phát biểu nào sau đây mô tả sai về chức năng của thiết bị switch?", options: ["Quản lí lưu lượng dữ liệu giữa các thiết bị trong mạng để tránh xung đột.", "Mở rộng băng thông cho mạng bằng cách phân phối dữ liệu giữa các thiết bị.", "Định tuyến các gói tin giữa các mạng khác nhau.", "Kết nối các thiết bị trong LAN theo mô hình hình sao."], correct: 2 },
-        { id: 19, type: "single", question: "Phát biểu nào sau đây về các thẻ tạo danh sách trong HTML là đúng?", options: ["Các thẻ &lt;li&gt; được đặt bên trong thẻ &lt;ul&gt; để tạo danh sách có thứ tự.", "Thẻ &lt;ul&gt; được sử dụng để tạo danh sách có thứ tự.", "Thẻ &lt;ol&gt; được sử dụng để tạo danh sách không có thứ tự.", "Mỗi thẻ &lt;li&gt; có thể chứa một thẻ &lt;ol&gt; hoặc &lt;ul&gt; mới để tạo danh sách lồng nhau."], correct: 3 },
-        { id: 20, type: "single", question: "Cho đoạn chương trình viết bằng ngôn ngữ Python như sau:<br><div class='code-block'>S = 0\nfor i in range(1,4):\n    S += i*i\nprint(S)</div>Giá trị của S sau khi thực hiện đoạn chương trình trên là:", options: ["30.", "29.", "14.", "13."], correct: 2 },
-        { id: 21, type: "single", question: "Cú pháp CSS nào sau đây dùng để chỉ định chữ màu đỏ (#FF0000) cho một phần tử?", options: ["text-color: #FF0000;", "color: #FF0000;", "#FF0000: color;", "color=\"#FF0000\";"], correct: 1 },
-        { id: 22, type: "single", question: "Phát biểu nào sau đây là sai khi nói về HTML?", options: ["Là tiêu chuẩn hiển thị của các trình duyệt web.", "Là ngôn ngữ đánh dấu.", "Mô tả cấu trúc của trang web bằng các thẻ đánh dấu.", "Trình duyệt hiển thị thẻ HTML."], correct: 3 },
-        { id: 23, type: "single", question: "Thuộc tính nào sau đây của thẻ &lt;table&gt; được dùng để gộp cột trong một bảng HTML?", options: ["colspan.", "rowspan.", "merge.", "align."], correct: 0 },
-        { id: 24, type: "single", question: "Lệnh &lt;link rel=\"icon\" href=\"logo.png\" type=\"image/png\"&gt; có tác dụng gì?", options: ["Không hiển thị vì thiếu thuộc tính image.", "Hiển thị hình ảnh logo làm nền trong một trang web.", "Liên kết với tệp hình ảnh logo.png, làm biểu tượng (favicon) cho trang web.", "Hiển thị logo của website trên thanh tiêu đề."], correct: 2 },
-        
-        // PHẦN 2 - CHUNG
-        { id: 'c1', type: 'tf_cluster', huong: 'chung', question: "Trong công ti A, để quản lí hàng hoá được nhập vào kho của công ti, người quản lí tạo một CSDL có hai bảng như sau:<br>Bảng HÀNG HOÁ gồm các thông tin: Mã hàng hoá, Tên hàng hoá, Đơn vị tính, Công ti cung ứng.<br>Bảng NHẬP KHO gồm các thông tin: Số thứ tự, Mã hàng hoá, Ngày nhập hàng, Số lượng<br>CSDL này được lưu tại máy tính của người quản lí và được cập nhật thường xuyên bởi người quản lí. Các phòng ban khác trong công ti có thể truy cập và khai thác CSDL này để phục vụ cho công việc của mình. Một số học sinh đưa ra nhận định sau:", subQuestions: [
-            { id: 'tf1_a', text: "Tập hợp dữ liệu của hai bảng NHẬP KHO và HÀNG HOÀ tạo thành hệ CSDL quản lí hàng hoá nhập kho của công ti A.", correct: "Đúng" },
-            { id: 'tf1_b', text: "Khi người quản lí tìm kiếm thông tin hàng hoá nhập theo ngày, thao tác người quản lí đang thực hiện thuộc nhóm thao tác khai thác dữ liệu.", correct: "Đúng" },
-            { id: 'tf1_c', text: "Hệ CSDL mà công ti A đang sử dụng là hệ CSDL tập trung.", correct: "Đúng" },
-            { id: 'tf1_d', text: "Để có thể khai thác thông tin từ cả hai bảng, cần tạo liên kết giữa hai bảng thông qua cặp khoá chính Mã hàng hoá (của bảng NHẬP KHO) và khoá ngoài Mã hàng hoá (của bảng HÀNG HOÁ).", correct: "Sai" }
+        // PHẦN I
+        { id: 1, type: "single", question: "Phương án nào sau đây là một trong những khả năng của AI?", options: ["AI chỉ có thể đọc văn bản, không có khả năng học và ra quyết định.", "AI có khả năng nhận biết môi trường xung quanh và học tập từ dữ liệu.", "AI không thể hiểu tiếng nói hoặc nhận biết môi trường xung quanh.", "AI hoạt động mà không cần lập trình hoặc sự can thiệp từ con người."], correct: 1 },
+        { id: 2, type: "single", question: "Ví dụ nào sau đây minh hoạ cho một hệ thống AI có khả năng học từ dữ liệu?", options: ["Một hệ thống AI phân tích hàng nghìn hình ảnh y khoa để cải thiện độ chính xác trong việc phát hiện bệnh.", "Một chương trình máy tính luôn thực hiện các lệnh đã được lập trình sẵn mà không thể thay đổi.", "Một robot thực hiện các thao tác lặp lại mà không cần phân tích dữ liệu đầu vào.", "Một máy tính được lập trình để thực hiện các phép tính toán học cơ bản mà không cần thu thập thêm thông tin."], correct: 0 },
+        { id: 3, type: "single", question: "Phát biểu nào sau đây về khả năng của switch là sai?", options: ["Mở rộng băng thông cho mạng bằng cách phân phối dữ liệu giữa các thiết bị.", "Kết nối các thiết bị trong mạng nội bộ theo mô hình hình sao.", "Định tuyến các gói tin giữa các mạng khác nhau.", "Quản lí lưu lượng dữ liệu giữa các thiết bị để tránh xung đột trong mạng."], correct: 2 },
+        { id: 4, type: "single", question: "Lựa chọn nào sau đây cho phép người dùng kích hoạt tính năng chia sẻ tệp tin và thư mục?", options: ["Allow access to files.", "Share this folder.", "Turn on network discovery.", "Enable Sharing."], correct: 1 },
+        { id: 5, type: "single", question: "Phương án nào sau đây là chức năng của modem trong hệ thống mạng?", options: ["Chuyển đổi dữ liệu số thành tín hiệu tương tự và ngược lại.", "Điều chỉnh tốc độ truyền dữ liệu.", "Định tuyến các gói dữ liệu trong mạng.", "Kết nối LAN với Internet."], correct: 0 },
+        { id: 6, type: "single", question: "Khi đang cấu hình một thiết bị mạng để gửi dữ liệu, điều quan trọng là phải thực hiện một giao thức mạng ngay trước khi bắt đầu truyền gói dữ liệu. Giao thức nào sau đây cần được thực hiện tại thiết bị gửi trước khi gửi gói dữ liệu đi", options: ["Giao thức FTP (File Transfer Protocol).", "Giao thức HTTP (HyperText Protocol).", "Giao thức TCP (Transmission Control Protocol).", "Giao thức ICMP (Internet Control Message Protocol)."], correct: 2 },
+        { id: 7, type: "single", question: "Nhược điểm nào sau đây có thể ảnh hưởng đến sự hiệu quả của giao tiếp ảo?", options: ["Dễ dàng truyền tải cảm xúc và tâm trạng thông qua tin nhắn.", "Không có rào cản về ngôn ngữ trong giao tiếp.", "Thiếu sự giao tiếp phi ngôn ngữ như ánh mắt, cử chỉ.", "Luôn đảm bảo mọi thông tin được truyền đạt đầy đủ và rõ ràng."], correct: 2 },
+        { id: 8, type: "single", question: "Nghề sửa chữa và bảo trì máy tính không yêu cầu bắt buộc phải:", options: ["Thực hiện bảo trì định kì và nâng cấp linh kiện phần cứng.", "Lập trình ứng dụng và phát triển phần mềm mới.", "Kiểm tra và tối ưu hoá hiệu suất của hệ thống máy tính.", "Phân tích và giải quyết các sự cố phần cứng và phần mềm."], correct: 1 },
+        { id: 9, type: "single", question: "Phương án nào sau đây là nhiệm vụ chính của kĩ thuật viên CNTT?", options: ["Quản lí hệ thống mạng", "Phân tích dữ liệu tài chính.", "Thiết kế phần mềm.", "Cài đặt, bảo trì và sửa chữa phần cứng."], correct: 3 },
+        { id: 10, type: "single", question: "Khi một công ti phần mềm tuyển dụng lập trình viên, yếu tố nào được xem là quan trọng nhất trong quá trình lựa chọn ứng viên?", options: ["Có bằng cấp của các trường đại học nổi tiếng mà không cần kinh nghiệm thực tế trong lĩnh vực lập trình.", "Khả năng hiểu biết sâu sắc về ngôn ngữ lập trình cụ thể cũng như khả năng áp dụng kĩ năng giải quyết vấn đề trong thực tế.", "Kinh nghiệm làm việc trong các lĩnh vực không liên quan đến lập trình, như quản lí dự án.", "Sự hiểu biết về xu hướng công nghệ mới và khả năng làm việc nhóm hiệu quả với các bộ phận khác."], correct: 1 },
+        { id: 11, type: "single", question: "Phương án nào sau đây chỉ ra đúng cụm từ viết tắt của từ HTML?", options: ["Hot Typing Markup Language.", "Home Testing Mixed Language.", "Home Typing Modern Language.", "HyperText Markup Language."], correct: 3 },
+        { id: 12, type: "single", question: "Trong HTML, thẻ &lt;h1&gt; đến &lt;h6&gt; có chức năng nào sau đây?", options: ["Tạo tiêu đề.", "Tạo danh sách.", "Tạo đoạn văn.", "Chèn hình ảnh."], correct: 0 },
+        { id: 13, type: "single", question: "Đoạn mã HTML sau đây định dạng một đoạn văn bản. Phương án nào sau đây cho biết chính xác màu chữ của văn bản khi mã được thực thi?<br><div class='code-block'>&lt;p style=\"color: #3498db; font-size: 18px;\"&gt;Đây là một đoạn văn bản.&lt;/p&gt;</div>", options: ["Màu đỏ.", "Màu xanh da trời.", "Màu vàng.", "Màu đen."], correct: 1 },
+        { id: 14, type: "single", question: "Để thay đổi màu chữ đoạn văn bản thành màu đỏ, đoạn mã HTML nào sau đây là đúng?", options: ["&lt;p style=\"color=red\"&gt; Nội dung &lt;/p&gt;", "&lt;p style=\"font-color: red;\"&gt; Nội dung &lt;/p&gt;", "&lt;p style=\"color: red;\"&gt; Nội dung &lt;/p&gt;", "&lt;p color=\"red\"&gt; Nội dung &lt;/p&gt;"], correct: 2 },
+        { id: 15, type: "single", question: "Cặp thẻ nào sau đây được sử dụng để tạo danh sách dạng liệt kê không có thứ tự", options: ["&lt;ul&gt;, &lt;li&gt;", "&lt;ol&gt;, &lt;li&gt;", "&lt;dl&gt;, &lt;li&gt;", "&lt;dt&gt;, &lt;dd&gt;"], correct: 0 },
+        { id: 16, type: "single", question: "Trong HTML, thẻ &lt;table&gt; có chức năng:", options: ["Tạo danh sách không có thứ tự.", "Tạo bảng.", "Tạo khung để nhúng trang web.", "Tạo liên kết đến trang web khác."], correct: 1 },
+        { id: 17, type: "single", question: "Thẻ nào sau đây được sử dụng để tạo liên kết trong HTML?", options: ["&lt;link&gt;", "&lt;a&gt;", "&lt;href&gt;", "&lt;url&gt;"], correct: 1 },
+        { id: 18, type: "single", question: "Trang web của một trường có nút \"Đăng kí sự kiện\" dùng để khi người dùng nhảy chuột vào nút này sẽ chuyển đến trang đăng kí sự kiện. Mã HTML nào sau đây là đúng", options: ["&lt;a href=\"register.html\"&gt;&lt;button&gt;Đăng kí sự kiện&lt;/button&gt;&lt;/a&gt;", "&lt;button href=\"register.html\"&gt;Đăng kí sự kiện&lt;/button&gt;", "&lt;a href=\"register.html\" button&gt;Đăng kí sự kiện&lt;/button&gt;&lt;/a&gt;", "&lt;a button href=\"register.html\"&gt;Đăng kí sự kiện&lt;/a&gt;"], correct: 0 },
+        { id: 19, type: "single", question: "Khi nào nên sử dụng đường dẫn tuyệt đối thay vì đường dẫn tương đối trong HTML", options: ["Khi liên kết tới một tài liệu trên cùng máy chủ.", "Khi liên kết tới một trang web khác trên Internet.", "Khi liên kết đến một vị trí khác trong cùng trang", "Khi tạo các danh sách có thứ tự trong HTML."], correct: 1 },
+        { id: 20, type: "single", question: "Phát biểu nào sau đây đúng về vai trò của khoá chính trong một bảng", options: ["Khoá chính có thể chứa các giá trị lặp lại ở các hàng khác nhau.", "Khoá chính được dùng để phân biệt duy nhất từng hàng trong bảng dữ liệu.", "Một bảng luôn cần ít nhất hai khoá chính để đảm bảo tính toàn vẹn dữ liệu.", "Khoá chính có thể chứa giá trị null nếu không có dữ liệu hợp lệ."], correct: 1 },
+        { id: 21, type: "single", question: "Trong CSDL quản lí của một thư viện, khi người thủ thư thực hiện việc tìm những học sinh đã mượn sách Tin học. Thao tác này của người thủ thư thuộc nhóm thao tác nào sau đây?", options: ["Cập nhật dữ liệu.", "Tạo lập hồ sơ.", "Khai thác thông tin.", "Quản lí thông tin."], correct: 2 },
+        { id: 22, type: "single", question: "Đặc điểm nào sau đây mô tả chính xác về khoá chính trong CSDL?", options: ["Khoá chính có thể nhận các giá trị giống nhau ở nhiều hàng.", "Khoá chính xác định duy nhất mỗi hàng và không được phép bỏ trống.", "Một bảng có thể có nhiều khoá chính để tăng tính linh hoạt.", "Khoá chính không nhất thiết phải là duy nhất hoặc bắt buộc."], correct: 1 },
+        { id: 23, type: "single", question: "Chọn phương án đúng trong các phương án sau, khi nói về bài toán quản lí?", options: ["Bài toán quản lí dùng để giải quyết một bài toán khoa học trong một lĩnh vực cụ nào đó.", "Bài toán quản lí dùng để lưu trữ và xử lí dữ liệu về hoạt động của tất cả tổ chức xã hội.", "Bài toán quản lí có đặc điểm là giải quyết một vấn đề xã hội trong một lĩnh vực cụ thể.", "Bài toán quản lí có đặc điểm là lưu trữ và xử lí dữ liệu về hoạt động của một tổ chức."], correct: 3 },
+        { id: 24, type: "single", question: "Cho mảng C = [10.5, 20.5, 30.0, 40.2]. Kết quả của C[0] là gì?", options: ["10.5", "20.5", "40.2", "Lỗi chương trình"], correct: 0 },
+
+        // PHẦN II - CHUNG
+        { id: 'c1', type: 'tf_cluster', huong: 'chung', question: "Tại một trường đại học, hệ thống mạng hiện tại chỉ có một switch để kết nối các máy tỉnh trong mạng nội bộ và một router để kết nối với Internet. Do nhu cầu phát triển, nhà trường muốn nâng cấp hệ thống mạng để đáp ứng tốt hơn cho giảng dạy trực tuyến và kết nổi nhiều thiết bị.<br>Cán bộ quản lí nhà trường đưa ra các nhận định sau:", subQuestions: [
+            { id: 'tf1_a', text: "Nền sử dụng thêm switch để mở rộng số lượng kết nối cho các phòng học có nhiều máy tính.", correct: "Đúng" },
+            { id: 'tf1_b', text: "Lắp đặt thêm một Access Point sẽ cải thiện tốc độ truy cập Internet của tất cả các thiết bị trong mạng.", correct: "Sai" },
+            { id: 'tf1_c', text: "Thay router hiện tại bằng một router có băng thông cao hơn sẽ giúp mạng hoạt động hiệu quả hơn với nhiều thiết bị cùng kết nối.", correct: "Đúng" },
+            { id: 'tf1_d', text: "Việc nâng cấp modem sẽ giúp tăng vùng phủ sóng Wi-Fi trong khuôn viên trường học.", correct: "Sai" }
         ]},
-        
-        { id: 'c2', type: 'tf_cluster', huong: 'chung', question: "Phòng thực hành tin học của trường THPT có 40 máy tính để bàn. Giáo viên muốn thiết lập một mạng nội bộ (LAN) có dây để kết nối các máy tính này lại với nhau nhằm mục đích chia sẻ tệp tin và quản lí thiết bị. Giáo viên đã trang bị đầy đủ cáp mạng (cáp xoắn đôi) và một thiết bị chuyển mạch (Switch) có đủ số lượng cổng kết nối. Một số học sinh đưa ra nhận định sau:", subQuestions: [
-            { id: 'tf2_a', text: "Để kết nối các máy tính bằng cáp mạng, thiết bị trung tâm cần sử dụng là Access Point (điểm truy cập không dây).", correct: "Sai" },
-            { id: 'tf2_b', text: "Thiết bị Switch sẽ nhận dữ liệu và chuyển tiếp chính xác đến thiết bị đích dựa trên địa chỉ mạng, giúp giảm thiểu xung đột dữ liệu.", correct: "Đúng" },
-            { id: 'tf2_c', text: "Chỉ với Switch và cáp mạng, các máy tính trong phòng đã có thể tạo thành một LAN nội bộ để chia sẻ tệp tin mà chưa cần kết nối Internet.", correct: "Đúng" },
-            { id: 'tf2_d', text: "Để mạng LAN này kết nối được với Internet, giáo viên cần bổ sung thêm thiết bị như Router (bộ định tuyến) hoặc Modem kết nối với đường truyền của nhà cung cấp dịch vụ.", correct: "Đúng" }
+        { id: 'c2', type: 'tf_cluster', huong: 'chung', question: "Cho bảng HỌC SINH và các ý kiến sau đây:<br><table class='data-table'><tr><th>STT</th><th>HO VA TEN</th><th>MA HS</th><th>NAM SINH</th><th>DIEMTOAN</th><th>DIEMVAN</th><th>DIEMTIN</th></tr><tr><td>1</td><td>NGUYEN AN</td><td>A01</td><td>2010</td><td>7</td><td>8</td><td>9</td></tr><tr><td>2</td><td>NGO HA</td><td>A02</td><td>2010</td><td>9</td><td>8</td><td>7</td></tr></table>", subQuestions: [
+            { id: 'tf2_a', text: "Bảng HỌC SINH gồm có 5 trường dữ liệu.", correct: "Sai" },
+            { id: 'tf2_b', text: "Hàng có STT 1 là hàng chứa thông tin của học sinh NGUYEN AN.", correct: "Đúng" },
+            { id: 'tf2_c', text: "Trong bảng dữ liệu trên, trường MA HS được chọn làm khoá chính.", correct: "Đúng" },
+            { id: 'tf2_d', text: "Từ bảng HỌC SINH, giáo viên có thể tổng kết được điểm trung bình DIEMTOAN, DIEMVAN có hệ số 2, DIEMTIN có hệ số 1 bằng công thức truy vấn như sau: (DIEMTOAN*2+DIEMVAN*2+DIEMTIN)/5.", correct: "Đúng" }
         ]},
 
-        // PHẦN 2 - CS (Khoa học máy tính)
-        { id: 'c3', type: 'tf_cluster', huong: 'CS', question: "Với yêu cầu bài toán là viết chương trình tìm số chẵn thứ k trong dãy số 1, 2, 3, 4, 5,... chia hết cho x, bạn Minh đã viết chương trình như hình sau:<br><div class='code-block'>def Tim_k(m, n):\n    i=2\n    d=0\n    while d!=m:\n        if i%n==0:\n            d+=1;\n        i+=2;\n    return i-2;\nk, x = map(int, input().split())\nprint (Tim-k(k,x))</div>Một số phát biểu được đưa ra như sau:", subQuestions: [
-            { id: 'tf3_a', text: "Chương trình có lỗi cú pháp ở phần thân hàm.", correct: "Sai" },
-            { id: 'tf3_b', text: "Thuật toán sử dụng cho chương trình là thuật toán tìm kiếm nhị phân với dãy số nguyên không giảm.", correct: "Sai" },
-            { id: 'tf3_c', text: "Cho k=7,x=6. Chương trình đưa ra kết quả cần tìm sau 21 bước thực hiện.", correct: "Đúng" },
-            { id: 'tf3_d', text: "Cho k = 1 075, x = 1 025. Kết quả thu được là 1 098 800.", correct: "Sai" }
+        // PHẦN II - CS
+        { id: 'c3', type: 'tf_cluster', huong: 'CS', question: "Trong quá trình chẩn đoán và điều trị bệnh tim mạch, các mô hình học máy có thể phân tích dữ liệu từ hồ sơ y tế và hình ảnh siêu âm tim để phát hiện sớm các bất thường, hỗ trợ các bác sĩ trong việc ra quyết định điều trị. Sau đây là các phát biểu về ứng dụng của học máy trong chẩn đoán bệnh tim mạch:", subQuestions: [
+            { id: 'tf3_a', text: "Mô hình học máy có khả năng dự đoán nguy cơ đột quỵ dựa trên dữ liệu bệnh án cá nhân và gia đình.", correct: "Đúng" },
+            { id: 'tf3_b', text: "Chẩn đoán bệnh tim mạch dựa trên học máy luôn chính xác 100% và không bao giờ cần sự can thiệp của bác sĩ.", correct: "Sai" },
+            { id: 'tf3_c', text: "Việc sử dụng học máy trong chẩn đoán bệnh tim mạch giúp rút ngắn thời gian nhưng không thể giảm chi phí điều trị", correct: "Sai" },
+            { id: 'tf3_d', text: "Một số phần mềm học máy có thể phân tích các tín hiệu điện tâm đồ (ECG) để phát hiện nhịp tim bất thường.", correct: "Đúng" }
         ]},
-        { id: 'c4', type: 'tf_cluster', huong: 'CS', question: "Học máy đã được sử dụng rộng rãi để hỗ trợ điều trị ung thư, đặc biệt trong phân tích hình ảnh y tế và dự đoán kết quả điều trị. Một số phát biểu về ứng dụng của “Học máy điều trị ung thư” như sau:", subQuestions: [
-            { id: 'tf4_a', text: "Học máy có thể phân tích hình ảnh chụp CT để xác định giai đoạn của ung thư một cách chính xác.", correct: "Đúng" },
-            { id: 'tf4_b', text: "Mọi quyết định điều trị ung thư từ học máy luôn được áp dụng mà không cần sự xem xét của bác sĩ.", correct: "Sai" },
-            { id: 'tf4_c', text: "Sử dụng học máy giúp phát hiện sớm tế bào ung thư từ hình ảnh sinh thiết.", correct: "Đúng" },
-            { id: 'tf4_d', text: "Các mô hình học máy không thể áp dụng trong điều trị cá nhân hoá cho từng bệnh nhân ung thư.", correct: "Sai" }
+        { id: 'c4', type: 'tf_cluster', huong: 'CS', question: "Trong giờ học lập trình, giáo viên yêu cầu học sinh viết chương trình duyệt và tính tổng tất cả các phần tử trong một ma trận hai chiều. Bạn Hải đã viết chương trình như sau:<br><div class='code-block'>def sum_A(A):\n    s=0\n    for i in range(len(A)):\n        for j in range(len(A[i])):\n            s += A[i][j]\n    return s\n\nA = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nres = sum_A(A)\nprint(res)</div>Khi Hải trình chiếu chương trình này trước lớp, các bạn đã đưa ra những nhận xét sau:", subQuestions: [
+            { id: 'tf4_a', text: "Chương trình sẽ in ra kết quả là 45.", correct: "Đúng" },
+            { id: 'tf4_b', text: "Nếu trong ma trận có số âm, chương trình vẫn tính đúng tổng các phần tử, bao gồm cả số âm.", correct: "Đúng" },
+            { id: 'tf4_c', text: "Nếu thêm một hàng mới vào ma trận [[1, 2, 3), (4, 5, 6], [7, 8, 9], [10, 11, 12]], chương trình vẫn chạy đúng và in ra tổng của tất cả các phần tử.", correct: "Đúng" },
+            { id: 'tf4_d', text: "Nếu ma trận có các hàng không đều về số cột, chẳng hạn [[1, 2], [3, 4, 5]], chương trình sẽ có lỗi khi chạy.", correct: "Sai" }
         ]},
 
-        // PHẦN 2 - ICT (Tin học ứng dụng)
-        { id: 'c5', type: 'tf_cluster', huong: 'ICT', question: "Sở Giáo dục và Đào tạo của một tỉnh tổ chức kì thi học sinh giỏi cấp tỉnh. Trong CSDL quản lí kết quả môn Tin học kì thi này có 3 bảng gồm:<br>- Bảng Thí sinh (THISINH) có các cột: Số thứ tự (STT), Số báo danh (SBD), Họ tên thí sinh (HoTen), Ngày sinh (NgaySinh), Trường (Truong).<br>- Bảng Đánh phách (PHACH) có các cột: Số thứ tự (STT), Số báo danh (SBD), Số phách (SoPhach)<br>- Bảng Điểm thi (DIEMTHI) có các cột: Số thứ tự (STT), Số phách (SoPhach), Điểm thi (Diem).<br>Biết rằng danh sách thí sinh được niêm yết cho tất cả thí sinh biết; số phách là bí mật chỉ có người đánh phách là Chủ tịch Hội đồng thi biết và điểm thi có các giáo viên trong hội đồng chấm thi biết. Điểm thi được tính theo thang điểm 10.<br>Một số học sinh đưa ra các ý kiến sau:", subQuestions: [
-            { id: 'tf5_a', text: "Liên kết được thiết lập giữa bảng Thí sinh và bảng Đánh phách là liên kết 1-n.", correct: "Sai" },
-            { id: 'tf5_b', text: "Có thể chọn trường Số báo danh (SBD) hoặc Số phách (SoPhach) làm khoá chính cho bảng Đánh phách.", correct: "Đúng" },
-            { id: 'tf5_c', text: "Để biết họ tên thí sinh và số phách của thí sinh đó thì cần dùng hai bảng Thí sinh và Đánh phách.", correct: "Đúng" },
-            { id: 'tf5_d', text: "Thực hiện truy vấn INNER JOIN trực tiếp giữa bảng DANHPHACH và DIEMTHI sẽ giúp thu được kết quả Số báo danh của thí sinh có điểm thi tuyệt đối.", correct: "Sai" }
+        // PHẦN II - ICT
+        { id: 'c5', type: 'tf_cluster', huong: 'ICT', question: "Để hỗ trợ hoạt động từ thiện tốt hơn, một nhóm tình nguyện viên xây dựng trang web có nhúng video về các hoạt động, bản đồ để chỉ dẫn địa điểm sự kiện và biểu mẫu quyên góp. Nhóm thảo luận và đưa ra các ý kiến như sau:", subQuestions: [
+            { id: 'tf5_a', text: "Biểu mẫu giúp thu thập thông tin từ những người muốn hỗ trợ.", correct: "Đúng" },
+            { id: 'tf5_b', text: "Việc nhúng bản đồ để hướng dẫn đến địa điểm sự kiện là không cần thiết nếu có thông tin chi tiết.", correct: "Sai" },
+            { id: 'tf5_c', text: "Video về các hoạt động từ thiện có thể tạo cảm hứng cho người xem.", correct: "Đúng" },
+            { id: 'tf5_d', text: "Các video và bản đồ không cần phải cập nhật thường xuyên.", correct: "Sai" }
         ]},
-        { id: 'c6', type: 'tf_cluster', huong: 'ICT', question: "Minh được Ban chấp hành Đoàn trường giao nhiệm vụ tạo website với mục đích trang bị cho học sinh của trường các kĩ năng cần thiết trong cuộc sống. Tuy nhiên, Minh chưa thành thạo trong việc tạo các trang web. Minh đã truy cập Internet để tìm hiểu và nhận được một số thông tin qua quá trình tìm hiểu như sau:", subQuestions: [
-            { id: 'tf6_a', text: "Không cần giỏi về ngôn ngữ lập trình vẫn có thể tạo ra một trang web đơn giản.", correct: "Đúng" },
-            { id: 'tf6_b', text: "Thanh điều hướng được thiết kế với mục đích chính là để người dùng trở về trang chủ tại bất kì trang web nào của website.", correct: "Sai" },
-            { id: 'tf6_c', text: "Các video được nhúng vào trang web thường có phần mở rộng là .mp4, .avi, .png.", correct: "Sai" },
-            { id: 'tf6_d', text: "Các phần mềm thường hỗ trợ tính năng xem trước hoạt động của trang web trên nhiều thiết bị như điện thoại, máy tính để bàn, máy tính xách tay.", correct: "Đúng" }
+        { id: 'c6', type: 'tf_cluster', huong: 'ICT', question: "Một nhóm học sinh sử dụng phần mềm hệ QTCSDL để tạo CSDL quản lí thư viện của trường và truy vấn thông tin khi cần. CSDL gồm:<br>•Bảng SACH lưu thông tin về sách với các cột Mã sách (MaSach), Tên sách (TenSach), Tác giả (TacGia).<br>•Bảng DỌC_GIA lưu thông tin về độc giả với các cột Mã độc giả (MaDG), Họ tên (HoTen), Ngày sinh (NgaySinh).<br>•Bảng MUON_SẠCH lưu thông tin về việc mượn sách với các cột Mã mượn (MaMuon), Ngày mượn (NgayMuon), Ngày trả (Ngay Tra), Mã độc giả (MaDG), Mã sách (MaSach). Trong đó, mỗi sách có một mã duy nhất, mỗi độc giả cũng có mã khác nhau và mỗi phiếu mượn sách có mã riêng.<br>Sau đây là các ý kiến của nhóm học sinh đó về việc thiết kế truy vấn cho yêu cầu \"Đưa ra danh sách các sách đã được mượn trong tháng 9 năm 2024. Kết quả bao gồm các thông tin mã sách, tên sách và tác giả. Danh sách kết quả được xếp thứ tự tăng dần theo mã sách\":", subQuestions: [
+            { id: 'tf6_a', text: "Thiết lập liên kết giữa bảng SACH và bảng MUON_SACH là thiết lập 1-1.", correct: "Sai" },
+            { id: 'tf6_b', text: "Hai bảng SACH và MUON_SACH tham gia truy vấn được thiết lập liên kết bằng biểu thuc SACH.MaSach = MUON_SACH.MaSach.", correct: "Đúng" },
+            { id: 'tf6_c', text: "Nếu muốn sắp xếp danh sách các sách đã mượn trong tháng 9 năm 2024 theo tên sách, họ chỉ cần liệt kê các sách trong bảng SACH và xếp theo tên sách.", correct: "Sai" },
+            { id: 'tf6_d', text: "Thiết lập điều kiện lọc cho truy vấn bằng biểu thức (MUON_SACH.NgayMuon >= '2924- 09-01') AND (MUON_SACH. NgayMuon <= '2024-09-30').", correct: "Đúng" }
         ]}
     ];
-
     let currentQuestions = [];
     let deviceId = '';
     let allScores = [];
@@ -302,33 +326,25 @@
     let userAnswers = {};
     let timerInterval;
 
-    // --- MOCK SDK LƯU BẢNG ĐIỂM ---
-    const MockSdk = {
+    // ==================== SDK FIREBASE THỰC TẾ ====================
+    const RealtimeSdk = {
         init(handler) {
-            let stored = [];
-            try {
-                const raw = localStorage.getItem('thpt_tinhoc_final');
-                stored = raw ? JSON.parse(raw) : [];
-            } catch (e) {}
-            handler.onDataChanged(stored);
+            scoresRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const scoresList = [];
+                if (data) {
+                    for (let key in data) {
+                        scoresList.push({ id: key, ...data[key] });
+                    }
+                }
+                handler.onDataChanged(scoresList);
+            });
             return Promise.resolve({ isOk: true });
         },
         create(record) {
-            let data = [];
-            try {
-                const raw = localStorage.getItem('thpt_tinhoc_final');
-                data = raw ? JSON.parse(raw) : [];
-                record.id = Date.now(); 
-                data.push(record);
-                localStorage.setItem('thpt_tinhoc_final', JSON.stringify(data));
-                dataHandler.onDataChanged(data); 
-                return Promise.resolve({ isOk: true });
-            } catch (e) {
-                record.id = Date.now();
-                data.push(record);
-                dataHandler.onDataChanged(data);
-                return Promise.resolve({ isOk: true });
-            }
+            return scoresRef.push(record)
+                .then(() => { return { isOk: true }; })
+                .catch(error => { console.error(error); return { isOk: false }; });
         }
     };
 
@@ -360,7 +376,8 @@
         } catch (e) {
             deviceId = 'dev_' + Math.random().toString(36).substr(2) + Date.now();
         }
-        window.dataSdk = window.dataSdk || MockSdk;
+        
+        window.dataSdk = RealtimeSdk;
         window.dataSdk.init(dataHandler);
         setupEvents();
     }
@@ -378,7 +395,6 @@
                 let rawData = JSON.parse(JSON.stringify(rawQuestions));
                 let part1 = rawData.filter(q => q.type === 'single');
                 
-                // Trộn Phần 1
                 part1 = shuffleArray(part1);
                 part1.forEach((q, idx) => {
                     q.question = q.question.replace(/^Câu\s*\d+[:\.\s]*/i, '');
@@ -388,14 +404,12 @@
                     q.correct = q.options.indexOf(correctText);
                 });
 
-                // Tách riêng và Trộn Phần 2 (Chung trước, Riêng sau)
                 let part2_chung = rawData.filter(q => q.type === 'tf_cluster' && q.huong === 'chung');
                 let part2_rieng = rawData.filter(q => q.type === 'tf_cluster' && q.huong === huong);
 
                 part2_chung = shuffleArray(part2_chung);
                 part2_rieng = shuffleArray(part2_rieng);
 
-                // Gộp phần chung và riêng lại theo đúng thứ tự
                 let part2 = [...part2_chung, ...part2_rieng];
 
                 part2.forEach((q, idx) => {
@@ -409,7 +423,6 @@
                     });
                 });
 
-                // Gộp (24 + 4 = 28 màn hình câu hỏi)
                 currentQuestions = [...part1, ...part2];
 
                 startQuiz();
@@ -543,7 +556,7 @@
                                     <span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors">
                                         ${String.fromCharCode(65 + i)}
                                     </span>
-                                    <span class="text-gray-700 leading-relaxed">${opt}</span>
+                                    <span class="text-gray-700 leading-relaxed">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
                                 </label>
                             </div>
                         `).join('')}
@@ -580,7 +593,7 @@
         clearInterval(timerInterval);
         
         let correct = 0;
-        let totalItems = getTotalItems(); // Tổng 40 ý
+        let totalItems = getTotalItems(); 
 
         currentQuestions.forEach(q => {
             if (q.type === 'tf_cluster') {
@@ -640,9 +653,6 @@
         `;
     }
 
-    // ==========================================
-    // CHẾ ĐỘ XEM LẠI BÀI (XỔ DỌC TOÀN BỘ CÂU HỎI)
-    // ==========================================
     function reviewQuiz() {
         document.getElementById('result-modal').classList.add('hidden');
         document.getElementById('scores-section').classList.add('hidden');
@@ -650,12 +660,10 @@
         
         document.body.classList.add('is-reviewing');
         
-        // Ẩn thanh thời gian và nút next/submit
         document.getElementById('timer-banner').style.display = 'none';
         document.getElementById('nav-buttons').style.display = 'none';
         document.getElementById('progress-container').style.display = 'none';
 
-        // Tạo thanh công cụ nổi dưới cùng
         let floatingBar = document.getElementById('review-floating-bar');
         if(!floatingBar) {
             floatingBar = document.createElement('div');
@@ -669,11 +677,9 @@
         }
         floatingBar.style.display = 'flex';
 
-        // Xổ dọc toàn bộ câu hỏi
         const container = document.getElementById('question-container');
         container.innerHTML = currentQuestions.map((q, idx) => {
             
-            // XỬ LÝ CHÈN TIÊU ĐỀ PHẦN I VÀ PHẦN II
             let headerHtml = '';
             if (idx === 0) {
                 headerHtml = `
@@ -709,7 +715,7 @@
                     return `
                         <div class="p-4 border-2 rounded-2xl flex items-center gap-4 ${stateClass} mb-3 font-bold text-lg pointer-events-none">
                             <span class="w-10 h-10 rounded-xl border-2 flex items-center justify-center text-base font-black flex-shrink-0 bg-white/50 border-gray-300/50">${String.fromCharCode(65 + i)}</span>
-                            <span class="leading-relaxed flex-1">${opt}</span>
+                            <span class="leading-relaxed flex-1">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
                             <span>${icon}</span>
                         </div>
                     `;
@@ -771,12 +777,18 @@
             const meBadge = s.deviceId === deviceId ? '<span class="ml-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs px-3 py-1 rounded-full font-black shadow-sm uppercase tracking-wider">Bạn</span>' : '';
             const date = new Date(s.thoiGian).toLocaleString('vi-VN');
 
+            // ĐÃ XỬ LÝ LỖI UNDEFINED CHO BẢN CŨ VÀ ĐÃ THÊM CỘT LỚP
+            const cauDung = s.soCauDung !== undefined ? s.soCauDung : '-';
+            const tongCau = s.tongCau !== undefined ? s.tongCau : '-';
+            const tenLop = s.lop || '';
+
             return `
                 <tr class="${rowClass} transition-colors">
                     <td class="px-3 sm:px-5 py-4 text-center font-black text-gray-400 text-lg">#${idx + 1}</td>
-                    <td class="px-3 sm:px-5 py-4 font-extrabold text-gray-800 whitespace-nowrap text-lg">${s.hoTen} ${meBadge}</td>
-                    <td class="px-3 sm:px-5 py-4 text-sm font-bold text-blue-500 whitespace-nowrap bg-blue-50/50 rounded-lg inline-block mt-3">${s.huong}</td>
-                    <td class="px-3 sm:px-5 py-4 text-center text-gray-600 font-bold text-lg">${s.soCauDung}/${s.tongCau}</td>
+                    <td class="px-3 sm:px-5 py-4 font-extrabold text-gray-800 whitespace-nowrap text-lg">${s.hoTen || ''} ${meBadge}</td>
+                    <td class="px-3 sm:px-5 py-4 font-bold text-gray-700 text-base">${tenLop}</td>
+                    <td class="px-3 sm:px-5 py-4 text-sm font-bold text-blue-500 whitespace-nowrap bg-blue-50/50 rounded-lg inline-block mt-3">${s.huong || ''}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-gray-600 font-bold text-lg">${cauDung}/${tongCau}</td>
                     <td class="px-3 sm:px-5 py-4 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-green-600' : 'text-red-500 drop-shadow-sm'}">${s.diem}</span></td>
                     <td class="px-3 sm:px-5 py-4 text-right text-xs text-gray-400 whitespace-nowrap font-bold">${date}</td>
                 </tr>
