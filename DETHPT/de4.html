@@ -1,10 +1,11 @@
+
 <!doctype html>
 <html lang="vi" class="w-full h-full m-0 p-0">
  <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <title>Kiểm Tra Trắc Nghiệm - Tin Học 12 (Đề 4)</title>
+  <title>Kiểm Tra Trắc Nghiệm - Tin Học 12 (Đề 5)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
@@ -148,7 +149,7 @@
     <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative">
      <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
       <div>
-       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Số 5</h2>
        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
       </div>
       <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
@@ -231,7 +232,7 @@
 
     let cheatCount = 0;
     let isQuizStarted = false; 
-    let isPenalizing = false; // Cờ chặn bắt lỗi liên tục khi đang bị phạt
+    let isPenalizing = false; 
 
     function handleCheatAction() {
         if (!isQuizStarted || isPenalizing) return; 
@@ -249,7 +250,6 @@
             
             modal.classList.remove('hidden');
             
-            // Lấy câu hỏi hiện tại và tước quyền (Đánh dấu 0 điểm / Gian lận)
             const currentQ = currentQuestions[currentIdx];
             if (currentQ.type === 'tf_cluster') {
                 currentQ.subQuestions.forEach(sub => {
@@ -272,14 +272,13 @@
                 msg.innerHTML = "Bạn vừa thoát màn hình, chuyển tab hoặc dùng phím cấm.<br><br><span class='text-red-600 font-black'>Câu hỏi này bị tước quyền trả lời (0 điểm).</span><br><br><i class='text-sm text-gray-500'>Vui lòng nhấn nút bên dưới để tiếp tục.</i>";
                 btn.innerText = "TÔI ĐÃ HIỂU & TIẾP TỤC";
                 
-                // Học sinh tự tay bấm "Tiếp tục" hệ thống mới cho qua câu
                 btn.onclick = () => {
                     modal.classList.add('hidden');
                     if (currentIdx < currentQuestions.length - 1) {
                         currentIdx++;
                         renderQuestion();
                     } else {
-                        submitQuiz(); // Nếu vi phạm ở câu cuối cùng thì nộp luôn
+                        submitQuiz(); 
                     }
                     isPenalizing = false;
                 };
@@ -287,12 +286,10 @@
         }
     }
 
-    // Bắt sự kiện chuyển Tab / ẩn trình duyệt
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === 'hidden') handleCheatAction();
     });
 
-    // Bắt phím tắt chụp ảnh, F12, Ctrl+C, Ctrl+V
     window.addEventListener('keydown', (e) => {
         const forbiddenKeys = ['PrintScreen', 'F12'];
         if (forbiddenKeys.includes(e.key) || (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'p' || e.key === 's'))) {
@@ -400,34 +397,24 @@
     let userAnswers = {};
     let timerInterval;
     let quizStartTime, quizEndTime;
-
-    // --- MOCK SDK LƯU BẢNG ĐIỂM ---
-    const MockSdk = {
+    const RealtimeSdk = {
         init(handler) {
-            let stored = [];
-            try {
-                const raw = localStorage.getItem('thpt_tinhoc_final_v6');
-                stored = raw ? JSON.parse(raw) : [];
-            } catch (e) {}
-            handler.onDataChanged(stored);
+            scoresRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const scoresList = [];
+                if (data) {
+                    for (let key in data) {
+                        scoresList.push({ id: key, ...data[key] });
+                    }
+                }
+                handler.onDataChanged(scoresList);
+            });
             return Promise.resolve({ isOk: true });
         },
         create(record) {
-            let data = [];
-            try {
-                const raw = localStorage.getItem('thpt_tinhoc_final_v6');
-                data = raw ? JSON.parse(raw) : [];
-                record.id = Date.now(); 
-                data.push(record);
-                localStorage.setItem('thpt_tinhoc_final_v6', JSON.stringify(data));
-                dataHandler.onDataChanged(data); 
-                return Promise.resolve({ isOk: true });
-            } catch (e) {
-                record.id = Date.now();
-                data.push(record);
-                dataHandler.onDataChanged(data);
-                return Promise.resolve({ isOk: true });
-            }
+            return scoresRef.push(record)
+                .then(() => { return { isOk: true }; })
+                .catch(error => { console.error(error); return { isOk: false }; });
         }
     };
 
@@ -460,7 +447,7 @@
             deviceId = 'dev_' + Math.random().toString(36).substr(2) + Date.now();
         }
         
-        window.dataSdk = window.dataSdk || MockSdk;
+        window.dataSdk = RealtimeSdk;
         window.dataSdk.init(dataHandler);
         setupEvents();
     }
@@ -478,7 +465,6 @@
                 let rawData = JSON.parse(JSON.stringify(rawQuestions));
                 let part1 = rawData.filter(q => q.type === 'single');
                 
-                // Trộn Phần 1
                 part1 = shuffleArray(part1);
                 part1.forEach((q, idx) => {
                     q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
@@ -487,18 +473,15 @@
                     q.correct = q.options.indexOf(correctText);
                 });
 
-                // Tách riêng và Trộn Phần 2 (Chung trước, Riêng sau)
                 let part2_chung = rawData.filter(q => q.type === 'tf_cluster' && q.huong === 'chung');
                 let part2_rieng = rawData.filter(q => q.type === 'tf_cluster' && q.huong === huong);
 
                 part2_chung = shuffleArray(part2_chung);
                 part2_rieng = shuffleArray(part2_rieng);
 
-                // Gộp phần chung và riêng lại theo đúng thứ tự
                 let part2 = [...part2_chung, ...part2_rieng];
 
                 part2.forEach((q, idx) => {
-                    // CÂU SỐ TỰ ĐỘNG KHỞI ĐỘNG LẠI TỪ 1 CHO PHẦN II
                     q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
                     q.subQuestions = shuffleArray(q.subQuestions);
                     const labels = ['a)', 'b)', 'c)', 'd)'];
@@ -508,16 +491,17 @@
                     });
                 });
 
-                // Gộp (24 + 4 = 28 màn hình câu hỏi)
                 currentQuestions = [...part1, ...part2];
-
                 startQuiz();
             } else {
                 alert("Vui lòng nhập đủ Họ tên và Lớp!");
             }
         };
 
-        document.getElementById('view-scores-btn').onclick = () => showSection('scores');
+        document.getElementById('view-scores-btn').onclick = () => {
+            document.getElementById('view-scores-btn').innerText = "⏳ Đang tải dữ liệu...";
+            showSection('scores');
+        };
         document.getElementById('next-btn').onclick = nextQuestion;
         document.getElementById('submit-btn').onclick = submitQuiz;
     }
@@ -539,10 +523,7 @@
         quizStartTime = new Date();
         cheatCount = 0;
         
-        // Timeout 1 giây tránh phạt nhầm
-        setTimeout(() => {
-            isQuizStarted = true;
-        }, 1000);
+        setTimeout(() => { isQuizStarted = true; }, 1000);
 
         document.body.classList.remove('is-reviewing');
         let floatingBar = document.getElementById('review-floating-bar');
@@ -557,7 +538,7 @@
         currentIdx = 0;
         userAnswers = {};
         renderQuestion();
-        startTimer(45 * 60); // 45 phút
+        startTimer(45 * 60); 
     }
 
     function retryQuiz() {
@@ -637,7 +618,7 @@
 
                     <div class="flex gap-4 mb-5">
                         <div class="w-full">
-                            <p class="text-xl font-extrabold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p>
+                            <div class="text-xl font-extrabold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</div>
                         </div>
                     </div>
                     <div class="space-y-4 md:pl-6 mt-6">
@@ -695,7 +676,7 @@
         clearInterval(timerInterval);
         
         let correct = 0;
-        let totalItems = getTotalItems(); // Tổng 40 ý
+        let totalItems = getTotalItems(); 
 
         currentQuestions.forEach(q => {
             if (q.type === 'tf_cluster') {
@@ -724,16 +705,18 @@
             deviceId: deviceId 
         };
 
-        const result = await window.dataSdk.create(record);
+        if (window.dataSdk) {
+            const result = await window.dataSdk.create(record);
 
-        if (result.isOk) {
-            showModalResult(score, correct, totalItems);
-        } else {
-            alert("Lỗi lưu bài! Vui lòng thử lại.");
+            if (result.isOk) {
+                showModalResult(score, correct, totalItems, record.duration);
+            } else {
+                alert("Lỗi mạng! Không thể lưu điểm. Vui lòng thử lại.");
+            }
         }
     }
 
-    function showModalResult(score, correct, total) {
+    function showModalResult(score, correct, total, dur) {
         const modal = document.getElementById('result-modal');
         const content = document.getElementById('result-content');
         modal.classList.remove('hidden');
@@ -748,20 +731,17 @@
             <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative">
                 <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
                 <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
-                <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Trả lời đúng ${correct}/${total} ý</div>
+                <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Đúng ${correct}/${total} ý | Tổng TG: ${dur}</div>
             </div>
             
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <button onclick="reviewQuiz()" class="w-full py-3 bg-gray-100 text-blue-700 border-2 border-blue-200 rounded-xl font-extrabold shadow-sm hover:bg-blue-50 transition-colors text-lg">🔎 Xem lại bài</button>
-                <button onclick="document.getElementById('result-modal').classList.add('hidden'); document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden');" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden'); document.getElementById('view-scores-btn').click();" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
             </div>
             <button onclick="goHome()" class="w-full py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏠 Về trang chủ</button>
         `;
     }
 
-    // ==========================================
-    // CHẾ ĐỘ XEM LẠI BÀI
-    // ==========================================
     function reviewQuiz() {
         document.getElementById('result-modal').classList.add('hidden');
         document.getElementById('scores-section').classList.add('hidden');
@@ -769,12 +749,10 @@
         
         document.body.classList.add('is-reviewing');
         
-        // Ẩn thanh thời gian và nút next/submit
         document.getElementById('timer-banner').style.display = 'none';
         document.getElementById('nav-buttons').style.display = 'none';
         document.getElementById('progress-container').style.display = 'none';
 
-        // Tạo thanh công cụ nổi dưới cùng
         let floatingBar = document.getElementById('review-floating-bar');
         if(!floatingBar) {
             floatingBar = document.createElement('div');
@@ -788,11 +766,9 @@
         }
         floatingBar.style.display = 'flex';
 
-        // Xổ dọc toàn bộ câu hỏi
         const container = document.getElementById('question-container');
         container.innerHTML = currentQuestions.map((q, idx) => {
             
-            // XỬ LÝ CHÈN TIÊU ĐỀ PHẦN I VÀ PHẦN II
             let headerHtml = '';
             if (idx === 0) {
                 headerHtml = `
@@ -837,8 +813,8 @@
                 return `
                     ${headerHtml}
                     <div class="mb-8">
-                        <div class="flex gap-4 mb-4">
-                            <p class="text-xl font-extrabold text-red-600 leading-snug">${q.displayQuestion}</p>
+                        <div class="mb-4">
+                            <div class="text-xl font-extrabold text-red-600 leading-snug">${q.displayQuestion}</div>
                         </div>
                         <div class="md:pl-6">${optionsHtml}</div>
                     </div>
@@ -848,7 +824,6 @@
                     let userAns = userAnswers[sub.id];
                     let isCorrect = userAns === sub.correct;
                     
-                    // Phân biệt trạng thái Gian lận và Sai thông thường
                     let ansText = "";
                     let colorClass = "";
                     if (userAns === "Gian lận") {
@@ -890,16 +865,22 @@
         if (allScores.length === 0) {
             tbody.innerHTML = '';
             document.getElementById('no-scores').classList.remove('hidden');
+            document.getElementById('view-scores-btn').innerText = "🏆 Xem bảng điểm";
             return;
         }
         document.getElementById('no-scores').classList.add('hidden');
 
-        // SẮP XẾP THEO LỚP (A-Z) RỒI ĐẾN ĐIỂM (CAO XUỐNG THẤP)
         const sorted = [...allScores].sort((a, b) => {
             let lopA = (a.lop || "").toLowerCase();
             let lopB = (b.lop || "").toLowerCase();
             if (lopA < lopB) return -1;
             if (lopA > lopB) return 1;
+
+            let tenA = (a.hoTen || "").toLowerCase();
+            let tenB = (b.hoTen || "").toLowerCase();
+            if (tenA < tenB) return -1;
+            if (tenA > tenB) return 1;
+
             return b.diem - a.diem;
         });
 
@@ -908,7 +889,6 @@
             const meBadge = s.deviceId === deviceId ? '<span class="ml-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs px-3 py-1 rounded-full font-black shadow-sm uppercase tracking-wider">Bạn</span>' : '';
             const date = new Date(s.thoiGian).toLocaleString('vi-VN');
 
-            // ĐÃ XỬ LÝ LỖI UNDEFINED CHO BẢN CŨ VÀ ĐÃ THÊM CỘT LỚP
             const cauDung = s.soCauDung !== undefined ? s.soCauDung : '-';
             const tongCau = s.tongCau !== undefined ? s.tongCau : '-';
             const tenLop = s.lop || '';
@@ -921,10 +901,14 @@
                     <td class="px-3 sm:px-5 py-4 text-sm font-bold text-blue-500 whitespace-nowrap bg-blue-50/50 rounded-lg inline-block mt-3">${s.huong || ''}</td>
                     <td class="px-3 sm:px-5 py-4 text-center text-gray-600 font-bold text-lg">${cauDung}/${tongCau}</td>
                     <td class="px-3 sm:px-5 py-4 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-green-600' : 'text-red-500 drop-shadow-sm'}">${s.diem}</span></td>
-                    <td class="px-3 sm:px-5 py-4 text-right text-xs text-gray-400 whitespace-nowrap font-bold">${date}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.startTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.endTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-right text-xs text-orange-600 font-bold">${s.duration || '--'}</td>
                 </tr>
             `;
         }).join('');
+        
+        document.getElementById('view-scores-btn').innerText = "🏆 Xem bảng điểm";
         
         setTimeout(() => {
             const myRow = document.querySelector('.my-score-row');
