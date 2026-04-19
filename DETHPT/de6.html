@@ -1,0 +1,949 @@
+
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Trắc Nghiệm - Tin Học 12 (Đề 6)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      -webkit-user-select: none !important; -moz-user-select: none !important;
+      -ms-user-select: none !important; user-select: none !important; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    input, textarea, select {
+      -webkit-user-select: auto !important; -moz-user-select: auto !important;
+      -ms-user-select: auto !important; user-select: auto !important;
+      pointer-events: auto !important;
+    }
+    #app { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; padding-bottom: 50px; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    /* Nút chọn Phần I */
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    /* Nút chọn Phần II */
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    /* Định dạng Code Python & HTML */
+    .code-block { background: #f8fafc; color: #1e3a8a; padding: 15px 20px; border-radius: 10px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; margin: 15px 0; font-size: 16px; font-weight: 700; border: 1px solid #e2e8f0; border-left: 5px solid #3b82f6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+
+    /* CSS bảng dữ liệu */
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; font-size: 0.95rem; text-align: left;}
+    .data-table th, .data-table td { border: 1px solid #cbd5e1; padding: 8px 12px; }
+    .data-table th { background-color: #f1f5f9; font-weight: bold; color: #334155; }
+    .data-table tr:nth-child(even) { background-color: #f8fafc; }
+
+    /* CSS chế độ xem lại */
+    body.is-reviewing #app { padding-bottom: 100px; } 
+    .review-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+    .review-incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; text-decoration: line-through; opacity: 0.8; }
+    .review-neutral { background-color: #ffffff !important; border-color: #e2e8f0 !important; opacity: 0.5; }
+  </style>
+ </head>
+ <body oncopy="return false" oncut="return false" onpaste="return false">
+  <div id="app" class="p-0 sm:p-4 md:p-8 flex flex-col sm:block transition-all">
+   
+   <div id="login-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-md mx-auto fade-in flex-grow flex flex-col sm:justify-center">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start flex-grow sm:flex-grow-0">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="w-24 h-24 bg-gradient-to-br from-pink-500 to-orange-400 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
+       <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+      </div>
+      <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 mb-1">Kiểm Tra Tin Học 12</h1>
+      <p class="text-gray-600 font-bold">Thời gian làm bài đề 6: 45 Phút</p>
+     </div>
+     
+     <form id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-2">
+          <label class="block text-sm font-bold text-blue-600 mb-2">🎯 Chọn định hướng Phần riêng:</label>
+          <div class="grid grid-cols-1 gap-3">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonHuong" value="CS" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-3 border-2 border-gray-200 rounded-2xl transition-all h-full">
+                      <div class="de-icon w-10 h-10 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm mr-3">CS</div>
+                      <div class="de-text text-gray-800 font-extrabold text-sm leading-tight">Khoa học máy tính<br><span class="text-xs font-normal text-gray-500">Định hướng KHTN</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonHuong" value="ICT" class="hidden de-radio">
+                  <div class="de-label flex items-center p-3 border-2 border-gray-200 rounded-2xl transition-all h-full">
+                      <div class="de-icon w-10 h-10 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm mr-3">ICT</div>
+                      <div class="de-text text-gray-800 font-extrabold text-sm leading-tight">Tin học ứng dụng<br><span class="text-xs font-normal text-gray-500">Định hướng ICT</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <button type="submit" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl"> 🚀 BẮT ĐẦU THI </button>
+     </form>
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button id="view-scores-btn" type="button" class="text-blue-600 font-extrabold hover:text-blue-800 hover:underline transition-colors text-lg">🏆 Xem bảng điểm</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      <div>
+       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Số 6</h2>
+       <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+      </div>
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="next-btn" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-extrabold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-extrabold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow">
+     <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+      <button onclick="goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Về trang chủ</button>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-2 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Hướng</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Đúng</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-[2rem] shadow-2xl p-8 max-w-md w-full fade-in text-center flex flex-col border-t-8 border-green-500" id="result-content"></div>
+   </div>
+
+   <div id="cheat-modal" class="fixed inset-0 bg-red-900/95 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[9999]">
+    <div class="bg-white rounded-[2rem] shadow-2xl p-8 max-w-md w-full text-center flex flex-col border-t-8 border-red-600 transform transition-all scale-100">
+        <div class="text-7xl mb-4 animate-bounce">🚨</div>
+        <h3 class="text-3xl font-black text-red-600 mb-2 uppercase tracking-wide">PHÁT HIỆN VI PHẠM!</h3>
+        <p class="text-gray-700 font-bold mb-4 text-lg" id="cheat-message"></p>
+        <div class="bg-red-50 text-red-700 font-extrabold p-4 rounded-2xl border-2 border-red-100 mb-6">
+            Hệ thống đã ghi nhận vi phạm lần thứ <span id="cheat-count-display" class="text-3xl font-black mx-1">1</span>
+        </div>
+        <button id="cheat-continue-btn" class="w-full py-4 bg-gradient-to-r from-red-600 to-red-800 text-white font-extrabold rounded-xl shadow-lg hover:shadow-xl transition-all text-lg tracking-wide uppercase shrink-0">TÔI ĐÃ HIỂU & TIẾP TỤC</button>
+    </div>
+   </div>
+
+  </div>
+
+  <script>
+    // ==================== BẢO VỆ TÀI LIỆU & CHỐNG GIAN LẬN ====================
+    document.addEventListener('contextmenu', event => event.preventDefault()); 
+    document.addEventListener('selectstart', event => {
+        if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'SELECT') { event.preventDefault(); }
+    });
+    document.addEventListener('dragstart', event => event.preventDefault()); 
+    document.addEventListener('copy', event => {
+        event.clipboardData.setData('text/plain', 'Tài liệu đã được bảo vệ!');
+        event.preventDefault();
+    });
+
+    let cheatCount = 0;
+    let isQuizStarted = false; 
+    let isPenalizing = false; 
+
+    function handleCheatAction() {
+        if (!isQuizStarted || isPenalizing) return; 
+        
+        const isQuizActive = !document.getElementById('quiz-section').classList.contains('hidden') && !document.body.classList.contains('is-reviewing');
+        
+        if (isQuizActive) {
+            isPenalizing = true;
+            cheatCount++;
+            
+            document.getElementById('cheat-count-display').innerText = cheatCount;
+            const modal = document.getElementById('cheat-modal');
+            const msg = document.getElementById('cheat-message');
+            const btn = document.getElementById('cheat-continue-btn');
+            
+            modal.classList.remove('hidden');
+            
+            const currentQ = currentQuestions[currentIdx];
+            if (currentQ.type === 'tf_cluster') {
+                currentQ.subQuestions.forEach(sub => {
+                    if (!userAnswers[sub.id]) userAnswers[sub.id] = "Gian lận"; 
+                });
+            } else {
+                if (userAnswers[currentQ.id] === undefined) userAnswers[currentQ.id] = -1; 
+            }
+            updateProgress();
+
+            if (cheatCount >= 3) {
+                msg.innerHTML = "Bạn đã vi phạm quá 3 lần.<br>Hệ thống đang <b>TỰ ĐỘNG THU BÀI</b>!";
+                btn.innerText = "NỘP BÀI NGAY";
+                btn.onclick = () => {
+                    modal.classList.add('hidden');
+                    submitQuiz();
+                    isPenalizing = false;
+                };
+            } else {
+                msg.innerHTML = "Bạn vừa thoát màn hình, chuyển tab hoặc dùng phím cấm.<br><br><span class='text-red-600 font-black'>Câu hỏi này bị tước quyền trả lời (0 điểm).</span><br><br><i class='text-sm text-gray-500'>Vui lòng nhấn nút bên dưới để tiếp tục.</i>";
+                btn.innerText = "TÔI ĐÃ HIỂU & TIẾP TỤC";
+                
+                btn.onclick = () => {
+                    modal.classList.add('hidden');
+                    if (currentIdx < currentQuestions.length - 1) {
+                        currentIdx++;
+                        renderQuestion();
+                    } else {
+                        submitQuiz(); 
+                    }
+                    isPenalizing = false;
+                };
+            }
+        }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === 'hidden') handleCheatAction();
+    });
+
+    window.addEventListener('keydown', (e) => {
+        const forbiddenKeys = ['PrintScreen', 'F12'];
+        if (forbiddenKeys.includes(e.key) || (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'p' || e.key === 's'))) {
+            e.preventDefault();
+            handleCheatAction();
+        }
+    });
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'PrintScreen') handleCheatAction();
+    });
+
+    // ==================== CẤU HÌNH FIREBASE ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+        messagingSenderId: "1046142513655",
+        appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tin12_de6');
+
+    // ==================== NGÂN HÀNG CÂU HỎI ĐỀ SỐ 6 ====================
+    const rawQuestions = [
+        // PHẦN 1: TRẮC NGHIỆM NHIỀU LỰA CHỌN (24 CÂU)
+        { id: 1, type: "single", question: "Lĩnh vực nào sau đây đang ứng dụng AI để hỗ trợ chẩn đoán bệnh và phân tích dữ liệu y khoa?", options: ["Tài chính.", "Giao thông.", "Y tế.", "Giáo dục."], correct: 2 },
+        { id: 2, type: "single", question: "Sự phát triển của AI có thể dẫn đến điều gì sau đây?", options: ["Sự mất việc làm trong một số lĩnh vực nhất định.", "Giảm chi phí sản xuất.", "Tạo ra nhiều cơ hội nghề nghiệp mới.", "Cải thiện năng suất lao động."], correct: 0 },
+        { id: 3, type: "single", question: "Phương án nào sau đây nêu đúng đóng góp của AI trong ngành giao thông vận tải?", options: ["AI chỉ tham gia vào việc kiểm soát lưu lượng giao thông trong các đô thị nhỏ.", "AI được sử dụng để tối ưu hoá các tuyến xe buýt và tăng cường hệ thống taxi truyền thống.", "AI chủ yếu hỗ trợ việc tạo ra các bản đồ số chính xác cho các ứng dụng chỉ đường.", "AI giúp quản lí giao thông thông minh và phát triển công nghệ xe tự lái hiện đại."], correct: 3 },
+        { id: 4, type: "single", question: "Ứng dụng của việc AI được sử dụng để chẩn đoán bệnh là gì?", options: ["AI giúp phân tích dữ liệu y khoa và hỗ trợ bác sĩ đưa ra chẩn đoán chính xác hơn trong quá trình điều trị bệnh.", "AI có thể thay thế hoàn toàn bác sĩ trong việc chẩn đoán và điều trị cho bệnh nhân bằng cách phân tích dữ liệu.", "AI chỉ có thể được sử dụng để phân tích các hình ảnh y khoa mà không có khả năng tham gia vào chẩn đoán bệnh.", "AI giúp theo dõi quá trình điều trị của bệnh nhân, nhưng không thể hỗ trợ trong việc chẩn đoán ban đầu."], correct: 0 },
+        { id: 5, type: "single", question: "Phương án nào sau đây nêu đúng chức năng của router trong mạng?", options: ["Kết nối các thiết bị theo mô hình hình sao.", "Kết nối mạng nội bộ với mạng Internet.", "Chuyển đổi tín hiệu số thành tín hiệu tương tự.", "Lưu trữ và chia sẻ tài nguyên."], correct: 1 },
+        { id: 6, type: "single", question: "Giao thức nào sau đây giúp truyền tải siêu văn bản một cách an toàn?", options: ["FTP.", "HTTP.", "HTTPS.", "TCP."], correct: 2 },
+        { id: 7, type: "single", question: "Sau khi hoàn tất quá trình đóng gói dữ liệu và xác định địa chỉ IP cũng như địa chỉ MAC tại thiết bị gửi, giao thức mạng sẽ thực hiện bước nào tiếp theo?", options: ["Truyền gói dữ liệu ngay lập tức.", "Xác định đường đi tối ưu cho gói dữ liệu.", "Tiếp nhận gói dữ liệu từ thiết bị khác.", "Kiểm tra lỗi và đảm bảo độ tin cậy sau khi truyền gói dữ liệu."], correct: 1 },
+        { id: 8, type: "single", question: "Khi tham gia vào cộng đồng trên mạng, cần tránh những hành vi nào sau đây?", options: ["Bình luận với ngôn ngữ khiếm nhã hoặc xúc phạm.", "Chia sẻ những câu chuyện có ý nghĩa và khuyến khích người khác.", "Bảo vệ thông tin cá nhân của mình và người khác.", "Giúp đỡ người khác khi họ gặp khó khăn trên không gian mạng."], correct: 0 },
+        { id: 9, type: "single", question: "Việc nào sau đây thể hiện sự tôn trọng quyền riêng tư trong giao tiếp trực tuyến?", options: ["Công khai đăng tải hình ảnh của người khác mà không hỏi ý kiến trước.", "Chia sẻ thông tin cá nhân của người khác mà không được phép.", "Không phát tán thông tin riêng tư của người khác khi chưa có sự đồng ý.", "Gửi thư rác cho người khác một cách không kiểm soát."], correct: 2 },
+        { id: 10, type: "single", question: "Hành động nào sau đây vi phạm nguyên tắc ứng xử nhân văn trong giao tiếp trực tuyến?", options: ["Sử dụng ngôn từ lịch sự và không xúc phạm đối phương.", "Gửi lời cảm ơn sau khi nhận được sự giúp đỡ.", "Phê phán người khác bằng những từ ngữ thô bạo trên mạng xã hội.", "Lắng nghe ý kiến khác một cách bình tĩnh và tôn trọng."], correct: 2 },
+        { id: 11, type: "single", question: "Thẻ đánh dấu HTML (tag) được viết trong cặp dấu nào sau đây?", options: ["{}", "()", "<>", "[]"], correct: 2 },
+        { id: 12, type: "single", question: "Thẻ nào sau đây không tồn tại trong HTML?", options: ["h1", "h2", "h8", "h4"], correct: 2 },
+        { id: 13, type: "single", question: "Để định dạng màu đỏ cho cụm từ \"Nội dung\", mã HTML nào sau đây là đúng?", options: ["&lt;p style=\"color=red\"&gt; Nội dung &lt;/p&gt;", "&lt;p style=\"color: red\"&gt; Nội dung &lt;/p&gt;", "&lt;p style=\"font-color: red\"&gt; Nội dung &lt;/p&gt;", "&lt;p color=\"red\"&gt; Nội dung &lt;/p&gt;"], correct: 1 },
+        { id: 14, type: "single", question: "Cho hình minh hoạ danh sách như sau:<div class='bg-white p-4 border-2 border-gray-200 rounded-lg my-3 shadow-inner font-normal text-left'><dl><dt class='font-bold text-lg text-black'>Động đất</dt><dd class='ml-8 text-gray-700'>Là hiện tượng rung chuyển của bề mặt Trái Đất do sự di chuyển của các mảng kiến tạo.</dd><dt class='font-bold text-lg text-black mt-2'>Bão</dt><dd class='ml-8 text-gray-700'>Là hiện tượng thời tiết cực đoan với gió mạnh và mưa lớn, thường xảy ra ở các khu vực nhiệt đới.</dd></dl></div>Những thẻ nào sau đây đã được sử dụng để tạo danh sách đó?", options: ["&lt;dl&gt;, &lt;dt&gt;, &lt;dd&gt;", "&lt;dl&gt;, &lt;ul&gt;, &lt;db&gt;", "&lt;dl&gt;, &lt;li&gt;, &lt;dd&gt;", "&lt;dl&gt;, &lt;dt&gt;, &lt;db&gt;"], correct: 0 },
+        { id: 15, type: "single", question: "Câu lệnh nào sau đây thiết đặt ảnh logo và khi nháy vào logo sẽ dẫn đến trang chủ?", options: ["&lt;a href=\"homepage.html\"&gt;logo.png&lt;/a&gt;", "&lt;img src=\"homepage.html\"&gt;&lt;a href=\"logo.png\"&gt;&lt;/a&gt;", "&lt;a href=\"homepage.html\"&gt;&lt;img src=\"logo.png\"&gt;&lt;/a&gt;", "&lt;a src=\"logo.png\"&gt;&lt;img href=\"homepage.html\"&gt;&lt;/a&gt;"], correct: 2 },
+        { id: 16, type: "single", question: "Nếu muốn định dạng tiêu đề h1 với các yêu cầu: cỡ chữ 36px; chữ màu đỏ (#FF0000) và căn giữa thì đoạn mã CSS nào sau đây là đúng?", options: ["h1 { font-size: 36px; color: #FF0000; text-align: center; }", "h1 { font-size: 36px; color: #FF0000; margin: center; }", "h1 { font-size: 36px; background-color: #FF0000; text-align: center; }", "h1 { height: 36px; color: #FF0000; text-align: center; }"], correct: 0 },
+        { id: 17, type: "single", question: "Kĩ năng nào sau đây không cần thiết đối với một kĩ thuật viên CNTT?", options: ["Kĩ năng sửa chữa các lỗi thường gặp của máy tính.", "Kĩ năng cài đặt phần mềm.", "Kĩ năng phân tích, thiết kế hệ thống.", "Kĩ năng lắp ráp máy tính."], correct: 2 },
+        { id: 18, type: "single", question: "Phát biểu nào sau đây sai về vai trò của chuyên gia Bảo mật hệ thống thông tin?", options: ["Cần có kiến thức vững về các kĩ thuật mã hoá và bảo vệ dữ liệu.", "Có khả năng phát hiện và ứng phó với các mối đe doạ an ninh mạng.", "Cần biết cách thiết lập và duy trì chính sách bảo mật cho tổ chức.", "Cần phải biết lập trình và sửa chữa các linh kiện phần cứng trong máy tính."], correct: 3 },
+        { id: 19, type: "single", question: "Khi một công ti phần mềm tuyển dụng lập trình viên, yếu tố nào được xem là quan trọng nhất trong quá trình lựa chọn ứng viên?", options: ["Kinh nghiệm làm việc trong các lĩnh vực không liên quan đến lập trình, như quản lí dự án.", "Khả năng hiểu biết sâu sắc về ngôn ngữ lập trình cụ thể cũng như khả năng áp dụng kĩ năng giải quyết vấn đề trong thực tế.", "Có bằng cấp từ các trường đại học nổi tiếng mà không cần kinh nghiệm thực tế trong lĩnh vực lập trình.", "Sự hiểu biết về xu hướng công nghệ mới và khả năng làm việc nhóm hiệu quả với các bộ phận khác."], correct: 1 },
+        { id: 20, type: "single", question: "Cho đoạn chương trình viết bằng ngôn ngữ Python như sau:<br><div class='code-block'>S = 0\nfor i in range(1, 8): # Từ 1 đến 7\n    if i % 2 == 0 and i % 3 == 0:\n        S += i**3 + i**2\n    elif i % 2 == 0:\n        S += i**2 - 2*i\n    elif i % 3 == 0:\n        S += i**3 - 3*i\n    else:\n        S += i**2 + i\nprint(S)</div>Giá trị của biến S sau khi thực hiện đoạn chương trình trên là:", options: ["576", "376", "366", "372"], correct: 3 },
+        { id: 21, type: "single", question: "Công việc thường gặp khi xử lí thông tin của một tổ chức là:", options: ["Tạo lập hồ sơ.", "Cập nhật hồ sơ.", "Khai thác hồ sơ.", "Tạo lập, cập nhật, khai thác hồ sơ."], correct: 3 },
+        { id: 22, type: "single", question: "Trong hệ QTCSDL, để tạo biểu mẫu ta chọn đối tượng nào trên bảng chọn đối tượng?", options: ["Queries.", "Forms.", "Tables.", "Reports."], correct: 1 },
+        { id: 23, type: "single", question: "Cho câu lệnh SQL như sau:<br>SELECT [Tên sách], [Giá tiền] FROM SÁCH<br>WHERE [Nhà xuất bản] = \"Kim Đồng\"<br>Chọn phương án là yêu cầu truy vấn của câu lệnh SQL", options: ["Tìm tên sách và giá tiền của những quyển sách của Nhà xuất bản Kim Đồng.", "Tìm trong bảng SÁCH thông tin tên sách và giá tiền của những quyển sách của Nhà xuất bản Kim Đồng.", "Tìm trong bảng SÁCH thông tin tên sách và số trang của những quyển sách của Nhà xuất bản Kim Đồng.", "Tìm tên sách và số trang của những quyển sách của Nhà xuất bản Kim Đồng."], correct: 1 },
+        { id: 24, type: "single", question: "Cho CSDL gồm 2 bảng:<br><b>Bảng NGƯỜI ĐỌC</b><br><table class='data-table w-full text-sm my-2'><tr><th>Số thẻ TV</th><th>Họ và tên</th><th>Ngày sinh</th><th>Lớp</th></tr><tr><td>HS-01</td><td>Lê Văn An</td><td>11/12/2007</td><td>12/7</td></tr><tr><td>HS-02</td><td>Trần Ánh</td><td>03/01/2007</td><td>12/5</td></tr><tr><td>HS-03</td><td>Nguyễn Bình</td><td>16/09/2007</td><td>12/3</td></tr><tr><td>HS-04</td><td>Lê Thị Mai</td><td>22/11/2007</td><td>12/1</td></tr><tr><td>HS-05</td><td>Minh Anh</td><td>01/01/2007</td><td>12/4</td></tr><tr><td>HS-06</td><td>Minh Tuấn</td><td>22/03/2007</td><td>12/7</td></tr></table><b>Bảng MƯỢN TRẢ</b><br><table class='data-table w-full text-sm my-2'><tr><th>Số thẻ TV</th><th>Mã sách</th><th>Ngày mượn</th><th>Ngày trả</th></tr><tr><td>HS-01</td><td>AN-01</td><td>10/02/2023</td><td>17/02/2023</td></tr><tr><td>HS-02</td><td>TN-01</td><td>22/12/2023</td><td>27/12/2023</td></tr><tr><td>HS-03</td><td>TH-01</td><td>07/05/2023</td><td>07/12/2023</td></tr></table><br>Bảng NGƯỜI ĐỌC có khoá chính là Số thẻ TV, bảng MƯỢN-TRẢ có khoá chính là Mã sách. Hai bảng này đã hình thành liên kết. Hãy chọn phương án là giá trị bản ghi <b>KHÔNG THỂ</b> thêm vào trường Số thẻ TV ở bảng MƯỢN TRẢ.", options: ["HS-03.", "HS-04.", "HS-06.", "HS-07."], correct: 3 },
+
+        // PHẦN 2 - CHUNG (Bắt buộc cho mọi định hướng)
+        { id: 'c1', type: 'tf_cluster', huong: 'chung', question: "Trong khi làm việc tại nhà, anh Minh cần tải gấp một tệp lớn từ máy tính lên Google Drive để chia sẻ với đồng nghiệp. Tuy nhiên, mạng Wi-Fi nhà anh bị hỏng. Anh có một điện thoại thông minh với kết nối 4G. Hãy đánh giá những phương án sau giúp anh Minh tải tệp thành công:", subQuestions: [
+            { id: 'tf1_a', text: "Mở điện thoại thông minh, bật tính năng chia sẻ Mobile hotspot để kết nối máy tính với mạng 4G từ điện thoại.", correct: "Đúng" },
+            { id: 'tf1_b', text: "Tới quán cafe gần nhà có Wi-Fi để tải tệp lên từ đó nhưng mạng Wi-Fi cũng bị hỏng.", correct: "Sai" },
+            { id: 'tf1_c', text: "Cắm cáp USB giữa điện thoại và máy tính rồi bật tính năng chia sẻ mạng qua USB từ điện thoại.", correct: "Đúng" },
+            { id: 'tf1_d', text: "Gọi cho nhà cung cấp dịch vụ Internet để kiểm tra và sửa chữa nhưng họ trả lời phải chờ thiết bị trong vài ngày tới.", correct: "Sai" }
+        ]},
+        
+        { id: 'c2', type: 'tf_cluster', huong: 'chung', question: "Một nhóm học sinh xây dựng trang web cho một sự kiện thể thao ở trường như sau:<br><div class='bg-white border-2 border-gray-300 p-5 rounded-xl my-4 text-gray-800 shadow-inner font-normal text-left'><h3 class='text-2xl font-black text-center text-blue-700 mb-4'>Giải Bóng Đá Sinh Viên 2024</h3><p class='mb-2'>Sự kiện diễn ra vào ngày 15/10/2024.</p><p class='mb-2'>Địa điểm: <b class='font-black text-black'>Sân vận động trường Đại học ABC</b></p><p class='mb-2'>Thời gian diễn ra: 15/10/2024 đến 20/10/2024</p><p class='mb-0'>Giá vé: 50.000 VND</p></div>Một học sinh có các ý kiến như sau:", subQuestions: [
+            { id: 'tf2_a', text: "Để hiển thị tiêu đề của sự kiện, trang web đã sử dụng thẻ &lt;h3&gt;.", correct: "Sai" },
+            { id: 'tf2_b', text: "Đoạn mã sau đây giúp hiển thị địa điểm sự kiện với định dạng in đậm: &lt;b&gt;Sân vận động trường Đại học ABC&lt;/b&gt;", correct: "Đúng" },
+            { id: 'tf2_c', text: "Để hiển thị thời gian diễn ra, sử dụng thẻ &lt;time&gt; như sau: Thời gian diễn ra: &lt;time&gt;15/10/2024 đến 20/10/2024&lt;/time&gt;", correct: "Đúng" },
+            { id: 'tf2_d', text: "Để hiển thị giá vé, cần sử dụng thẻ &lt;p&gt; như sau: &lt;p&gt;Giá vé: &lt;div&gt;50.000 VNĐ&lt;/div&gt;&lt;/p&gt;", correct: "Sai" }
+        ]},
+
+        // PHẦN 2 - CS (Khoa học máy tính)
+        { id: 'c3', type: 'tf_cluster', huong: 'CS', question: "Học máy đang được sử dụng để phát triển các phương pháp điều trị y tế cá nhân hoá dựa trên dữ liệu di truyền và lâm sàng của bệnh nhân. Sau đây là các phát biểu về ứng dụng của Học máy trong y tế cá nhân hoá:", subQuestions: [
+            { id: 'tf3_a', text: "Các mô hình học máy có thể phân tích dữ liệu di truyền để đề xuất phương pháp điều trị phù hợp cho từng bệnh nhân.", correct: "Đúng" },
+            { id: 'tf3_b', text: "Việc cá nhân hoá điều trị dựa trên học máy không cần sự can thiệp của bác sĩ trong quá trình ra quyết định.", correct: "Sai" },
+            { id: 'tf3_c', text: "Học máy giúp tối ưu hoá liều lượng thuốc và dự đoán phản ứng của cơ thể đối với các loại thuốc nhất định.", correct: "Đúng" },
+            { id: 'tf3_d', text: "Các mô hình học máy có thể sử dụng cho một số loại bệnh cụ thể và có thể ứng dụng rộng rãi trong các lĩnh vực y tế khác.", correct: "Đúng" }
+        ]},
+        { id: 'c4', type: 'tf_cluster', huong: 'CS', question: "Trong giờ học lập trình, cô giáo yêu cầu học sinh viết chương trình để tính tổng các phần tử trong một ma trận 2 chiều. Bạn Hải đã viết chương trình như sau:<br><div class='code-block'>def sum_A(A):\n    s = 0\n    for i in range(len(A)):\n        for j in range(len(A[i])):\n            s += A[i][j]\n    return s\n\nA = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nres = sum_A(A)\nprint(res)</div>Sau khi bạn Hải chiếu chương trình lên trước lớp, các bạn đã đưa ra nhận xét. Hãy đánh giá các nhận xét này là đúng hay sai:", subQuestions: [
+            { id: 'tf4_a', text: "Chương trình in ra kết quả là 45 khi chạy trên ma trận đã cho.", correct: "Đúng" },
+            { id: 'tf4_b', text: "Nếu trong ma trận có số âm, chương trình vẫn tính đúng tổng của tất cả các phần tử.", correct: "Đúng" },
+            { id: 'tf4_c', text: "Nếu thêm một hàng mới vào ma trận, chương trình vẫn chạy đúng và cho ra tổng chính xác.", correct: "Đúng" },
+            { id: 'tf4_d', text: "Nếu ma trận có một hàng không đều về số cột, chương trình sẽ gây lỗi khi thực thi.", correct: "Sai" }
+        ]},
+
+        // PHẦN 2 - ICT (Tin học ứng dụng)
+        { id: 'c5', type: 'tf_cluster', huong: 'ICT', question: "Một trường THPT dự định tạo trang web giới thiệu các câu lạc bộ, hoạt động ngoại khóa và các sự kiện nổi bật của trường hằng năm. Trang web có thể cung cấp thông tin đầy đủ về các câu lạc bộ, lịch hoạt động và những thành tích của học sinh, giáo viên. Trong cuộc thảo luận, một số giáo viên đưa ra các ý kiến như sau:", subQuestions: [
+            { id: 'tf5_a', text: "Trang web nên có một phần riêng để giới thiệu chi tiết về các câu lạc bộ, mỗi câu lạc bộ bao gồm số thành viên, hoạt động nổi bật và thông tin liên lạc với người phụ trách.", correct: "Đúng" },
+            { id: 'tf5_b', text: "Các phần mềm tạo website miễn phí không hỗ trợ việc tích hợp lịch sự kiện động trên trang web.", correct: "Sai" },
+            { id: 'tf5_c', text: "Khi trình bày thông tin về các hoạt động nên tạo bảng hoặc danh sách để người đọc dễ theo dõi.", correct: "Đúng" },
+            { id: 'tf5_d', text: "Việc chèn video giới thiệu hoạt động của trường, của các câu lạc bộ có thể giúp tăng tương tác người dùng.", correct: "Đúng" }
+        ]},
+        { id: 'c6', type: 'tf_cluster', huong: 'ICT', question: "Một trường học quản lí thông tin thư viện bằng CSDL quan hệ gồm các bảng sau:<br>• Bảng SACH lưu thông tin về sách, có các trường Mã sách (MaSach), Tên sách (TenSach), Tác giả (TacGia).<br>• Bảng DOC_GIA lưu thông tin về độc giả, có các trường Mã độc giả (MaDG), Họ tên (HoTen), Ngày sinh (NgaySinh).<br>• Bảng MUON_SACH lưu thông tin về việc mượn sách, có các trường Mã mượn (MaMuon), Ngày mượn (NgayMuon), Ngày trả (NgayTra), Mã độc giả (MaDG), Mã sách (MaSach).<br>Lưu ý: Mỗi cuốn sách, mỗi độc giả và mỗi phiếu mượn đều có một mã duy nhất. Sau đây là một số nhận xét về CSDL trên như sau:", subQuestions: [
+            { id: 'tf6_a', text: "Quan hệ giữa bảng SACH và bảng MUON_SACH là liên kết một – một.", correct: "Sai" },
+            { id: 'tf6_b', text: "Liên kết giữa bảng SACH và bảng MUON_SACH được thiết lập bằng biểu thức SACH.MaSach = MUON_SACH.MaSach.", correct: "Đúng" },
+            { id: 'tf6_c', text: "Truy vấn đưa ra danh sách các sách đã được mượn trong tháng 9 năm 2024 thì điều kiện truy vấn là biểu thức (MUON_SACH.NgayMuon >= '2024-09-01') AND (MUON_SACH.NgayMuon <= '2024-09-30').", correct: "Đúng" },
+            { id: 'tf6_d', text: "Câu lệnh SQL đưa ra danh sách các sách được mượn trong tháng 9 năm 2024. Kết quả bao gồm mã sách, tên sách và tác giả như sau:<br><div class='code-block'>SELECT SACH.MaSach, SACH.TenSach, SACH.TacGia\nFROM MUON_SACH\nJOIN SACH ON MUON_SACH.MaSach = SACH.MaSach\nWHERE (MUON_SACH.NgayMuon >= '2024-09-01')\nAND (MUON_SACH.NgayMuon <= '2024-09-30');</div>", correct: "Đúng" }
+        ]}
+    ];
+
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    const RealtimeSdk = {
+        init(handler) {
+            scoresRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const scoresList = [];
+                if (data) {
+                    for (let key in data) {
+                        scoresList.push({ id: key, ...data[key] });
+                    }
+                }
+                handler.onDataChanged(scoresList);
+            });
+            return Promise.resolve({ isOk: true });
+        },
+        create(record) {
+            return scoresRef.push(record)
+                .then(() => { return { isOk: true }; })
+                .catch(error => { console.error(error); return { isOk: false }; });
+        }
+    };
+
+    const dataHandler = {
+        onDataChanged(data) {
+            allScores = data || [];
+            renderScores();
+        }
+    };
+
+    function shuffleArray(array) {
+        let curId = array.length;
+        while (0 !== curId) {
+            let randId = Math.floor(Math.random() * curId);
+            curId -= 1;
+            let tmp = array[curId];
+            array[curId] = array[randId];
+            array[randId] = tmp;
+        }
+        return array;
+    }
+
+    function initApp() {
+        try {
+            if (!localStorage.getItem('deviceId')) {
+                localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+            }
+            deviceId = localStorage.getItem('deviceId');
+        } catch (e) {
+            deviceId = 'dev_' + Math.random().toString(36).substr(2) + Date.now();
+        }
+        
+        window.dataSdk = RealtimeSdk;
+        window.dataSdk.init(dataHandler);
+        setupEvents();
+    }
+
+    function setupEvents() {
+        document.getElementById('login-form').onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('hoTen').value.trim();
+            const lop = document.getElementById('lop').value.trim();
+            const huong = document.querySelector('input[name="chonHuong"]:checked').value;
+            
+            if (name && lop) {
+                currentStudent = { hoTen: name, lop: lop, huong: huong };
+                
+                let rawData = JSON.parse(JSON.stringify(rawQuestions));
+                let part1 = rawData.filter(q => q.type === 'single');
+                
+                part1 = shuffleArray(part1);
+                part1.forEach((q, idx) => {
+                    q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+                    let correctText = q.options[q.correct];
+                    q.options = shuffleArray(q.options);
+                    q.correct = q.options.indexOf(correctText);
+                });
+
+                let part2_chung = rawData.filter(q => q.type === 'tf_cluster' && q.huong === 'chung');
+                let part2_rieng = rawData.filter(q => q.type === 'tf_cluster' && q.huong === huong);
+
+                part2_chung = shuffleArray(part2_chung);
+                part2_rieng = shuffleArray(part2_rieng);
+
+                let part2 = [...part2_chung, ...part2_rieng];
+
+                part2.forEach((q, idx) => {
+                    q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+                    q.subQuestions = shuffleArray(q.subQuestions);
+                    const labels = ['a)', 'b)', 'c)', 'd)'];
+                    q.subQuestions.forEach((sub, sIdx) => {
+                        sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                        sub.text = `${labels[sIdx]} ${sub.text}`;
+                    });
+                });
+
+                currentQuestions = [...part1, ...part2];
+                startQuiz();
+            } else {
+                alert("Vui lòng nhập đủ Họ tên và Lớp!");
+            }
+        };
+
+        document.getElementById('view-scores-btn').onclick = () => {
+            document.getElementById('view-scores-btn').innerText = "⏳ Đang tải dữ liệu...";
+            showSection('scores');
+        };
+        document.getElementById('next-btn').onclick = nextQuestion;
+        document.getElementById('submit-btn').onclick = submitQuiz;
+    }
+
+    function goHome() {
+        document.body.classList.remove('is-reviewing');
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(floatingBar) floatingBar.style.display = 'none';
+        
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    }
+
+    let currentIdx = 0;
+    function startQuiz() {
+        quizStartTime = new Date();
+        cheatCount = 0;
+        
+        setTimeout(() => { isQuizStarted = true; }, 1000);
+
+        document.body.classList.remove('is-reviewing');
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(floatingBar) floatingBar.style.display = 'none';
+        
+        document.getElementById('timer-banner').style.display = 'flex';
+        document.getElementById('nav-buttons').style.display = 'flex';
+        document.getElementById('progress-container').style.display = 'block';
+
+        showSection('quiz');
+        document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop} (${currentStudent.huong})`;
+        currentIdx = 0;
+        userAnswers = {};
+        renderQuestion();
+        startTimer(45 * 60); 
+    }
+
+    function retryQuiz() {
+        document.getElementById('login-form').dispatchEvent(new Event('submit'));
+    }
+
+    function getTotalItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.subQuestions.length;
+            else count++;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id]) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined) count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        updateProgress();
+    };
+
+    function renderQuestion() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3">
+                        <span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span>
+                        <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">TRẮC NGHIỆM ĐÚNG/SAI (${q.huong === 'chung' ? 'Phần Chung' : 'Phần ' + q.huong})</h3>
+                    </div>
+
+                    <div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-800 text-base md:text-lg font-medium leading-relaxed shadow-inner">
+                        ${q.displayQuestion}
+                    </div>
+                    <div class="space-y-3 md:pl-6">
+                        ${q.subQuestions.map(sub => `
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all">
+                                <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                                <div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
+                                    <input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" 
+                                        onchange="selectAnswer('${sub.id}', 'Đúng', 'tf')" ${isChecked(sub.id, 'Đúng') ? 'checked' : ''}>
+                                    <label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Đúng</label>
+
+                                    <input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" 
+                                        onchange="selectAnswer('${sub.id}', 'Sai', 'tf')" ${isChecked(sub.id, 'Sai') ? 'checked' : ''}>
+                                    <label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Sai</label>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="fade-in">
+                    ${currentIdx === 0 ? `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3">
+                        <span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span>
+                        <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM NHIỀU LỰA CHỌN</h3>
+                    </div>` : ''}
+
+                    <div class="flex gap-4 mb-5">
+                        <div class="w-full">
+                            <p class="text-xl font-semibold text-red-700 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4 md:pl-14 mt-6">
+                        ${q.options.map((opt, i) => `
+                            <div class="flex items-center">
+                                <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio"
+                                    ${isChecked(q.id, i) ? 'checked' : ''}
+                                    onchange="selectAnswer('${q.id}', ${i}, 'single')">
+                                <label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg">
+                                    <span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors">
+                                        ${String.fromCharCode(65 + i)}
+                                    </span>
+                                    <span class="text-gray-700 leading-relaxed font-normal">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        updateNav();
+        updateProgress();
+    }
+
+    function isChecked(qId, val) {
+        return userAnswers[qId] === val;
+    }
+
+    function nextQuestion() {
+        if (currentIdx < currentQuestions.length - 1) {
+            currentIdx++;
+            renderQuestion();
+        }
+    }
+
+    function updateNav() {
+        const isLast = currentIdx === currentQuestions.length - 1;
+        document.getElementById('next-btn').style.display = isLast ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = isLast ? 'block' : 'none';
+    }
+
+    function updateProgress() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    }
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    async function submitQuiz() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correct = 0;
+        let totalItems = getTotalItems(); 
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] === sub.correct) correct++;
+                });
+            } else {
+                if (userAnswers[q.id] === q.correct) correct++;
+            }
+        });
+        
+        const score = (correct * 10 / totalItems).toFixed(2);
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        const record = {
+            hoTen: currentStudent.hoTen,
+            lop: currentStudent.lop,
+            huong: currentStudent.huong,
+            diem: parseFloat(score),
+            soCauDung: correct,
+            tongCau: totalItems,
+            startTime: quizStartTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+            duration: formatDuration(durationSeconds),
+            thoiGian: new Date().toISOString(),
+            deviceId: deviceId 
+        };
+
+        if (window.dataSdk) {
+            const result = await window.dataSdk.create(record);
+
+            if (result.isOk) {
+                showModalResult(score, correct, totalItems, record.duration);
+            } else {
+                alert("Lỗi mạng! Không thể lưu điểm. Vui lòng thử lại.");
+            }
+        }
+    }
+
+    function showModalResult(score, correct, total, dur) {
+        const modal = document.getElementById('result-modal');
+        const content = document.getElementById('result-content');
+        modal.classList.remove('hidden');
+        
+        content.innerHTML = `
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-green-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2">
+                <span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - ${currentStudent.lop}</span>
+                <br><span class="text-sm font-bold text-gray-400 mt-1 block">Định hướng ${currentStudent.huong}</span>
+            </p>
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative">
+                <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+                <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+                <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Đúng ${correct}/${total} ý | Tổng TG: ${dur}</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="reviewQuiz()" class="w-full py-3 bg-gray-100 text-blue-700 border-2 border-blue-200 rounded-xl font-extrabold shadow-sm hover:bg-blue-50 transition-colors text-lg">🔎 Xem lại bài</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden'); document.getElementById('view-scores-btn').click();" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+            </div>
+            <button onclick="goHome()" class="w-full py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏠 Về trang chủ</button>
+        `;
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('scores-section').classList.add('hidden');
+        document.getElementById('quiz-section').classList.remove('hidden');
+        
+        document.body.classList.add('is-reviewing');
+        
+        document.getElementById('timer-banner').style.display = 'none';
+        document.getElementById('nav-buttons').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'none';
+
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(!floatingBar) {
+            floatingBar = document.createElement('div');
+            floatingBar.id = 'review-floating-bar';
+            floatingBar.className = "fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-200 p-4 flex gap-4 justify-center shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-50";
+            floatingBar.innerHTML = `
+                <button onclick="goHome()" class="px-6 py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏠 Về trang chủ</button>
+                <button onclick="retryQuiz()" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-extrabold shadow-md hover:bg-blue-700 transition-colors text-lg">🔄 Làm lại bài</button>
+            `;
+            document.body.appendChild(floatingBar);
+        }
+        floatingBar.style.display = 'flex';
+
+        const container = document.getElementById('question-container');
+        container.innerHTML = currentQuestions.map((q, idx) => {
+            
+            let headerHtml = '';
+            if (idx === 0) {
+                headerHtml = `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-blue-200 pb-3 mt-4">
+                        <span class="bg-gradient-to-br from-blue-500 to-cyan-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">I</span>
+                        <h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-700 uppercase tracking-widest">Phần Trắc Nghiệm Nhiều Lựa Chọn</h3>
+                    </div>
+                `;
+            } else if (q.type === 'tf_cluster' && currentQuestions[idx - 1] && currentQuestions[idx - 1].type === 'single') {
+                headerHtml = `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-orange-200 pb-3 mt-10">
+                        <span class="bg-gradient-to-br from-orange-500 to-red-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">II</span>
+                        <h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-700 to-red-700 uppercase tracking-widest">Phần Trắc Nghiệm Đúng/Sai</h3>
+                    </div>
+                `;
+            }
+
+            if (q.type === 'single') {
+                let penaltyHtml = userAnswers[q.id] === -1 ? `<div class="mb-4 inline-block font-extrabold text-red-700 bg-red-50 px-4 py-2 rounded-xl border border-red-200 shadow-sm">⚠️ Bị tước quyền (Gian lận) | Đáp án đúng: ${String.fromCharCode(65 + q.correct)}</div>` : "";
+
+                let optionsHtml = q.options.map((opt, i) => {
+                    let isSelected = isChecked(q.id, i);
+                    let isCorrect = (q.correct === i);
+                    let stateClass = "review-neutral";
+                    let icon = "";
+                    
+                    if (isCorrect) {
+                        stateClass = "review-correct shadow-md";
+                        icon = "✅";
+                    } else if (isSelected && !isCorrect) {
+                        stateClass = "review-incorrect";
+                        icon = "❌";
+                    }
+                    
+                    return `
+                        <div class="p-4 border-2 rounded-2xl flex items-center gap-4 ${stateClass} mb-3 font-bold text-lg pointer-events-none">
+                            <span class="w-10 h-10 rounded-xl border-2 flex items-center justify-center text-base font-black flex-shrink-0 bg-white/50 border-gray-300/50">${String.fromCharCode(65 + i)}</span>
+                            <span class="leading-relaxed flex-1 font-normal">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                            <span>${icon}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    ${headerHtml}
+                    <div class="mb-8">
+                        <div class="mb-4">
+                            <div class="text-xl font-semibold text-red-700 leading-snug">${q.displayQuestion}</div>
+                        </div>
+                        ${penaltyHtml}
+                        <div class="md:pl-6">${optionsHtml}</div>
+                    </div>
+                `;
+            } else {
+                let subHtml = q.subQuestions.map(sub => {
+                    let userAns = userAnswers[sub.id];
+                    let isCorrect = userAns === sub.correct;
+                    
+                    let ansText = "";
+                    let colorClass = "";
+                    if (userAns === "Gian lận") {
+                        ansText = `⚠️ Bị tước quyền (Gian lận) | Đáp án chuẩn: ${sub.correct}`;
+                        colorClass = "text-red-800 bg-red-100 border-red-300";
+                    } else if (userAns) {
+                        ansText = isCorrect ? `✅ Chính xác (Bạn chọn: ${userAns})` : `❌ Trả lời sai (Bạn chọn: ${userAns} | Đáp án: ${sub.correct})`;
+                        colorClass = isCorrect ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200';
+                    } else {
+                        ansText = `➖ Bỏ qua (Đáp án chuẩn: ${sub.correct})`;
+                        colorClass = 'text-orange-600 bg-orange-50 border-orange-200';
+                    }
+
+                    return `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 rounded-2xl gap-4 shadow-sm mb-3">
+                            <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                            <div class="font-extrabold ${colorClass} text-sm whitespace-nowrap px-4 py-2 rounded-xl border border-gray-100">
+                                ${ansText}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    ${headerHtml}
+                    <div class="mb-8 p-4 bg-gray-50 rounded-2xl border-2 border-gray-200 font-medium">
+                        <div class="text-xl font-semibold text-red-700 mb-4">${q.displayQuestion}</div>
+                        <div>${subHtml}</div>
+                    </div>
+                `;
+            }
+        }).join('<div class="my-6 border-b-2 border-dashed border-gray-200"></div>');
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) {
+            tbody.innerHTML = '';
+            document.getElementById('no-scores').classList.remove('hidden');
+            document.getElementById('view-scores-btn').innerText = "🏆 Xem bảng điểm";
+            return;
+        }
+        document.getElementById('no-scores').classList.add('hidden');
+
+        const sorted = [...allScores].sort((a, b) => {
+            let lopA = (a.lop || "").toLowerCase();
+            let lopB = (b.lop || "").toLowerCase();
+            if (lopA < lopB) return -1;
+            if (lopA > lopB) return 1;
+
+            let tenA = (a.hoTen || "").toLowerCase();
+            let tenB = (b.hoTen || "").toLowerCase();
+            if (tenA < tenB) return -1;
+            if (tenA > tenB) return 1;
+
+            return b.diem - a.diem;
+        });
+
+        tbody.innerHTML = sorted.map((s, idx) => {
+            const rowClass = s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-gray-50';
+            const meBadge = s.deviceId === deviceId ? '<span class="ml-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs px-3 py-1 rounded-full font-black shadow-sm uppercase tracking-wider">Bạn</span>' : '';
+            const date = new Date(s.thoiGian).toLocaleString('vi-VN');
+
+            const cauDung = s.soCauDung !== undefined ? s.soCauDung : '-';
+            const tongCau = s.tongCau !== undefined ? s.tongCau : '-';
+            const tenLop = s.lop || '';
+
+            return `
+                <tr class="${rowClass} transition-colors">
+                    <td class="px-3 sm:px-5 py-4 text-center font-black text-gray-400 text-lg">#${idx + 1}</td>
+                    <td class="px-3 sm:px-5 py-4 font-bold text-gray-700 text-base">${tenLop}</td>
+                    <td class="px-3 sm:px-5 py-4 font-extrabold text-gray-800 whitespace-nowrap text-lg">${s.hoTen || ''} ${meBadge}</td>
+                    <td class="px-3 sm:px-5 py-4 text-sm font-bold text-blue-500 whitespace-nowrap bg-blue-50/50 rounded-lg inline-block mt-3">${s.huong || ''}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-gray-600 font-bold text-lg">${cauDung}/${tongCau}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-green-600' : 'text-red-500 drop-shadow-sm'}">${s.diem}</span></td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.startTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.endTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-right text-xs text-orange-600 font-bold">${s.duration || '--'}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        document.getElementById('view-scores-btn').innerText = "🏆 Xem bảng điểm";
+        
+        setTimeout(() => {
+            const myRow = document.querySelector('.my-score-row');
+            if (myRow) myRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) submitQuiz();
+        }, 1000);
+    }
+
+    initApp();
+  </script>
+ </body>
+</html>
