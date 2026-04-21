@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Tin Học 12: Mạng Máy Tính</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      -webkit-user-select: none !important; -moz-user-select: none !important;
+      -ms-user-select: none !important; user-select: none !important; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    input, textarea, select {
+      -webkit-user-select: auto !important; -moz-user-select: auto !important;
+      -ms-user-select: auto !important; user-select: auto !important;
+      pointer-events: auto !important;
+    }
+    #app { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; padding-bottom: 50px; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    /* Nút chọn Phần I */
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    /* Nút chọn Phần II */
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    .code-block { background: #f8fafc; color: #1e3a8a; padding: 15px 20px; border-radius: 10px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; margin: 15px 0; font-size: 16px; font-weight: 700; border: 1px solid #e2e8f0; border-left: 5px solid #3b82f6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; font-size: 0.95rem; text-align: left;}
+    .data-table th, .data-table td { border: 1px solid #cbd5e1; padding: 8px 12px; }
+    .data-table th { background-color: #f1f5f9; font-weight: bold; color: #334155; }
+    .data-table tr:nth-child(even) { background-color: #f8fafc; }
+
+    /* CSS chế độ xem lại - Tăng padding-bottom để không bị nút nổi che khuất câu cuối */
+    body.is-reviewing #app { padding-bottom: 160px; } 
+    .review-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+    .review-incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; text-decoration: line-through; opacity: 0.8; }
+    .review-neutral { background-color: #ffffff !important; border-color: #e2e8f0 !important; opacity: 0.5; }
+  </style>
+ </head>
+ <body oncopy="return false" oncut="return false" onpaste="return false">
+  <div id="app" class="p-0 sm:p-4 md:p-8 flex flex-col sm:block transition-all">
+   
+   <div id="login-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-md mx-auto fade-in flex-grow flex flex-col sm:justify-center">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start flex-grow sm:flex-grow-0">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="w-24 h-24 bg-gradient-to-br from-pink-500 to-orange-400 rounded-3xl mx-auto mb-2 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
+       <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253"></path></svg>
+      </div>
+   
+      <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 mb-1">ÔN TẬP: MẠNG MÁY TÍNH</h1>
+      <p class="text-gray-600 font-bold">Thời gian làm bài: 45 Phút</p>
+     </div>
+     
+     <form id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all" placeholder="12A1">
+          </div>
+      </div>
+      <button type="submit" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl"> 🚀 BẮT ĐẦU ÔN TẬP </button>
+     </form>
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button id="view-scores-btn" type="button" class="text-blue-600 font-extrabold hover:text-blue-800 hover:underline transition-colors text-lg">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      <div>
+       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Ôn Tập: Mạng Máy Tính</h2>
+       <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+      </div>
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" class="flex-1 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold text-lg rounded-xl shadow-md transition-all transform hover:-translate-y-1" style="display: none;">⬅ Câu trước</button>
+        <button id="next-btn" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow">
+     <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+      <button onclick="goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Về màn hình chính</button>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-2 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Đúng</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-[2rem] shadow-2xl p-8 max-w-md w-full fade-in text-center flex flex-col border-t-8 border-green-500" id="result-content"></div>
+   </div>
+
+  </div>
+
+  <script>
+    // ==================== BẢO VỆ TÀI LIỆU ====================
+    document.addEventListener('contextmenu', event => event.preventDefault()); 
+    document.addEventListener('selectstart', event => {
+        if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'SELECT') { event.preventDefault(); }
+    });
+    document.addEventListener('dragstart', event => event.preventDefault()); 
+    document.addEventListener('copy', event => {
+        event.clipboardData.setData('text/plain', 'Tài liệu đã được bảo vệ!');
+        event.preventDefault();
+    });
+
+    let isQuizStarted = false; 
+
+    // ==================== CẤU HÌNH FIREBASE ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+        messagingSenderId: "1046142513655",
+        appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tin12_ontap_mang');
+
+    // ==================== NGÂN HÀNG CÂU HỎI MỚI (MẠNG MÁY TÍNH) ====================
+    const rawQuestions = [
+        // PHẦN 1: TRẮC NGHIỆM MỘT LỰA CHỌN (16 CÂU)
+        { id: 1, type: "single", question: "Phát biểu nào sau đây mô tả sai về việc kết nối máy tính với các thiết bị khác qua mạng Wi-Fi?", options: ["Để kết nối vào mạng Wi-Fi, cần phải biết cả tên mạng và mật khẩu truy cập nếu mạng có bảo mật.", "Hiện nay, hầu hết các laptop và điện thoại thông minh đều được trang bị sẵn Card mạng không dây (NIC) để kết nối vào Wi-Fi.", "Để kết nối laptop hoặc điện thoại thông minh vào Wi-Fi, chỉ cần liên kết với bất kì điểm truy cập nào trong phạm vi phủ sóng.", "Để kết nối máy tính cá nhân hoặc điện thoại thông minh vào mạng Wi-Fi, cần kết nối với Access Point của mạng đó."], correct: 2 },
+        { id: 2, type: "single", question: "Phương án nào sau đây mô tả đúng về một giao thức mạng có nhiệm vụ truyền tải các gói dữ liệu tin cậy, theo thứ tự và có khả năng kiểm tra lỗi, điều chỉnh tốc độ truyền?", options: ["HTTP.", "SMTP.", "TCP.", "IP."], correct: 2 },
+        { id: 3, type: "single", question: "Phát biểu nào sau đây sai khi nói về các giao thức mạng?", options: ["TCP đảm bảo các gói tin được truyền tải tin cậy và theo đúng thứ tự giữa các thiết bị.", "HTTP là giao thức truyền tải siêu văn bản giữa trình duyệt và máy chủ web.", "FTP là giao thức truyền tải tệp tin, thường được sử dụng để chia sẻ tệp qua Internet.", "SMTP được sử dụng để truyền tải tập tin lớn giữa các máy tính trong mạng."], correct: 3 },
+        { id: 4, type: "single", question: "Phát biểu nào sau đây mô tả sai về giao thức IP?", options: ["Giao thức IP là một phần quan trọng của bộ giao thức Internet, được sử dụng để định danh và truyền tải các gói tin qua mạng.", "IP là viết tắt của Internet Protocol, chịu trách nhiệm định địa chỉ cho các gói tin dữ liệu.", "Hiện nay chỉ có địa chỉ IP phiên bản 6 (IPv6) được sử dụng, các phiên bản cũ như IPv4 đã hoàn toàn bị thay thế và không còn dùng nữa.", "Giao thức IP hỗ trợ việc định tuyến trên mạng, giúp các bộ định tuyến (router) xác định tuyến đường phù hợp để gửi gói tin đến đích."], correct: 2 },
+        { id: 5, type: "single", question: "Phát biểu nào sau đây mô tả sai về khả năng của thiết bị switch?", options: ["Kết nối các thiết bị trong mạng nội bộ theo mô hình hình sao.", "Mở rộng băng thông cho mạng bằng cách phân phối dữ liệu giữa các thiết bị.", "Định tuyến các gói tin giữa các mạng khác nhau.", "Quản lí lưu lượng dữ liệu giữa các thiết bị trong mạng để tránh xung đột."], correct: 2 },
+        { id: 6, type: "single", question: "Ngoài việc cung cấp kết nối không dây, Access Point còn có chức năng nào sau đây?", options: ["Tăng cường khả năng truyền tải dữ liệu cho các thiết bị trong mạng.", "Chuyển đổi tín hiệu số thành tín hiệu tương tự để truyền tải qua mạng.", "Biến đổi tín hiệu tương tự thành tín hiệu số khi nhận dữ liệu.", "Hỗ trợ điều phối và quản lí lưu lượng dữ liệu giữa các thiết bị kết nối."], correct: 3 },
+        { id: 7, type: "single", question: "Đặc điểm nào sau đây thể hiện một trong những lợi ích của giao thức TCP/IP?", options: ["Đảm bảo tính bảo mật cao khi truyền tải dữ liệu qua Internet.", "Cung cấp khả năng kết nối và truyền tải dữ liệu giữa nhiều loại thiết bị khác nhau.", "Hỗ trợ khả năng xử lí và truyền tải các ứng dụng đa phương tiện.", "Đảm bảo các gói dữ liệu được gửi đi theo đúng thứ tự và kiểm tra lỗi trong quá trình truyền tải."], correct: 1 },
+        { id: 8, type: "single", question: "Phương án nào sau đây mô tả đúng về một giao thức mạng có nhiệm vụ định danh gói tin bằng cách gắn địa chỉ IP của trạm gửi và trạm nhận, sau đó xác định tuyến đường tốt nhất cho gói tin?", options: ["HTTP.", "SMTP.", "TCP.", "IP."], correct: 3 },
+        { id: 9, type: "single", question: "Khi đang cấu hình một thiết bị mạng để gửi dữ liệu, điều quan trọng là phải thực hiện một giao thức mạng nhất định ngay trước khi bắt đầu truyền gói dữ liệu. Giao thức nào sau đây cần được thực hiện tại thiết bị gửi trước khi gửi gói dữ liệu đi?", options: ["Giao thức TCP (Transmission Control Protocol).", "Giao thức HTTP (Hypertext Transfer Protocol).", "Giao thức FTP (File Transfer Protocol).", "Giao thức ICMP (Internet Control Message Protocol)."], correct: 0 },
+        { id: 10, type: "single", question: "Lựa chọn nào sau đây cho phép người dùng kích hoạt tính năng chia sẻ tệp tin và thư mục?", options: ["Enable Sharing.", "Share this folder.", "Turn on network discovery.", "Allow access to files."], correct: 1 },
+        { id: 11, type: "single", question: "Thẻ nào trong cửa sổ Properties cho phép người dùng thiết lập chức năng chia sẻ?", options: ["General.", "Sharing.", "Security.", "Details."], correct: 1 },
+        { id: 12, type: "single", question: "Trong một văn phòng, sau khi đã bật tính năng chia sẻ máy in, một nhân viên cần chia sẻ máy in với các đồng nghiệp của mình để họ có thể in tài liệu dễ dàng. Lựa chọn nào sau đây cho phép người dùng thiết lập việc chia sẻ máy in để mọi người cùng sử dụng?", options: ["Share this printer.", "Configure printer settings.", "Stop sharing this printer.", "Add a new printer."], correct: 0 },
+        { id: 13, type: "single", question: "Trong một buổi họp nhóm tại văn phòng, một nhân viên được giao nhiệm vụ chia sẻ một ổ đĩa trên máy tính của mình với đồng nghiệp để họ có thể truy cập và đọc dữ liệu quan trọng. Nhân viên đó cần thực hiện thao tác nào sau đây để chia sẻ ổ đĩa?", options: ["Nháy nút phải chuột vào ổ đĩa cần chia sẻ, chọn Properties/Advanced Sharing, chọn nhóm hoặc tên người dùng cần chia sẻ và cấp quyền Full control.", "Nháy nút phải chuột vào ổ đĩa cần chia sẻ, chọn Properties/Advanced Sharing, chọn nhóm hoặc tên người dùng cần chia sẻ và cấp quyền Change.", "Nháy nút phải chuột vào ổ đĩa cần chia sẻ, chọn Properties/Advanced Sharing, chọn nhóm hoặc tên người dùng cần chia sẻ và cấp quyền Read.", "Nháy nút phải chuột vào ổ đĩa cần chia sẻ, chọn Properties/Advanced Sharing, chọn nhóm hoặc tên người dùng cần chia sẻ và cấp tất cả các quyền (Full control, Change, Read)."], correct: 2 },
+        { id: 14, type: "single", question: "Một nhân viên đang làm việc tại văn phòng và cần chia sẻ kết nối Internet từ điện thoại di động của mình với đồng nghiệp để họ có thể truy cập tài liệu trực tuyến. Phương án nào sau đây mô tả đúng các bước để thiết lập điểm truy cập mạng di động (Mobile hotspot)?", options: ["Nhập địa chỉ IP vào trình duyệt để kích hoạt.", "Cài đặt > Mạng & Internet > Bật Mobile hotspot.", "Cài đặt > Ứng dụng > Kích hoạt chia sẻ mạng.", "Mở Bluetooth để kết nối chia sẻ."], correct: 1 },
+        { id: 15, type: "single", question: "Sau khi kết nối thiết bị thông minh vào mạng Wi-Fi tại nhà, bạn nhận được thông báo rằng hệ thống không thể tìm thấy thiết bị này. Để khắc phục sự cố, bạn cần bật chức năng Network discovery để kiểm tra các thiết bị đã kết nối. Biểu tượng nào sau đây sẽ giúp bạn thực hiện điều này?", options: ["Biểu tượng Cài đặt (Settings) trong thanh tác vụ.", "Biểu tượng Mạng (Network) trên màn hình chính hoặc Control Panel.", "Biểu tượng Wi-Fi trong phần thông báo.", "Biểu tượng Cài đặt mạng (Network Settings) trong bảng điều khiển."], correct: 1 },
+        { id: 16, type: "single", question: "Trong một phòng máy tính của trường học, bạn cần kết nối máy tính của mình với switch để có thể truy cập Internet và chia sẻ tài nguyên. Bạn sẽ sử dụng loại dây nào sau đây để thực hiện kết nối này?", options: ["Dây cáp quang (Fiber optic cable).", "Dây cáp mạng Ethernet (Ethernet cable).", "Dây cáp HDMI (HDMI cable).", "Dây cáp USB (USB cable)."], correct: 1 },
+
+        // PHẦN 2 - TRẮC NGHIỆM ĐÚNG SAI (17 CÂU)
+        { id: 'c1', type: 'tf_cluster', question: "Hiệu trưởng trường THPT ABC yêu cầu nhân viên CNTT tạo một thư mục chia sẻ để lưu trữ báo cáo cuộc họp hằng tháng và cho phép nhóm GIÁO VIÊN có thể xem các báo cáo này. Hãy đánh giá những cách phân quyền sau đây:", subQuestions: [
+            { id: 'tf1_a', text: "Phân quyền Full Control cho nhóm Everyone.", correct: "Sai" },
+            { id: 'tf1_b', text: "Phân quyền Read cho nhóm Everyone.", correct: "Sai" },
+            { id: 'tf1_c', text: "Phân quyền Read cho nhóm GIÁO VIÊN.", correct: "Đúng" },
+            { id: 'tf1_d', text: "Phân quyền Modify cho nhóm GIÁO VIÊN.", correct: "Sai" }
+        ]},
+        
+        { id: 'c2', type: 'tf_cluster', question: "Phòng CNTT của trường Đại học XYZ được giao nhiệm vụ tạo một thư mục chia sẻ để lưu trữ Tài liệu năm học 2023-2024 và cần đảm bảo rằng chỉ sinh viên mới có thể đọc được và chỉ giảng viên mới có thể chỉnh sửa. Hãy đánh giá những giải pháp sau đây:", subQuestions: [
+            { id: 'tf2_a', text: "Phân quyền Full Control cho nhóm SINH VIÊN.", correct: "Sai" },
+            { id: 'tf2_b', text: "Phân quyền Read cho nhóm GIẢNG VIÊN.", correct: "Sai" },
+            { id: 'tf2_c', text: "Phân quyền Read cho nhóm SINH VIÊN và quyền Modify cho nhóm GIẢNG VIÊN.", correct: "Đúng" },
+            { id: 'tf2_d', text: "Phân quyền Modify cho nhóm SINH VIÊN.", correct: "Sai" }
+        ]},
+
+        { id: 'c3', type: 'tf_cluster', question: "Trong một trường học, có phòng máy với 30 máy tính kết nối với một hệ thống mạng có đặc điểm như sau: Các máy tính có thể chia sẻ tài liệu với nhau qua mạng LAN. Một bộ phát Wi-Fi được kết nối với một router. Cáp Internet được kết nối từ router đến phòng máy. Hãy nhận xét về các thiết bị và cấu hình mạng sau:", subQuestions: [
+            { id: 'tf3_a', text: "Các máy tính trong phòng máy có thể chia sẻ dữ liệu với nhau thông qua mạng LAN.", correct: "Đúng" },
+            { id: 'tf3_b', text: "Nếu router bị ngắt kết nối với Internet, các máy tính trong phòng vẫn có thể chia sẻ tài liệu với nhau.", correct: "Đúng" },
+            { id: 'tf3_c', text: "Việc sử dụng một switch trong mạng có thể giúp tăng hiệu quả kết nối giữa các máy tính so với việc chỉ sử dụng router.", correct: "Đúng" },
+            { id: 'tf3_d', text: "Thêm một hub vào hệ thống mạng sẽ cải thiện tốc độ kết nối cho các máy tính trong phòng.", correct: "Sai" }
+        ]},
+
+        { id: 'c4', type: 'tf_cluster', question: "Tại văn phòng một công ti, có một mạng nội bộ với các đặc điểm sau: Có 20 máy tính được kết nối với một switch. Switch được kết nối với một router để ra Internet. Một cáp Ethernet nối router với bộ phát Wi-Fi. Hãy đánh giá những thông tin sau:", subQuestions: [
+            { id: 'tf4_a', text: "Bộ switch chịu trách nhiệm phân phối dữ liệu giữa các máy tính trong văn phòng.", correct: "Đúng" },
+            { id: 'tf4_b', text: "Nếu bộ phát Wi-Fi bị ngắt, các máy tính kết nối với switch vẫn có thể truy cập Internet.", correct: "Đúng" },
+            { id: 'tf4_c', text: "Tất cả máy tính trong văn phòng phải kết nối qua bộ phát Wi-Fi để truy cập Internet.", correct: "Sai" },
+            { id: 'tf4_d', text: "Sử dụng thêm một router thay cho switch sẽ giúp mạng hoạt động nhanh hơn khi nhiều máy tính sử dụng cùng lúc.", correct: "Sai" }
+        ]},
+
+        { id: 'c5', type: 'tf_cluster', question: "Trong một trường học, có 8 phòng máy tính chuyên dụng, mỗi phòng có 3 máy tính để bàn, được kết nối với một hub trung tâm. Các phòng được kết nối với nhau thông qua một switch nằm trong tủ mạng chính. Hãy đánh giá những nhận xét sau:", subQuestions: [
+            { id: 'tf5_a', text: "Các phòng máy có thể chia sẻ dữ liệu với nhau qua mạng nội bộ nhờ switch trung tâm.", correct: "Đúng" },
+            { id: 'tf5_b', text: "Sử dụng một hub để kết nối các máy tính trong mỗi phòng sẽ tiết kiệm chi phí hơn so với việc sử dụng một switch trong mỗi phòng.", correct: "Đúng" },
+            { id: 'tf5_c', text: "Cấu trúc mạng trong trường học là cấu trúc hình sao, với switch là thiết bị trung tâm.", correct: "Đúng" },
+            { id: 'tf5_d', text: "Nếu một hub trong một phòng bị hỏng, tất cả các máy tính trong phòng đó vẫn có thể kết nối với mạng.", correct: "Sai" }
+        ]},
+
+        { id: 'c6', type: 'tf_cluster', question: "Ban giám hiệu trường THPT XYZ yêu cầu tạo một thư mục LỚP HỌC cho phép nhóm GIÁO VIÊN có thể xem và chỉnh sửa nội dung bên trong. Nhân viên quản lí phòng hành chính đưa ra các phương án sau:", subQuestions: [
+            { id: 'tf6_a', text: "Phân quyền Full Control cho nhóm người dùng GIÁO VIÊN.", correct: "Sai" },
+            { id: 'tf6_b', text: "Phân quyền Modify cho nhóm người dùng GIÁO VIÊN.", correct: "Đúng" },
+            { id: 'tf6_c', text: "Phân quyền Read cho nhóm người dùng GIÁO VIÊN.", correct: "Sai" },
+            { id: 'tf6_d', text: "Phân quyền Write cho nhóm người dùng GIÁO VIÊN.", correct: "Sai" }
+        ]},
+
+        { id: 'c7', type: 'tf_cluster', question: "Ban giám hiệu trường THPT Lý Tự Trọng yêu cầu phòng hành chính tạo một thư mục DỰ ÁN để cho phép nhóm HỌC SINH có thể nộp bài tập và sửa đổi nội dung. Nhân viên quản lí phòng hành chính đưa ra các phương án sau:", subQuestions: [
+            { id: 'tf7_a', text: "Phân quyền Full Control cho nhóm người dùng HỌC SINH.", correct: "Sai" },
+            { id: 'tf7_b', text: "Phân quyền Write cho nhóm người dùng HỌC SINH.", correct: "Sai" },
+            { id: 'tf7_c', text: "Phân quyền Read cho nhóm người dùng HỌC SINH.", correct: "Sai" },
+            { id: 'tf7_d', text: "Phân quyền Modify cho nhóm người dùng HỌC SINH.", correct: "Đúng" }
+        ]},
+
+        { id: 'c8', type: 'tf_cluster', question: "Tại trường THPT Ngọc Lan, hệ thống mạng trong phòng thực hành được kết nối thông qua một switch trung tâm. Các máy tính trong phòng thực hành có thể chia sẻ tệp qua mạng LAN và truy cập Internet thông qua một router chính. Hãy đánh giá những nhận xét sau:", subQuestions: [
+            { id: 'tf8_a', text: "Thiết bị bắt buộc phải có để các máy tính trong phòng thực hành truy cập Internet là switch.", correct: "Sai" },
+            { id: 'tf8_b', text: "Các máy tính trong phòng thực hành có thể chia sẻ tệp với nhau qua mạng LAN mà không cần kết nối Internet.", correct: "Đúng" },
+            { id: 'tf8_c', text: "Nếu switch bị ngắt, các máy tính sẽ không thể kết nối với nhau để chia sẻ tệp.", correct: "Đúng" },
+            { id: 'tf8_d', text: "Sử dụng thêm một hub trong mạng sẽ cải thiện tốc độ kết nối giữa các máy tính so với việc chỉ sử dụng switch.", correct: "Sai" }
+        ]},
+
+        { id: 'c9', type: 'tf_cluster', question: "Tại văn phòng một công ti, hệ thống mạng nội bộ được thiết kế để các máy tính có thể truy cập vào một thư mục chung thông qua một switch. Máy tính có thể truy cập Internet qua một router kết nối với hệ thống mạng của toà nhà. Hãy đánh giá những nhận xét sau:", subQuestions: [
+            { id: 'tf9_a', text: "Để các máy tính truy cập Internet, phải có một router kết nối với hệ thống mạng.", correct: "Đúng" },
+            { id: 'tf9_b', text: "Các máy tính có thể chia sẻ dữ liệu với nhau qua mạng LAN mà không cần có router.", correct: "Đúng" },
+            { id: 'tf9_c', text: "Nếu thêm một switch vào mạng, tất cả máy tính sẽ truy cập Internet nhanh hơn.", correct: "Sai" },
+            { id: 'tf9_d', text: "Hệ thống mạng có thể được cải thiện bằng cách thay thế switch hiện tại bằng một hub.", correct: "Sai" }
+        ]},
+
+        { id: 'c10', type: 'tf_cluster', question: "Tại trường THPT Trần Phú, hệ thống mạng phòng máy có một router trung tâm kết nối Internet. Để mở rộng mạng cho 2 phòng học mới, mỗi phòng 20 máy tính, kĩ thuật viên dự định lắp thêm các thiết bị. Hãy đánh giá những nhận định sau:", subQuestions: [
+            { id: 'tf10_a', text: "Nên lắp mỗi phòng một switch 24 cổng và kết nối hai switch này về router trung tâm để phân nhánh mạng.", correct: "Đúng" },
+            { id: 'tf10_b', text: "Việc lắp thêm một Access Point trong mỗi phòng sẽ giúp các máy tính để bàn (không có card Wi-Fi) kết nối mạng ổn định hơn cáp mạng.", correct: "Sai" },
+            { id: 'tf10_c', text: "Có thể nối tiếp switch của phòng 2 vào switch của phòng 1 thay vì nối trực tiếp về router để tiết kiệm dây cáp, nhưng có thể ảnh hưởng đến băng thông.", correct: "Đúng" },
+            { id: 'tf10_d', text: "Nên thay thế router trung tâm bằng một hub để tăng tốc độ truyền tải dữ liệu ra Internet cho cả 2 phòng.", correct: "Sai" }
+        ]},
+
+        { id: 'c11', type: 'tf_cluster', question: "Tại một trường đại học, hệ thống mạng hiện tại chỉ có một switch để kết nối các máy tính trong mạng nội bộ và một router để kết nối với Internet. Do nhu cầu phát triển, nhà trường muốn nâng cấp hệ thống mạng để đáp ứng tốt hơn cho giảng dạy trực tuyến và kết nối nhiều thiết bị. Hãy đánh giá những nhận định sau:", subQuestions: [
+            { id: 'tf11_a', text: "Nên dùng thêm switch để mở rộng số lượng kết nối cho các phòng học có nhiều máy tính.", correct: "Đúng" },
+            { id: 'tf11_b', text: "Lắp đặt thêm một Access Point sẽ cải thiện tốc độ truy cập Internet của tất cả các thiết bị trong mạng.", correct: "Sai" },
+            { id: 'tf11_c', text: "Thay router hiện tại bằng một router có băng thông cao hơn sẽ giúp mạng hoạt động hiệu quả hơn với nhiều thiết bị cùng kết nối.", correct: "Đúng" },
+            { id: 'tf11_d', text: "Việc nâng cấp modem sẽ giúp tăng vùng phủ sóng Wi-Fi trong khuôn viên trường học.", correct: "Sai" }
+        ]},
+
+        { id: 'c12', type: 'tf_cluster', question: "Một văn phòng nhỏ với khoảng 15 máy tính được kết nối với nhau qua một switch duy nhất, nhưng không có kết nối Internet. Quản trị mạng muốn thiết lập một hệ thống để chia sẻ dữ liệu giữa các máy tính nội bộ. Hãy đánh giá những nhận xét sau về hệ thống mạng này:", subQuestions: [
+            { id: 'tf12_a', text: "Thiết bị NAS sẽ cho phép các máy tính chia sẻ dữ liệu qua mạng cục bộ mà không cần kết nối Internet.", correct: "Đúng" },
+            { id: 'tf12_b', text: "Máy chủ DHCP có thể cấp phát địa chỉ IP cho các thiết bị trong mạng nội bộ để chúng có thể liên lạc với nhau.", correct: "Đúng" },
+            { id: 'tf12_c', text: "Tường lửa có thể bảo vệ mạng nội bộ khỏi các truy cập trái phép từ bên ngoài.", correct: "Sai" },
+            { id: 'tf12_d', text: "Switch có thể kết nối các thiết bị với nhau, nhưng không thể cung cấp chức năng chia sẻ dữ liệu giữa các máy tính mà không có phần mềm hỗ trợ.", correct: "Đúng" }
+        ]},
+
+        { id: 'c13', type: 'tf_cluster', question: "Chị Lan cần tham gia một cuộc họp trực tuyến từ máy tính tại nhà nhưng Wi-Fi gia đình không ổn định và điện thoại của chị có kết nối 4G. Hãy đánh giá các phương án thực hiện sau đây của chị Lan:", subQuestions: [
+            { id: 'tf13_a', text: "Kết nối máy tính với điện thoại qua cáp USB, bật tính năng chia sẻ mạng (USB Tethering) từ điện thoại để sử dụng mạng 4G.", correct: "Đúng" },
+            { id: 'tf13_b', text: "Tắt máy tính và khởi động lại Wi-Fi, sau đó thử kết nối lại mạng trước khi tham gia cuộc họp.", correct: "Sai" },
+            { id: 'tf13_c', text: "Chuyển sang một phòng khác trong nhà để cải thiện tín hiệu Wi-Fi và tham gia họp.", correct: "Sai" },
+            { id: 'tf13_d', text: "Gọi cho nhà cung cấp dịch vụ Internet để báo sự cố Wi-Fi và đợi họ xử lí trước khi tham gia cuộc họp.", correct: "Sai" }
+        ]},
+
+        { id: 'c14', type: 'tf_cluster', question: "Trong một công ti quảng cáo, giám đốc sáng tạo yêu cầu chuyên viên CNTT tạo một thư mục để lưu trữ các Tài liệu chiến lược marketing và cho phép nhóm MARKETING truy cập để xem và đóng góp ý kiến. Các phương án chia sẻ mà chuyên viên CNTT có thể thực hiện gồm:", subQuestions: [
+            { id: 'tf14_a', text: "Phân quyền Full Control cho nhóm người dùng Everyone.", correct: "Sai" },
+            { id: 'tf14_b', text: "Phân quyền Read cho nhóm người dùng Everyone.", correct: "Sai" },
+            { id: 'tf14_c', text: "Phân quyền Read cho nhóm người dùng MARKETING.", correct: "Sai" },
+            { id: 'tf14_d', text: "Phân quyền Change cho nhóm người dùng MARKETING.", correct: "Đúng" }
+        ]},
+
+        { id: 'c15', type: 'tf_cluster', question: "Tại một công ti kiến trúc, phòng thiết kế có 30 máy tính để bàn (không hỗ trợ kết nối không dây) và được thiết lập thành một hệ thống mạng nội bộ. Máy tính đều có thể chia sẻ dữ liệu và truy cập Internet. Có bộ phát Wi-Fi cho thiết bị di động. Tất cả kết nối qua switch. Một dây cáp mạng Internet kết nối từ bộ định tuyến vào phòng thiết kế. Sau đây là các nhận xét:", subQuestions: [
+            { id: 'tf15_a', text: "Tất cả các máy tính trong phòng sử dụng cáp mạng để kết nối.", correct: "Đúng" },
+            { id: 'tf15_b', text: "Nếu hệ thống không được kết nối Internet, mạng giữa các máy tính trong phòng sẽ trở thành mạng LAN.", correct: "Đúng" },
+            { id: 'tf15_c', text: "Sử dụng hub sẽ hiệu quả hơn switch trong cấu hình này.", correct: "Sai" },
+            { id: 'tf15_d', text: "Dây cáp mạng Internet được kết nối trực tiếp với bộ phát Wi-Fi.", correct: "Sai" }
+        ]},
+
+        { id: 'c16', type: 'tf_cluster', question: "Một quán cà phê cung cấp Wi-Fi miễn phí cho khách hàng của mình. Mạng có các đặc điểm: Một modem kết nối với ISP. Modem kết nối với một bộ phát Wi-Fi. Chủ quán muốn đảm bảo chỉ khách hàng được phép mới có thể truy cập Wi-Fi và đề xuất bật mã hoá WPA2. Hãy đánh giá những nhận xét sau:", subQuestions: [
+            { id: 'tf16_a', text: "Bộ phát Wi-Fi là một phần của mạng cục bộ (LAN).", correct: "Đúng" },
+            { id: 'tf16_b', text: "Mã hoá WPA2 đảm bảo rằng người dùng trái phép không thể dễ dàng kết nối với mạng.", correct: "Đúng" },
+            { id: 'tf16_c', text: "Modem gán địa chỉ IP cho các thiết bị kết nối với Wi-Fi.", correct: "Sai" },
+            { id: 'tf16_d', text: "Tất cả các thiết bị của khách hàng kết nối qua Wi-Fi đều là một phần của LAN nội bộ của quán cà phê.", correct: "Đúng" }
+        ]},
+
+        { id: 'c17', type: 'tf_cluster', question: "Một văn phòng nhỏ thiết lập một mạng, trong đó 20 máy tính được kết nối với một switch duy nhất và switch này được kết nối với Internet thông qua một modem. Họ muốn đảm bảo nhân viên có thể chia sẻ tệp nội bộ mà không cần sử dụng Internet. Hãy đánh giá những nhận xét sau:", subQuestions: [
+            { id: 'tf17_a', text: "Thiết bị NAS sẽ cho phép nhân viên chia sẻ tệp qua mạng cục bộ.", correct: "Đúng" },
+            { id: 'tf17_b', text: "Máy chủ DHCP là cần thiết để gán địa chỉ IP cho cả việc sử dụng mạng cục bộ và truy cập Internet.", correct: "Đúng" },
+            { id: 'tf17_c', text: "Kết nối Internet là không cần thiết để chia sẻ tệp nội bộ giữa các máy tính trên cùng một switch.", correct: "Đúng" },
+            { id: 'tf17_d', text: "Switch gán địa chỉ IP cho tất cả các thiết bị trên mạng.", correct: "Sai" }
+        ]}
+    ];
+
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    const RealtimeSdk = {
+        init(handler) {
+            scoresRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const scoresList = [];
+                if (data) {
+                    for (let key in data) {
+                        scoresList.push({ id: key, ...data[key] });
+                    }
+                }
+                handler.onDataChanged(scoresList);
+            });
+            return Promise.resolve({ isOk: true });
+        },
+        create(record) {
+            return scoresRef.push(record)
+                .then(() => { return { isOk: true }; })
+                .catch(error => { console.error(error); return { isOk: false }; });
+        }
+    };
+
+    const dataHandler = {
+        onDataChanged(data) {
+            allScores = data || [];
+            renderScores();
+        }
+    };
+
+    function initApp() {
+        try {
+            if (!localStorage.getItem('deviceId')) {
+                localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+            }
+            deviceId = localStorage.getItem('deviceId');
+        } catch (e) {
+            deviceId = 'dev_' + Math.random().toString(36).substr(2) + Date.now();
+        }
+        
+        window.dataSdk = RealtimeSdk;
+        window.dataSdk.init(dataHandler);
+        setupEvents();
+        
+        showSection('login');
+    }
+
+    function setupEvents() {
+        document.getElementById('login-form').onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('hoTen').value.trim();
+            const lop = document.getElementById('lop').value.trim();
+            
+            if (name && lop) {
+                currentStudent = { hoTen: name, lop: lop, huong: 'Chung' };
+                loadQuizData();
+            } else {
+                alert("Vui lòng nhập đủ Họ tên và Lớp!");
+            }
+        };
+
+        document.getElementById('view-scores-btn').onclick = () => {
+            showSection('scores');
+        };
+        document.getElementById('next-btn').onclick = nextQuestion;
+        document.getElementById('prev-btn').onclick = prevQuestion; 
+        document.getElementById('submit-btn').onclick = submitQuiz;
+    }
+
+    function loadQuizData() {
+        let rawData = JSON.parse(JSON.stringify(rawQuestions));
+        
+        // GIỮ NGUYÊN THỨ TỰ (KHÔNG DÙNG HÀM SHUFFLE)
+        let part1 = rawData.filter(q => q.type === 'single');
+        part1.forEach((q, idx) => {
+            q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+        });
+
+        // BẮT ĐẦU ĐÁNH SỐ TỪ CÂU 1 CHO PHẦN 2
+        let part2 = rawData.filter(q => q.type === 'tf_cluster');
+        part2.forEach((q, idx) => {
+            q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+            const labels = ['a)', 'b)', 'c)', 'd)'];
+            q.subQuestions.forEach((sub, sIdx) => {
+                sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                sub.text = `${labels[sIdx]} ${sub.text}`;
+            });
+        });
+
+        currentQuestions = [...part1, ...part2];
+        startQuiz();
+    }
+
+    function goHome() {
+        document.body.classList.remove('is-reviewing');
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(floatingBar) floatingBar.style.display = 'none';
+        
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    }
+
+    let currentIdx = 0;
+    function startQuiz() {
+        quizStartTime = new Date();
+        isQuizStarted = true;
+
+        document.body.classList.remove('is-reviewing');
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(floatingBar) floatingBar.style.display = 'none';
+        
+        document.getElementById('timer-banner').style.display = 'flex';
+        document.getElementById('nav-buttons').style.display = 'flex';
+        document.getElementById('progress-container').style.display = 'block';
+
+        showSection('quiz');
+        document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+        currentIdx = 0;
+        userAnswers = {};
+        renderQuestion();
+        
+        clearInterval(timerInterval);
+        startTimer(45 * 60); 
+    }
+
+    function retryQuiz() {
+        loadQuizData();
+    }
+
+    function getTotalItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.subQuestions.length;
+            else count++;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id]) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined) count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        updateProgress();
+    };
+
+    function renderQuestion() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3">
+                        <span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span>
+                        <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">TRẮC NGHIỆM ĐÚNG/SAI</h3>
+                    </div>
+
+                    <div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-700 text-base md:text-lg font-extrabold leading-relaxed shadow-inner">
+                        ${q.displayQuestion}
+                    </div>
+                    <div class="space-y-3 md:pl-6">
+                        ${q.subQuestions.map(sub => `
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all">
+                                <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                                <div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
+                                    <input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" 
+                                        onchange="selectAnswer('${sub.id}', 'Đúng', 'tf')" ${isChecked(sub.id, 'Đúng') ? 'checked' : ''}>
+                                    <label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Đúng</label>
+
+                                    <input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" 
+                                        onchange="selectAnswer('${sub.id}', 'Sai', 'tf')" ${isChecked(sub.id, 'Sai') ? 'checked' : ''}>
+                                    <label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Sai</label>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="fade-in">
+                    ${currentIdx === 0 ? `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3">
+                        <span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span>
+                        <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3>
+                    </div>` : ''}
+
+                    <div class="flex gap-4 mb-5">
+                        <div class="w-full">
+                            <div class="text-xl font-extrabold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</div>
+                        </div>
+                    </div>
+                    <div class="space-y-4 md:pl-14 mt-6">
+                        ${q.options.map((opt, i) => `
+                            <div class="flex items-center">
+                                <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio"
+                                    ${isChecked(q.id, i) ? 'checked' : ''}
+                                    onchange="selectAnswer('${q.id}', ${i}, 'single')">
+                                <label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg">
+                                    <span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors">
+                                        ${String.fromCharCode(65 + i)}
+                                    </span>
+                                    <span class="text-gray-700 leading-relaxed">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        updateNav();
+        updateProgress();
+    }
+
+    function isChecked(qId, val) {
+        return userAnswers[qId] === val;
+    }
+
+    function nextQuestion() {
+        if (currentIdx < currentQuestions.length - 1) {
+            currentIdx++;
+            renderQuestion();
+        }
+    }
+    function prevQuestion() {
+        if (currentIdx > 0) {
+            currentIdx--;
+            renderQuestion();
+        }
+    }
+
+   function updateNav() {
+        const isLast = currentIdx === currentQuestions.length - 1;
+        const isFirst = currentIdx === 0; 
+        
+        document.getElementById('prev-btn').style.display = isFirst ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = isLast ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = isLast ? 'block' : 'none';
+    }
+    
+    function updateProgress() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    }
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    async function submitQuiz() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correct = 0;
+        let totalItems = getTotalItems(); 
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] === sub.correct) correct++;
+                });
+            } else {
+                if (userAnswers[q.id] === q.correct) correct++;
+            }
+        });
+        
+        const score = (correct * 10 / totalItems).toFixed(2);
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        const record = {
+            hoTen: currentStudent.hoTen,
+            lop: currentStudent.lop,
+            huong: currentStudent.huong,
+            diem: parseFloat(score),
+            soCauDung: correct,
+            tongCau: totalItems,
+            startTime: quizStartTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+            duration: formatDuration(durationSeconds),
+            thoiGian: new Date().toISOString(),
+            deviceId: deviceId 
+        };
+
+        if (window.dataSdk) {
+            const result = await window.dataSdk.create(record);
+
+            if (result.isOk) {
+                showModalResult(score, correct, totalItems, record.duration);
+            } else {
+                alert("Lỗi mạng! Không thể lưu điểm. Vui lòng thử lại.");
+            }
+        }
+    }
+
+    function showModalResult(score, correct, total, dur) {
+        const modal = document.getElementById('result-modal');
+        const content = document.getElementById('result-content');
+        modal.classList.remove('hidden');
+        
+        content.innerHTML = `
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-green-600 mb-2">Hoàn thành bài ôn tập!</h3>
+            <p class="text-gray-600 mb-6 mt-2">
+                <span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - ${currentStudent.lop}</span>
+            </p>
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative">
+                <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+                <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+                <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Đúng ${correct}/${total} ý | Tổng TG: ${dur}</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="reviewQuiz()" class="w-full py-3 bg-gray-100 text-blue-700 border-2 border-blue-200 rounded-xl font-extrabold shadow-sm hover:bg-blue-50 transition-colors text-lg">🔎 Xem lại bài</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden');" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+            </div>
+            <button onclick="goHome()" class="w-full py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏠 Về màn hình chính</button>
+        `;
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('scores-section').classList.add('hidden');
+        document.getElementById('quiz-section').classList.remove('hidden');
+        
+        document.body.classList.add('is-reviewing');
+        
+        document.getElementById('timer-banner').style.display = 'none';
+        document.getElementById('nav-buttons').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'none';
+
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(!floatingBar) {
+            floatingBar = document.createElement('div');
+            floatingBar.id = 'review-floating-bar';
+            floatingBar.className = "fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-200 p-4 flex gap-4 justify-center shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-50";
+            floatingBar.innerHTML = `
+                <button onclick="document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden');" class="px-6 py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏆 Xem Bảng Điểm</button>
+                <button onclick="goHome()" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-extrabold shadow-md hover:bg-blue-700 transition-colors text-lg">🏠 Về màn hình chính</button>
+            `;
+            document.body.appendChild(floatingBar);
+        }
+        floatingBar.style.display = 'flex';
+
+        const container = document.getElementById('question-container');
+        container.innerHTML = currentQuestions.map((q, idx) => {
+            
+            let headerHtml = '';
+            if (idx === 0) {
+                headerHtml = `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-blue-200 pb-3 mt-4">
+                        <span class="bg-gradient-to-br from-blue-500 to-cyan-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">I</span>
+                        <h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-700 uppercase tracking-widest">Phần Trắc Nghiệm Nhiều Lựa Chọn</h3>
+                    </div>
+                `;
+            } else if (q.type === 'tf_cluster' && currentQuestions[idx - 1] && currentQuestions[idx - 1].type === 'single') {
+                headerHtml = `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-orange-200 pb-3 mt-10">
+                        <span class="bg-gradient-to-br from-orange-500 to-red-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">II</span>
+                        <h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-700 to-red-700 uppercase tracking-widest">Phần Trắc Nghiệm Đúng/Sai</h3>
+                    </div>
+                `;
+            }
+
+            if (q.type === 'single') {
+                let optionsHtml = q.options.map((opt, i) => {
+                    let isSelected = isChecked(q.id, i);
+                    let isCorrect = (q.correct === i);
+                    let stateClass = "review-neutral";
+                    let icon = "";
+                    
+                    if (isCorrect) {
+                        stateClass = "review-correct shadow-md";
+                        icon = "✅";
+                    } else if (isSelected && !isCorrect) {
+                        stateClass = "review-incorrect";
+                        icon = "❌";
+                    }
+                    
+                    return `
+                        <div class="p-4 border-2 rounded-2xl flex items-center gap-4 ${stateClass} mb-3 font-bold text-lg pointer-events-none">
+                            <span class="w-10 h-10 rounded-xl border-2 flex items-center justify-center text-base font-black flex-shrink-0 bg-white/50 border-gray-300/50">${String.fromCharCode(65 + i)}</span>
+                            <span class="leading-relaxed flex-1">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                            <span>${icon}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    ${headerHtml}
+                    <div class="mb-8">
+                        <div class="mb-4">
+                            <div class="text-xl font-extrabold text-red-600 leading-snug">${q.displayQuestion}</div>
+                        </div>
+                        <div class="md:pl-14">${optionsHtml}</div>
+                    </div>
+                `;
+            } else {
+                let subHtml = q.subQuestions.map(sub => {
+                    let userAns = userAnswers[sub.id];
+                    let isCorrect = userAns === sub.correct;
+                    
+                    let ansText = "";
+                    let colorClass = "";
+
+                    if (userAns) {
+                        ansText = isCorrect ? `✅ Chính xác (Bạn chọn: ${userAns})` : `❌ Trả lời sai (Bạn chọn: ${userAns} | Đáp án: ${sub.correct})`;
+                        colorClass = isCorrect ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200';
+                    } else {
+                        ansText = `➖ Bỏ qua (Đáp án chuẩn: ${sub.correct})`;
+                        colorClass = 'text-orange-600 bg-orange-50 border-orange-200';
+                    }
+
+                    return `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 rounded-2xl gap-4 shadow-sm mb-3">
+                            <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                            <div class="font-extrabold ${colorClass} text-sm whitespace-nowrap px-4 py-2 rounded-xl border border-gray-100">
+                                ${ansText}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    ${headerHtml}
+                    <div class="mb-8 p-4 bg-gray-50 rounded-2xl border-2 border-gray-200">
+                        <div class="text-xl font-extrabold text-red-600 mb-4">${q.displayQuestion}</div>
+                        <div>${subHtml}</div>
+                    </div>
+                `;
+            }
+        }).join('<div class="my-6 border-b-2 border-dashed border-gray-200"></div>');
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) {
+            tbody.innerHTML = '';
+            document.getElementById('no-scores').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('no-scores').classList.add('hidden');
+
+        const sorted = [...allScores].sort((a, b) => b.diem - a.diem);
+
+        tbody.innerHTML = sorted.map((s, idx) => {
+            const rowClass = s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-gray-50';
+            const meBadge = s.deviceId === deviceId ? '<span class="ml-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs px-3 py-1 rounded-full font-black shadow-sm uppercase tracking-wider">Bạn</span>' : '';
+
+            const cauDung = s.soCauDung !== undefined ? s.soCauDung : '-';
+            const tongCau = s.tongCau !== undefined ? s.tongCau : '-';
+            const tenLop = s.lop || '';
+
+            return `
+                <tr class="${rowClass} transition-colors">
+                    <td class="px-3 sm:px-5 py-4 text-center font-black text-gray-400 text-lg">#${idx + 1}</td>
+                    <td class="px-3 sm:px-5 py-4 font-bold text-gray-700 text-base">${tenLop}</td>
+                    <td class="px-3 sm:px-5 py-4 font-extrabold text-gray-800 whitespace-nowrap text-lg">${s.hoTen || ''} ${meBadge}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-gray-600 font-bold text-lg">${cauDung}/${tongCau}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-green-600' : 'text-red-500 drop-shadow-sm'}">${s.diem}</span></td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.startTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.endTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-right text-xs text-orange-600 font-bold">${s.duration || '--'}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        setTimeout(() => {
+            const myRow = document.querySelector('.my-score-row');
+            if (myRow) myRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => {
+            const sec = document.getElementById(s+'-section');
+            if(sec) sec.classList.add('hidden');
+        });
+        const target = document.getElementById(id+'-section');
+        if(target) target.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) submitQuiz();
+        }, 1000);
+    }
+
+    initApp();
+  </script>
+ </body>
+</html>
