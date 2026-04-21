@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập: Trí Tuệ Nhân Tạo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      -webkit-user-select: none !important; -moz-user-select: none !important;
+      -ms-user-select: none !important; user-select: none !important; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    input, textarea, select {
+      -webkit-user-select: auto !important; -moz-user-select: auto !important;
+      -ms-user-select: auto !important; user-select: auto !important;
+      pointer-events: auto !important;
+    }
+    #app { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; padding-bottom: 50px; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    /* Nút chọn Phần I */
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    /* Nút chọn Phần II */
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    /* Định dạng Code Python & HTML */
+    .code-block { background: #f8fafc; color: #1e3a8a; padding: 15px 20px; border-radius: 10px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; margin: 15px 0; font-size: 16px; font-weight: 700; border: 1px solid #e2e8f0; border-left: 5px solid #3b82f6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+
+    /* CSS bảng dữ liệu */
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; font-size: 0.95rem; text-align: left;}
+    .data-table th, .data-table td { border: 1px solid #cbd5e1; padding: 8px 12px; }
+    .data-table th { background-color: #f1f5f9; font-weight: bold; color: #334155; }
+    .data-table tr:nth-child(even) { background-color: #f8fafc; }
+
+    /* CSS chế độ xem lại - Tăng padding-bottom để không bị nút nổi che khuất câu cuối */
+    body.is-reviewing #app { padding-bottom: 160px; } 
+    .review-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+    .review-incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; text-decoration: line-through; opacity: 0.8; }
+    .review-neutral { background-color: #ffffff !important; border-color: #e2e8f0 !important; opacity: 0.5; }
+  </style>
+ </head>
+ <body oncopy="return false" oncut="return false" onpaste="return false">
+  <div id="app" class="p-0 sm:p-4 md:p-8 flex flex-col sm:block transition-all">
+   
+   <div id="login-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-md mx-auto fade-in flex-grow flex flex-col sm:justify-center">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start flex-grow sm:flex-grow-0">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="w-24 h-24 bg-gradient-to-br from-pink-500 to-orange-400 rounded-3xl mx-auto mb-2 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
+       <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253"></path></svg>
+      </div>
+         <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 mb-1">ÔN TẬP: TRÍ TUỆ NHÂN TẠO</h1>
+      <p class="text-gray-600 font-bold">Thời gian làm bài: 45 Phút</p>
+     </div>
+     
+     <form id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all" placeholder="12A1">
+          </div>
+      </div>
+      <button type="submit" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl"> 🚀 BẮT ĐẦU ÔN TẬP </button>
+     </form>
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button id="view-scores-btn" type="button" class="text-blue-600 font-extrabold hover:text-blue-800 hover:underline transition-colors text-lg">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      <div>
+       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Ôn Tập: Trí Tuệ Nhân Tạo</h2>
+       <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+      </div>
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" class="flex-1 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold text-lg rounded-xl shadow-md transition-all transform hover:-translate-y-1" style="display: none;">⬅ Câu trước</button>
+        
+        <button id="next-btn" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow">
+     <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+      <button onclick="goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Về màn hình chính</button>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-2 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Đúng</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-[2rem] shadow-2xl p-8 max-w-md w-full fade-in text-center flex flex-col border-t-8 border-green-500" id="result-content"></div>
+   </div>
+
+  </div>
+
+  <script>
+    // ==================== BẢO VỆ TÀI LIỆU ====================
+    document.addEventListener('contextmenu', event => event.preventDefault()); 
+    document.addEventListener('selectstart', event => {
+        if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'SELECT') { event.preventDefault(); }
+    });
+    document.addEventListener('dragstart', event => event.preventDefault()); 
+    document.addEventListener('copy', event => {
+        event.clipboardData.setData('text/plain', 'Tài liệu đã được bảo vệ!');
+        event.preventDefault();
+    });
+
+    let isQuizStarted = false; 
+
+    // ==================== CẤU HÌNH FIREBASE ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+        messagingSenderId: "1046142513655",
+        appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tin12_ontap');
+
+    // ==================== NGÂN HÀNG CÂU HỎI MỚI ====================
+    const rawQuestions = [
+        // PHẦN 1: TRẮC NGHIỆM MỘT LỰA CHỌN (16 CÂU)
+        { id: 1, type: "single", question: "Rủi ro nào sau đây có thể xảy ra khi AI trở nên phổ biến trong xã hội?", options: ["Tăng cường sự kết nối giữa con người.", "Tạo ra sự phụ thuộc quá mức vào công nghệ.", "Cải thiện khả năng giao tiếp giữa các quốc gia.", "Giảm thiểu chi phí sản xuất."], correct: 1 },
+        { id: 2, type: "single", question: "Phương án nào sau đây nêu đúng một trong những cảnh báo về AI trong tương lai?", options: ["AI không thể thay thế con người trong công việc.", "AI có thể tạo ra các vấn đề về đạo đức do dữ liệu huấn luyện thiên vị.", "AI chỉ được tạo ra để sử dụng trong lĩnh vực y tế.", "AI có thể tạo ra người máy mà không thể được sử dụng trong giáo dục."], correct: 1 },
+        { id: 3, type: "single", question: "Trong tương lai, mối lo ngại nào về AI có liên quan trực tiếp đến quyền riêng tư?", options: ["AI sẽ tự động đăng nhập vào các tài khoản ngân hàng mà không cần xác thực bảo mật.", "AI có thể theo dõi và giám sát mọi hoạt động trực tuyến của người dùng mà không được phép.", "AI sẽ yêu cầu người dùng chia sẻ tất cả thông tin cá nhân để truy cập dịch vụ.", "AI sẽ khiến thông tin cá nhân bị xoá hoàn toàn khỏi các hệ thống trực tuyến."], correct: 1 },
+        { id: 4, type: "single", question: "Phương án nào sau đây nêu đúng một trong những cảnh báo về sự phát triển của AI trong tương lai liên quan đến an ninh mạng?", options: ["AI có thể cải thiện hoàn toàn an ninh mạng khỏi sự tấn công của các hacker.", "AI không thể áp dụng vào an ninh mạng vì những hạn chế hiện tại.", "AI có thể tạo ra các cuộc tấn công mạng thông minh và khó bị phát hiện.", "AI không thể bị lợi dụng cho mục đích xấu."], correct: 2 },
+        { id: 5, type: "single", question: "Trong lĩnh vực y tế, AI có thể hỗ trợ các bác sĩ như thế nào?", options: ["Phân tích dữ liệu y khoa để hỗ trợ bác sĩ trong chẩn đoán và điều trị bệnh.", "Giúp phát hiện nhanh các lỗi phần mềm trong hệ thống máy tính.", "Tối ưu hoá các quy trình sản xuất và quản lí hậu cần tại bệnh viện.", "Hỗ trợ bệnh nhân bằng cách tự động cập nhật thông tin sức khoẻ qua mạng."], correct: 0 },
+        { id: 6, type: "single", question: "Ứng dụng nào sau đây là một ví dụ quan trọng về việc sử dụng AI trong nông nghiệp?", options: ["Dự báo thời tiết để điều chỉnh lịch gieo trồng.", "Tối ưu hoá quy trình tưới tiêu thông minh.", "Tạo ra giống cây mới bằng công nghệ gen.", "Phát hiện sâu bệnh và dự đoán năng suất."], correct: 3 },
+        { id: 7, type: "single", question: "Phương án nào sau đây nêu đúng vai trò của AI trong lĩnh vực lập trình và phát triển phần mềm?", options: ["AI chỉ tập trung vào việc tự động hoá các công việc văn phòng.", "AI giúp lập trình viên tự động tạo mã nguồn và tối ưu hoá hiệu suất phần mềm.", "AI tự động hoá các quy trình kinh doanh và dịch vụ khách hàng cho các doanh nghiệp.", "AI đóng vai trò hỗ trợ trong việc viết nội dung và thiết kế đồ hoạ."], correct: 1 },
+        { id: 8, type: "single", question: "Phương án nào sau đây nêu đúng về khả năng nhận thức được môi trường xung quanh của AI?", options: ["Nhận thức và phân tích môi trường thông qua cảm biến và dữ liệu đầu vào để đưa ra quyết định.", "Hoạt động trong môi trường ảo và không có khả năng tương tác với thế giới thực.", "Khả năng tự động điều chỉnh hành vi dựa trên phản hồi từ môi trường xung quanh.", "Khả năng thay thế hoàn toàn cảm giác và nhận thức của con người trong mọi tình huống."], correct: 0 },
+        { id: 9, type: "single", question: "Phương án nào sau đây nêu đúng về khả năng ứng dụng AI trong giáo dục?", options: ["AI chỉ có thể hỗ trợ giáo viên trong việc quản lí lớp học mà không thể tham gia vào quá trình giảng dạy.", "AI có thể phân tích dữ liệu học tập của học sinh để cá nhân hoá phương pháp giảng dạy và hỗ trợ học tập.", "AI có khả năng tự động đánh giá bài kiểm tra và thay thế hoàn toàn vai trò của giáo viên.", "AI chỉ được sử dụng trong các môi trường giáo dục trực tuyến mà không có khả năng hỗ trợ trong các lớp học truyền thống."], correct: 1 },
+        { id: 10, type: "single", question: "Lí do nào sau đây giải thích đúng cho việc AI được coi là một hệ thống thông minh?", options: ["AI có thể tự động thực hiện các nhiệm vụ cơ bản mà không cần sự can thiệp của con người.", "AI hoạt động chủ yếu dựa trên các lệnh cố định mà không cần dữ liệu mới.", "AI có khả năng thực hiện các hành vi thông minh như con người, bao gồm học hỏi và ra quyết định chính xác.", "AI không cần phải thu thập thông tin từ môi trường để thực hiện nhiệm vụ."], correct: 2 },
+        { id: 11, type: "single", question: "Khả năng nào sau đây là điểm nổi bật nhất của AI so với các hệ thống máy tính thông thường?", options: ["Chơi game tự động linh hoạt nhất hiện nay.", "Học hỏi và điều chỉnh hành vi dựa trên thông tin mới.", "Kết nối Internet tốc độ cao và phù hợp với hệ thống máy tính.", "Lưu trữ dữ liệu lớn mà không cần quản lí."], correct: 1 },
+        { id: 12, type: "single", question: "Một hệ thống AI có khả năng suy luận và học hỏi có thể làm công việc nào sau đây?", options: ["Sử dụng dữ liệu có sẵn để đưa ra các quyết định dựa trên logic.", "Thực hiện các nhiệm vụ cố định mà không cần thông tin mới.", "Chỉ có thể thực hiện một nhiệm vụ đơn lẻ như một chiếc máy tính thông thường.", "Không thể điều chỉnh hành vi dựa trên thông tin mới."], correct: 0 },
+        { id: 13, type: "single", question: "Phương án nào sau đây giải thích cho việc AI được coi là một công cụ hữu ích trong việc quản lí chuỗi cung ứng và hậu cần?", options: ["AI chỉ giúp quản lí thông tin khách hàng và hỗ trợ quảng cáo.", "AI tối ưu hoá quá trình lưu trữ, sản xuất và vận chuyển hàng hoá một cách hiệu quả.", "AI có khả năng thay thế hoàn toàn nhân viên trong các kho hàng và nhà máy.", "AI giúp cải thiện hệ thống an ninh và theo dõi sản phẩm tại các cửa hàng bán lẻ."], correct: 1 },
+        { id: 14, type: "single", question: "Lí do nào sau đây giải thích đúng cho việc AI đang trở thành một phần không thể thiếu trong các hệ thống giao thông thông minh hiện đại?", options: ["AI chỉ giám sát các xe tự lái và không ảnh hưởng đến các phương tiện giao thông khác.", "AI giúp dự đoán tình trạng giao thông và điều chỉnh lưu lượng xe để giảm tắc nghẽn.", "AI chỉ có khả năng hỗ trợ tài xế thông qua các ứng dụng bản đồ số.", "AI chỉ hỗ trợ việc quản lí các bãi đậu xe và giám sát giao thông khu vực đô thị nhỏ."], correct: 1 },
+        { id: 15, type: "single", question: "Lí do nào sau đây giải thích đúng cho việc AI có thể gây ra các vấn đề đạo đức trong tương lai?", options: ["AI có thể làm tăng số lượng công việc cho con người mà không vi phạm vấn đề đạo đức.", "Dữ liệu huấn luyện của AI có thể chứa đựng những yếu tố thiên vị, dẫn đến quyết định không công bằng.", "AI không thể phân tích dữ liệu từ nhiều nguồn khác nhau.", "AI chỉ hoạt động dựa trên những lệnh lập trình sẵn và không học từ dữ liệu mới."], correct: 1 },
+        { id: 16, type: "single", question: "Phương án nào sau đây nêu đúng điểm khác biệt chính giữa AGI và ANI?", options: ["AGI có thể tự học và áp dụng tri thức từ lĩnh vực này sang lĩnh vực khác, trong khi ANI chỉ có thể thực hiện một nhiệm vụ cụ thể.", "ANI có khả năng thực hiện nhiều nhiệm vụ phức tạp hơn AGI.", "AGI chỉ có thể thực hiện các nhiệm vụ được lập trình sẵn, trong khi ANI có khả năng tự học từ dữ liệu.", "AGI không thể thực hiện nhiệm vụ cụ thể nào, trong khi ANI có thể thực hiện tất cả các nhiệm vụ."], correct: 0 },
+
+        // PHẦN 2 - TRẮC NGHIỆM ĐÚNG SAI
+        { id: 'c1', type: 'tf_cluster', question: "Công ti Amazon đã phát triển nhiều dịch vụ, bao gồm thương mại điện tử, dịch vụ điện toán đám mây và nền tảng trợ lí ảo Alexa. Gần đây, Amazon cũng đang đầu tư vào lĩnh vực y tế với các dịch vụ chăm sóc sức khoẻ trực tuyến.<br>Một số ý kiến được đưa ra như sau:", subQuestions: [
+            { id: 'tf1_a', text: "Amazon Prime là dịch vụ thương mại điện tử cung cấp giao hàng nhanh và miễn phí cho các thành viên.", correct: "Đúng" },
+            { id: 'tf1_b', text: "Amazon Web Services (AWS) là dịch vụ lưu trữ đám mây với khả năng mở rộng không giới hạn.", correct: "Đúng" },
+            { id: 'tf1_c', text: "Trợ lí ảo Alexa của Amazon có thể chẩn đoán chính xác các bệnh nguy hiểm như ung thư.", correct: "Sai" },
+            { id: 'tf1_d', text: "Amazon hiện chỉ tập trung vào thương mại điện tử và đã ngừng phát triển các dịch vụ y tế trực tuyến.", correct: "Sai" }
+        ]},
+        
+        { id: 'c2', type: 'tf_cluster', question: "Apple là một trong những công ti công nghệ hàng đầu thế giới với các sản phẩm như iPhone, iPad và dịch vụ iCloud. Ngoài ra, Apple cũng đang đầu tư mạnh vào lĩnh vực sức khoẻ thông qua Apple Watch với các tính năng theo dõi sức khoẻ.<br>Một số người đưa ra các ý kiến sau:", subQuestions: [
+            { id: 'tf2_a', text: "iCloud là một dịch vụ lưu trữ đám mây của Apple cho phép người dùng lưu trữ dữ liệu trực tuyến.", correct: "Đúng" },
+            { id: 'tf2_b', text: "Apple Watch chỉ có thể theo dõi duy nhất chỉ số nhịp tim của người dùng.", correct: "Sai" },
+            { id: 'tf2_c', text: "iPhone là sản phẩm duy nhất của Apple có khả năng kết nối Internet.", correct: "Sai" },
+            { id: 'tf2_d', text: "Apple Watch có thể cảnh báo người dùng về nhịp tim bất thường và giúp phát hiện sớm các dấu hiệu của bệnh tim mạch.", correct: "Đúng" }
+        ]},
+
+        { id: 'c3', type: 'tf_cluster', question: "Microsoft là một tập đoàn công nghệ lớn cung cấp các dịch vụ như hệ điều hành Windows, bộ công cụ Microsoft Office và dịch vụ đám mây Azure. Microsoft cũng đang đầu tư vào AI để nâng cao khả năng tự động hoá và bảo mật.<br>Một số người đưa ra các ý kiến sau:", subQuestions: [
+            { id: 'tf3_a', text: "Microsoft Office là một bộ phần mềm văn phòng cung cấp các ứng dụng như Word, Excel, PowerPoint.", correct: "Đúng" },
+            { id: 'tf3_b', text: "Cortana là một trợ lí ảo do chính tập đoàn Microsoft phát triển.", correct: "Đúng" },
+            { id: 'tf3_c', text: "Windows là hệ điều hành duy nhất mà Microsoft đang phát triển và sở hữu.", correct: "Sai" },
+            { id: 'tf3_d', text: "Microsoft hoàn toàn không sử dụng AI để cải thiện khả năng bảo mật dữ liệu trên dịch vụ đám mây Azure.", correct: "Sai" }
+        ]},
+
+        { id: 'c4', type: 'tf_cluster', question: "AI đang cách mạng hoá ngành giao thông với sự phát triển của các phương tiện tự lái và các hệ thống quản lí giao thông thông minh.<br>Sau đây là các phát biểu về AI trong lĩnh vực giao thông:", subQuestions: [
+            { id: 'tf4_a', text: "Xe tự lái sử dụng AI để phát hiện và tránh va chạm với các chướng ngại vật.", correct: "Đúng" },
+            { id: 'tf4_b', text: "AI hiện nay đã có thể hoàn toàn thay thế con người xử lý mọi tình huống điều khiển xe mà không cần sự giám sát.", correct: "Sai" },
+            { id: 'tf4_c', text: "AI giúp cải thiện lưu lượng giao thông bằng cách điều khiển đèn giao thông dựa trên tình hình thực tế.", correct: "Đúng" },
+            { id: 'tf4_d', text: "AI trong giao thông thông minh chỉ hoạt động được trên các tuyến đường cao tốc và không có tác dụng ở khu vực đô thị.", correct: "Sai" }
+        ]},
+
+        { id: 'c5', type: 'tf_cluster', question: "AI đang được ứng dụng rộng rãi trong lĩnh vực y tế, từ việc hỗ trợ chẩn đoán bệnh đến theo dõi sức khoẻ người bệnh.<br>Sau đây là các phát biểu về AI trong lĩnh vực y tế:", subQuestions: [
+            { id: 'tf5_a', text: "AI có thể phân tích hình ảnh y khoa để hỗ trợ bác sĩ chẩn đoán.", correct: "Đúng" },
+            { id: 'tf5_b', text: "AI đã có thể thay thế hoàn toàn bác sĩ trong quá trình ra quyết định và điều trị bệnh.", correct: "Sai" },
+            { id: 'tf5_c', text: "AI giúp cá nhân hoá việc điều trị bệnh cho từng bệnh nhân dựa trên dữ liệu y khoa.", correct: "Đúng" },
+            { id: 'tf5_d', text: "Các hệ thống AI y tế hiện nay không thể xử lý và phân tích dữ liệu từ hồ sơ bệnh án điện tử.", correct: "Sai" }
+        ]},
+
+        { id: 'c6', type: 'tf_cluster', question: "AI có nhiều tác động tích cực và tiêu cực đến nền kinh tế và xã hội. Tuy nhiên, việc ứng dụng AI cũng đặt ra nhiều câu hỏi về tính bảo mật và quyền riêng tư.<br>Sau đây là các phát biểu về tác động của AI đối với con người:", subQuestions: [
+            { id: 'tf6_a', text: "AI có thể thay thế hoàn toàn con người trong tất cả các lĩnh vực công việc ở thời điểm hiện tại.", correct: "Sai" },
+            { id: 'tf6_b', text: "AI có thể giúp tăng năng suất lao động nhưng cũng gây ra những lo ngại về việc con người bị mất việc làm.", correct: "Đúng" },
+            { id: 'tf6_c', text: "AI không có khả năng thu thập thông tin cá nhân từ các hoạt động trực tuyến của người dùng.", correct: "Sai" },
+            { id: 'tf6_d', text: "AI có thể theo dõi hành vi của con người trên mạng và thu thập dữ liệu cá nhân để phục vụ mục đích quảng cáo.", correct: "Đúng" }
+        ]}
+    ];
+
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    const RealtimeSdk = {
+        init(handler) {
+            scoresRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const scoresList = [];
+                if (data) {
+                    for (let key in data) {
+                        scoresList.push({ id: key, ...data[key] });
+                    }
+                }
+                handler.onDataChanged(scoresList);
+            });
+            return Promise.resolve({ isOk: true });
+        },
+        create(record) {
+            return scoresRef.push(record)
+                .then(() => { return { isOk: true }; })
+                .catch(error => { console.error(error); return { isOk: false }; });
+        }
+    };
+
+    const dataHandler = {
+        onDataChanged(data) {
+            allScores = data || [];
+            renderScores();
+        }
+    };
+
+    function initApp() {
+        try {
+            if (!localStorage.getItem('deviceId')) {
+                localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+            }
+            deviceId = localStorage.getItem('deviceId');
+        } catch (e) {
+            deviceId = 'dev_' + Math.random().toString(36).substr(2) + Date.now();
+        }
+        
+        window.dataSdk = RealtimeSdk;
+        window.dataSdk.init(dataHandler);
+        setupEvents();
+        
+        showSection('login');
+    }
+
+    function setupEvents() {
+        document.getElementById('login-form').onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('hoTen').value.trim();
+            const lop = document.getElementById('lop').value.trim();
+            
+            if (name && lop) {
+                currentStudent = { hoTen: name, lop: lop, huong: 'Chung' };
+                loadQuizData();
+            } else {
+                alert("Vui lòng nhập đủ Họ tên và Lớp!");
+            }
+        };
+
+        document.getElementById('view-scores-btn').onclick = () => {
+            showSection('scores');
+        };
+        document.getElementById('next-btn').onclick = nextQuestion;
+        document.getElementById('prev-btn').onclick = prevQuestion; 
+        document.getElementById('submit-btn').onclick = submitQuiz;
+    }
+
+    function loadQuizData() {
+        let rawData = JSON.parse(JSON.stringify(rawQuestions));
+        
+        // GIỮ NGUYÊN THỨ TỰ (KHÔNG DÙNG HÀM SHUFFLE)
+        let part1 = rawData.filter(q => q.type === 'single');
+        part1.forEach((q, idx) => {
+            q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+        });
+
+        // BẮT ĐẦU ĐÁNH SỐ TỪ CÂU 1 CHO PHẦN 2
+        let part2 = rawData.filter(q => q.type === 'tf_cluster');
+        part2.forEach((q, idx) => {
+            q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+            const labels = ['a)', 'b)', 'c)', 'd)'];
+            q.subQuestions.forEach((sub, sIdx) => {
+                sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                sub.text = `${labels[sIdx]} ${sub.text}`;
+            });
+        });
+
+        currentQuestions = [...part1, ...part2];
+        startQuiz();
+    }
+
+    function goHome() {
+        document.body.classList.remove('is-reviewing');
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(floatingBar) floatingBar.style.display = 'none';
+        
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    }
+
+    let currentIdx = 0;
+    function startQuiz() {
+        quizStartTime = new Date();
+        isQuizStarted = true;
+
+        document.body.classList.remove('is-reviewing');
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(floatingBar) floatingBar.style.display = 'none';
+        
+        document.getElementById('timer-banner').style.display = 'flex';
+        document.getElementById('nav-buttons').style.display = 'flex';
+        document.getElementById('progress-container').style.display = 'block';
+
+        showSection('quiz');
+        document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+        currentIdx = 0;
+        userAnswers = {};
+        renderQuestion();
+        
+        clearInterval(timerInterval);
+        startTimer(45 * 60); 
+    }
+
+    function retryQuiz() {
+        loadQuizData();
+    }
+
+    function getTotalItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.subQuestions.length;
+            else count++;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id]) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined) count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        updateProgress();
+    };
+
+    function renderQuestion() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3">
+                        <span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span>
+                        <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">TRẮC NGHIỆM ĐÚNG/SAI</h3>
+                    </div>
+
+                    <div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-700 text-base md:text-lg font-extrabold leading-relaxed shadow-inner">
+                        ${q.displayQuestion}
+                    </div>
+                    <div class="space-y-3 md:pl-6">
+                        ${q.subQuestions.map(sub => `
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all">
+                                <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                                <div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
+                                    <input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" 
+                                        onchange="selectAnswer('${sub.id}', 'Đúng', 'tf')" ${isChecked(sub.id, 'Đúng') ? 'checked' : ''}>
+                                    <label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Đúng</label>
+
+                                    <input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" 
+                                        onchange="selectAnswer('${sub.id}', 'Sai', 'tf')" ${isChecked(sub.id, 'Sai') ? 'checked' : ''}>
+                                    <label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Sai</label>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="fade-in">
+                    ${currentIdx === 0 ? `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3">
+                        <span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span>
+                        <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3>
+                    </div>` : ''}
+
+                    <div class="flex gap-4 mb-5">
+                        <div class="w-full">
+                            <div class="text-xl font-extrabold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</div>
+                        </div>
+                    </div>
+                    <div class="space-y-4 md:pl-14 mt-6">
+                        ${q.options.map((opt, i) => `
+                            <div class="flex items-center">
+                                <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio"
+                                    ${isChecked(q.id, i) ? 'checked' : ''}
+                                    onchange="selectAnswer('${q.id}', ${i}, 'single')">
+                                <label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg">
+                                    <span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors">
+                                        ${String.fromCharCode(65 + i)}
+                                    </span>
+                                    <span class="text-gray-700 leading-relaxed">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        updateNav();
+        updateProgress();
+    }
+
+    function isChecked(qId, val) {
+        return userAnswers[qId] === val;
+    }
+
+    function nextQuestion() {
+        if (currentIdx < currentQuestions.length - 1) {
+            currentIdx++;
+            renderQuestion();
+        }
+    }
+    function prevQuestion() {
+        if (currentIdx > 0) {
+            currentIdx--;
+            renderQuestion();
+        }
+    }
+
+   function updateNav() {
+        const isLast = currentIdx === currentQuestions.length - 1;
+        const isFirst = currentIdx === 0; 
+        
+        document.getElementById('prev-btn').style.display = isFirst ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = isLast ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = isLast ? 'block' : 'none';
+    }
+    
+    function updateProgress() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    }
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    async function submitQuiz() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correct = 0;
+        let totalItems = getTotalItems(); 
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] === sub.correct) correct++;
+                });
+            } else {
+                if (userAnswers[q.id] === q.correct) correct++;
+            }
+        });
+        
+        const score = (correct * 10 / totalItems).toFixed(2);
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        const record = {
+            hoTen: currentStudent.hoTen,
+            lop: currentStudent.lop,
+            huong: currentStudent.huong,
+            diem: parseFloat(score),
+            soCauDung: correct,
+            tongCau: totalItems,
+            startTime: quizStartTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+            duration: formatDuration(durationSeconds),
+            thoiGian: new Date().toISOString(),
+            deviceId: deviceId 
+        };
+
+        if (window.dataSdk) {
+            const result = await window.dataSdk.create(record);
+
+            if (result.isOk) {
+                showModalResult(score, correct, totalItems, record.duration);
+            } else {
+                alert("Lỗi mạng! Không thể lưu điểm. Vui lòng thử lại.");
+            }
+        }
+    }
+
+    function showModalResult(score, correct, total, dur) {
+        const modal = document.getElementById('result-modal');
+        const content = document.getElementById('result-content');
+        modal.classList.remove('hidden');
+        
+        content.innerHTML = `
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-green-600 mb-2">Hoàn thành bài ôn tập!</h3>
+            <p class="text-gray-600 mb-6 mt-2">
+                <span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - ${currentStudent.lop}</span>
+            </p>
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative">
+                <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+                <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+                <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Đúng ${correct}/${total} ý | Tổng TG: ${dur}</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="reviewQuiz()" class="w-full py-3 bg-gray-100 text-blue-700 border-2 border-blue-200 rounded-xl font-extrabold shadow-sm hover:bg-blue-50 transition-colors text-lg">🔎 Xem lại bài</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden');" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+            </div>
+            <button onclick="goHome()" class="w-full py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏠 Về màn hình chính</button>
+        `;
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('scores-section').classList.add('hidden');
+        document.getElementById('quiz-section').classList.remove('hidden');
+        
+        document.body.classList.add('is-reviewing');
+        
+        document.getElementById('timer-banner').style.display = 'none';
+        document.getElementById('nav-buttons').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'none';
+
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(!floatingBar) {
+            floatingBar = document.createElement('div');
+            floatingBar.id = 'review-floating-bar';
+            floatingBar.className = "fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-200 p-4 flex gap-4 justify-center shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-50";
+            floatingBar.innerHTML = `
+                <button onclick="document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden');" class="px-6 py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏆 Xem Bảng Điểm</button>
+                <button onclick="goHome()" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-extrabold shadow-md hover:bg-blue-700 transition-colors text-lg">🏠 Về màn hình chính</button>
+            `;
+            document.body.appendChild(floatingBar);
+        }
+        floatingBar.style.display = 'flex';
+
+        const container = document.getElementById('question-container');
+        container.innerHTML = currentQuestions.map((q, idx) => {
+            
+            let headerHtml = '';
+            if (idx === 0) {
+                headerHtml = `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-blue-200 pb-3 mt-4">
+                        <span class="bg-gradient-to-br from-blue-500 to-cyan-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">I</span>
+                        <h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-700 uppercase tracking-widest">Phần Trắc Nghiệm Nhiều Lựa Chọn</h3>
+                    </div>
+                `;
+            } else if (q.type === 'tf_cluster' && currentQuestions[idx - 1] && currentQuestions[idx - 1].type === 'single') {
+                headerHtml = `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-orange-200 pb-3 mt-10">
+                        <span class="bg-gradient-to-br from-orange-500 to-red-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">II</span>
+                        <h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-700 to-red-700 uppercase tracking-widest">Phần Trắc Nghiệm Đúng/Sai</h3>
+                    </div>
+                `;
+            }
+
+            if (q.type === 'single') {
+                let optionsHtml = q.options.map((opt, i) => {
+                    let isSelected = isChecked(q.id, i);
+                    let isCorrect = (q.correct === i);
+                    let stateClass = "review-neutral";
+                    let icon = "";
+                    
+                    if (isCorrect) {
+                        stateClass = "review-correct shadow-md";
+                        icon = "✅";
+                    } else if (isSelected && !isCorrect) {
+                        stateClass = "review-incorrect";
+                        icon = "❌";
+                    }
+                    
+                    return `
+                        <div class="p-4 border-2 rounded-2xl flex items-center gap-4 ${stateClass} mb-3 font-bold text-lg pointer-events-none">
+                            <span class="w-10 h-10 rounded-xl border-2 flex items-center justify-center text-base font-black flex-shrink-0 bg-white/50 border-gray-300/50">${String.fromCharCode(65 + i)}</span>
+                            <span class="leading-relaxed flex-1">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                            <span>${icon}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    ${headerHtml}
+                    <div class="mb-8">
+                        <div class="mb-4">
+                            <div class="text-xl font-extrabold text-red-600 leading-snug">${q.displayQuestion}</div>
+                        </div>
+                        <div class="md:pl-14">${optionsHtml}</div>
+                    </div>
+                `;
+            } else {
+                let subHtml = q.subQuestions.map(sub => {
+                    let userAns = userAnswers[sub.id];
+                    let isCorrect = userAns === sub.correct;
+                    
+                    let ansText = "";
+                    let colorClass = "";
+
+                    if (userAns) {
+                        ansText = isCorrect ? `✅ Chính xác (Bạn chọn: ${userAns})` : `❌ Trả lời sai (Bạn chọn: ${userAns} | Đáp án: ${sub.correct})`;
+                        colorClass = isCorrect ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200';
+                    } else {
+                        ansText = `➖ Bỏ qua (Đáp án chuẩn: ${sub.correct})`;
+                        colorClass = 'text-orange-600 bg-orange-50 border-orange-200';
+                    }
+
+                    return `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 rounded-2xl gap-4 shadow-sm mb-3">
+                            <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                            <div class="font-extrabold ${colorClass} text-sm whitespace-nowrap px-4 py-2 rounded-xl border border-gray-100">
+                                ${ansText}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    ${headerHtml}
+                    <div class="mb-8 p-4 bg-gray-50 rounded-2xl border-2 border-gray-200">
+                        <div class="text-xl font-extrabold text-red-600 mb-4">${q.displayQuestion}</div>
+                        <div>${subHtml}</div>
+                    </div>
+                `;
+            }
+        }).join('<div class="my-6 border-b-2 border-dashed border-gray-200"></div>');
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) {
+            tbody.innerHTML = '';
+            document.getElementById('no-scores').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('no-scores').classList.add('hidden');
+
+        const sorted = [...allScores].sort((a, b) => b.diem - a.diem);
+
+        tbody.innerHTML = sorted.map((s, idx) => {
+            const rowClass = s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-gray-50';
+            const meBadge = s.deviceId === deviceId ? '<span class="ml-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs px-3 py-1 rounded-full font-black shadow-sm uppercase tracking-wider">Bạn</span>' : '';
+
+            const cauDung = s.soCauDung !== undefined ? s.soCauDung : '-';
+            const tongCau = s.tongCau !== undefined ? s.tongCau : '-';
+            const tenLop = s.lop || '';
+
+            return `
+                <tr class="${rowClass} transition-colors">
+                    <td class="px-3 sm:px-5 py-4 text-center font-black text-gray-400 text-lg">#${idx + 1}</td>
+                    <td class="px-3 sm:px-5 py-4 font-bold text-gray-700 text-base">${tenLop}</td>
+                    <td class="px-3 sm:px-5 py-4 font-extrabold text-gray-800 whitespace-nowrap text-lg">${s.hoTen || ''} ${meBadge}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-gray-600 font-bold text-lg">${cauDung}/${tongCau}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-green-600' : 'text-red-500 drop-shadow-sm'}">${s.diem}</span></td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.startTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.endTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-right text-xs text-orange-600 font-bold">${s.duration || '--'}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        setTimeout(() => {
+            const myRow = document.querySelector('.my-score-row');
+            if (myRow) myRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => {
+            const sec = document.getElementById(s+'-section');
+            if(sec) sec.classList.add('hidden');
+        });
+        const target = document.getElementById(id+'-section');
+        if(target) target.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) submitQuiz();
+        }, 1000);
+    }
+
+    initApp();
+  </script>
+ </body>
+</html>
