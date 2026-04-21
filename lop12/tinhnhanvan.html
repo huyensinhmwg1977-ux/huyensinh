@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập: Ứng Xử Trên Không Gian Mạng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      -webkit-user-select: none !important; -moz-user-select: none !important;
+      -ms-user-select: none !important; user-select: none !important; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    input, textarea, select {
+      -webkit-user-select: auto !important; -moz-user-select: auto !important;
+      -ms-user-select: auto !important; user-select: auto !important;
+      pointer-events: auto !important;
+    }
+    #app { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; padding-bottom: 50px; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    /* Nút chọn Phần I */
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    /* Nút chọn Phần II */
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    .code-block { background: #f8fafc; color: #1e3a8a; padding: 15px 20px; border-radius: 10px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; margin: 15px 0; font-size: 16px; font-weight: 700; border: 1px solid #e2e8f0; border-left: 5px solid #3b82f6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; font-size: 0.95rem; text-align: left;}
+    .data-table th, .data-table td { border: 1px solid #cbd5e1; padding: 8px 12px; }
+    .data-table th { background-color: #f1f5f9; font-weight: bold; color: #334155; }
+    .data-table tr:nth-child(even) { background-color: #f8fafc; }
+
+    /* CSS chế độ xem lại - Đã tăng không gian cuộn xuống 350px để không bị che khuất */
+    body.is-reviewing #app { padding-bottom: 350px !important; } 
+    .review-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+    .review-incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; text-decoration: line-through; opacity: 0.8; }
+    .review-neutral { background-color: #ffffff !important; border-color: #e2e8f0 !important; opacity: 0.5; }
+  </style>
+ </head>
+ <body oncopy="return false" oncut="return false" onpaste="return false">
+  <div id="app" class="p-0 sm:p-4 md:p-8 flex flex-col sm:block transition-all">
+   
+   <div id="login-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-md mx-auto fade-in flex-grow flex flex-col sm:justify-center">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start flex-grow sm:flex-grow-0">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="w-24 h-24 bg-gradient-to-br from-pink-500 to-orange-400 rounded-3xl mx-auto mb-2 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform">
+       <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253"></path></svg>
+      </div>
+      <h2 class="text-lg font-bold text-gray-800 mb-2">ÔN TẬP</h2>
+      <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 mb-1">ỨNG XỬ TRÊN KHÔNG GIAN MẠNG</h1>
+      <p class="text-gray-600 font-bold">Thời gian làm bài: 45 Phút</p>
+     </div>
+     
+     <form id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all" placeholder="12A1">
+          </div>
+      </div>
+      <button type="submit" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl"> 🚀 BẮT ĐẦU ÔN TẬP </button>
+     </form>
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button id="view-scores-btn" type="button" class="text-blue-600 font-extrabold hover:text-blue-800 hover:underline transition-colors text-lg">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      <div>
+       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Ôn Tập: Ứng Xử Trên Không Gian Mạng</h2>
+       <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+      </div>
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" class="flex-1 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold text-lg rounded-xl shadow-md transition-all transform hover:-translate-y-1" style="display: none;">⬅ Câu trước</button>
+        <button id="next-btn" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow">
+     <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+      <button onclick="goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Về màn hình chính</button>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-2 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Đúng</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-[2rem] shadow-2xl p-8 max-w-md w-full fade-in text-center flex flex-col border-t-8 border-green-500" id="result-content"></div>
+   </div>
+
+  </div>
+
+  <script>
+    // ==================== BẢO VỆ TÀI LIỆU ====================
+    document.addEventListener('contextmenu', event => event.preventDefault()); 
+    document.addEventListener('selectstart', event => {
+        if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'SELECT') { event.preventDefault(); }
+    });
+    document.addEventListener('dragstart', event => event.preventDefault()); 
+    document.addEventListener('copy', event => {
+        event.clipboardData.setData('text/plain', 'Tài liệu đã được bảo vệ!');
+        event.preventDefault();
+    });
+
+    let isQuizStarted = false; 
+
+    // ==================== CẤU HÌNH FIREBASE ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+        messagingSenderId: "1046142513655",
+        appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tin12_ungxu'); 
+
+    // ==================== NGÂN HÀNG CÂU HỎI MỚI (Đã bổ sung đủ số lượng) ====================
+    const rawQuestions = [
+        // PHẦN 1: TRẮC NGHIỆM MỘT LỰA CHỌN (25 CÂU)
+        { id: 1, type: "single", question: "Trong quá trình trao đổi qua mạng, hành động nào sau đây là không đúng?", options: ["Sử dụng từ ngữ lịch sự, tôn trọng người khác.", "Đăng tải thông tin giả mạo để lừa gạt người khác.", "Tham gia thảo luận tích cực về các chủ đề xã hội.", "Góp ý mang tính xây dựng trong các cuộc trò chuyện trực tuyến."], correct: 1 },
+        { id: 2, type: "single", question: "Những hành vi nào sau đây cần tránh khi trò chuyện trực tuyến?", options: ["Đưa ra những lời nhận xét ác ý về người khác.", "Chia sẻ thông tin hữu ích và hỗ trợ lẫn nhau.", "Tôn trọng ý kiến của người khác trong cuộc thảo luận.", "Phản hồi nhanh chóng và lịch sự đối với các tin nhắn."], correct: 0 },
+        { id: 3, type: "single", question: "Trong giao tiếp trực tuyến, hành động nào là không phù hợp?", options: ["Đưa ra lời nói xúc phạm người khác trên mạng xã hội.", "Đưa ra ý kiến một cách tôn trọng và xây dựng.", "Bảo vệ quyền riêng tư của người khác trên mạng.", "Tham gia vào các hoạt động gây quỹ từ thiện trực tuyến."], correct: 0 },
+        { id: 4, type: "single", question: "Hành vi nào sau đây không phù hợp với nguyên tắc ứng xử văn minh trên mạng xã hội?", options: ["Luôn thể hiện sự tôn trọng đối với ý kiến của người khác.", "Sử dụng ngôn ngữ xúc phạm và khiếm nhã.", "Góp ý tích cực và xây dựng trong các cuộc thảo luận.", "Tìm kiếm thông tin trước khi đưa ra nhận xét."], correct: 1 },
+        { id: 5, type: "single", question: "Trong giao tiếp trực tuyến, hành động nào sau đây là không phù hợp?", options: ["Chia sẻ thông tin giả mạo để gây hoang mang cho người khác.", "Lắng nghe và tôn trọng ý kiến của người khác trong thảo luận.", "Phản hồi một cách lịch sự và hợp tác.", "Góp ý một cách nhẹ nhàng và xây dựng."], correct: 0 },
+        { id: 6, type: "single", question: "Hành vi nào sau đây là không nên có khi tham gia các diễn đàn thảo luận trực tuyến?", options: ["Đưa ra lời khen ngợi hoặc nhận xét tích cực.", "Đưa ra nhận xét sau khi hiểu rõ vấn đề.", "Góp ý trên tinh thần xây dựng.", "Bình luận thiếu tính xây dựng và mang tính công kích."], correct: 3 },
+        { id: 7, type: "single", question: "Khi tham gia không gian mạng, bạn cần thực hiện điều gì sau đây để bảo vệ thông tin cá nhân?", options: ["Cung cấp đầy đủ mọi thông tin cá nhân trên các trang mạng xã hội.", "Kiểm tra và thiết lập các tùy chọn quyền riêng tư trên tài khoản cá nhân.", "Chia sẻ mật khẩu tài khoản với nhiều người.", "Đăng tải mọi hoạt động cá nhân hằng ngày lên mạng xã hội."], correct: 1 },
+        { id: 8, type: "single", question: "Hành động nào sau đây là không nên thực hiện khi trao đổi thông tin trên mạng?", options: ["Phản hồi nhanh chóng và lịch sự đối với các câu hỏi.", "Lắng nghe và tìm hiểu ý kiến khác trước khi nhận xét.", "Chia sẻ kinh nghiệm cá nhân với tinh thần hợp tác.", "Phê phán ý kiến của người khác một cách ác ý."], correct: 3 },
+        { id: 9, type: "single", question: "Phương án nào sau đây nêu đúng lí do việc tuân thủ pháp luật Việt Nam về không gian mạng lại quan trọng đối với người dùng cá nhân?", options: ["Tuân thủ pháp luật giúp người dùng tránh các hình phạt và bảo vệ quyền lợi của mình trên không gian mạng.", "Tuân thủ pháp luật không liên quan đến việc bảo vệ thông tin cá nhân.", "Pháp luật chỉ áp dụng cho doanh nghiệp, không áp dụng cho cá nhân.", "Vi phạm pháp luật trên không gian mạng không gây hậu quả nghiêm trọng."], correct: 0 },
+        { id: 10, type: "single", question: "Phương án nào sau đây nêu đúng lí do việc tôn trọng quyền riêng tư là một phần quan trọng của ứng xử nhân văn trong không gian mạng?", options: ["Vì chia sẻ thông tin cá nhân của người khác có thể giúp họ nổi tiếng hơn.", "Vì vi phạm quyền riêng tư có thể dẫn đến các hậu quả nghiêm trọng như mất lòng tin và tổn hại cảm xúc.", "Vì quyền riêng tư không liên quan đến việc giao tiếp trên không gian mạng.", "Vì thông tin cá nhân trên mạng luôn được bảo vệ và không ai có thể truy cập."], correct: 1 },
+        { id: 11, type: "single", question: "Nhược điểm nào sau đây có thể ảnh hưởng đến sự hiệu quả của giao tiếp ảo?", options: ["Không có rào cản về ngôn ngữ trong giao tiếp.", "Dễ dàng truyền tải cảm xúc và tâm trạng thông qua tin nhắn.", "Thiếu sự giao tiếp phi ngôn ngữ như ánh mắt, cử chỉ.", "Luôn đảm bảo mọi thông tin được truyền đạt đầy đủ và rõ ràng."], correct: 2 },
+        { id: 12, type: "single", question: "Hạn chế nào sau đây khiến giao tiếp trực tuyến trở nên không hiệu quả?", options: ["Không yêu cầu sự tương tác giữa các bên.", "Không có công cụ hỗ trợ giao tiếp đa dạng.", "Dễ dàng truyền tải thông điệp chính xác mà không có lỗi.", "Sự cố kĩ thuật như mất kết nối mạng."], correct: 3 },
+        { id: 13, type: "single", question: "Phương án nào sau đây nêu ưu điểm lớn nhất của giao tiếp trong không gian mạng?", options: ["Tạo cơ hội cho mọi người thể hiện ý kiến mà không lo sợ phán xét.", "Dễ dàng hiểu rõ cảm xúc thật của người giao tiếp.", "Không phụ thuộc vào kết nối Internet.", "Giao tiếp trong thế giới ảo luôn chính xác và hiệu quả."], correct: 0 },
+        { id: 14, type: "single", question: "Trường hợp nào sau đây không thể hiện tính nhân văn khi giao tiếp trong không gian mạng?", options: ["Chia sẻ một bài viết tích cực về việc giúp đỡ người nghèo.", "Sử dụng lời lẽ thô tục khi không đồng ý với người khác.", "Bình tĩnh lắng nghe quan điểm của đối phương dù không đồng ý.", "Gửi lời cảm ơn sau khi nhận được sự giúp đỡ từ người khác."], correct: 1 },
+        { id: 15, type: "single", question: "Hành vi nào sau đây giúp duy trì tính nhân văn trong giao tiếp trên mạng xã hội?", options: ["Phê phán công khai sai lầm của người khác một cách nặng nề.", "Gửi lời động viên và chia sẻ với những người gặp khó khăn.", "Đăng tải thông tin không chính xác gây hiểu lầm cho cộng đồng.", "Lan truyền tin đồn mà không kiểm chứng sự thật."], correct: 1 },
+        
+        // 10 câu mới bổ sung
+        { id: 16, type: "single", question: "Khi nhận được một tin nhắn đe dọa từ người lạ trên mạng, bạn nên làm gì?", options: ["Xóa tin nhắn và chặn tài khoản đó ngay lập tức.", "Nhắn tin lại để chửi mắng họ bảo vệ bản thân.", "Chuyển tiếp tin nhắn đó cho bạn bè để cùng xem.", "Tìm hiểu thông tin cá nhân của người đó để trả thù."], correct: 0 },
+        { id: 17, type: "single", question: "Để bảo vệ tài khoản trực tuyến khỏi bị đánh cắp, biện pháp nào sau đây là hiệu quả nhất?", options: ["Sử dụng mật khẩu ngắn để dễ nhớ.", "Chia sẻ mật khẩu với người bạn thân nhất.", "Kích hoạt tính năng bảo mật hai lớp (2FA).", "Đặt mật khẩu giống nhau cho tất cả các tài khoản."], correct: 2 },
+        { id: 18, type: "single", question: "Hành vi 'Bắt nạt trên mạng' (Cyberbullying) có thể gây ra hậu quả gì?", options: ["Giúp nạn nhân trở nên mạnh mẽ và tự tin hơn trong cuộc sống.", "Làm tổn thương tinh thần nghiêm trọng, gây trầm cảm cho nạn nhân.", "Giúp mọi người gắn kết và hiểu nhau hơn qua những lời trêu đùa.", "Chỉ là một trò đùa vui vẻ trên thế giới ảo, không có hậu quả thực tế gì."], correct: 1 },
+        { id: 19, type: "single", question: "Khi thấy một bài đăng có nội dung xuyên tạc, kích động thù địch trên mạng, hành động đúng đắn là:", options: ["Vào bình luận ủng hộ để tăng tương tác cho bài viết.", "Báo cáo (Report) bài đăng đó với quản trị viên nền tảng.", "Chia sẻ lại để nhiều người vào xem và chửi bới.", "Làm ngơ, tiếp tục lướt qua và coi như không thấy gì."], correct: 1 },
+        { id: 20, type: "single", question: "Quyền tác giả trên không gian mạng được hiểu như thế nào?", options: ["Mọi thông tin trên mạng đều là miễn phí và ai cũng có quyền sử dụng tùy ý.", "Được quyền sao chép tác phẩm của người khác nếu không nhằm mục đích thương mại.", "Phải xin phép và ghi rõ nguồn khi sử dụng tác phẩm, bài viết, hình ảnh của người khác.", "Chỉ những bài viết được bảo hộ bằng giấy tờ mới cần phải ghi nguồn."], correct: 2 },
+        { id: 21, type: "single", question: "Thông tin cá nhân (như số điện thoại, căn cước công dân, địa chỉ nhà) khi đăng tải công khai trên mạng sẽ có nguy cơ gì?", options: ["Bị kẻ xấu thu thập, lợi dụng để lừa đảo, chiếm đoạt tài sản.", "Giúp tăng số lượng người theo dõi và tương tác trên mạng xã hội một cách an toàn.", "Được các công ty công nghệ bảo vệ an toàn tuyệt đối 100%.", "Không có nguy cơ gì đáng kể vì mạng xã hội có tính năng tự động ẩn thông tin nhạy cảm."], correct: 0 },
+        { id: 22, type: "single", question: "Việc sử dụng ngôn ngữ viết tắt, tiếng lóng khi gửi email xin việc hoặc trao đổi công việc với đối tác trên mạng là:", options: ["Thể hiện sự chuyên nghiệp, năng động và hiện đại.", "Giúp tiết kiệm thời gian và tăng hiệu quả công việc đáng kể.", "Không phù hợp, thể hiện sự thiếu tôn trọng và thiếu tính chuyên nghiệp.", "Được khuyến khích sử dụng thường xuyên để tạo sự gần gũi."], correct: 2 },
+        { id: 23, type: "single", question: "Tin giả (Fake news) thường có đặc điểm gì dễ nhận biết nhất?", options: ["Nguồn tin chính thống, có trích dẫn và kiểm chứng rõ ràng từ cơ quan chức năng.", "Tiêu đề giật gân, câu view, nội dung không có nguồn gốc rõ ràng hoặc từ trang web lạ.", "Hình ảnh minh họa chân thực, sắc nét và được cung cấp từ các cơ quan báo chí lớn.", "Nội dung phản ánh đúng sự thật khách quan và mang tính xây dựng cho xã hội."], correct: 1 },
+        { id: 24, type: "single", question: "'Phishing' là hình thức tấn công mạng nhằm mục đích gì?", options: ["Làm sập hệ thống máy chủ lưu trữ dữ liệu của một tổ chức.", "Đánh cắp thông tin cá nhân, tài khoản ngân hàng thông qua các liên kết, email giả mạo.", "Phát tán mã độc để xóa toàn bộ dữ liệu trên máy tính của nạn nhân.", "Theo dõi vị trí và nghe lén cuộc gọi của người dùng mạng."], correct: 1 },
+        { id: 25, type: "single", question: "Nguyên tắc 'Suy nghĩ trước khi đăng' (Think before you post) mang ý nghĩa gì?", options: ["Cân nhắc kĩ xem bài đăng có mang lại nhiều lượt thích (like) và bình luận không.", "Xem xét kĩ hậu quả, tính xác thực và sự phù hợp của nội dung trước khi quyết định chia sẻ.", "Suy nghĩ xem nên chọn hình ảnh nào đã qua chỉnh sửa đẹp nhất để đăng.", "Chỉ ưu tiên đăng những thông tin mang tính chất chỉ trích và gây tranh cãi."], correct: 1 },
+
+        // PHẦN 2 - TRẮC NGHIỆM ĐÚNG SAI (8 CÂU)
+        { id: 'c1', type: 'tf_cluster', question: "Linh là học sinh lớp 12 và thích sử dụng mạng xã hội để chia sẻ hình ảnh và thông tin cá nhân. Trong một nhóm trực tuyến, Linh chia sẻ các bài viết về học tập và giao lưu với bạn bè. Gần đây, có người trong nhóm đã chia sẻ lại hình ảnh của Linh mà không xin phép và còn bình luận tiêu cực về bài viết của Linh.", subQuestions: [
+            { id: 'tf1_a', text: "Việc chia sẻ hình ảnh cá nhân của Linh mà không có sự đồng ý có thể được coi là xâm phạm quyền riêng tư của cô ấy.", correct: "Đúng" },
+            { id: 'tf1_b', text: "Khi Linh tham gia thảo luận trực tuyến, cô ấy nên tôn trọng ý kiến của người khác, ngay cả khi không đồng ý với quan điểm của họ.", correct: "Đúng" },
+            { id: 'tf1_c', text: "Việc Linh sử dụng lời lẽ lịch sự và tôn trọng trong các bình luận có thể giúp tạo ra một môi trường giao tiếp nhân văn và tích cực trên không gian mạng.", correct: "Đúng" },
+            { id: 'tf1_d', text: "Nếu Linh gặp phải thông tin không đúng về mình trên mạng, cô ấy nên tìm cách phản hồi một cách bình tĩnh và lịch sự thay vì công kích người đăng thông tin đó.", correct: "Đúng" }
+        ]},
+        
+        { id: 'c2', type: 'tf_cluster', question: "Một cơn bão mạnh vừa đổ bộ vào miền Trung, gây thiệt hại nghiêm trọng cho các tỉnh ven biển. Trên mạng xã hội, nhiều người dùng đăng tải hình ảnh và thông tin về thiệt hại, trong đó có một số thông tin chưa được kiểm chứng gây hoang mang trong cộng đồng.", subQuestions: [
+            { id: 'tf2_a', text: "Việc lan truyền thông tin chưa kiểm chứng về thiệt hại do bão có thể gây hoang mang và khó khăn cho công tác cứu trợ.", correct: "Đúng" },
+            { id: 'tf2_b', text: "Người dùng mạng xã hội nên kiểm tra tính chính xác của thông tin trước khi chia sẻ để đảm bảo không gây hiểu lầm trong cộng đồng.", correct: "Đúng" },
+            { id: 'tf2_c', text: "Nếu mọi người chỉ chia sẻ những thông tin đã xác thực từ các nguồn uy tín, điều này sẽ giúp cộng đồng nhận thức đúng đắn hơn về tình hình bão.", correct: "Đúng" },
+            { id: 'tf2_d', text: "Nếu thấy một bài viết chứa thông tin sai lệch về cơn bão, người dùng nên báo cáo bài viết đó hoặc cung cấp thông tin chính xác để tránh gây hiểu nhầm.", correct: "Đúng" }
+        ]},
+
+        { id: 'c3', type: 'tf_cluster', question: "Nam thường xuyên bị một nhóm bạn cùng trường nhắn tin đe dọa, chế giễu và đăng những bức ảnh 'dìm hàng' cậu lên các trang mạng xã hội công khai. Nam cảm thấy rất căng thẳng và sợ hãi. Theo bạn, các nhận định sau đây về tình huống này là đúng hay sai?", subQuestions: [
+            { id: 'tf3_a', text: "Nam đang là nạn nhân của hành vi bắt nạt trực tuyến (cyberbullying).", correct: "Đúng" },
+            { id: 'tf3_b', text: "Khi bị bắt nạt trên mạng, việc tốt nhất Nam nên làm là im lặng và chịu đựng một mình để sự việc tự qua đi.", correct: "Sai" },
+            { id: 'tf3_c', text: "Nam nên chủ động chụp màn hình lưu lại các tin nhắn, bình luận đe dọa để làm bằng chứng báo cáo hoặc nhờ giáo viên, phụ huynh giúp đỡ.", correct: "Đúng" },
+            { id: 'tf3_d', text: "Để giải quyết triệt để, Nam nên tạo một tài khoản giả mạo để nhắn tin đe dọa lại những người đã bắt nạt mình.", correct: "Sai" }
+        ]},
+
+        { id: 'c4', type: 'tf_cluster', question: "Thời gian gần đây, trên mạng xã hội xuất hiện rất nhiều thông tin giả mạo (Fake news) liên quan đến các vấn đề y tế và sức khỏe. Hãy đánh giá các phát biểu sau đây liên quan đến tin giả:", subQuestions: [
+            { id: 'tf4_a', text: "Hành vi phát tán, chia sẻ tin giả mạo gây hoang mang dư luận có thể bị cơ quan chức năng xử phạt theo quy định của pháp luật.", correct: "Đúng" },
+            { id: 'tf4_b', text: "Tin giả thường sử dụng tiêu đề giật gân, hình ảnh đã qua chỉnh sửa để kích thích sự tò mò và đánh lừa cảm xúc của người đọc.", correct: "Đúng" },
+            { id: 'tf4_c', text: "Khi thấy một bài viết có hàng ngàn lượt chia sẻ và bình luận, chắc chắn thông tin trong bài viết đó là hoàn toàn đúng sự thật.", correct: "Sai" },
+            { id: 'tf4_d', text: "Nếu bạn chỉ chia sẻ tin giả vào các nhóm kín hoặc qua tin nhắn cá nhân thì sẽ không vi phạm pháp luật và không gây hại.", correct: "Sai" }
+        ]},
+
+        { id: 'c5', type: 'tf_cluster', question: "Mọi hoạt động của bạn trên Internet từ việc lướt web, bình luận, đến đăng ảnh đều tạo ra 'Dấu chân kĩ thuật số' (Digital Footprint). Hãy đánh giá các nhận định sau về dấu chân kĩ thuật số:", subQuestions: [
+            { id: 'tf5_a', text: "Dấu chân kĩ thuật số là toàn bộ những dữ liệu mà người dùng để lại trong quá trình sử dụng Internet, bao gồm cả lịch sử tìm kiếm và bài đăng.", correct: "Đúng" },
+            { id: 'tf5_b', text: "Hiện nay, nhiều nhà tuyển dụng thường xuyên tìm kiếm và xem xét dấu chân kĩ thuật số của ứng viên để đánh giá tính cách và đạo đức.", correct: "Đúng" },
+            { id: 'tf5_c', text: "Khi bạn xóa một bài viết hoặc hình ảnh trên mạng xã hội cá nhân, nó sẽ lập tức biến mất vĩnh viễn và không ai có thể khôi phục lại được.", correct: "Sai" },
+            { id: 'tf5_d', text: "Dấu chân kĩ thuật số chỉ được tạo ra khi bạn chủ động đăng tải nội dung; việc bạn chỉ âm thầm lướt xem không để lại dữ liệu gì.", correct: "Sai" }
+        ]},
+
+        { id: 'c6', type: 'tf_cluster', question: "Các hình thức lừa đảo trực tuyến ngày càng trở nên tinh vi. Dưới đây là một số cách ứng xử khi gặp các tình huống đáng ngờ trên mạng. Hãy đánh giá các cách ứng xử này:", subQuestions: [
+            { id: 'tf6_a', text: "Tuyệt đối không bao giờ cung cấp mã OTP (Mã xác thực một lần) cho bất kỳ ai, kể cả người đó tự xưng là công an hay nhân viên ngân hàng.", correct: "Đúng" },
+            { id: 'tf6_b', text: "Nên cẩn thận kiểm tra kỹ địa chỉ đường dẫn (URL) của trang web trước khi đăng nhập tài khoản để tránh bị lừa bởi các trang web giả mạo.", correct: "Đúng" },
+            { id: 'tf6_c', text: "Nếu nhận được tin báo trúng thưởng từ một số lạ yêu cầu nộp trước một khoản phí nhỏ để nhận giải, bạn nên nộp ngay để không bỏ lỡ cơ hội.", correct: "Sai" },
+            { id: 'tf6_d', text: "Các ngân hàng và cơ quan nhà nước thường xuyên yêu cầu người dân cung cấp mật khẩu tài khoản qua tin nhắn SMS để xác minh.", correct: "Sai" }
+        ]},
+
+        { id: 'c7', type: 'tf_cluster', question: "Khi làm bài tập nhóm môn Tin học, Hoa đã sao chép một đoạn văn bản dài và nhiều hình ảnh từ một trang web trên mạng đưa vào bài làm của mình mà không ghi rõ nguồn gốc. Hãy đánh giá các nhận định sau về vấn đề bản quyền:", subQuestions: [
+            { id: 'tf7_a', text: "Đạo văn là hành vi sao chép một phần hoặc toàn bộ tác phẩm của người khác và cố tình nhận đó là công trình do chính mình tạo ra.", correct: "Đúng" },
+            { id: 'tf7_b', text: "Khi trích dẫn thông tin, số liệu từ một bài báo trên mạng để làm tài liệu tham khảo, bạn bắt buộc phải ghi rõ nguồn gốc và tên tác giả của bài viết.", correct: "Đúng" },
+            { id: 'tf7_c', text: "Nếu một bức ảnh được tìm thấy dễ dàng trên Google, bạn có thể tự do tải về và sử dụng nó cho mọi mục đích mà không cần xin phép tác giả.", correct: "Sai" },
+            { id: 'tf7_d', text: "Mọi phần mềm ứng dụng trên mạng đều là tài sản chung nên việc tải và sử dụng các phần mềm bẻ khóa (crack) là hành vi hợp pháp.", correct: "Sai" }
+        ]},
+
+        { id: 'c8', type: 'tf_cluster', question: "Việc sử dụng mạng xã hội và các thiết bị điện tử thông minh chiếm một phần lớn thời gian của giới trẻ hiện nay. Đánh giá các phát biểu sau về việc sử dụng thiết bị điện tử lành mạnh:", subQuestions: [
+            { id: 'tf8_a', text: "Thường xuyên lướt mạng xã hội hoặc chơi game trên điện thoại trong nhiều giờ trước khi ngủ có thể gây rối loạn giấc ngủ và ảnh hưởng xấu đến sức khỏe.", correct: "Đúng" },
+            { id: 'tf8_b', text: "Dành quá nhiều thời gian đắm chìm trong thế giới ảo có thể làm giảm chất lượng các mối quan hệ thực tế và làm suy giảm kỹ năng giao tiếp trực tiếp.", correct: "Đúng" },
+            { id: 'tf8_c', text: "Dấu hiệu rõ nhất của việc nghiện Internet là khi bạn cảm thấy vui vẻ, sảng khoái và năng suất học tập tăng cao sau nhiều giờ liên tục lướt mạng.", correct: "Sai" },
+            { id: 'tf8_d', text: "Hầu hết các nền tảng mạng xã hội được thiết kế để không gây nghiện, do đó người dùng luôn có thể dễ dàng tự kiểm soát được thời gian sử dụng.", correct: "Sai" }
+        ]}
+    ];
+
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    const RealtimeSdk = {
+        init(handler) {
+            scoresRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const scoresList = [];
+                if (data) {
+                    for (let key in data) {
+                        scoresList.push({ id: key, ...data[key] });
+                    }
+                }
+                handler.onDataChanged(scoresList);
+            });
+            return Promise.resolve({ isOk: true });
+        },
+        create(record) {
+            return scoresRef.push(record)
+                .then(() => { return { isOk: true }; })
+                .catch(error => { console.error(error); return { isOk: false }; });
+        }
+    };
+
+    const dataHandler = {
+        onDataChanged(data) {
+            allScores = data || [];
+            renderScores();
+        }
+    };
+
+    function initApp() {
+        try {
+            if (!localStorage.getItem('deviceId')) {
+                localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+            }
+            deviceId = localStorage.getItem('deviceId');
+        } catch (e) {
+            deviceId = 'dev_' + Math.random().toString(36).substr(2) + Date.now();
+        }
+        
+        window.dataSdk = RealtimeSdk;
+        window.dataSdk.init(dataHandler);
+        setupEvents();
+        
+        showSection('login');
+    }
+
+    function setupEvents() {
+        document.getElementById('login-form').onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('hoTen').value.trim();
+            const lop = document.getElementById('lop').value.trim();
+            
+            if (name && lop) {
+                currentStudent = { hoTen: name, lop: lop, huong: 'Chung' };
+                loadQuizData();
+            } else {
+                alert("Vui lòng nhập đủ Họ tên và Lớp!");
+            }
+        };
+
+        document.getElementById('view-scores-btn').onclick = () => {
+            showSection('scores');
+        };
+        document.getElementById('next-btn').onclick = nextQuestion;
+        document.getElementById('prev-btn').onclick = prevQuestion; 
+        document.getElementById('submit-btn').onclick = submitQuiz;
+    }
+
+    function loadQuizData() {
+        let rawData = JSON.parse(JSON.stringify(rawQuestions));
+        
+        // GIỮ NGUYÊN THỨ TỰ (KHÔNG DÙNG HÀM SHUFFLE)
+        let part1 = rawData.filter(q => q.type === 'single');
+        part1.forEach((q, idx) => {
+            q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+        });
+
+        // BẮT ĐẦU ĐÁNH SỐ TỪ CÂU 1 CHO PHẦN 2
+        let part2 = rawData.filter(q => q.type === 'tf_cluster');
+        part2.forEach((q, idx) => {
+            q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+            const labels = ['a)', 'b)', 'c)', 'd)'];
+            q.subQuestions.forEach((sub, sIdx) => {
+                sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                sub.text = `${labels[sIdx]} ${sub.text}`;
+            });
+        });
+
+        currentQuestions = [...part1, ...part2];
+        startQuiz();
+    }
+
+    function goHome() {
+        document.body.classList.remove('is-reviewing');
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(floatingBar) floatingBar.style.display = 'none';
+        
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    }
+
+    let currentIdx = 0;
+    function startQuiz() {
+        quizStartTime = new Date();
+        isQuizStarted = true;
+
+        document.body.classList.remove('is-reviewing');
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(floatingBar) floatingBar.style.display = 'none';
+        
+        document.getElementById('timer-banner').style.display = 'flex';
+        document.getElementById('nav-buttons').style.display = 'flex';
+        document.getElementById('progress-container').style.display = 'block';
+
+        showSection('quiz');
+        document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+        currentIdx = 0;
+        userAnswers = {};
+        renderQuestion();
+        
+        clearInterval(timerInterval);
+        startTimer(45 * 60); 
+    }
+
+    function retryQuiz() {
+        loadQuizData();
+    }
+
+    function getTotalItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.subQuestions.length;
+            else count++;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id]) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined) count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        updateProgress();
+    };
+
+    function renderQuestion() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3">
+                        <span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span>
+                        <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">TRẮC NGHIỆM ĐÚNG/SAI</h3>
+                    </div>
+
+                    <div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-700 text-base md:text-lg font-extrabold leading-relaxed shadow-inner">
+                        ${q.displayQuestion}
+                    </div>
+                    <div class="space-y-3 md:pl-6">
+                        ${q.subQuestions.map(sub => `
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all">
+                                <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                                <div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0">
+                                    <input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" 
+                                        onchange="selectAnswer('${sub.id}', 'Đúng', 'tf')" ${isChecked(sub.id, 'Đúng') ? 'checked' : ''}>
+                                    <label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Đúng</label>
+
+                                    <input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" 
+                                        onchange="selectAnswer('${sub.id}', 'Sai', 'tf')" ${isChecked(sub.id, 'Sai') ? 'checked' : ''}>
+                                    <label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Sai</label>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="fade-in">
+                    ${currentIdx === 0 ? `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3">
+                        <span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span>
+                        <h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3>
+                    </div>` : ''}
+
+                    <div class="flex gap-4 mb-5">
+                        <div class="w-full">
+                            <div class="text-xl font-extrabold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</div>
+                        </div>
+                    </div>
+                    <div class="space-y-4 md:pl-14 mt-6">
+                        ${q.options.map((opt, i) => `
+                            <div class="flex items-center">
+                                <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio"
+                                    ${isChecked(q.id, i) ? 'checked' : ''}
+                                    onchange="selectAnswer('${q.id}', ${i}, 'single')">
+                                <label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg">
+                                    <span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors">
+                                        ${String.fromCharCode(65 + i)}
+                                    </span>
+                                    <span class="text-gray-700 leading-relaxed">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        updateNav();
+        updateProgress();
+    }
+
+    function isChecked(qId, val) {
+        return userAnswers[qId] === val;
+    }
+
+    function nextQuestion() {
+        if (currentIdx < currentQuestions.length - 1) {
+            currentIdx++;
+            renderQuestion();
+        }
+    }
+    function prevQuestion() {
+        if (currentIdx > 0) {
+            currentIdx--;
+            renderQuestion();
+        }
+    }
+
+   function updateNav() {
+        const isLast = currentIdx === currentQuestions.length - 1;
+        const isFirst = currentIdx === 0; 
+        
+        document.getElementById('prev-btn').style.display = isFirst ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = isLast ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = isLast ? 'block' : 'none';
+    }
+    
+    function updateProgress() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    }
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    async function submitQuiz() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correct = 0;
+        let totalItems = getTotalItems(); 
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] === sub.correct) correct++;
+                });
+            } else {
+                if (userAnswers[q.id] === q.correct) correct++;
+            }
+        });
+        
+        const score = (correct * 10 / totalItems).toFixed(2);
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        const record = {
+            hoTen: currentStudent.hoTen,
+            lop: currentStudent.lop,
+            huong: currentStudent.huong,
+            diem: parseFloat(score),
+            soCauDung: correct,
+            tongCau: totalItems,
+            startTime: quizStartTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+            duration: formatDuration(durationSeconds),
+            thoiGian: new Date().toISOString(),
+            deviceId: deviceId 
+        };
+
+        if (window.dataSdk) {
+            const result = await window.dataSdk.create(record);
+
+            if (result.isOk) {
+                showModalResult(score, correct, totalItems, record.duration);
+            } else {
+                alert("Lỗi mạng! Không thể lưu điểm. Vui lòng thử lại.");
+            }
+        }
+    }
+
+    function showModalResult(score, correct, total, dur) {
+        const modal = document.getElementById('result-modal');
+        const content = document.getElementById('result-content');
+        modal.classList.remove('hidden');
+        
+        content.innerHTML = `
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-green-600 mb-2">Hoàn thành bài ôn tập!</h3>
+            <p class="text-gray-600 mb-6 mt-2">
+                <span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - ${currentStudent.lop}</span>
+            </p>
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative">
+                <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+                <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+                <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Đúng ${correct}/${total} ý | Tổng TG: ${dur}</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="reviewQuiz()" class="w-full py-3 bg-gray-100 text-blue-700 border-2 border-blue-200 rounded-xl font-extrabold shadow-sm hover:bg-blue-50 transition-colors text-lg">🔎 Xem lại bài</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden');" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+            </div>
+            <button onclick="goHome()" class="w-full py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏠 Về màn hình chính</button>
+        `;
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        document.getElementById('scores-section').classList.add('hidden');
+        document.getElementById('quiz-section').classList.remove('hidden');
+        
+        document.body.classList.add('is-reviewing');
+        
+        document.getElementById('timer-banner').style.display = 'none';
+        document.getElementById('nav-buttons').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'none';
+
+        let floatingBar = document.getElementById('review-floating-bar');
+        if(!floatingBar) {
+            floatingBar = document.createElement('div');
+            floatingBar.id = 'review-floating-bar';
+            floatingBar.className = "fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-200 p-4 flex gap-4 justify-center shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-50";
+            floatingBar.innerHTML = `
+                <button onclick="document.getElementById('quiz-section').classList.add('hidden'); document.getElementById('scores-section').classList.remove('hidden');" class="px-6 py-3 bg-gray-100 text-gray-800 rounded-xl font-extrabold shadow-sm hover:bg-gray-200 transition-colors text-lg">🏆 Xem Bảng Điểm</button>
+                <button onclick="goHome()" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-extrabold shadow-md hover:bg-blue-700 transition-colors text-lg">🏠 Về màn hình chính</button>
+            `;
+            document.body.appendChild(floatingBar);
+        }
+        floatingBar.style.display = 'flex';
+
+        const container = document.getElementById('question-container');
+        let reviewHTML = currentQuestions.map((q, idx) => {
+            
+            let headerHtml = '';
+            if (idx === 0) {
+                headerHtml = `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-blue-200 pb-3 mt-4">
+                        <span class="bg-gradient-to-br from-blue-500 to-cyan-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">I</span>
+                        <h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-700 uppercase tracking-widest">Phần Trắc Nghiệm Một Lựa Chọn</h3>
+                    </div>
+                `;
+            } else if (q.type === 'tf_cluster' && currentQuestions[idx - 1] && currentQuestions[idx - 1].type === 'single') {
+                headerHtml = `
+                    <div class="flex items-center gap-3 mb-6 border-b-2 border-orange-200 pb-3 mt-10">
+                        <span class="bg-gradient-to-br from-orange-500 to-red-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">II</span>
+                        <h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-700 to-red-700 uppercase tracking-widest">Phần Trắc Nghiệm Đúng/Sai</h3>
+                    </div>
+                `;
+            }
+
+            if (q.type === 'single') {
+                let optionsHtml = q.options.map((opt, i) => {
+                    let isSelected = isChecked(q.id, i);
+                    let isCorrect = (q.correct === i);
+                    let stateClass = "review-neutral";
+                    let icon = "";
+                    
+                    if (isCorrect) {
+                        stateClass = "review-correct shadow-md";
+                        icon = "✅";
+                    } else if (isSelected && !isCorrect) {
+                        stateClass = "review-incorrect";
+                        icon = "❌";
+                    }
+                    
+                    return `
+                        <div class="p-4 border-2 rounded-2xl flex items-center gap-4 ${stateClass} mb-3 font-bold text-lg pointer-events-none">
+                            <span class="w-10 h-10 rounded-xl border-2 flex items-center justify-center text-base font-black flex-shrink-0 bg-white/50 border-gray-300/50">${String.fromCharCode(65 + i)}</span>
+                            <span class="leading-relaxed flex-1">${opt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                            <span>${icon}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    ${headerHtml}
+                    <div class="mb-8">
+                        <div class="mb-4">
+                            <div class="text-xl font-extrabold text-red-600 leading-snug">${q.displayQuestion}</div>
+                        </div>
+                        <div class="md:pl-14">${optionsHtml}</div>
+                    </div>
+                `;
+            } else {
+                let subHtml = q.subQuestions.map(sub => {
+                    let userAns = userAnswers[sub.id];
+                    let isCorrect = userAns === sub.correct;
+                    
+                    let ansText = "";
+                    let colorClass = "";
+
+                    if (userAns) {
+                        ansText = isCorrect ? `✅ Chính xác (Bạn chọn: ${userAns})` : `❌ Trả lời sai (Bạn chọn: ${userAns} | Đáp án: ${sub.correct})`;
+                        colorClass = isCorrect ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200';
+                    } else {
+                        ansText = `➖ Bỏ qua (Đáp án chuẩn: ${sub.correct})`;
+                        colorClass = 'text-orange-600 bg-orange-50 border-orange-200';
+                    }
+
+                    return `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 rounded-2xl gap-4 shadow-sm mb-3">
+                            <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                            <div class="font-extrabold ${colorClass} text-sm whitespace-nowrap px-4 py-2 rounded-xl border border-gray-100">
+                                ${ansText}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    ${headerHtml}
+                    <div class="mb-8 p-4 bg-gray-50 rounded-2xl border-2 border-gray-200">
+                        <div class="text-xl font-extrabold text-red-600 mb-4">${q.displayQuestion}</div>
+                        <div>${subHtml}</div>
+                    </div>
+                `;
+            }
+        }).join('<div class="my-6 border-b-2 border-dashed border-gray-200"></div>');
+        
+        reviewHTML += '<div class="text-center text-gray-400 font-bold mt-12 mb-32 pb-10 text-xl tracking-[0.5em] uppercase">--- HẾT ---</div>';
+        container.innerHTML = reviewHTML;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) {
+            tbody.innerHTML = '';
+            document.getElementById('no-scores').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('no-scores').classList.add('hidden');
+
+        const sorted = [...allScores].sort((a, b) => b.diem - a.diem);
+
+        tbody.innerHTML = sorted.map((s, idx) => {
+            const rowClass = s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-gray-50';
+            const meBadge = s.deviceId === deviceId ? '<span class="ml-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs px-3 py-1 rounded-full font-black shadow-sm uppercase tracking-wider">Bạn</span>' : '';
+
+            const cauDung = s.soCauDung !== undefined ? s.soCauDung : '-';
+            const tongCau = s.tongCau !== undefined ? s.tongCau : '-';
+            const tenLop = s.lop || '';
+
+            return `
+                <tr class="${rowClass} transition-colors">
+                    <td class="px-3 sm:px-5 py-4 text-center font-black text-gray-400 text-lg">#${idx + 1}</td>
+                    <td class="px-3 sm:px-5 py-4 font-bold text-gray-700 text-base">${tenLop}</td>
+                    <td class="px-3 sm:px-5 py-4 font-extrabold text-gray-800 whitespace-nowrap text-lg">${s.hoTen || ''} ${meBadge}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-gray-600 font-bold text-lg">${cauDung}/${tongCau}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-green-600' : 'text-red-500 drop-shadow-sm'}">${s.diem}</span></td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.startTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-center text-xs text-gray-400 font-bold">${s.endTime || '--:--'}</td>
+                    <td class="px-3 sm:px-5 py-4 text-right text-xs text-orange-600 font-bold">${s.duration || '--'}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        setTimeout(() => {
+            const myRow = document.querySelector('.my-score-row');
+            if (myRow) myRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => {
+            const sec = document.getElementById(s+'-section');
+            if(sec) sec.classList.add('hidden');
+        });
+        const target = document.getElementById(id+'-section');
+        if(target) target.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) submitQuiz();
+        }, 1000);
+    }
+
+    initApp();
+  </script>
+ </body>
+</html>
