@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Trắc Nghiệm - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    /* GIAO DIỆN NỀN CHUYỂN MÀU GỐC */
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    /* CSS NỀN XANH NHẠT VÀ CHỮ XANH ĐẬM (DARK BLUE) CHO BLOCK CODE */
+    .code-snippet {
+        background-color: #f0f9ff; 
+        color: #003399; 
+        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        overflow-x: auto;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        border: 2px solid #bae6fd;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        line-height: 1.6;
+        white-space: pre-wrap;
+    }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1">TẠO TRANG WEB HTML PHẦN 2</h1>
+      <p class="text-gray-600 font-bold">Môn: Tin học 12</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn phần thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ÔN TẬP 1</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ÔN TẬP 2</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 câu</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </p>
+   </footer>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_html_2');
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== NGÂN HÀNG CÂU HỎI ÔN TẬP 1 (PHẦN 3) ====================
+    const de1_data = [
+        { id: "1_1", type: "single", question: "Thuộc tính nào sau đây của thẻ &lt;input&gt; được sử dụng để hiển thị một trường nhập mật khẩu, trong đó các kí tự sẽ được ẩn trong HTML?", options: ["type=\"text\"", "type=\"password\"", "type=\"hidden\"", "type=\"email\""], correct: 1 },
+        { id: "1_2", type: "single", question: "Thuộc tính nào trong thẻ &lt;input&gt; được sử dụng để tạo một nút bấm trong HTML?", options: ["type=\"button\"", "type=\"submit\"", "type=\"hidden\"", "type=\"text\""], correct: 0 },
+        { id: "1_3", type: "single", question: "Đặc tính list-style-type trong thuộc tính style có thể nhận những giá trị nào sau đây trong HTML?", options: ["disc, circle.", "number, bullet.", "arrow, square.", "dot, none."], correct: 0 },
+        { id: "1_4", type: "single", question: "Phương án nào sau đây nêu đúng cú pháp để tạo trường nhập văn bản trong HTML?", options: ["&lt;input type=\"text\"&gt;", "&lt;input type=\"textbox\"&gt;", "&lt;input type=\"textarea\"&gt;", "&lt;input type=\"field\"&gt;"], correct: 0 },
+        { id: "1_5", type: "single", question: "Phương án nào sau đây nêu đúng cú pháp để tạo danh sách thả xuống trong HTML?", options: ["&lt;select id=\"dropdown\" name=\"dropdown\"&gt;", "&lt;dropdown id=\"select\" name=\"select\"&gt;", "&lt;input type=\"select\" name=\"dropdown\"&gt;", "&lt;option type=\"select\" name=\"dropdown\"&gt;"], correct: 0 },
+        { id: "1_6", type: "single", question: "Phương án nào sau đây nêu đúng cú pháp để tạo vùng nhập văn bản có nhiều dòng trong HTML?", options: ["&lt;input type=\"textarea\" name=\"text\"&gt;", "&lt;textarea id=\"text\" name=\"text\"&gt;", "&lt;textbox id=\"text\" name=\"text\"&gt;", "&lt;text id=\"text\" name=\"text\"&gt;"], correct: 1 },
+        { id: "1_7", type: "single", question: "Khi muốn tạo một biểu mẫu có ô nhập thông tin và nút gửi đi. Mã HTML nào sau đây là đúng?", options: ["&lt;form&gt; &lt;input type=\"button\"&gt;&lt;input type=\"text\"&gt;&lt;/form&gt;", "&lt;form&gt;&lt;input type=\"submit\"&gt;&lt;input type=\"text\"&gt;&lt;/form&gt;", "&lt;form&gt;&lt;input type=\"text\"&gt;&lt;input type=\"submit\"&gt;&lt;/form&gt;", "&lt;form&gt;&lt;input type=\"text\"&gt;&lt;/form&gt;"], correct: 2 },
+        { id: "1_8", type: "single", question: "Trang web cần thêm biểu mẫu liên hệ, trong đó ô \"Nhập số điện thoại\" chỉ chấp nhận các kí tự số. Mã HTML nào sau đây là đúng để đáp ứng yêu cầu này?", options: ["&lt;input type=\"number\" placeholder=\"Nhập số điện thoại\"&gt;", "&lt;input type=\"text\" placeholder=\"Nhập số điện thoại\"&gt;", "&lt;input type=\"tel\" placeholder=\"Nhập số điện thoại\"&gt;", "&lt;input type=\"phone\" placeholder=\"Nhập số điện thoại\"&gt;"], correct: 2 },
+        { id: "1_9", type: "single", question: "Giả sử em đang thiết kế trang web cho cuộc thi viết và cẩn thu thập đoạn văn bản ngắn mô tả từ người tham gia. Để cho phép nhập nhiều dòng văn bản, cần sử dụng phần tử HTML nào sau đây?", options: ["&lt;input type=\"text\"&gt;", "&lt;textarea&gt;", "&lt;input type=\"input\"&gt;", "&lt;input type=\"multiline\"&gt;"], correct: 1 },
+        { id: "1_10", type: "single", question: "Giả sử em được giao nhiệm vụ thiết kế trang web để thu thập ý kiến của học sinh về các môn học. Cần tạo một biểu mẫu, trong đó cho phép học sinh chọn nhiều môn học mà họ yêu thích. Thuộc tính type nào sau đây của phần tử &lt;input&gt; cho phép tạo điều đó?", options: ["checkbox.", "radio.", "text.", "select."], correct: 0 },
+        { id: "1_11", type: "single", question: "CSS được viết tắt từ cụm từ nào sau đây?", options: ["Cascading Style Sheet", "Computer Style Sheet", "Creative Style Sheet", "Cascading System Style"], correct: 0 },
+        { id: "1_12", type: "single", question: "Đoạn mã nào sau đây sẽ liên kết tệp style.css với tài liệu HTML?", options: ["&lt;css href=\"styles.css\"&gt;", "&lt;link rel=\"stylesheet\" href=\"styles.css\"&gt;", "&lt;style src=\"styles.css\"&gt;", "&lt;style href=\"styles.css\"&gt;"], correct: 1 },
+        { id: "1_13", type: "single", question: "Phương án nào sau đây nêu đúng vai trò quan trọng của CSS trong việc thiết kế giao diện của một trang web?", options: ["Giúp tăng tốc độ tải và cải thiện hiệu suất hiển thị của trang web.", "Cho phép định nghĩa định dạng một lần và áp dụng nhiều lần trên các phần tử.", "Thay đổi hoặc chỉnh sửa nội dung của các đoạn văn bản trên trang web.", "Xác định cấu trúc và tổ chức nội dung HTML của trang web."], correct: 1 },
+        { id: "1_14", type: "single", question: "Nếu bạn muốn thiết kế một website có 4 trang con khác nhau về giao diện nhưng có cấu trúc HTML giống nhau, phương án sử dụng CSS nào sau đây phù hợp nhất?", options: ["Thiết lập CSS riêng cho từng thẻ trong từng trang HTML.", "Thiết lập CSS trong thẻ &lt;style&gt; ở phần &lt;head&gt; cho từng trang.", "Tạo tệp CSS riêng cho mỗi trang và liên kết bằng thẻ &lt;link&gt;.", "Sử dụng một tệp CSS chung cho tất cả các trang và liên kết bằng thẻ &lt;link&gt;."], correct: 3 },
+        { id: "1_15", type: "single", question: "Thuộc tính CSS nào sau đây được sử dụng để tạo khoảng cách giữa viền ngoài của phần tử và các phần tử xung quanh?", options: ["border.", "padding.", "margin.", "spacing."], correct: 2 },
+        { id: "1_16", type: "single", question: "Nếu muốn thêm khoảng cách giữa các phần tử &lt;div&gt; trên trang web thì thuộc tính CSS nào sau đây phù hợp nhất?", options: ["div { padding: 20px; }", "div { margin: 20px; }", "div { border-spacing: 20px; }", "div { border: 20px; }"], correct: 1 },
+        { id: "1_17", type: "single", question: "Một người thiết kế trang web và muốn hiển thị của thẻ &lt;button&gt; nằm trên một dòng riêng. Người đó nên sử dụng thuộc tính CSS nào sau đây?", options: ["display: inline;", "display: block;", "display: inline-block;", "display: hidden;"], correct: 1 },
+        { id: "1_18", type: "single", question: "Một người muốn định dạng tiêu đề trong trang web bằng cách thiết lập cùng lúc kiểu chữ, cỡ chữ và màu chữ. Thuộc tính CSS nào sau đây được sử dụng để đặt tất cả các thuộc tính liên quan đến phông chữ trong một lệnh duy nhất?", options: ["font.", "font-family.", "font-size.", "font-style."], correct: 0 },
+        { id: "1_19", type: "single", question: "Một người muốn tạo một đoạn văn bản có nền màu vàng và độ rộng cố định là 400px. Đoạn mã CSS nào sau đây phù hợp để thực hiện điều này?", options: ["p { background-color: yellow; width: 400px; }", "p { color: yellow; width: 400px; }", "p { background-color: #ffff00; height: 400px; }", "p { width: 400px; height: yellow; }"], correct: 0 },
+        { id: "1_20", type: "single", question: "Câu lệnh CSS nào sau đây thực hiện định dạng cho tiêu đề &lt;h1&gt; với nền màu xanh lá cây và chữ màu trắng?", options: ["h1 { color: white; background-color: green; }", "h1 { color: white; bg-color: green; }", "h1 { font-color: white; background: green; }", "h1 { color: green; background-color: white; }"], correct: 0 },
+        { id: "1_21", type: "single", question: "Để thiết lập màu chữ cho tất cả các liên kết trên trang web thành màu xanh dương, đoạn mã CSS nào sau đây là đúng?", options: ["a { text-color: blue; }", "a { color: blue; }", "a { font-color: blue; }", "a { background-color: blue; }"], correct: 1 },
+        { id: "1_22", type: "single", question: "Để áp dụng một quy tắc CSS cho tất đoạn mã CSS nào sau đây là chính xác?", options: ["p, span { font-size: 16px; }", "p span {font-size: 16px; }", "p span { font-size: 16px; }", "p + span {font-size: 16px; }"], correct: 0 },
+        { id: "1_23", type: "single", question: "Một người tạo tệp style.css với các quy tắc định dạng như sau:<br><div class='code-snippet'>p { font-size: 16px; color: #333333; }<br>.table { width: 300px; height: 200px; }</div>Phương án nào sau đây mô tả đúng cách sử dụng các định dạng từ tệp style.css này?", options: ["Sao chép các định dạng này và đặt trong thẻ &lt;style&gt; ở phần &lt;head&gt; của trang web.", "Nhúng tệp style.css vào trang web bằng thẻ &lt;link&gt; đặt trong phần &lt;head&gt; của trang web.", "Nhúng tệp tin style.css vào trang web bằng thẻ &lt;style&gt; trong phần &lt;head&gt;.", "Sao chép các định dạng này và đặt trong thẻ &lt;link&gt; ở phần &lt;head&gt; của trang web."], correct: 1 },
+        
+        { id: '1_c1', type: 'tf_cluster', question: "Để truy cập vào các khoá học trực tuyến, người dùng cần điền vào biểu mẫu đăng nhập. Sau đây là đoạn mã HTML của biểu mẫu:<div class='code-snippet'>&lt;form&gt;<br>&nbsp;&nbsp;&lt;label for=\"user\"&gt;Người dùng&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"text\" id=\"user\" name=\"user\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;label for=\"password\"&gt;Mật khẩu&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"password\" id=\"password\" name=\"password\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;input type=\"submit\" value=\"Đăng nhập\"&gt;<br>&lt;/form&gt;</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd1_1a', text: "a) Thẻ &lt;input&gt; đầu tiên cho phép người dùng nhập tên đăng nhập và có thể nhập vào các kiểu dữ liệu khác nhau cho ô nhập liệu đó.", correct: "Đúng" },
+            { id: 'd1_1b', text: "b) Dữ liệu nhập vào ô mật khẩu sẽ được ẩn đi.", correct: "Đúng" },
+            { id: 'd1_1c', text: "c) Không có thuộc tính action trong thẻ &lt;form&gt;, do đó dữ liệu sẽ hoàn toàn không thể được gửi đi.", correct: "Sai" },
+            { id: 'd1_1d', text: "d) Có thể thêm thuộc tính placeholder cho các ô nhập liệu để hướng dẫn người dùng.", correct: "Đúng" }
+        ]},
+        { id: '1_c2', type: 'tf_cluster', question: "Để truy cập vào các chức năng của trang web giáo dục trực tuyến, người dùng cần đăng kí tài khoản. Nhân viên phát triển web đã viết đoạn mã HTML sau để tạo biểu mẫu đăng kí:<div class='code-snippet'>&lt;form&gt;<br>&nbsp;&nbsp;&lt;label for=\"username\"&gt;Tài khoản&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"text\" id=\"username\" name=\"username\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;label for=\"email\"&gt;Email&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"email\" id=\"email\" name=\"email\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;label for=\"password\"&gt;Mật khẩu&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"password\" id=\"password\" name=\"password\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;input type=\"submit\" value=\"Đăng kí\"&gt;<br>&lt;/form&gt;</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd1_2a', text: "a) Kiểu dữ liệu khai báo cho tài khoản là text.", correct: "Đúng" },
+            { id: 'd1_2b', text: "b) Khi nhập dữ liệu vào ô mật khẩu, dữ liệu sẽ được hiển thị rõ ràng.", correct: "Sai" },
+            { id: 'd1_2c', text: "c) Phương thức gửi dữ liệu mặc định là phương thức POST.", correct: "Sai" },
+            { id: 'd1_2d', text: "d) Thẻ &lt;input&gt; của ô email yêu cầu người dùng nhập chính xác định dạng thư điện tử nhưng không kiểm tra liệu địa chỉ đó có tồn tại hay không.", correct: "Đúng" }
+        ]},
+        { id: '1_c3', type: 'tf_cluster', question: "Một công ty tổ chức một sự kiện trực tuyến và yêu cầu nhân viên đăng kí tham gia qua một biểu mẫu trực tuyến. Một lập trình viên đã viết đoạn mã HTML sau để thu thập thông tin đăng kí:<div class='code-snippet'>&lt;form&gt;<br>&nbsp;&nbsp;&lt;label for=\"name\"&gt;Họ và tên&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"text\" id=\"name\" name=\"name\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;label for=\"email\"&gt;Email&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"email\" id=\"email\" name=\"email\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;label for=\"phone\"&gt;Số điện thoại&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"tel\" id=\"phone\" name=\"phone\"&gt; &lt;br&gt;<br>&lt;/form&gt;</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd1_3a', text: "a) Trường nhập liệu \"Họ và tên\" sử dụng kiểu dữ liệu là text.", correct: "Đúng" },
+            { id: 'd1_3b', text: "b) Trường nhập liệu \"Email\" sẽ kiểm tra định dạng đúng của thư điện tử khi người dùng nhập dữ liệu.", correct: "Đúng" },
+            { id: 'd1_3c', text: "c) Trường nhập liệu \"Số điện thoại\" có kiểu dữ liệu là number.", correct: "Sai" },
+            { id: 'd1_3d', text: "d) Đoạn mã HTML trên chưa có nút lệnh để gửi dữ liệu.", correct: "Đúng" }
+        ]},
+        { id: '1_c4', type: 'tf_cluster', question: "Một người phát triển trang web hướng dẫn sử dụng công cụ trực tuyến và muốn thêm bảng phân tích dữ liệu bằng đoạn mã HTML sau:<div class='code-snippet'>&lt;table border=\"2\"&gt;<br>&nbsp;&nbsp;&lt;tr&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;th&gt;Phân tích&lt;/th&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;th&gt;Số liệu&lt;/th&gt;<br>&nbsp;&nbsp;&lt;/tr&gt;<br>&nbsp;&nbsp;&lt;tr&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;td&gt;Phân tích A&lt;/td&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;td&gt;100&lt;/td&gt;<br>&nbsp;&nbsp;&lt;/tr&gt;<br>&nbsp;&nbsp;&lt;tr&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;td&gt;Phân tích B&lt;/td&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;td&gt;200&lt;/td&gt;<br>&nbsp;&nbsp;&lt;/tr&gt;<br>&lt;/table&gt;</div>Sau đây là một số nhận định về đoạn mã này:", subQuestions: [
+            { id: 'd1_4a', text: "a) Bảng có 2 hàng và 3 cột.", correct: "Sai" },
+            { id: 'd1_4b', text: "b) Dòng đầu tiên có chứa tiêu đề của bảng.", correct: "Đúng" },
+            { id: 'd1_4c', text: "c) Các số liệu trong bảng không có định dạng đặc biệt (chữ đậm, in nghiêng), chỉ đơn giản là các con số.", correct: "Đúng" },
+            { id: 'd1_4d', text: "d) Bảng không thể có viền nếu không có thuộc tính border.", correct: "Sai" }
+        ]},
+        { id: '1_c5', type: 'tf_cluster', question: "Một nhà báo muốn chèn video minh hoạ vào bài viết trực tuyến của mình và đã sử dụng câu lệnh HTML sau:<div class='code-snippet'>&lt;video src=\"video_travel.mp4\" width=\"600\" height=\"400\"&gt;&lt;/video&gt;</div>Sau đây là một số nhận định về câu lệnh trên:", subQuestions: [
+            { id: 'd1_5a', text: "a) Thẻ &lt;video&gt; dùng để nhúng video vào bài viết.", correct: "Đúng" },
+            { id: 'd1_5b', text: "b) Video \"video_travel.mp4\" được đặt trong cùng thư mục chứa tệp HTML.", correct: "Đúng" },
+            { id: 'd1_5c', text: "c) Video sẽ được hiển thị trong khung có chiều rộng 600px và chiều cao 400px.", correct: "Đúng" },
+            { id: 'd1_5d', text: "d) Thuộc tính width và height không quyết định kích thước khung chứa video.", correct: "Sai" }
+        ]},
+        { id: '1_c6', type: 'tf_cluster', question: "Nhà phát triển trang web thương mại điện tử đã thêm một khung nội tuyến để hiển thị nội dung quảng cáo từ một trang web khác bằng câu lệnh sau:<div class='code-snippet'>&lt;iframe src=\"https://ads.com/banner.html\" width=\"300\" height=\"250\"&gt;<br>&lt;/iframe&gt;</div>Sau đây là một số nhận định về câu lệnh này:", subQuestions: [
+            { id: 'd1_6a', text: "a) Thẻ &lt;iframe&gt; dùng để hiển thị được nội dung từ trang web khác trong trang hiện tại.", correct: "Đúng" },
+            { id: 'd1_6b', text: "b) Nội dung hiển thị trong khung là trang \"banner.html\".", correct: "Đúng" },
+            { id: 'd1_6c', text: "c) Khung hiển thị có chiều rộng là 300px và chiều cao là 250px.", correct: "Đúng" },
+            { id: 'd1_6d', text: "d) Nếu trang web chứa nội dung không cùng thư mục với trang hiện tại thì nội dung sẽ không thể hiển thị trong khung.", correct: "Sai" }
+        ]},
+        { id: '1_c7', type: 'tf_cluster', question: "Một nhân viên truyền thông muốn chèn hình ảnh về sản phẩm vào bài đăng trên website nội bộ và đã sử dụng đoạn mã sau:<div class='code-snippet'>&lt;img src=\"assets/product.jpg\" alt=\"Sản phẩm mới\" width=\"300\" height=\"250\"&gt;</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd1_7a', text: "a) Trường hợp ảnh không hiển thị được, trình duyệt sẽ hiện dòng chữ \"Sản phẩm mới\" thay thế.", correct: "Đúng" },
+            { id: 'd1_7b', text: "b) Ảnh được hiển thị có kích thước rộng 300px và cao 250px.", correct: "Đúng" },
+            { id: 'd1_7c', text: "c) Nếu không có thuộc tính width và height, kích thước ảnh sẽ tự động điều chỉnh theo kích thước của khung chứa mà không theo kích thước gốc.", correct: "Sai" },
+            { id: 'd1_7d', text: "d) Thư mục \"assets\" nằm trong thư mục cha của tệp HTML này.", correct: "Sai" }
+        ]},
+        { id: '1_c8', type: 'tf_cluster', question: "Một giáo viên dạy trực tuyến muốn thêm video bài giảng vào trang web lớp học của mình và đã sử dụng đoạn mã sau:<div class='code-snippet'>&lt;video src=\"lesson.mp4\" controls autoplay&gt;Trình duyệt không hỗ trợ phát video này.&lt;/video&gt;</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd1_8a', text: "a) Video sẽ được phát tự động khi học sinh truy cập vào trang web.", correct: "Đúng" },
+            { id: 'd1_8b', text: "b) Nếu video không chạy được, thông báo \"Trình duyệt không hỗ trợ phát video này.\" sẽ hiển thị.", correct: "Đúng" },
+            { id: 'd1_8c', text: "c) Học sinh có thể tạm dừng và tua lại video nhờ thuộc tính controls.", correct: "Đúng" },
+            { id: 'd1_8d', text: "d) Nếu video không được tải thành công, thuộc tính controls sẽ không hoạt động.", correct: "Đúng" }
+        ]},
+        { id: '1_c9', type: 'tf_cluster', question: "Nhân viên lập trình web đã viết đoạn mã HTML sau để tạo biểu mẫu đăng nhập:<div class='code-snippet'>&lt;form&gt;<br>&nbsp;&nbsp;&lt;label for=\"fullname\"&gt;Họ tên&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"text\" id=\"fullname\" name=\"fullname\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;label for=\"password\"&gt;Mật khẩu&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"password\" id=\"password\" name=\"password\"&gt; &lt;br&gt;<br>&nbsp;&nbsp;&lt;input type=\"submit\" value=\"Đăng nhập\"&gt;<br>&lt;/form&gt;</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd1_9a', text: "a) Ô nhập liệu cho \"Họ tên\" là kiểu dữ liệu text.", correct: "Đúng" },
+            { id: 'd1_9b', text: "b) Thẻ &lt;input type=\"password\"&gt; cho phép người dùng nhìn thấy mật khẩu khi nhập.", correct: "Sai" },
+            { id: 'd1_9c', text: "c) Biểu mẫu này sẽ gửi dữ liệu đến một trang web cụ thể khi người dùng nháy nút \"Đăng nhập\".", correct: "Sai" },
+            { id: 'd1_9d', text: "d) Người dùng bắt buộc phải nhập thông tin họ tên để đăng nhập.", correct: "Sai" }
+        ]}
+    ];
+
+    // ==================== NGÂN HÀNG CÂU HỎI ĐỀ 2 (PHẦN 4) ====================
+    const de2_data = [
+        { id: "2_1", type: "single", question: "Đoạn mã HTML và CSS sau đây khai bảo định dạng cho một trang web:<div class='code-snippet'>&lt;head&gt;<br>&nbsp;&nbsp;&lt;style&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;h1 { color: orange; font-size: 24px; }<br>&nbsp;&nbsp;&nbsp;&nbsp;h1 { color: purple; font-size: 30px; }<br>&nbsp;&nbsp;&lt;/style&gt;<br>&lt;/head&gt;<br>&lt;body&gt;<br>&nbsp;&nbsp;&lt;h1&gt;Chào mừng đến với trang web của tôi!&lt;/h1&gt;<br>&lt;/body&gt;</div>Nội dung của thẻ &lt;h1&gt; sẽ được hiển thị như thế nào khi mã này được chạy?", options: ["Chữ màu cam, cỡ chữ 24px.", "Chữ màu tím, cỡ chữ 30px.", "Chữ màu tím, cỡ chữ 24px.", "Chữ màu cam, cỡ chữ 30px."], correct: 1 },
+        { id: "2_2", type: "single", question: "Một người muốn tạo một bảng có đường viền của bảng là nét đứt (dotted), màu xanh dương (#0000FF) và độ dày là 2px. Mỗi ô trong bảng có khoảng cách 15px với đường viền. Đoạn mã CSS nào sau đây thực hiện công việc trên?", options: ["table { border: 2px dotted #0000FF; border-spacing: 15px; }", "table { border: 2px dotted #0000FF; padding: 15px; }", "table { border: 2px solid #0000FF; padding: 15px; }", "table { border: 2px dotted #0000FF; margin: 15px; }"], correct: 0 },
+        { id: "2_3", type: "single", question: "Để định dạng chữ màu đỏ (#FF0000) cho một phần tử, lệnh CSS nào sau đây là đúng?", options: ["text-color: #FF0000;", "color: #FF0000;", "#FF0000: color;", "color=\"#FF0000\";"], correct: 1 },
+        { id: "2_4", type: "single", question: "Phương án nào sau đây là đúng ý nghĩa của khai báo margin: 5px 15px 30px 40px;?", options: ["Lề trên 5px, lề bên trái 15px, lề dưới 30px và lề bên phải 40px.", "Lề tất cả các phía đều là 5px.", "Lề trên 40px, lề bên phải 30px, lề dưới 15px và lề bên trái 5px.", "Lề trên 5px, lề bên phải 15px, lề dưới 30px và lề bên trái 40px."], correct: 3 },
+        { id: "2_5", type: "single", question: "Để thiết lập cỡ chữ 18px cho một phần tử, cú pháp CSS nào sau đây là chính xác?", options: ["font: 18px;", "font-size: 18px;", "size: 18px;", "text-size: 18px;"], correct: 1 },
+        { id: "2_6", type: "single", question: "Giả sử muốn làm nổi bật các liên kết trên trang web bằng màu xanh lá cây khi dùng di con trỏ chuột qua. Câu lệnh CSS nào sau đây thực hiện điều đó?", options: ["a:hover {color: green; }", "a:link { color: green; }", "a:visited { color: green; }", "a:focus { color: green; }"], correct: 0 },
+        { id: "2_7", type: "single", question: "Khai báo CSS nào sau đây tạo đường viền màu đỏ, kiểu \"double\", dày 2px cho phần tử?", options: ["element { border-width: 2px; border-style: solid; border-color: red; }", "element { border: red double 2px; }", "element { border-style: double; border-color: red; border-width: 2px; }", "element { border: 2px double red; }"], correct: 3 },
+        { id: "2_8", type: "single", question: "Trong một dự án web, người ta muốn các danh sách không thứ tự (&lt;ul&gt;) sử dụng kí hiệu có dạng hình vuông và màu nền xám nhạt. Câu lệnh CSS nào sau đây sẽ đáp ứng yêu cầu đó?", options: ["ul { list-type: square; background-color: gray; }", "ul { list-style: square; background-color: lightgray; }", "ul { list-style: square; background: lightgray; }", "ul { list-type: square; background: lightgray; }"], correct: 1 },
+        { id: "2_9", type: "single", question: "Một người thiết kế trang web và muốn văn bản bên trong thẻ &lt;p&gt; có phông \"Times New Roman\" và chữ màu đen. Câu lệnh CSS nào sau đây thực hiện đúng yêu cầu này?", options: ["p {font: \"Times New Roman\"; text-color: black; }", "p { font-family: \"Times New Roman\"; color: black; }", "p { font-family: \"Times New Roman\"; font-color: black; }", "p {font: \"Times New Roman\"; color: black; }"], correct: 1 },
+        { id: "2_10", type: "single", question: "Nếu một phần tử HTML được áp dụng hai quy tắc CSS từ các bộ chọn khác nhau, với một bộ chọn có độ ưu tiên cao hơn, quy tắc nào sẽ được áp dụng?", options: ["Quy tắc từ bộ chọn có độ ưu tiên thấp hơn sẽ được áp dụng.", "Cả hai quy tắc sẽ được áp dụng đồng thời.", "Không đủ thông tin để xác định quy tắc nào sẽ được áp dụng.", "Quy tắc từ bộ chọn có độ ưu tiên cao hơn sẽ được áp dụng."], correct: 3 },
+        { id: "2_11", type: "single", question: "Bộ chọn nào sau đây có độ ưu tiên thấp nhất trong CSS?", options: ["Bộ chọn id.", "Bộ chọn lớp.", "Bộ chọn phần tử.", "Bộ chọn tổ hợp."], correct: 2 },
+        { id: "2_12", type: "single", question: "Để áp dụng các quy tắc CSS cho tất cả các phần tử &lt;h2&gt; trong tài liệu HTML, phương án nào sau đây là thích hợp nhất?", options: ["Sử dụng bộ chọn ID.", "Sử dụng bộ chọn lớp.", "Sử dụng bộ chọn phần tử.", "Sử dụng bộ chọn thuộc tính."], correct: 2 },
+        { id: "2_13", type: "single", question: "Bộ chọn CSS nào sau đây chỉ định kiểu cho tất cả các phần tử &lt;div&gt; có thuộc tính class=\"content\"?", options: ["div {class=\"content\";}", "#content div {}", ".content {}", "div.content {}"], correct: 3 },
+        { id: "2_14", type: "single", question: "Thuộc tính nào của thẻ &lt;img&gt; dùng để cung cấp văn bản thay thế khi ảnh không hiển thị được?", options: ["src", "alt", "title", "href"], correct: 1 },
+        { id: "2_15", type: "single", question: "Trong CSS, làm thế nào để chọn tất cả các phần tử có lớp (class) là \"container\"?", options: [".container", "#container", "*container", "container"], correct: 0 },
+        { id: "2_16", type: "single", question: "Thẻ nào dùng để tạo danh sách có thứ tự trong HTML?", options: ["&lt;ul&gt;", "&lt;li&gt;", "&lt;ol&gt;", "&lt;dl&gt;"], correct: 2 },
+        { id: "2_17", type: "single", question: "Để thiết lập màu nền cho một phần tử trong CSS, thuộc tính nào được sử dụng?", options: ["color", "background-color", "bgcolor", "background-image"], correct: 1 },
+        { id: "2_18", type: "single", question: "Thẻ &lt;link&gt; dùng để chèn tệp CSS ngoại tuyến vào HTML thường được đặt ở đâu?", options: ["Trong thẻ &lt;body&gt;", "Trong thẻ &lt;head&gt;", "Ở cuối tệp HTML", "Sau thẻ &lt;/html&gt;"], correct: 1 },
+        { id: "2_19", type: "single", question: "Giá trị mặc định của thuộc tính position trong CSS là gì?", options: ["relative", "absolute", "fixed", "static"], correct: 3 },
+        { id: "2_20", type: "single", question: "Để áp dụng cùng một kiểu cho nhiều phần tử HTML, ví dụ &lt;h1&gt;, &lt;p&gt;, và &lt;div&gt;, mà không cần khai báo từng phần tử riêng lẻ, ta sử dụng cú pháp CSS nào sau đây?", options: ["h1 p div { color: blue; }", "h1, p, div { color: blue; }", "h1 p, div { color: blue; }", "h1 + p + div { color: blue; }"], correct: 1 },
+        { id: "2_21", type: "single", question: "Đoạn mã CSS nào sau đây có độ ưu tiên cao nhất?", options: [".box { margin: 10px; }", "div { margin: 10px; }", "{ margin: 10px; }", "#container .box { margin: 10px; }"], correct: 3 },
+        { id: "2_22", type: "single", question: "Nếu cùng một thuộc tính CSS được khai báo trong nhiều tệp CSS khác nhau và tất cả các tệp này đều được liên kết với cùng một trang HTML thì quy tắc CSS nào sẽ được áp dụng?", options: ["Quy tắc từ tệp CSS đầu tiên được liên kết.", "Quy tắc CSS có độ chi tiết (specificity) cao nhất sẽ được áp dụng.", "Quy tắc CSS với số lượng thuộc tính ít hơn.", "Quy tắc từ tệp CSS được liên kết cuối cùng trong trang HTML."], correct: 1 },
+        { id: "2_23", type: "single", question: "Phát biểu nào sau đây đúng về độ ưu tiên của bộ chọn trong CSS?", options: ["Bộ chọn id có độ ưu tiên cao hơn bộ chọn phần tử.", "Bộ chọn phần tử luôn có độ ưu tiên cao nhất.", "Bộ chọn lớp có độ ưu tiên cao hơn bộ chọn id.", "Tất cả các bộ chọn đều có độ ưu tiên như nhau."], correct: 0 },
+        { id: '2_c1', type: 'tf_cluster', question: "Cho đoạn mã tạo biểu mẫu: <br><span class='code-snippet px-2 py-1 mx-1' style='font-size:0.9rem; margin:0;'>&lt;input type=\"radio\" name=\"gender\" value=\"male\"&gt; Nam &lt;input type=\"radio\" name=\"gender\" value=\"female\"&gt; Nữ</span>.<br> Sau đây là một số nhận định:", subQuestions: [
+            { id: 'd2_1a', text: "a) Đây là các nút chọn cho phép người dùng chọn nhiều mục cùng lúc.", correct: "Sai" },
+            { id: 'd2_1b', text: "b) Thuộc tính name phải giống nhau để nhóm các nút này vào cùng một lựa chọn duy nhất.", correct: "Đúng" },
+            { id: 'd2_1c', text: "c) Giá trị gửi lên máy chủ khi người dùng tích chọn \"Nam\" sẽ là chuỗi \"male\".", correct: "Đúng" },
+            { id: 'd2_1d', text: "d) Nếu đổi type=\"radio\" thành type=\"checkbox\", người dùng có thể chọn cả hai.", correct: "Đúng" }
+        ]},
+        { id: '2_c2', type: 'tf_cluster', question: "Nhóm học sinh muốn tạo bảng có đường viền rõ ràng và đều nhau bằng mã HTML và CSS như sau:<div class='code-snippet'>&lt;table&gt;<br>&nbsp;&nbsp;&lt;thead&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;tr&gt; &lt;th&gt;STT&lt;/th&gt; &lt;th&gt;Họ tên&lt;/th&gt; &lt;th&gt;Điểm&lt;/th&gt; &lt;/tr&gt;<br>&nbsp;&nbsp;&lt;/thead&gt;<br>&nbsp;&nbsp;&lt;tbody&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;tr&gt;&lt;td&gt;1&lt;/td&gt;&lt;td&gt;Bùi Hoàng Việt Anh&lt;/td&gt;&lt;td&gt;9&lt;/td&gt;&lt;/tr&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;tr&gt;&lt;td&gt;2&lt;/td&gt;&lt;td&gt;Vũ Văn Thanh&lt;/td&gt;&lt;td&gt;8&lt;/td&gt;&lt;/tr&gt;<br>&nbsp;&nbsp;&lt;/tbody&gt;<br>&lt;/table&gt;<br><br>/* Đoạn mã CSS */<br>td, th { border: 1px solid #000; }</div>Một học sinh trong nhóm đã đưa ra các nhận định sau:", subQuestions: [
+            { id: 'd2_2a', text: "a) Mã CSS trên sẽ tạo ra viền cho cả các ô tiêu đề và các ô dữ liệu.", correct: "Đúng" },
+            { id: 'd2_2b', text: "b) Kiểu viền solid tạo ra đường viền nét đứt.", correct: "Sai" },
+            { id: 'd2_2c', text: "c) Thuộc tính border có thể định nghĩa độ rộng, kiểu và màu của viền.", correct: "Đúng" },
+            { id: 'd2_2d', text: "d) Để bỏ viền, có thể thay solid bằng none.", correct: "Đúng" }
+        ]},
+        { id: '2_c3', type: 'tf_cluster', question: "Một bạn sử dụng mã CSS sau để tạo khung chứa với lớp box:<div class='code-snippet'>.box {<br>&nbsp;&nbsp;width: 50%;<br>&nbsp;&nbsp;height: 300px;<br>&nbsp;&nbsp;border: 3px dashed #009688;<br>&nbsp;&nbsp;padding: 20px;<br>&nbsp;&nbsp;margin: 15px;<br>}</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd2_3a', text: "a) Phần tử có lớp box sẽ có chiều rộng là 50% của phần tử chứa nó.", correct: "Đúng" },
+            { id: 'd2_3b', text: "b) Thuộc tính border: 3px dashed sẽ tạo ra viền nét liền dày 3px.", correct: "Sai" },
+            { id: 'd2_3c', text: "c) Khoảng cách từ viền của phần tử có lớp box đến nội dung bên trong của nó là 20px.", correct: "Đúng" },
+            { id: 'd2_3d', text: "d) Khoảng cách giữa các phần tử có lớp box là 15px ở cả bốn chiều.", correct: "Đúng" }
+        ]},
+        { id: '2_c4', type: 'tf_cluster', question: "Một bạn sử dụng đoạn mã CSS sau để định kiểu cho các nút bấm trên trang web với lớp button:<div class='code-snippet'>.button {<br>&nbsp;&nbsp;background-color: #ff5722;<br>&nbsp;&nbsp;border-radius: 5px;<br>&nbsp;&nbsp;padding: 10px 25px;<br>&nbsp;&nbsp;text-align: center;<br>}</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd2_4a', text: "a) Nút bấm có màu nền là #ff5722, một màu cam sáng, giúp thu hút sự chú ý của người dùng.", correct: "Đúng" },
+            { id: 'd2_4b', text: "b) Góc của các nút bấm có lớp button được bo tròn với bán kính 5px.", correct: "Đúng" },
+            { id: 'd2_4c', text: "c) Nội dung văn bản trên nút bấm sẽ được căn giữa theo chiều ngang nhờ thuộc tính text-align: center.", correct: "Đúng" },
+            { id: 'd2_4d', text: "d) Khoảng cách từ văn bản bên trong nút đến các cạnh của nút sẽ là 10px theo chiều dọc và 20px theo chiều ngang.", correct: "Đúng" }
+        ]},
+        { id: '2_c5', type: 'tf_cluster', question: "Một bạn sử dụng đoạn mã CSS và HTML sau đây để tạo thông báo về thời tiết:<div class='code-snippet'>h1 {color: red; text-align: left;}<br><br>&lt;h1&gt;Thông tin cập nhật về tình hình thời tiết&lt;/h1&gt;<br>&lt;dl&gt;<br>&nbsp;&nbsp;&lt;dt&gt;&lt;b&gt;1. Hà Nội&lt;/b&gt;&lt;/dt&gt;<br>&nbsp;&nbsp;&lt;dd&gt;Nhiệt độ thấp nhất: 22-24 độ.&lt;/dd&gt;<br>&nbsp;&nbsp;&lt;dd&gt;Nhiệt độ cao nhất: 31-33 độ.&lt;/dd&gt;<br>&nbsp;&nbsp;&lt;dt&gt;&lt;b&gt;2. Phía Tây Bắc Bộ&lt;/b&gt;&lt;/dt&gt;<br>&nbsp;&nbsp;&lt;dd&gt;Nhiệt độ thấp nhất: 21-24 độ, có nơi dưới 20 độ.&lt;/dd&gt;<br>&nbsp;&nbsp;&lt;dd&gt;Nhiệt độ cao nhất: 29-32 độ.&lt;/dd&gt;<br>&lt;/dl&gt;</div>Sau đây là một số nhận định:", subQuestions: [
+            { id: 'd2_5a', text: "a) Tiêu đề \"Thông tin cập nhật về tình hình thời tiết\" được hiển thị bằng màu đỏ nhờ thuộc tính CSS color: red.", correct: "Đúng" },
+            { id: 'd2_5b', text: "b) Thẻ &lt;dl&gt; được sử dụng để tạo một danh sách định nghĩa cho các địa điểm thời tiết, giúp người dùng dễ dàng theo dõi thông tin.", correct: "Đúng" },
+            { id: 'd2_5c', text: "c) Danh sách địa điểm thời tiết sử dụng thẻ &lt;dt&gt; để mô tả các thông tin liên quan đến từng địa điểm.", correct: "Sai" },
+            { id: 'd2_5d', text: "d) Nội dung bên trong thẻ &lt;dd&gt; được sử dụng để định nghĩa các tiêu đề cho danh sách thời tiết.", correct: "Sai" }
+        ]},
+        { id: '2_c6', type: 'tf_cluster', question: "Một trang web thương mại điện tử yêu cầu người dùng đăng nhập để thực hiện các giao dịch. Nhân viên thiết kế web đã viết đoạn mã HTML sau để tạo biểu mẫu đăng nhập:<div class='code-snippet'>&lt;form&gt;<br>&nbsp;&nbsp;&lt;label for=\"email\"&gt;Email:&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"email\" id=\"email\" name=\"email\"&gt;&lt;br&gt;<br>&nbsp;&nbsp;&lt;label for=\"userpassword\"&gt;Mật khẩu:&lt;/label&gt;<br>&nbsp;&nbsp;&lt;input type=\"password\" id=\"userpassword\" name=\"userpassword\"&gt;&lt;br&gt;<br>&nbsp;&nbsp;&lt;input type=\"submit\" value=\"Đăng nhập\"&gt;<br>&lt;/form&gt;</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd2_6a', text: "a) Thẻ &lt;input&gt; ứng với ô email cho phép người dùng nhập địa chỉ thư điện tử hợp lệ.", correct: "Đúng" },
+            { id: 'd2_6b', text: "b) Mật khẩu được hiển thị trong ô nhập liệu mà không bị che đi.", correct: "Sai" },
+            { id: 'd2_6c', text: "c) Dữ liệu từ biểu mẫu sẽ được gửi đi thông qua phương thức GET.", correct: "Đúng" },
+            { id: 'd2_6d', text: "d) Người dùng bắt buộc phải nhập địa chỉ thư điện tử để hoàn tất quá trình đăng nhập.", correct: "Sai" }
+        ]},
+        { id: '2_c7', type: 'tf_cluster', question: "Một người muốn cải tiến giao diện cho các ô nhập liệu trên trang web bằng cách sử dụng đoạn mã CSS sau đây:<div class='code-snippet'>input[type='email'] {<br>&nbsp;&nbsp;width: 250px;<br>&nbsp;&nbsp;padding: 12px;<br>&nbsp;&nbsp;border: 2px dashed #007BFF;<br>&nbsp;&nbsp;box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);<br>}</div>Sau đây là một số nhận định về cách làm của người đó:", subQuestions: [
+            { id: 'd2_7a', text: "a) Định dạng trên định kiểu cho ô nhập liệu là email.", correct: "Đúng" },
+            { id: 'd2_7b', text: "b) Kích thước của vùng đệm giữa đường viền và nội dung bên trong là 12px cho tất cả các chiều.", correct: "Đúng" },
+            { id: 'd2_7c', text: "c) Đường viền của ô email có độ dày 2px, kiểu đường nét đứt, màu xanh dương.", correct: "Đúng" },
+            { id: 'd2_7d', text: "d) Chiều rộng của ô nhập liệu là 300px, không bao gồm vùng đệm và đường viền.", correct: "Sai" }
+        ]},
+        { id: '2_c8', type: 'tf_cluster', question: "Khi sử dụng thẻ &lt;iframe&gt; trong HTML, một số nhận định được đưa ra như sau:", subQuestions: [
+            { id: 'd2_8a', text: "a) Thẻ &lt;iframe&gt; không yêu cầu thẻ đóng &lt;/iframe&gt;.", correct: "Sai" },
+            { id: 'd2_8b', text: "b) Thuộc tính src chỉ định địa chỉ URL của trang web hoặc tài liệu muốn nhúng.", correct: "Đúng" },
+            { id: 'd2_8c', text: "c) Có thể dùng CSS để loại bỏ đường viền mặc định của khung nhúng này.", correct: "Đúng" },
+            { id: 'd2_8d', text: "d) Khung nội tuyến &lt;iframe&gt; chỉ có thể nhúng các trang web từ cùng một tên miền gốc.", correct: "Sai" }
+        ]},
+        { id: '2_c9', type: 'tf_cluster', question: "Một nhóm học sinh làm trang web giới thiệu dự án bảo vệ môi trường với nội dung như sau:<div class='code-snippet' style='color:#003399; font-family:sans-serif;'><h1>Dự Án Bảo Vệ Môi Trường Lớp 12A</h1><br>Ngày thực hiện:<strong> 25/11/2024</strong> <br>Địa điểm thực hiện: Khu vực ven sông Hồng<br><strong> Mục tiêu của dự án:</strong> <br>- Làm sạch môi trường<br>- Trồng cây xanh</div>Quan sát trang web, một học sinh đưa ra các ý kiến như sau:", subQuestions: [
+            { id: 'd2_9a', text: "a) Sử dụng thẻ &lt;h1&gt; để hiển thị tiêu đề dự án.", correct: "Đúng" },
+            { id: 'd2_9b', text: "b) Đoạn mã sau giúp hiển thị địa điểm thực hiện với định dạng chữ nghiêng: &lt;i&gt;Khu vực ven sông Hồng&lt;/i&gt;", correct: "Đúng" },
+            { id: 'd2_9c', text: "c) Ngày thực hiện được nhấn mạnh bằng cách sử dụng thẻ &lt;strong&gt; như sau: Ngày thực hiện: &lt;strong&gt;25/11/2024&lt;/strong&gt;", correct: "Đúng" },
+            { id: 'd2_9d', text: "d) Sử dụng thẻ &lt;ol&gt; để hiển thị các mục tiêu của dự án như sau:<br>&lt;ol&gt;Mục tiêu của dự án: &lt;li&gt;Làm sạch môi trường&lt;/li&gt;&lt;li&gt;Trồng cây xanh&lt;/li&gt;&lt;/ol&gt;", correct: "Sai" }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Thầy/Cô vui lòng nhắc học sinh nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // Xử lý hiển thị phần 1
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                // TỰ ĐỘNG ĐÁNH SỐ LẠI CÂU TRẮC NGHIỆM MỘT LỰA CHỌN TỪ 1
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+            });
+            
+            // Xử lý hiển thị phần 2
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                // TỰ ĐỘNG ĐÁNH SỐ LẠI CÂU ĐÚNG SAI BẮT ĐẦU LẠI TỪ 1 (Theo đúng yêu cầu)
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${sub.text}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); // Fallback
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    // Hiển thị tổng số câu hỏi thay vì tổng số ý
+    function getTotalItems() {
+        return currentQuestions.length; 
+    }
+
+    // Tính số câu đã trả lời (Câu T/F được tính là 1 câu nếu đã trả lời TẤT CẢ các ý)
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                let allAnswered = q.subQuestions.every(sub => userAnswers[sub.id] !== undefined);
+                if (allAnswered) count++;
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl font-bold leading-relaxed shadow-inner">${q.displayQuestion.replace(/\n/g, '<br/>')}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} câu`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // Chấm điểm tính theo từng "ý" riêng lẻ
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+
+        const score = scoreP1P2.toFixed(2);
+        let correctTotal = correctP1P2;
+        let itemsTotal = totalP1P2;
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctTotal, tongCau: itemsTotal,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctTotal, itemsTotal, record.duration); });
+        }
+    };
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border-2 border-gray-100 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-gray-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 border border-green-200">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-green-200 text-green-800 font-bold border-green-400 border-2'; 
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-200 text-red-800 font-bold line-through border-red-400 border-2'; 
+                    } else {
+                        optBg = 'bg-white text-gray-600 border border-gray-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-bold' : ''}">${opt}</span>
+                             </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-gray-50'} transition-colors border-b border-gray-100"><td class="px-3 sm:px-4 py-4 text-center font-black text-gray-400 text-sm">#${idx + 1}</td><td class="px-3 sm:px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-3 sm:px-4 py-4 font-extrabold text-gray-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-3 sm:px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-3 sm:px-4 py-4 text-center text-gray-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-3 sm:px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-green-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-3 sm:px-4 py-4 text-center text-gray-500 text-xs">${s.startTime}</td><td class="px-3 sm:px-4 py-4 text-center text-gray-500 text-xs">${s.endTime}</td><td class="px-3 sm:px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-3 sm:px-5 py-4 text-right text-xs text-gray-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Trắc Nghiệm - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    /* GIAO DIỆN NỀN CHUYỂN MÀU GỐC */
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    /* CSS NỀN XANH NHẠT VÀ CHỮ XANH ĐẬM (DARK BLUE) CHO BLOCK CODE */
+    .code-snippet {
+        background-color: #f0f9ff; 
+        color: #003399; 
+        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        overflow-x: auto;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        border: 2px solid #bae6fd;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        line-height: 1.6;
+        white-space: pre-wrap;
+    }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1">TẠO TRANG WEB HTML PHẦN 1</h1>
+      <p class="text-gray-600 font-bold">Môn: Tin học 12</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn phần thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ÔN TẬP 1</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ÔN TẬP 2</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </div>
+      </p>
+   </footer>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_html_1');
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== NGÂN HÀNG CÂU HỎI PHẦN 1 ====================
+    const de1_data = [
+        { id: "1_1", type: "single", question: "Phương án nào sau đây chỉ ra đúng cụm từ viết tắt của từ HTML?", options: ["HyperText Markup Language.", "Home Testing Mixed Language.", "Home Typing Modern Language.", "Hot Typing Markup Language."], correct: 0 },
+        { id: "1_2", type: "single", question: "Phương án nào sau đây nêu đúng khai báo dữ liệu hiển thị là HTML5?", options: ["&lt;html version=\"5.0\"&gt;", "&lt;!DOCTYPE html&gt;", "&lt;html lang=\"en\"&gt;", "&lt;head type=\"text/html\"&gt;"], correct: 1 },
+        { id: "1_3", type: "single", question: "Phương án nào sau đây nêu đúng các thành phần của một phần tử (element) HTML?", options: ["Thẻ mở, thuộc tính và thẻ đóng (nếu có).", "Thẻ mở, thuộc tính và liên kết.", "Nội dung, định dạng và liên kết ngoài.", "Thẻ mở, thuộc tính, nội dung và thẻ đóng (nếu có)."], correct: 3 },
+        { id: "1_4", type: "single", question: "Thẻ HTML nào sau đây được sử dụng để thiết lập tiêu đề xuất hiện trên tab trình duyệt khi mở trang web?", options: ["&lt;meta&gt;", "&lt;header&gt;", "&lt;title&gt;", "&lt;head&gt;"], correct: 2 },
+        { id: "1_5", type: "single", question: "Kí hiệu nào sau đây được dùng cho thẻ đóng trong HTML?", options: ["/", "\\", "!", "//"], correct: 0 },
+        { id: "1_6", type: "single", question: "Thẻ &lt;meta&gt; nằm trong phần tử nào sau đây?", options: ["&lt;body&gt;", "&lt;footer&gt;", "&lt;head&gt;", "&lt;div&gt;"], correct: 2 },
+        { id: "1_7", type: "single", question: "Thẻ nào sau đây được sử dụng để chèn ngắt dòng trong HTML?", options: ["&lt;break&gt;", "&lt;lb&gt;", "&lt;hr&gt;", "&lt;br&gt;"], correct: 3 },
+        { id: "1_8", type: "single", question: "Phương án nào sau đây nêu đúng số lượng cặp thẻ &lt;body&gt; tối đa mà một trang HTML có thể có?", options: ["Một cặp.", "Hai cặp.", "Ba cặp.", "Nhiều cặp tuỳ ý."], correct: 0 },
+        { id: "1_9", type: "single", question: "Thẻ HTML nào sau đây là thẻ đơn?", options: ["&lt;head&gt;", "&lt;body&gt;", "&lt;br&gt;", "&lt;h1&gt;"], correct: 2 },
+        { id: "1_10", type: "single", question: "Trong HTML, thẻ &lt;h1&gt; đến &lt;h6&gt; có chức năng nào sau đây?", options: ["Định dạng tiêu đề.", "Định dạng đoạn văn.", "Tạo danh sách.", "Chèn hình ảnh."], correct: 0 },
+        { id: "1_11", type: "single", question: "Thẻ &lt;p&gt; có chức năng nào sau đây trong HTML?", options: ["Định dạng đoạn văn.", "Tạo danh sách.", "Định dạng tiêu đề.", "Chèn hình ảnh."], correct: 0 },
+        { id: "1_12", type: "single", question: "Thẻ HTML nào sau đây chỉ có thẻ bắt đầu mà không cần thẻ kết thúc?", options: ["&lt;h1&gt;", "&lt;p&gt;", "&lt;img&gt;", "&lt;div&gt;"], correct: 2 },
+        { id: "1_13", type: "single", question: "Để định nghĩa một tiêu đề có cỡ chữ lớn nhất trên trang web, thẻ nào sau đây được sử dụng trong HTML?", options: ["&lt;h6&gt;", "&lt;h3&gt;", "&lt;h1&gt;", "&lt;header&gt;"], correct: 2 },
+        { id: "1_14", type: "single", question: "Thẻ nào sau đây được sử dụng để tạo chỉ số dưới trong HTML?", options: ["&lt;sup&gt;", "&lt;sub&gt;", "&lt;i&gt;", "&lt;em&gt;"], correct: 1 },
+        { id: "1_15", type: "single", question: "Trong một trang web tin tức, cần nhấn mạnh nội dung quan trọng trong các bài viết bằng cách in đậm. Thẻ HTML nào sau đây nên được sử dụng để định dạng nội dung đó?", options: ["&lt;b&gt;", "&lt;i&gt;", "&lt;strong&gt;", "&lt;mark&gt;"], correct: 2 },
+        { id: "1_16", type: "single", question: "Thẻ HTML nào sau đây được sử dụng để nhấn mạnh nội dung văn bản bằng cách in nghiêng?", options: ["&lt;em&gt;", "&lt;strong&gt;", "&lt;i&gt;", "&lt;b&gt;"], correct: 0 },
+        { id: "1_17", type: "single", question: "Các cặp thẻ HTML nào sau đây lồng nhau là đúng?", options: ["&lt;div&gt;&lt;p&gt;&lt;/div&gt;&lt;/p&gt;", "&lt;p&gt;&lt;strong&gt;&lt;/strong&gt;&lt;/p&gt;", "&lt;h1&gt;&lt;em&gt;&lt;/h1&gt;&lt;/em&gt;", "&lt;body&gt;&lt;title&gt;&lt;/title&gt; &lt;/body&gt;"], correct: 1 },
+        { id: "1_18", type: "single", question: "Cho đoạn mã HTML định dạng đoạn văn bản như sau:<div class='code-snippet'>&lt;p style=\"color: skyblue; font-size: 18px;\"&gt; Đây là một đoạn văn bản.&lt;/p&gt;</div>Phương án nào sau đây cho biết màu chữ của văn bản khi đoạn mã trên được thực thi?", options: ["Màu đỏ", "Màu xanh da trời", "Màu vàng", "Màu đen"], correct: 1 },
+        
+        // CÂU 19 ĐÃ ĐƯỢC ÉP KIỂU HIỂN THỊ CHỮ SIÊU ĐẬM/CHỮ MẢNH ĐỂ PHÂN BIỆT RÕ RÀNG
+        { id: "1_19", type: "single", question: "Cho đoạn mã HTML sau:<div class='code-snippet'>&lt;!-- Tiêu đề --&gt;<br>&lt;p&gt;&lt;strong&gt;Biến đổi khí hậu&lt;/strong&gt; đang trở thành một trong những thách thức lớn nhất của thế kỉ 21.&lt;/p&gt;</div>Phương án nào sau đây nêu đúng kết quả hiển thị nội dung của trang web trên trình duyệt?", options: [
+            "<span class='font-black text-black'>Biến đổi khí hậu</span> <span class='font-normal'>đang trở thành một trong những thách thức lớn nhất của thế kỉ 21.</span>", 
+            "<span class='font-black text-black'>Tiêu đề. Biến đổi khí hậu đang trở thành một trong những thách thức lớn nhất của thể kỉ 21.</span>", 
+            "<span class='font-normal'>Biến đổi khí hậu</span> <span class='font-black text-black'>đang trở thành một trong những thách thức lớn nhất của thế kỉ 21.</span>", 
+            "<span class='font-black text-black'>Tiêu đề. Biến đổi khí hậu</span> <span class='font-normal'>đang trở thành một trong những thách thức lớn nhất của thế kỉ 21.</span>"
+        ], correct: 0 },
+
+        { id: "1_20", type: "single", question: "Cho đoạn mã HTML sau:<div class='code-snippet'>&lt;html&gt;<br>&nbsp;&nbsp;&lt;head&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;title&gt;Trang chủ&lt;/title&gt;<br>&nbsp;&nbsp;&lt;/head&gt;<br>&nbsp;&nbsp;&lt;body&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;h2&gt;Xin chào!&lt;/h1&gt;<br>&nbsp;&nbsp;&lt;/body&gt;<br>&lt;/html&gt;</div>Phát biểu nào sau đây nêu đúng lỗi của đoạn mã trên?", options: ["Thẻ &lt;title&gt; phải đặt trong thẻ &lt;body&gt;.", "Thẻ đóng của thẻ &lt;h2&gt; không đúng.", "Thiếu thẻ đóng cho thẻ &lt;head&gt;.", "Thẻ &lt;body&gt; khai báo thừa."], correct: 1 },
+        { id: "1_21", type: "single", question: "Đoạn mã HTML nào sau đây là đúng để hiển thị cụm từ Năng lượng tái tạo trên trình duyệt?", options: ["&lt;p&gt;&lt;strong&gt;Năng lượng&lt;/strong&gt; &lt;em&gt;tái tạo&lt;/em&gt;&lt;/p&gt;", "&lt;div&gt;&lt;h2&gt;Năng lượng tái tạo&lt;/h2&gt;&lt;/div&gt;", "&lt;p&gt;&lt;b&gt; Năng lượng tái tạo &lt;/b&gt;&lt;/p&gt;", "&lt;p&gt;&lt;strong&gt;Năng lượng&lt;/strong&gt; tái tạo&lt;/p&gt;"], correct: 3 },
+        { id: "1_22", type: "single", question: "Phần tử nào sau đây được sử dụng để tạo danh sách dạng liệt kê không theo thứ tự?", options: ["&lt;ul&gt;, &lt;li&gt;", "&lt;ol&gt;, &lt;li&gt;", "&lt;dl&gt;, &lt;li&gt;", "&lt;dt&gt;, &lt;dd&gt;"], correct: 0 },
+        { id: "1_23", type: "single", question: "Cho đoạn mã HTML tạo danh sách như sau:<div class='code-snippet'>&lt;ul&gt;<br>&nbsp;&nbsp;&lt;li&gt;Muc 1&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;Muc 2&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;Muc 3&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;Muc 4&lt;/li&gt;<br>&lt;/ul&gt;</div>Phương án nào chỉ ra đúng số mục trong danh sách này?", options: ["2.", "3.", "4.", "5."], correct: 2 },
+        { id: '1_c1', type: 'tf_cluster', question: "Cho tệp HTML có nội dung như sau:<div class='code-snippet'>&lt;!DOCTYPE html&gt;<br>&lt;html&gt;<br>&lt;head&gt;<br>&nbsp;&nbsp;&lt;title&gt;Trang thông tin sinh viên&lt;/title&gt;<br>&lt;/head&gt;<br>&lt;body&gt;<br>&nbsp;&nbsp;&lt;h2&gt;Danh sách sinh viên&lt;/h2&gt;<br>&nbsp;&nbsp;&lt;ul&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;Nguyễn Văn A&lt;/li&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;Trần Thị B&lt;/li&gt;<br>&nbsp;&nbsp;&lt;/ul&gt;<br>&lt;/body&gt;<br>&lt;/html&gt;</div>Sau đây là các nhận định về tệp HTML trên:", subQuestions: [
+            { id: 'd1_1a', text: "a) Thẻ &lt;title&gt; xác định tiêu đề cho trang thông tin sinh viên.", correct: "Đúng" },
+            { id: 'd1_1b', text: "b) Thẻ &lt;h2&gt; được sử dụng để tạo tiêu đề cho danh sách sinh viên.", correct: "Đúng" },
+            { id: 'd1_1c', text: "c) Thẻ &lt;ul&gt; được sử dụng để tạo danh sách có thứ tự.", correct: "Sai" },
+            { id: 'd1_1d', text: "d) Tệp HTML này không có phần tử con nào trong &lt;body&gt;.", correct: "Sai" }
+        ]},
+        { id: '1_c2', type: 'tf_cluster', question: "Tệp contact.html có câu lệnh như sau:<div class='code-snippet'>&lt;a href=\"mailto:sinhvien@example.com\"&gt;Gửi email cho sinh viên&lt;/a&gt;</div>Sau đây là các nhận định về câu lệnh trên:", subQuestions: [
+            { id: 'd1_2a', text: "a) Câu lệnh tạo liên kết đến địa chỉ thư điện tử.", correct: "Đúng" },
+            { id: 'd1_2b', text: "b) Khi nhảy chuột vào liên kết, một trang web sẽ mở ra để soạn thư điện tử.", correct: "Sai" },
+            { id: 'd1_2c', text: "c) Liên kết này sẽ tự động tải xuống tệp tin danh bạ khi người dùng click vào.", correct: "Sai" },
+            { id: 'd1_2d', text: "d) Thuộc tính href trong thẻ &lt;a&gt; có thể chứa cú pháp mailto để mở ứng dụng mail.", correct: "Đúng" }
+        ]},
+        { id: '1_c3', type: 'tf_cluster', question: "Trong một tệp HTML có câu lệnh sau:<div class='code-snippet'>&lt;img src=\"images/photo.jpg\" alt=\"Hình ảnh minh hoạ\" width=\"309\" height=\"200\"&gt;</div>Sau đây là các nhận định về câu lệnh trên:", subQuestions: [
+            { id: 'd1_3a', text: "a) Thẻ &lt;img&gt; được sử dụng để hiển thị hình ảnh trên trang web.", correct: "Đúng" },
+            { id: 'd1_3b', text: "b) Thuộc tính alt giúp hiển thị thông báo khi hình ảnh không thể hiển thị.", correct: "Đúng" },
+            { id: 'd1_3c', text: "c) Kích thước của hình ảnh sẽ tự động điều chỉnh linh hoạt theo kích thước màn hình điện thoại.", correct: "Sai" },
+            { id: 'd1_3d', text: "d) Tệp hình ảnh \"photo.jpg\" bắt buộc phải nằm cùng thư mục gốc với tệp HTML.", correct: "Sai" }
+        ]},
+        { id: '1_c4', type: 'tf_cluster', question: "Khi được yêu cầu tạo một danh sách tài liệu học tập gồm hai danh sách con (tài liệu trực tuyến và thực hành), học sinh viết HTML hiển thị ra như sau:<div class='code-snippet' style='color:#003399; font-family:sans-serif;'>1. Tài liệu học trực tuyến<br>&nbsp;&nbsp;. Tài liệu học lí thuyết<br>&nbsp;&nbsp;. Tài liệu video<br>2. Tài liệu thực hành<br>&nbsp;&nbsp;. Tài liệu thí nghiệm<br>&nbsp;&nbsp;. Tài liệu dự án</div>Sau đây là một số nhận định về đoạn mã HTML đó:", subQuestions: [
+            { id: 'd1_4a', text: "a) Cần sử dụng thẻ &lt;ol&gt; cho danh sách được đánh số 1, 2 và thẻ &lt;ul&gt; cho danh sách dấu chấm.", correct: "Đúng" },
+            { id: 'd1_4b', text: "b) Các thẻ con bên trong danh sách bắt buộc phải là thẻ &lt;li&gt;.", correct: "Đúng" },
+            { id: 'd1_4c', text: "c) Nếu thay thẻ &lt;ul&gt; bằng &lt;ol&gt;, danh sách con vẫn hiển thị dấu chấm.", correct: "Sai" },
+            { id: 'd1_4d', text: "d) Thẻ &lt;ol&gt; bắt buộc phải có thuộc tính type=\"1\" mới có thể hiển thị số thứ tự.", correct: "Sai" }
+        ]},
+        { id: '1_c5', type: 'tf_cluster', question: "Trong một tệp HTML có câu lệnh:<div class='code-snippet'>&lt;a href=\"https://www.example.com\" target=\"_blank\"&gt;Truy cập trang web&lt;/a&gt;</div>Sau đây là một số nhận định về câu lệnh trên:", subQuestions: [
+            { id: 'd1_5a', text: "a) Thẻ &lt;a&gt; được sử dụng để tạo liên kết từ trang web hiện tại đến một trang web khác.", correct: "Đúng" },
+            { id: 'd1_5b', text: "b) Khi nháy chuột vào liên kết, trang web sẽ mở đè lên cùng một tab hiện tại.", correct: "Sai" },
+            { id: 'd1_5c', text: "c) Thuộc tính target=\"_blank\" ra lệnh cho trình duyệt mở trang web trong một tab hoặc cửa sổ mới.", correct: "Đúng" },
+            { id: 'd1_5d', text: "d) Văn bản \"Truy cập trang web\" sẽ bị ẩn đi và không hiển thị trên giao diện người dùng.", correct: "Sai" }
+        ]},
+        { id: '1_c6', type: 'tf_cluster', question: "Giáo viên môn Tin học lớp 12 đưa ra đoạn mã HTML như sau:<div class='code-snippet'>&lt;ul style='list-style-type: circle'&gt;<br>&nbsp;&nbsp;&lt;li&gt;Điểm nổi bật 1&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;Điểm nổi bật 2&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;Điểm nổi bật 3&lt;/li&gt;<br>&lt;/ul&gt;</div>Một học sinh nhận xét về đoạn mã này:", subQuestions: [
+            { id: 'd1_6a', text: "a) Kí hiệu đầu dòng cho mỗi mục là hình tròn.", correct: "Đúng" },
+            { id: 'd1_6b', text: "b) Cấu trúc danh sách này có tổng cộng 3 phần tử con.", correct: "Đúng" },
+            { id: 'd1_6c', text: "c) Nếu thay circle bằng số 1 trong thuộc tính style, các mục sẽ hiển thị dưới dạng số đếm.", correct: "Sai" },
+            { id: 'd1_6d', text: "d) Đoạn mã sử dụng thẻ &lt;ul&gt; tức là đang tạo một danh sách có thứ tự (Ordered List).", correct: "Sai" }
+        ]},
+        { id: '1_c7', type: 'tf_cluster', question: "Khi được yêu cầu tạo trang web giới thiệu các món ăn đặc sản của Hà Nội, một học sinh đã sử dụng mã HTML như sau:<div class='code-snippet'>&lt;dl&gt;<br>&nbsp;&nbsp;&lt;dt&gt;&lt;b&gt;Phở&lt;/b&gt;&lt;/dt&gt;<br>&nbsp;&nbsp;&lt;dd&gt;Món ăn truyền thống nổi tiếng...&lt;/dd&gt;<br>&nbsp;&nbsp;&lt;dt&gt;&lt;i&gt;Bún chả&lt;/i&gt;&lt;/dt&gt;<br>&nbsp;&nbsp;&lt;dd&gt;Món bún kèm chả nướng...&lt;/dd&gt;<br>&lt;/dl&gt;</div>Sau đây là một số nhận định về đoạn mã trên:", subQuestions: [
+            { id: 'd1_7a', text: "a) Thẻ &lt;dl&gt; được dùng để tạo danh sách mô tả định nghĩa.", correct: "Đúng" },
+            { id: 'd1_7b', text: "b) Thẻ &lt;b&gt; trong mã được sử dụng để định dạng in đậm tên món ăn \"Phở\".", correct: "Đúng" },
+            { id: 'd1_7c', text: "c) Nội dung chi tiết trong thẻ &lt;dd&gt; bắt buộc phải đặt lồng bên trong thẻ &lt;ul&gt; thì mới hiển thị được.", correct: "Sai" },
+            { id: 'd1_7d', text: "d) Thẻ &lt;i&gt; dùng để tạo chữ gạch chân cho món ăn.", correct: "Sai" }
+        ]},
+        { id: '1_c8', type: 'tf_cluster', question: "Có một danh sách hiển thị trên trang web như sau:<div class='code-snippet' style='color:#003399; font-family:sans-serif;'>Bước 1: Chuẩn bị tài liệu<br>Bước 2: Tổ chức lớp học<br>Bước 3: Triển khai hoạt động</div>Một học sinh nêu ý kiến về mã HTML tạo ra trường hợp này:", subQuestions: [
+            { id: 'd1_8a', text: "a) Danh sách trên được định nghĩa là danh sách không có thứ tự (Unordered List).", correct: "Sai" },
+            { id: 'd1_8b', text: "b) Để tạo ra các bước đánh số thứ tự như trên, ta cần khai báo bằng thẻ &lt;ol&gt;.", correct: "Đúng" },
+            { id: 'd1_8c', text: "c) Mỗi mục (mỗi bước) trong danh sách này được tạo bằng thẻ &lt;li&gt;.", correct: "Đúng" },
+            { id: 'd1_8d', text: "d) Thêm thuộc tính type='disc' vào thẻ &lt;ol&gt; sẽ thay đổi các con số thành hình tròn.", correct: "Sai" }
+        ]},
+        { id: '1_c9', type: 'tf_cluster', question: "Cho đoạn mã CSS sau: <span class='code-snippet px-2 py-1 mx-1' style='font-size:0.9rem; margin:0;'>p { font-weight: bold; }</span>. Sau đây là một số nhận định:", subQuestions: [
+            { id: 'd1_9a', text: "a) Đoạn lệnh CSS này thiết lập in đậm cho tất cả các đoạn văn bản sử dụng thẻ &lt;p&gt;.", correct: "Đúng" },
+            { id: 'd1_9b', text: "b) Thuộc tính font-weight trong CSS chỉ nhận các giá trị chuỗi văn bản như 'bold' hoặc 'normal'.", correct: "Sai" },
+            { id: 'd1_9c', text: "c) CSS cho phép sử dụng các giá trị số (như 400, 700) thay cho chữ đối với thuộc tính này.", correct: "Đúng" },
+            { id: 'd1_9d', text: "d) Khai báo CSS theo cách này có mức độ ưu tiên áp dụng cao hơn so với inline CSS (viết trong thuộc tính style).", correct: "Sai" }
+        ]}
+    ];
+
+    // ==================== NGÂN HÀNG CÂU HỎI PHẦN 2 ====================
+    const de2_data = [
+        { id: "2_24", type: "single", question: "Phát biểu nào sau đây là đúng về các thẻ tạo danh sách trong HTML?", options: ["Thẻ &lt;li&gt; được đặt bên trong thẻ &lt;ol&gt; để tạo danh sách không có thứ tự.", "Thẻ &lt;ul&gt; được sử dụng để tạo danh sách có thứ tự.", "Thẻ &lt;ol&gt; được sử dụng để tạo danh sách không có thứ tự.", "Mỗi phần tử danh sách (thẻ &lt;li&gt;) có thể chứa một thẻ &lt;ol&gt; hoặc &lt;ul&gt; mới để tạo dàn sách lồng nhau."], correct: 3 },
+        { id: "2_25", type: "single", question: "Thuộc tính nào sau đây của thẻ &lt;table&gt; được dùng để gộp cột trong bảng HTML?", options: ["colspan.", "rowspan.", "merge.", "align."], correct: 0 },
+        { id: "2_26", type: "single", question: "Thẻ HTML nào sau đây được dùng để tạo một ô tiêu đề trong bảng?", options: ["&lt;td&gt;", "&lt;tr&gt;", "&lt;th&gt;", "&lt;caption&gt;"], correct: 2 },
+        { id: "2_27", type: "single", question: "Khi cần tạo một bảng có hàng đầu tiên là tiêu đề và tất cả các cột trong hàng này được căn giữa. Mã HTML nào sau đây là đúng?", options: ["&lt;th style=\"text-align: center;\"&gt;Tiêu đề&lt;/th&gt;", "&lt;td style=\"text-align: center;\"&gt;Tiêu đề&lt;/td&gt;", "&lt;tr style=\"text-align: center;\"&gt;Tiêu đề&lt;/tr&gt;", "&lt;table style=\"text-align: center;\"&gt;Tiêu đề&lt;/table&gt;"], correct: 2 },
+        { id: "2_28", type: "single", question: "Một bạn muốn tạo một bảng trong trang web chứa thông tin môn học, giáo viên và thời gian học. Thẻ nào sau đây cần được sử dụng để tạo ô chứa dữ liệu trong bảng đó?", options: ["&lt;table&gt;", "&lt;th&gt;", "&lt;td&gt;", "&lt;tr&gt;"], correct: 2 },
+        { id: "2_29", type: "single", question: "Thẻ nào sau đây được sử dụng để tạo liên kết trong HTML?", options: ["&lt;link&gt;", "&lt;a&gt;", "&lt;href&gt;", "&lt;url&gt;"], correct: 1 },
+        { id: "2_30", type: "single", question: "Thuộc tính nào sau đây dùng để chỉ định URL gốc cho thẻ liên kết trong HTML?", options: ["href.", "src.", "link.", "path."], correct: 0 },
+        { id: "2_31", type: "single", question: "Phương án nào sau đây nêu đúng cú pháp của thẻ liên kết trong HTML?", options: ["&lt;a href=\"URL\"&gt; Nội dung hiển thị &lt;/a&gt;", "&lt;link href=\"URL\"&gt; Nội dung hiển thị &lt;/link&gt;", "&lt;a src=\"URL\"&gt; Nội dung hiển thị &lt;/a&gt;", "&lt;url href=\"URL\"&gt; Nội dung hiển thị &lt;/url&gt;"], correct: 0 },
+        { id: "2_32", type: "single", question: "Đoạn mã HTML nào sau đây là đúng để tạo siêu liên kết dẫn đến trang services.html?", options: ["&lt;a&gt;Trang dịch vụ&lt;/a&gt;", "&lt;a href=\"services.html\"&gt;Trang dich vu&lt;/a&gt;", "&lt;a src=\"services.html\"&gt;Trang dịch vụ&lt;/a&gt;", "&lt;a target=\"services.html\"&gt;Trang dich vu&lt;/a&gt;"], correct: 1 },
+        { id: "2_33", type: "single", question: "Khi nào nên sử dụng đường dẫn tuyệt đối trong HTML?", options: ["Khi liên kết tới một tài liệu trên cùng máy chủ.", "Khi liên kết tới một trang web khác trên Internet.", "Khi liên kết đến một vị trí khác trong cùng trang.", "Khi tạo các danh sách có thứ tự trong HTML."], correct: 1 },
+        { id: "2_34", type: "single", question: "Để tạo liên kết từ một hình ảnh đến một trang khác, mã HTML nào sau đây là đúng?", options: ["&lt;img href=\"https://example.com\" src=\"image.jpg\"&gt;", "&lt;a src=\"image.jpg\" href=\"https://example.com\"&gt;&lt;/a&gt;", "&lt;a href=\"https://example.com\"&gt;&lt;img src=\"image.jpg\"&gt;&lt;/a&gt;", "&lt;img src=\"https://example.com\" href=\"image.jpg\"&gt;"], correct: 2 },
+        { id: "2_35", type: "single", question: "Trang web của trường có một nút \"Đăng kí sự kiện\". Nếu muốn khi nhảy vào nút này sẽ chuyển đến trang đăng kí sự kiện, mã HTML nào sau đây là đúng?", options: ["&lt;a href=\"register.html\" button&gt;Đăng kí sự kiện&lt;/button&gt;&lt;/a&gt;", "&lt;button href=\"register.html\"&gt;Đăng kí sự kiện&lt;/button&gt;", "&lt;a href=\"register.html\"&gt;&lt;button&gt;Đăng kí sự kiện&lt;/button&gt;&lt;/a&gt;", "&lt;a button href=\"register.html\"&gt;Đăng kí sự kiện&lt;/a&gt;"], correct: 2 },
+        { id: "2_36", type: "single", question: "Một trang web tin tức có đoạn văn bản: \"Đọc thêm tại báo điện tử VnExpress\". Nếu muốn nhảy vào chữ \"VnExpress\" thì chuyển đến trang chủ của VnExpress, mã HTML nào sau đây là đúng?", options: ["&lt;a href=\"https://vnexpress.net\"&gt;VnExpress&lt;/a&gt;", "&lt;a link=\"https://vnexpress.net\"&gt;VnExpress&lt;/a&gt;", "&lt;link href=\"https://vnexpress.net\"&gt;VnExpress&lt;/link&gt;", "&lt;a&gt;https://vnexpress.net VnExpress&lt;/a&gt;"], correct: 0 },
+        { id: "2_37", type: "single", question: "Trong HTML, thuộc tính nào sau đây bắt buộc phải có của thẻ &lt;img&gt;?", options: ["src.", "alt.", "width.", "height."], correct: 0 },
+        { id: "2_38", type: "single", question: "Thuộc tính nào sau đây dùng để định nghĩa chiều rộng của ảnh trong HTML?", options: ["height.", "src.", "width.", "size"], correct: 2 },
+        { id: "2_39", type: "single", question: "Phương án nào sau đây là chức năng của thuộc tính alt của thẻ &lt;img&gt;?", options: ["Hiển thị văn bản thay thế khi hình ảnh không tải được.", "Đặt đường dẫn đến hình ảnh.", "Thay đổi kích thước hình ảnh.", "Định dạng màu nền của hình ảnh."], correct: 0 },
+        { id: "2_40", type: "single", question: "Thuộc tính nào sau đây giúp hiển thị các nút điều khiển video trong HTML?", options: ["controls.", "autoplay.", "width.", "muted."], correct: 0 },
+        { id: "2_41", type: "single", question: "Một trang web có hình ảnh Anh2.png bị lỗi hiển thị do đường dẫn sai. Nếu muốn khi xảy ra lỗi thì văn bản \"Ảnh đường phố Hà Nội\" thay thế cho hình ảnh được hiển thị, thuộc tính nào sau đây cần được thêm vào thẻ &lt;img&gt;?", options: ["src.", "alt.", "width.", "height"], correct: 1 },
+        { id: "2_42", type: "single", question: "Phương án nào sau đây nêu đúng cú pháp khi chèn ảnh?", options: ["&lt;img link=\"img.png\" alt=\"image\"&gt;", "&lt;img href=\"img.jpg\" alt=\"image\"&gt;&lt;/img&gt;", "&lt;img src=\"img.png\" alt=\"image\"&gt;", "&lt;img url=\"img.jpg\"&gt;Ảnh&lt;/img&gt;"], correct: 2 },
+        { id: "2_43", type: "single", question: "Cú pháp nào sau đây là đúng khi chèn tập âm thanh vào trang web?", options: ["&lt;audio src=\"audio.mp3\"&gt;&lt;/audio&gt;", "&lt;sound src=\"audio.mp3\"&gt;&lt;/sound&gt;", "&lt;audio file=\"audio.mp3\"&gt;&lt;/audio&gt;", "&lt;audio source=\"audio.mp3\"&gt;&lt;/audio&gt;"], correct: 0 },
+        { id: "2_44", type: "single", question: "Đoạn mã HTML <span class='code-snippet px-2 py-1 mx-1' style='font-size:0.9rem; margin:0;'>&lt;img src=\"image.jpg\" alt=\"Ảnh mô tả\" width=\"500\"&gt;</span> có lỗi nào sau đây?", options: ["Thiếu thẻ đóng cho thẻ &lt;img&gt;.", "Thuộc tính width không hợp lệ.", "Thiếu thuộc tính height cho thẻ &lt;img&gt;.", "Không có lỗi nào trong đoạn mã này."], correct: 3 },
+        { id: "2_45", type: "single", question: "Cho câu lệnh HTML:<div class='code-snippet'>&lt;video src=\"video.mp4\" height=\"150\" width=\"100\" autoplay&gt;&lt;/video&gt;</div>Phát biểu nào sau đây về cách hoạt động của video là sai?", options: ["Video có tên là \"video.mp4\" sẽ được chèn vào trang web.", "Chiều cao của khung video hiển thị là 150px.", "Video sẽ tự động phát khi trang được tải.", "Video sẽ hiển thị thông báo bằng văn bản trên màn hình nếu không thể phát được."], correct: 3 },
+        { id: "2_46", type: "single", question: "Thẻ HTML nào sau đây được sử dụng để tạo khung chứa nội dung nhúng từ một trang web khác trong trang web hiện tại?", options: ["&lt;frame&gt;", "&lt;iframe&gt;", "&lt;div&gt;", "&lt;span&gt;"], correct: 1 },
+        { id: '2_c1', type: 'tf_cluster', question: "Cho đoạn mã HTML tạo bảng:<div class='code-snippet'>&lt;table&gt;<br>&nbsp;&nbsp;&lt;tr&gt;&lt;th&gt;Tên&lt;/th&gt;&lt;/tr&gt;<br>&nbsp;&nbsp;&lt;tr&gt;&lt;td&gt;An&lt;/td&gt;&lt;/tr&gt;<br>&lt;/table&gt;</div>Sau đây là một số nhận định:", subQuestions: [
+            { id: 'd2_1a', text: "a) Bảng này hiển thị cấu trúc gồm 2 hàng và 1 cột.", correct: "Đúng" },
+            { id: 'd2_1b', text: "b) Thẻ &lt;th&gt; có tác dụng tự động căn giữa và in đậm nội dung bên trong nó.", correct: "Đúng" },
+            { id: 'd2_1c', text: "c) Để gộp 2 cột cạnh nhau, ta dùng thuộc tính rowspan=\"2\" trong thẻ &lt;td&gt;.", correct: "Sai" },
+            { id: 'd2_1d', text: "d) Thẻ &lt;tr&gt; dùng để định nghĩa một cột trong bảng.", correct: "Sai" }
+        ]},
+        { id: '2_c2', type: 'tf_cluster', question: "Về việc nhúng tệp đa phương tiện trong HTML5, một học sinh đưa ra các nhận định sau:", subQuestions: [
+            { id: 'd2_2a', text: "a) Thuộc tính controls giúp hiển thị bộ điều khiển (phát/tạm dừng, âm lượng) cho thẻ audio.", correct: "Đúng" },
+            { id: 'd2_2b', text: "b) Thuộc tính autoplay ra lệnh cho phép video tự động phát ngay khi tải trang.", correct: "Đúng" },
+            { id: 'd2_2c', text: "c) Cấu trúc HTML5 hiện tại hoàn toàn không hỗ trợ định dạng video .mp4 cho thẻ &lt;video&gt;.", correct: "Sai" },
+            { id: 'd2_2d', text: "d) Thẻ &lt;source&gt; tải tất cả các file nguồn cùng một lúc để phát đồng thời hai video đè lên nhau.", correct: "Sai" }
+        ]},
+        { id: '2_c3', type: 'tf_cluster', question: "Một nhóm học sinh thiết kế một trang web thông tin du lịch và muốn thêm liên kết để các trang mạng xã hội. Đoạn mã HTML sau đã được sử dụng:<div class='code-snippet'>&lt;p&gt;Theo dõi chúng tôi trên:&lt;/p&gt;<br>&lt;ul&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;a href=\"https://facebook.com\" target=\"_blank\"&gt;Facebook&lt;/a&gt;&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;a href=\"https://instagram.com\" target=\"_blank\"&gt;Instagram&lt;/a&gt;&lt;/li&gt;<br>&lt;/ul&gt;</div>Một số bạn đưa ra các ý kiến:", subQuestions: [
+            { id: 'd2_3a', text: "a) Thẻ &lt;a&gt; được kết hợp thành công để tạo liên kết tới các trang mạng xã hội.", correct: "Đúng" },
+            { id: 'd2_3b', text: "b) Tất cả các liên kết trong danh sách đều mở đè lên cùng một tab trình duyệt hiện tại.", correct: "Sai" },
+            { id: 'd2_3c', text: "c) Thẻ &lt;ul&gt; được sử dụng đúng chuẩn để tạo danh sách liệt kê không có thứ tự cho các liên kết.", correct: "Đúng" },
+            { id: 'd2_3d', text: "d) Cấu trúc HTML nghiêm cấm thẻ &lt;a&gt; nằm lồng bên trong thẻ &lt;li&gt;.", correct: "Sai" }
+        ]},
+        { id: '2_c4', type: 'tf_cluster', question: "Trong một tệp HTML có câu lệnh:<div class='code-snippet'>&lt;form&gt;<br>&nbsp;&nbsp;&lt;input type=\"text\" name=\"fullname\" placeholder=\"Nhập họ và tên\"&gt;<br>&nbsp;&nbsp;&lt;input type=\"submit\" value=\"Gui\"&gt;<br>&lt;/form&gt;</div>Sau đây là một số nhận định về câu lệnh trên:", subQuestions: [
+            { id: 'd2_4a', text: "a) Thẻ &lt;form&gt; được sử dụng để tạo một vùng biểu mẫu giúp thu thập thông tin từ người dùng.", correct: "Đúng" },
+            { id: 'd2_4b', text: "b) Cả hai phần tử thẻ &lt;input&gt; đều bắt buộc phải có cặp thẻ đóng tương ứng.", correct: "Sai" },
+            { id: 'd2_4c', text: "c) Thuộc tính placeholder làm nhiệm vụ hiển thị văn bản gợi ý mặc định trong ô nhập liệu khi chưa nhập dữ liệu.", correct: "Đúng" },
+            { id: 'd2_4d', text: "d) Nút lệnh \"Gửi\" trong mã trên sẽ tự động gửi dữ liệu sang một máy chủ khác mà không cần cấu hình thêm.", correct: "Sai" }
+        ]},
+        { id: '2_c5', type: 'tf_cluster', question: "Một trường THPT định tạo một trang web thông báo về các hoạt động ngoại khoá. Giáo viên đã tạo một danh sách lựa chọn bằng đoạn mã HTML như sau:<div class='code-snippet'>&lt;form&gt;<br>&nbsp;&nbsp;&lt;p&gt;Chọn hoạt động bạn muốn tham gia:&lt;/p&gt;<br>&nbsp;&nbsp;&lt;select name=\"activities\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;option value=\"music\"&gt;Hát và nhảy&lt;/option&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;option value=\"sports\"&gt;Thể thao&lt;/option&gt;<br>&nbsp;&nbsp;&lt;/select&gt;<br>&lt;/form&gt;</div>Nhận định nào sau đây là chuẩn xác:", subQuestions: [
+            { id: 'd2_5a', text: "a) Cấu trúc select-option cho phép học sinh có thể chọn một hoạt động từ danh sách xổ xuống.", correct: "Đúng" },
+            { id: 'd2_5b', text: "b) Thẻ &lt;label&gt; nên được dùng để liên kết với phần danh sách thả xuống nhằm giúp cải thiện tính truy cập.", correct: "Đúng" },
+            { id: 'd2_5c', text: "c) Với đoạn mã mặc định này, người dùng hoàn toàn có thể chọn nhiều hoạt động cùng một lúc.", correct: "Sai" },
+            { id: 'd2_5d', text: "d) Biểu mẫu HTML này có thể tự động gửi dữ liệu đi mà không cần bất kỳ nút lệnh submit nào.", correct: "Sai" }
+        ]},
+        { id: '2_c6', type: 'tf_cluster', question: "Trong một tệp HTML có câu lệnh:<div class='code-snippet'>&lt;iframe src=\"https://www.example.com\" width=\"300\" height=\"200\"&gt;&lt;/iframe&gt;</div>Sau đây là một số nhận định về câu lệnh trên:", subQuestions: [
+            { id: 'd2_6a', text: "a) Thẻ &lt;iframe&gt; được ứng dụng để tạo một khung nội tuyến nhúng nội dung từ một trang web khác.", correct: "Đúng" },
+            { id: 'd2_6b', text: "b) Theo khai báo, kích thước khung hiển thị sẽ có chiều rộng là 300px và chiều cao là 200px.", correct: "Đúng" },
+            { id: 'd2_6c', text: "c) Nếu trang web được nhúng gặp lỗi không thể tải, nội dung thay thế bên trong cặp thẻ &lt;iframe&gt; sẽ tự động biến thành cảnh báo lỗi.", correct: "Sai" },
+            { id: 'd2_6d', text: "d) Cú pháp thẻ &lt;iframe&gt; trong HTML5 là thẻ đơn, không có thẻ đóng.", correct: "Sai" }
+        ]},
+        { id: '2_c7', type: 'tf_cluster', question: "Trong một tệp HTML có các câu lệnh:<div class='code-snippet'>&lt;video controls&gt;<br>&nbsp;&nbsp;&lt;source src=\"video.mp4\" type=\"video/mp4\"&gt;<br>&nbsp;&nbsp;Trình duyệt không hỗ trợ video này.<br>&lt;/video&gt;</div>Sau đây là một số nhận định về các câu lệnh trên:", subQuestions: [
+            { id: 'd2_7a', text: "a) Thẻ &lt;source&gt; được sử dụng để trỏ đến đường dẫn và định dạng tệp nguồn video cho thẻ &lt;video&gt;.", correct: "Đúng" },
+            { id: 'd2_7b', text: "b) Đoạn mã trên cho phép video sẽ tự động phát chạy nền khi người dùng vừa mở trang web.", correct: "Sai" },
+            { id: 'd2_7c', text: "c) Đoạn văn bản \"Trình duyệt không hỗ trợ...\" chỉ hiển thị ra màn hình khi trình duyệt quá cũ và không hiểu thẻ &lt;video&gt;.", correct: "Đúng" },
+            { id: 'd2_7d', text: "d) Thẻ &lt;video&gt; bắt buộc phải sử dụng kèm thẻ con &lt;source&gt; thì video mới có khả năng hiển thị trên web.", correct: "Sai" }
+        ]},
+        { id: '2_c8', type: 'tf_cluster', question: "Trong một tệp HTML có câu lệnh:<div class='code-snippet'>&lt;audio src=\"music.mp3\" controls loop&gt;&lt;/audio&gt;</div>Sau đây là một số nhận định về câu lệnh trên:", subQuestions: [
+            { id: 'd2_8a', text: "a) Thẻ &lt;audio&gt; được sử dụng để phát các tệp tin âm thanh trên trang web.", correct: "Đúng" },
+            { id: 'd2_8b', text: "b) Thuộc tính loop thiết lập chế độ làm cho âm thanh được phát lặp đi lặp lại tự động.", correct: "Đúng" },
+            { id: 'd2_8c', text: "c) Thuộc tính controls có tác dụng ngăn cản người dùng điều khiển (phát/dừng) âm thanh trên trình duyệt.", correct: "Sai" },
+            { id: 'd2_8d', text: "d) Có thể dễ dàng thay đổi diện tích khung phát âm thanh &lt;audio&gt; bằng cách thêm trực tiếp thuộc tính width và height.", correct: "Sai" }
+        ]},
+        { id: '2_c9', type: 'tf_cluster', question: "Một trường THPT thu thập ý kiến từ học sinh bằng biểu mẫu HTML như sau:<div class='code-snippet'>&lt;form&gt;<br>&nbsp;&nbsp;&lt;p&gt;Ý kiến của bạn về chiến dịch:&lt;/p&gt;<br>&nbsp;&nbsp;&lt;textarea name=\"feedback\" rows=\"4\" cols=\"50\"&gt;&lt;/textarea&gt;&lt;br&gt;<br>&nbsp;&nbsp;&lt;input type=\"submit\" value=\"Gửi ý kiến\"&gt;<br>&lt;/form&gt;</div>Học sinh đã nêu những nhận định sau:", subQuestions: [
+            { id: 'd2_9a', text: "a) Vùng thẻ &lt;textarea&gt; cho phép học sinh nhập liệu những đoạn ý kiến dài, chứa được nhiều dòng văn bản.", correct: "Đúng" },
+            { id: 'd2_9b', text: "b) Các thuộc tính rows và cols trong mã cản trở việc gõ nhiều ký tự của người dùng trên một dòng.", correct: "Sai" },
+            { id: 'd2_9c', text: "c) Để gửi dữ liệu đi, học sinh bắt buộc phải nhấn phím Enter trên bàn phím vì nút gửi ý kiến bị lỗi.", correct: "Sai" },
+            { id: 'd2_9d', text: "d) Nút lệnh có nhãn \"Gửi ý kiến\" đóng vai trò làm trigger kích hoạt quá trình nộp biểu mẫu khi được nháy chuột vào.", correct: "Đúng" }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Thầy/Cô vui lòng nhắc học sinh nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // Xử lý hiển thị phần 1
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+            });
+            
+            // Xử lý hiển thị phần 2
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${part1.length + idx + 1}: ${q.question}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${sub.text}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); // Fallback
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.subQuestions.length;
+            else count++;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => { if (userAnswers[sub.id]) count++; });
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-700 text-base md:text-lg font-extrabold leading-relaxed shadow-inner">${q.displayQuestion.replace(/\n/g, '<br/>')}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-xl font-extrabold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-slate-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-medium text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-slate-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+
+        const score = scoreP1P2.toFixed(2);
+        let correctTotal = correctP1P2;
+        let itemsTotal = totalP1P2;
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctTotal, tongCau: itemsTotal,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctTotal, itemsTotal, record.duration); });
+        }
+    };
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-green-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border-2 border-gray-100 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<p class="font-extrabold text-lg text-gray-800 mb-4">${q.displayQuestion}</p>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-gray-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 border border-green-200">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<p class="font-extrabold text-lg text-gray-800 mb-4">${q.displayQuestion}</p>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'}">${opt}</span>
+                             </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-gray-50'} transition-colors border-b border-gray-100"><td class="px-3 sm:px-4 py-4 text-center font-black text-gray-400 text-sm">#${idx + 1}</td><td class="px-3 sm:px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-3 sm:px-4 py-4 font-extrabold text-gray-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-3 sm:px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-3 sm:px-4 py-4 text-center text-gray-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-3 sm:px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-green-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-3 sm:px-4 py-4 text-center text-gray-500 text-xs">${s.startTime}</td><td class="px-3 sm:px-4 py-4 text-center text-gray-500 text-xs">${s.endTime}</td><td class="px-3 sm:px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-3 sm:px-5 py-4 text-right text-xs text-gray-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
