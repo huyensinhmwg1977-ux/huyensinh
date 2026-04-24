@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Trắc Nghiệm - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    /* GIAO DIỆN NỀN CHUYỂN MÀU GỐC */
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    /* CSS NỀN XANH NHẠT VÀ CHỮ XANH ĐẬM CHO BLOCK CODE */
+    .code-snippet {
+        background-color: #f0f9ff; 
+        color: #003399; 
+        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        overflow-x: auto;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        border: 2px solid #bae6fd;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        line-height: 1.6;
+        white-space: pre-wrap;
+    }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1">HƯỚNG NGHIỆP VỚI TIN HỌC</h1>
+      <p class="text-gray-600 font-bold">Môn: Tin học 12 (Nghề nghiệp CNTT)</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ĐỀ SỐ 1</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ĐỀ SỐ 2</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 câu</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </p>
+   </footer>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_cntt_full');
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== NGÂN HÀNG CÂU HỎI ĐỀ 1 ====================
+    const de1_data = [
+        { id: "1_1", type: "single", question: "Phương án nào sau đây nêu đúng vai trò chính của một chuyên viên bảo mật hệ thống?", options: ["A. Cài đặt phần mềm cho các máy trạm.", "B. Giám sát và đánh giá các rủi ro bảo mật trong hệ thống.", "C. Xây dựng trang web cho doanh nghiệp.", "D. Lập kế hoạch dự án phát triển phần mềm."], correct: 1 },
+        { id: "1_2", type: "single", question: "Phương án nào sau đây nêu đúng nhiệm vụ chính của kĩ thuật viên CNTT?", options: ["A. Quản lí hệ thống mạng.", "B. Cài đặt, bảo trì và sửa chữa phần cứng.", "C. Thiết kế phần mềm.", "D. Phân tích dữ liệu tài chính."], correct: 1 },
+        { id: "1_3", type: "single", question: "Công việc nào KHÔNG phải là trách nhiệm của kĩ sư an toàn thông tin?", options: ["A. Phát triển và thực hiện các biện pháp bảo mật để bảo vệ dữ liệu và hệ thống thông tin.", "B. Kiểm tra, phân tích các lỗ hổng bảo mật và đề xuất các giải pháp khắc phục.", "C. Xây dựng và triển khai các ứng dụng phần mềm cho doanh nghiệp.", "D. Đào tạo nhân viên về các quy tắc và thực hành an toàn thông tin."], correct: 2 },
+        { id: "1_4", type: "single", question: "Nghề sửa chữa và bảo trì máy tính KHÔNG yêu cầu bắt buộc phải có khả năng nào sau đây?", options: ["A. Phân tích và giải quyết các sự cố phần cứng và phần mềm.", "B. Lập trình ứng dụng và phát triển phần mềm mới.", "C. Kiểm tra và tối ưu hoá hiệu suất của hệ thống máy tính.", "D. Thực hiện bảo trì định kì và nâng cấp linh kiện phần cứng."], correct: 1 },
+        { id: "1_5", type: "single", question: "Phương án nào sau đây nêu đúng mục tiêu của phân tích thiết kế hệ thống?", options: ["A. Thiết kế các mô đun chức năng của hệ thống.", "B. Lập trình phần mềm.", "C. Cài đặt hệ thống bảo mật.", "D. Phân tích dữ liệu kinh doanh."], correct: 0 },
+        { id: "1_6", type: "single", question: "Đối với nghề quản trị mạng và hệ thống, phát biểu nào sau đây là chính xác nhất?", options: ["A. Không có quy định pháp luật nào đề cập đến công việc của người quản trị mạng và hệ thống.", "B. Cần phải trải qua đào tạo bài bản qua các chương trình học để trở thành quản trị mạng và hệ thống.", "C. Kĩ thuật viên CNTT thường đảm nhiệm vai trò quản trị mạng và hệ thống.", "D. Người quản trị mạng và hệ thống cần phải có kiến thức vững về lập trình."], correct: 1 },
+        { id: "1_7", type: "single", question: "Để trở thành một kĩ thuật viên sửa chữa và bảo trì máy tính chuyên nghiệp, người lao động cần phải có kiến thức và kĩ năng nào sau đây?", options: ["A. Kiến thức về cách phát triển phần mềm cho máy tính.", "B. Kĩ năng chẩn đoán và sửa chữa các lỗi phần cứng hiệu quả.", "C. Am hiểu về marketing kĩ thuật số.", "D. Kĩ năng lập trình cho các ứng dụng di động."], correct: 1 },
+        { id: "1_8", type: "single", question: "Phương án nào sau đây nêu đúng nhiệm vụ của một nhà phát triển web?", options: ["A. Phân tích yêu cầu khách hàng và viết mã (code) cho trang web.", "B. Cài đặt hệ thống mạng cho công ti.", "C. Phân tích dữ liệu bán hàng.", "D. Quản lí dự án phần mềm."], correct: 0 },
+        { id: "1_9", type: "single", question: "Phát biểu nào sau đây mô tả chính xác về nghề sửa chữa và bảo trì máy tính?", options: ["A. Cần phải sử dụng thành thạo tất cả phần mềm ứng dụng thông dụng trên máy tính của người dùng.", "B. Không cần có kĩ năng giao tiếp.", "C. Cần có kiến thức sâu rộng về lập trình.", "D. Cần biết điều chỉnh và tối ưu hoá các thông số cấu hình cho hệ điều hành và các phần mềm ứng dụng."], correct: 3 },
+        { id: "1_10", type: "single", question: "Vai trò nào sau đây là quan trọng nhất trong việc bảo mật hệ thống thông tin tại doanh nghiệp?", options: ["A. Bảo vệ thông tin cá nhân của nhân viên khỏi rò rỉ.", "B. Ngăn chặn các cuộc tấn công mạng gây thiệt hại cho doanh nghiệp.", "C. Tăng cường khả năng tương tác trực tuyến giữa các phòng ban.", "D. Quản lí hiệu quả hệ thống máy chủ của doanh nghiệp."], correct: 1 },
+        { id: "1_11", type: "single", question: "Khi phát triển một hệ thống thông tin mới, chuyên gia phân tích thiết kế hệ thống thực hiện công việc nào sau đây?", options: ["A. Thiết kế và phát triển giao diện cho trang web của công ti.", "B. Phân tích và lập kế hoạch cho hệ thống thông tin phù hợp với yêu cầu kinh doanh.", "C. Bảo trì các phần mềm hiện tại trong tổ chức.", "D. Phân tích dữ liệu để dự báo xu hướng tăng trưởng của công ti."], correct: 1 },
+        { id: "1_12", type: "single", question: "Khi một phần cứng hoặc máy tính không thể khởi động và hiển thị thông báo lỗi, người làm nghề nào sau đây có trách nhiệm giải quyết vấn đề này?", options: ["A. Kĩ thuật viên sửa chữa và bảo trì máy tính.", "B. Chuyên viên phát triển phần mềm.", "C. Quản trị viên mạng.", "D. Chuyên gia phân tích hệ thống."], correct: 0 },
+        { id: "1_13", type: "single", question: "Trong một trường học, nhiệm vụ nào sau đây là nhiệm vụ chính của kĩ thuật viên sửa chữa và bảo trì máy tính?", options: ["A. Lắp đặt các phần mềm quản lí học sinh cho giáo viên.", "B. Bảo trì và sửa chữa các máy tính trong phòng thực hành để học sinh sử dụng.", "C. Xây dựng các ứng dụng cho việc quản lí điểm số.", "D. Tổ chức các buổi hội thảo về an toàn thông tin cho học sinh."], correct: 1 },
+        { id: "1_14", type: "single", question: "Kĩ năng nào sau đây KHÔNG cần thiết đối với một chuyên gia bảo mật mạng?", options: ["A. Phân tích và đánh giá rủi ro bảo mật.", "B. Xử lí các cuộc tấn công mạng.", "C. Thiết kế website.", "D. Bảo mật CSDL."], correct: 2 },
+        { id: "1_15", type: "single", question: "Trong một công ty công nghệ, nhiệm vụ nào sau đây là trọng tâm của một kĩ sư quản trị mạng?", options: ["A. Triển khai các biện pháp bảo mật để ngăn chặn các cuộc tấn công của tin tặc.", "B. Lắp đặt phần cứng và phần mềm cho toàn bộ hệ thống mạng của tổ chức.", "C. Thiết kế các hệ thống quản lí CSDL để bảo vệ thông tin quan trọng.", "D. Khảo sát và phân tích nhu cầu CNTT của tổ chức."], correct: 1 },
+        { id: "1_16", type: "single", question: "Trong một công ty đa quốc gia, bảo mật hệ thống thông tin có ảnh hưởng như thế nào đến quản lí dữ liệu?", options: ["A. Tăng cường sự tương tác giữa các văn phòng toàn cầu.", "B. Giảm thiểu chi phí đầu tư vào CNTT.", "C. Thúc đẩy việc phát triển ứng dụng di động cho nhân viên.", "D. Bảo vệ dữ liệu khách hàng khỏi các cuộc tấn công mạng."], correct: 3 },
+        { id: "1_17", type: "single", question: "Ngành học nào ở bậc Đại học/Cao đẳng có liên quan trực tiếp đến nhóm nghề quản trị mạng?", options: ["A. Khoa học máy tính.", "B. Công nghệ phần mềm.", "C. Kĩ thuật mạng máy tính.", "D. Hệ thống thông tin."], correct: 2 },
+        { id: "1_18", type: "single", question: "Kĩ năng nào KHÔNG được yêu cầu cho nhân lực làm việc trong lĩnh vực bảo mật hệ thống thông tin?", options: ["A. Phát hiện và ngăn chặn các cuộc tấn công mạng.", "B. Đánh giá và phân tích các rủi ro liên quan đến bảo mật.", "C. Quản trị và phân tích CSDL chuyên sâu.", "D. Phát hiện lỗ hổng bảo mật qua phân tích dữ liệu."], correct: 2 },
+        { id: "1_19", type: "single", question: "Nhiệm vụ nào sau đây KHÔNG thuộc về chuyên gia bảo mật thông tin?", options: ["A. Phát triển các chiến lược bảo vệ dữ liệu cho doanh nghiệp.", "B. Tạo ra các ứng dụng di động cho người dùng cuối.", "C. Giám sát hệ thống để phát hiện các hoạt động đáng ngờ.", "D. Tổ chức các cuộc họp về chính sách bảo mật với nhân viên."], correct: 1 },
+        { id: "1_20", type: "single", question: "Phát biểu nào sau đây nêu đúng nguyên nhân làm tăng nhu cầu nhân lực trong lĩnh vực Phân tích dữ liệu?", options: ["A. Khối lượng dữ liệu khổng lồ từ các nguồn khác nhau đang được tạo ra hằng ngày, tạo ra nhu cầu cần phải phân tích để đưa ra quyết định.", "B. Các công cụ phân tích dữ liệu đang trở nên phổ biến và ai cũng dùng được.", "C. Do sự phát triển của AI, nhân lực có khả năng phân tích dữ liệu bị thay thế hoàn toàn.", "D. Nhu cầu hiểu biết về dữ liệu ngày càng trở nên không quan trọng."], correct: 0 },
+        { id: "1_21", type: "single", question: "Trong quá trình tìm hiểu về một ngành nghề trong lĩnh vực CNTT, thông tin nào được coi là ưu tiên hàng đầu?", options: ["A. Danh sách các chuyên gia hàng đầu tại khu vực.", "B. Những yêu cầu về công việc, kĩ năng cần có, chứng chỉ phù hợp và triển vọng nghề nghiệp.", "C. Quy mô các công ty trong ngành hoạt động tại địa phương.", "D. Mức thu nhập trung bình của người làm việc."], correct: 1 },
+        { id: "1_22", type: "single", question: "Khi tham gia các buổi hội thảo về nghề nghiệp trong lĩnh vực CNTT, mục tiêu nào cần được chú trọng hàng đầu?", options: ["A. Tìm kiếm thông tin về các công ty nổi bật.", "B. Kết nối với các chuyên gia và những người đã làm trong ngành.", "C. Tham gia vào các hoạt động giải trí và giải thưởng.", "D. Thu thập tài liệu quảng cáo từ các công ty tham gia."], correct: 1 },
+        { id: "1_23", type: "single", question: "Khi sử dụng mạng xã hội để tìm kiếm việc làm trong lĩnh vực CNTT, hành động nào cần chú ý cẩn trọng nhất?", options: ["A. Đăng tải thông tin cá nhân một cách cẩn thận và chuyên nghiệp.", "B. Chỉ theo dõi tài khoản công ty mà không bao giờ bình luận.", "C. Tạo ra nhiều bài viết giật gân để gây sự chú ý.", "D. Đưa thông tin sai lệch về kinh nghiệm để dễ trúng tuyển."], correct: 0 },
+        { id: "1_24", type: "single", question: "Công việc nào sau đây thuộc trách nhiệm của người làm nghề sửa chữa và bảo trì máy tính?", options: ["A. Lập trình để phát triển phần mềm quản lí nhân sự.", "B. Xác định nguyên nhân gây ra lỗi do một linh kiện trong máy tính bị hỏng.", "C. Thiết lập hệ thống bảo mật cho tổ chức.", "D. Giám sát các thao tác truy cập trái phép vào mạng dữ liệu."], correct: 1 },
+        { id: "1_25", type: "single", question: "Công việc nào sau đây là của người quản trị mạng?", options: ["A. Thiết kế ứng dụng phần mềm mới cho doanh nghiệp.", "B. Đảm bảo tính khả dụng và kết nối của hệ thống mạng trong tổ chức.", "C. Phân tích dữ liệu lớn để phục vụ cho quyết định kinh doanh.", "D. Lập kế hoạch tài chính cho các dự án CNTT."], correct: 1 },
+        { id: "1_26", type: "single", question: "Khi một công ty đang tìm kiếm nhân viên bảo mật hệ thống thông tin, yếu tố nào là quan trọng nhất?", options: ["A. Kinh nghiệm trong lĩnh vực không liên quan.", "B. Kiến thức về các phương pháp tấn công mạng và kĩ năng phản ứng nhanh.", "C. Không cần có bằng cấp hoặc chứng chỉ chuyên môn.", "D. Sự am hiểu về kế toán và bán hàng."], correct: 1 },
+        { id: "1_27", type: "single", question: "Tình huống nào sau đây mô tả KHÔNG chính xác về ứng dụng của CNTT trong các lĩnh vực khác nhau của đời sống?", options: ["A. Trong y tế, các hệ thống thông tin giúp lưu trữ và chia sẻ bệnh án điện tử.", "B. Trong giáo dục, phần mềm quản lí lớp học giúp giáo viên theo dõi kết quả của học sinh.", "C. Trong tài chính, việc dùng tiền mặt thanh toán không bao giờ được ghi nhận trên các hệ thống kế toán điện tử.", "D. Trong sản xuất, các hệ thống tự động hoá giúp tối ưu hoá quy trình và giảm lỗi con người."], correct: 2 },
+        { id: "1_28", type: "single", question: "Một trường học đang tìm nhân lực để đảm bảo máy tính trong phòng thực hành luôn hoạt động tốt và có thể nhanh chóng khắc phục sự cố. Nhóm nghề nào sau đây đáp ứng đúng yêu cầu này?", options: ["A. Sửa chữa và bảo trì máy tính.", "B. Quản trị mạng.", "C. Phát triển phần mềm.", "D. Bảo mật hệ thống thông tin."], correct: 0 },
+
+        { id: '1_c1', type: 'tf_cluster', question: "Trong thời đại số hoá, thông tin về ngành nghề CNTT ngày càng đa dạng. Nhiều bạn trẻ đang tìm kiếm thông tin để định hướng tương lai. Hãy nhận định tính đúng/sai của các phát biểu sau:", subQuestions: [
+            { id: 'd1_1a', text: "a) Tất cả thông tin về nghề nghiệp trong lĩnh vực CNTT trên Internet đều đáng tin cậy.", correct: "Sai" },
+            { id: 'd1_1b', text: "b) Chia sẻ thông tin nghề nghiệp của người khác mà không có sự đồng ý là hành vi không đúng mực.", correct: "Đúng" },
+            { id: 'd1_1c', text: "c) Cần kiểm tra nhiều nguồn khác nhau trước khi đưa ra quyết định chọn nghề nghiệp.", correct: "Đúng" },
+            { id: 'd1_1d', text: "d) Việc tham gia các hội thảo nghề nghiệp có thể giúp mở rộng kiến thức và xây dựng mối quan hệ trong ngành CNTT.", correct: "Đúng" }
+        ]},
+        { id: '1_c2', type: 'tf_cluster', question: "Trong bối cảnh doanh nghiệp sử dụng dữ liệu lớn để đưa ra quyết định, vai trò của chuyên viên phân tích dữ liệu rất quan trọng. Hãy nhận định tính đúng/sai của các phát biểu sau:", subQuestions: [
+            { id: 'd1_2a', text: "a) Chuyên viên phân tích dữ liệu chỉ cần có kĩ năng lập trình mà không cần hiểu biết về lĩnh vực kinh doanh.", correct: "Sai" },
+            { id: 'd1_2b', text: "b) Việc phân tích dữ liệu không chỉ giúp tối ưu hoá quy trình mà còn dự đoán xu hướng thị trường.", correct: "Đúng" },
+            { id: 'd1_2c', text: "c) Chuyên viên phân tích dữ liệu cần có khả năng giao tiếp hiệu quả để trình bày kết quả phân tích cho lãnh đạo.", correct: "Đúng" },
+            { id: 'd1_2d', text: "d) Dữ liệu từ các nguồn không chính thống có thể được sử dụng để đưa ra quyết định mà không cần kiểm chứng.", correct: "Sai" }
+        ]},
+        { id: '1_c3', type: 'tf_cluster', question: "Trong lĩnh vực sửa chữa và bảo trì máy tính, các kĩ thuật viên phải đối mặt với nhiều tình huống phức tạp và cần áp dụng công cụ chuyên môn. Hãy nhận định tính đúng/sai:", subQuestions: [
+            { id: 'd1_3a', text: "a) Kĩ thuật viên có thể bỏ qua các bước kiểm tra phần cứng ban đầu nếu họ đã có kinh nghiệm lâu năm.", correct: "Sai" },
+            { id: 'd1_3b', text: "b) Kiến thức về hệ điều hành và phần mềm ứng dụng là cần thiết để đảm bảo sửa chữa hiệu quả máy tính hiện đại.", correct: "Đúng" },
+            { id: 'd1_3c', text: "c) Việc ghi lại các thông tin và lịch sử sửa chữa của thiết bị là không cần thiết trong quy trình bảo trì.", correct: "Sai" },
+            { id: 'd1_3d', text: "d) Kĩ thuật viên sửa chữa máy tính cần có khả năng phân tích và tư duy logic để xác định sự cố.", correct: "Đúng" }
+        ]}
+    ];
+
+    // ==================== NGÂN HÀNG CÂU HỎI ĐỀ 2 ====================
+    const de2_data = [
+        { id: "2_1", type: "single", question: "Vị trí nào chịu trách nhiệm thiết kế, triển khai và tối ưu hóa cấu trúc cơ sở dữ liệu của một hệ thống?", options: ["A. Quản trị cơ sở dữ liệu (DBA).", "B. Thiết kế đồ họa.", "C. Kỹ sư mạng.", "D. Chuyên gia an ninh mạng."], correct: 0 },
+        { id: "2_2", type: "single", question: "Ngôn ngữ lập trình nào sau đây thường được các chuyên gia Trí tuệ nhân tạo (AI) và Phân tích dữ liệu ưu tiên sử dụng nhiều nhất?", options: ["A. HTML", "B. Python", "C. CSS", "D. Assembly"], correct: 1 },
+        { id: "2_3", type: "single", question: "Nghề Kiểm thử phần mềm thường được gọi tắt bằng thuật ngữ tiếng Anh nào?", options: ["A. Designer", "B. Tester / QA", "C. Developer", "D. DBA"], correct: 1 },
+        { id: "2_4", type: "single", question: "Công việc chính của một UI/UX Designer trong dự án phần mềm là gì?", options: ["A. Thiết lập tường lửa bảo vệ máy chủ.", "B. Lắp ráp và đi dây cáp mạng.", "C. Thiết kế giao diện và tối ưu trải nghiệm của người dùng.", "D. Sửa chữa bo mạch chủ của máy tính."], correct: 2 },
+        { id: "2_5", type: "single", question: "Một kỹ sư DevOps (DevOps Engineer) thường tham gia vào quá trình nào của phần mềm?", options: ["A. Giao hàng phần cứng máy tính.", "B. Vận hành, tự động hóa và triển khai phần mềm liên tục.", "C. Trực tổng đài tư vấn bán hàng.", "D. Quay phim và dựng video quảng cáo."], correct: 1 },
+        { id: "2_6", type: "single", question: "Lập trình viên Front-end tập trung chuyên sâu vào phần nào của một ứng dụng web?", options: ["A. Cơ sở dữ liệu khách hàng.", "B. Cấu hình bảo mật hệ điều hành máy chủ.", "C. Giao diện người dùng hiển thị trên trình duyệt.", "D. Thiết kế kiến trúc mạng LAN."], correct: 2 },
+        { id: "2_7", type: "single", question: "Lập trình viên Back-end chịu trách nhiệm xử lý các công việc liên quan đến:", options: ["A. Màu sắc và font chữ của trang web.", "B. Logic máy chủ (Server), API và Cơ sở dữ liệu.", "C. Cắt ghép hình ảnh bằng Photoshop.", "D. Giao hàng sản phẩm công nghệ."], correct: 1 },
+        { id: "2_8", type: "single", question: "Khái niệm 'Freelancer' trong ngành công nghệ thông tin có nghĩa là gì?", options: ["A. Người làm việc tự do, nhận dự án từ nhiều khách hàng khác nhau.", "B. Nhân viên làm việc toàn thời gian hợp đồng trọn đời cho nhà nước.", "C. Giám đốc điều hành của một tập đoàn công nghệ.", "D. Kỹ thuật viên chuyên trực sửa máy in."], correct: 0 },
+        { id: "2_9", type: "single", question: "Để phát triển sự nghiệp trong lĩnh vực Điện toán đám mây (Cloud Computing), chứng chỉ của các hãng nào sau đây là hữu ích nhất?", options: ["A. Adobe (Photoshop, Premiere).", "B. AWS, Google Cloud, Microsoft Azure.", "C. Microsoft Office Specialist (Word, Excel).", "D. Cisco CCNA."], correct: 1 },
+        { id: "2_10", type: "single", question: "Thuật ngữ IoT là viết tắt của công nghệ nào, đòi hỏi kỹ sư phải am hiểu cả phần cứng nhúng và phần mềm?", options: ["A. Internet of Things (Internet vạn vật).", "B. Internal Operating Technology.", "C. Integrated Office Tools.", "D. International Online Transfer."], correct: 0 },
+        { id: "2_11", type: "single", question: "Đặc thù nổi bật nhất về môi trường làm việc của ngành CNTT là gì?", options: ["A. Công nghệ thay đổi liên tục, đòi hỏi người làm nghề phải tự học và cập nhật không ngừng.", "B. Công việc nhàn hạ, không bao giờ phải tăng ca hay áp lực tiến độ.", "C. Kiến thức không thay đổi trong vòng 20 năm.", "D. Hoàn toàn không cần sử dụng tiếng Anh."], correct: 0 },
+        { id: "2_12", type: "single", question: "Vị trí IT Helpdesk (Hỗ trợ kỹ thuật) trong doanh nghiệp có nhiệm vụ gì?", options: ["A. Viết thuật toán cho trí tuệ nhân tạo.", "B. Thiết kế chiến dịch Marketing.", "C. Giải đáp thắc mắc, cài đặt máy móc và khắc phục lỗi trực tiếp cho người dùng cuối.", "D. Tính toán lương thưởng cho nhân viên."], correct: 2 },
+        { id: "2_13", type: "single", question: "Ai là người chịu trách nhiệm lên kế hoạch, phân công công việc và quản lý tiến độ của một dự án phần mềm?", options: ["A. Lập trình viên tập sự.", "B. Nhân viên kiểm thử.", "C. Quản lý dự án (Project Manager).", "D. Khách hàng sử dụng phần mềm."], correct: 2 },
+        { id: "2_14", type: "single", question: "Kỹ năng mềm nào được đánh giá là cực kỳ quan trọng đối với lập trình viên khi tham gia vào các dự án lớn (như mô hình Agile/Scrum)?", options: ["A. Kỹ năng làm việc độc lập, không cần giao tiếp.", "B. Kỹ năng giao tiếp và làm việc nhóm.", "C. Kỹ năng hội họa thủ công.", "D. Kỹ năng thể thao."], correct: 1 },
+        { id: "2_15", type: "single", question: "Trong ngành IT, 'Portfolio' mang ý nghĩa là gì?", options: ["A. Một phần mềm diệt virus.", "B. Hồ sơ năng lực chứa các dự án, sản phẩm thực tế mà ứng viên đã từng thực hiện.", "C. Tên một ngôn ngữ lập trình mới.", "D. Một loại cáp mạng quang tốc độ cao."], correct: 1 },
+        { id: "2_16", type: "single", question: "Mạng xã hội nào sau đây được dân CNTT sử dụng phổ biến nhất để xây dựng hồ sơ chuyên nghiệp và tìm kiếm việc làm?", options: ["A. TikTok.", "B. Instagram.", "C. LinkedIn.", "D. Snapchat."], correct: 2 },
+        { id: "2_17", type: "single", question: "Chuyên ngành 'Khoa học máy tính' (Computer Science) ở bậc Đại học thường tập trung chuyên sâu vào vấn đề gì?", options: ["A. Cách lắp ráp và sửa chữa phần cứng máy tính.", "B. Thuật toán, cấu trúc dữ liệu và nền tảng lý thuyết tính toán.", "C. Kỹ năng bán hàng phần mềm.", "D. Cách sử dụng phần mềm soạn thảo văn bản Word."], correct: 1 },
+        { id: "2_18", type: "single", question: "Khái niệm 'Full-stack Developer' dùng để chỉ một lập trình viên có khả năng gì?", options: ["A. Chỉ thiết kế đồ họa tĩnh.", "B. Chỉ xử lý dữ liệu ở máy chủ.", "C. Đảm nhận cả công việc Front-end (Giao diện) và Back-end (Hệ thống).", "D. Chỉ lo việc kiểm thử phần mềm."], correct: 2 },
+        { id: "2_19", type: "single", question: "Đạo đức nghề nghiệp trong ngành CNTT nghiêm cấm hành vi nào sau đây?", options: ["A. Đóng góp mã nguồn cho cộng đồng nguồn mở.", "B. Đánh cắp dữ liệu khách hàng hoặc bán mã nguồn của công ty cho đối thủ.", "C. Cập nhật bản vá lỗi bảo mật cho ứng dụng.", "D. Tham gia các khóa học nâng cao nghiệp vụ ngoài giờ."], correct: 1 },
+        { id: "2_20", type: "single", question: "Nghề phát triển Trò chơi (Game Developer) đòi hỏi sự kết hợp phức tạp giữa các yếu tố nào?", options: ["A. Lập trình, toán học vật lý và nghệ thuật thiết kế đồ họa, âm thanh.", "B. Y học cổ truyền và sinh học.", "C. Kiến trúc và nông nghiệp.", "D. Chỉ cần biết chơi game giỏi là làm được."], correct: 0 },
+        { id: "2_21", type: "single", question: "Trí tuệ nhân tạo (AI) hiện đang được ứng dụng trong những lĩnh vực nào?", options: ["A. Chỉ trong lĩnh vực giải trí.", "B. Rất hạn chế, chỉ dùng trong nghiên cứu vũ trụ.", "C. Rộng rãi trên mọi lĩnh vực: Y tế, Giao thông, Tài chính, Giáo dục...", "D. Chưa được ứng dụng vào thực tế đời sống."], correct: 2 },
+        { id: "2_22", type: "single", question: "Việc thiết lập lịch sao lưu (Backup) dữ liệu định kỳ để phòng ngừa sự cố thuộc trách nhiệm chính của vị trí nào?", options: ["A. Quản trị viên cơ sở dữ liệu / Quản trị hệ thống.", "B. Nhân viên thiết kế đồ họa.", "C. Lập trình viên Front-end.", "D. Chuyên viên viết nội dung (Copywriter)."], correct: 0 },
+        { id: "2_23", type: "single", question: "Công nghệ Chuỗi khối (Blockchain) ban đầu nổi tiếng nhất nhờ được ứng dụng làm nền tảng cho lĩnh vực nào?", options: ["A. Chỉnh sửa video.", "B. Tiền điện tử (như Bitcoin) và bảo mật giao dịch số.", "C. Trí tuệ nhân tạo nhận diện khuôn mặt.", "D. Phần mềm gõ tiếng Việt."], correct: 1 },
+        { id: "2_24", type: "single", question: "Khi một lỗi phần mềm (Bug) được phát hiện trên ứng dụng đang chạy, ai là người trực tiếp viết mã lệnh để sửa lỗi đó?", options: ["A. Nhân viên Tester.", "B. Giám đốc nhân sự.", "C. Lập trình viên (Developer).", "D. Nhân viên bảo vệ."], correct: 2 },
+        { id: "2_25", type: "single", question: "Để bảo vệ hệ thống mạng nội bộ của công ty khỏi các truy cập trái phép từ Internet, thiết bị hoặc phần mềm nào là tuyến phòng thủ đầu tiên?", options: ["A. Màn hình máy tính.", "B. Tường lửa (Firewall).", "C. Bàn phím cơ.", "D. Máy in mạng."], correct: 1 },
+        { id: "2_26", type: "single", question: "Chuyên gia 'Pentest' (Kiểm thử xâm nhập) trong lĩnh vực bảo mật đóng vai trò gì?", options: ["A. Đóng giả làm tin tặc tấn công vào hệ thống của chính công ty mình để tìm ra và vá các lỗ hổng trước khi bị kẻ xấu khai thác.", "B. Đi ăn trộm dữ liệu của công ty đối thủ.", "C. Lắp đặt camera an ninh cho tòa nhà.", "D. Sửa chữa dây cáp mạng bị đứt."], correct: 0 },
+        { id: "2_27", type: "single", question: "Trong lập trình, 'Mã nguồn mở' (Open Source) mang lại lợi ích gì cho cộng đồng công nghệ?", options: ["A. Bắt buộc người dùng phải trả rất nhiều tiền để được sử dụng.", "B. Giữ bí mật tuyệt đối công nghệ cốt lõi.", "C. Cho phép cộng đồng lập trình viên xem, học hỏi, đóng góp và cải tiến miễn phí.", "D. Làm phần mềm chạy chậm hơn."], correct: 2 },
+        { id: "2_28", type: "single", question: "Khả năng ngoại ngữ (đặc biệt là tiếng Anh) có ý nghĩa như thế nào đối với người làm nghề CNTT?", options: ["A. Không quan trọng vì phần mềm tự động dịch hết.", "B. Cực kỳ quan trọng để đọc tài liệu chuyên ngành, cập nhật công nghệ mới và giao tiếp với đối tác quốc tế.", "C. Chỉ cần thiết nếu làm việc cho các công ty nhà nước.", "D. Bắt buộc phải có bằng IELTS 8.0 mới được gõ code."], correct: 1 },
+
+        { id: '2_c1', type: 'tf_cluster', question: "Với sự gia tăng đáng kể của các mối đe dọa an ninh mạng, vai trò của các chuyên gia an ninh mạng trở nên thiết yếu. Hãy nhận định tính đúng/sai của các phát biểu sau:", subQuestions: [
+            { id: 'd2_1a', text: "a) Chuyên gia an ninh mạng không cần thiết phải biết đến các loại phần mềm độc hại.", correct: "Sai" },
+            { id: 'd2_1b', text: "b) Việc phát hiện và phản ứng nhanh với các sự cố an ninh là một phần quan trọng trong công việc của chuyên gia an ninh mạng.", correct: "Đúng" },
+            { id: 'd2_1c', text: "c) Kiến thức về luật pháp liên quan đến an ninh mạng là không quan trọng đối với chuyên gia an ninh.", correct: "Sai" },
+            { id: 'd2_1d', text: "d) Chuyên gia an ninh mạng cần liên tục cập nhật kiến thức mới để đối phó với các mối đe doạ tinh vi.", correct: "Đúng" }
+        ]},
+        { id: '2_c2', type: 'tf_cluster', question: "Sự chuyển đổi số mạnh mẽ trong các lĩnh vực kinh tế đã dẫn đến nhu cầu gia tăng nhân lực trong nhóm ngành CNTT. Hãy nhận định tính đúng/sai:", subQuestions: [
+            { id: 'd2_2a', text: "a) Nhu cầu nhân lực trong ngành CNTT chỉ tập trung duy nhất vào vị trí lập trình phát triển phần mềm.", correct: "Sai" },
+            { id: 'd2_2b', text: "b) Chỉ có những người có bằng cấp đại học chính quy mới có thể tìm được việc làm và đáp ứng nhu cầu nhân lực ngành CNTT.", correct: "Sai" },
+            { id: 'd2_2c', text: "c) Các kĩ năng như an ninh mạng và phân tích dữ liệu đang ngày càng trở nên quan trọng và khát nhân lực.", correct: "Đúng" },
+            { id: 'd2_2d', text: "d) Nhu cầu về nhân lực CNTT luôn biến động linh hoạt theo sự phát triển của công nghệ và xu hướng thị trường toàn cầu.", correct: "Đúng" }
+        ]},
+        { id: '2_c3', type: 'tf_cluster', question: "Trong quá trình tham gia làm việc tại các dự án phần mềm chuyên nghiệp, kĩ năng mềm và đạo đức nghề nghiệp là yếu tố then chốt đối với nhân sự IT. Hãy nhận định tính đúng/sai:", subQuestions: [
+            { id: 'd2_3a', text: "a) Lập trình viên cần trang bị kĩ năng làm việc nhóm để phối hợp hiệu quả với các thành viên khác trong dự án lớn.", correct: "Đúng" },
+            { id: 'd2_3b', text: "b) Chuyên gia bảo mật phải tuyệt đối tuân thủ nguyên tắc không tiết lộ, không mua bán dữ liệu nhạy cảm của khách hàng.", correct: "Đúng" },
+            { id: 'd2_3c', text: "c) Là lĩnh vực thuần kĩ thuật, người làm CNTT chỉ cần viết code giỏi, không cần bận tâm trau dồi kĩ năng giao tiếp hay trình bày.", correct: "Sai" },
+            { id: 'd2_3d', text: "d) Nhân sự IT được phép tự do sao chép mã nguồn nội bộ của công ty mang về nhà sử dụng cá nhân hoặc bán cho công ty đối thủ.", correct: "Sai" }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Thầy/Cô vui lòng nhắc học sinh nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // ĐÁNH SỐ TỪ 1 CHO CÂU TRẮC NGHIỆM ĐƠN
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+            });
+            
+            // ĐÁNH SỐ TỪ 1 CHO CÂU ĐÚNG SAI
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${sub.text}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); // Fallback
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    // ĐÃ CHỈNH SỬA: Hiển thị tổng số "câu" thay vì "ý" trên thanh Tiến độ
+    function getTotalItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                let allAnswered = q.subQuestions.every(sub => userAnswers[sub.id] !== undefined);
+                if (allAnswered) count++;
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl font-bold leading-relaxed shadow-inner">${q.displayQuestion.replace(/\n/g, '<br/>')}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} câu`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // ĐÃ CHỈNH SỬA: Chấm điểm tính theo TỪNG "Ý" chi tiết như đã yêu cầu.
+    // 28 ý phần trắc nghiệm + 12 ý (3 câu x 4) phần Đúng/Sai = 40 ý/đề.
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        // Tính điểm trên thang 10 (mỗi ý chiếm trọng số như nhau)
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+
+        const score = scoreP1P2.toFixed(2);
+        let correctTotal = correctP1P2;
+        let itemsTotal = totalP1P2;
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctTotal, tongCau: itemsTotal,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctTotal, itemsTotal, record.duration); });
+        }
+    };
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-slate-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="text-2xl mr-2 drop-shadow-sm">${statusIcon}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'} shadow-sm">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
