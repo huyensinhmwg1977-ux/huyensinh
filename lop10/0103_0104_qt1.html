@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Toán 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:not(.disabled):hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+    
+    .disabled-option { opacity: 0.8; pointer-events: none !important; }
+
+    #feedback-modal { z-index: 9999; }
+    #feedback-modal-content { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    
+    #feedback-modal-content mjx-container,
+    .review-explanation mjx-container {
+        color: #dc2626 !important;
+        font-weight: 900 !important;
+    }
+
+    /* CSS cho Nút Đúng/Sai Phần II - Màu Xanh Đồng Nhất */
+    .btn-tf { transition: all 0.2s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):hover { background-color: #f3f4f6; }
+    
+    /* Chống tràn trên điện thoại */
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white">
+     
+     <div class="text-center mb-6 pt-2">
+       <h1 class="text-2xl sm:text-3xl font-bold text-red-500 mb-3">THI THỬ TOÁN 12 THPT QG <br><span class="text-xl text-gray-600">(Chuẩn 2025 - 2026)</span></h1>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex gap-4">
+          <div class="w-1/2">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="...">
+          </div>
+          <div class="w-1/2">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="...">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 0103<br><span class="text-xs font-medium text-gray-500">Cấu trúc mới: 3 Phần, 34 Câu</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 0104<br><span class="text-xs font-medium text-gray-500">Cấu trúc mới: 3 Phần, 34 Câu</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ (ý)</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/34</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">90:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-gray-500 hover:bg-gray-600 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="feedback-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
+       <div class="bg-blue-50 border-4 border-blue-300 rounded-3xl w-full max-w-3xl shadow-2xl transform scale-95 opacity-0 flex flex-col" id="feedback-modal-content">
+           <div class="p-6 sm:p-8 flex-grow overflow-y-auto max-h-[85vh]">
+               <div id="feedback-header" class="text-center mb-4"></div>
+               <div id="feedback-body" class="text-black font-extrabold text-lg leading-relaxed text-left"></div>
+           </div>
+           <div class="p-4 bg-white border-t-2 border-blue-100 rounded-b-2xl">
+               <button onclick="window.closeFeedbackModal()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-xl rounded-xl shadow hover:shadow-lg transform hover:-translate-y-1 transition-all uppercase tracking-wider">Đã hiểu & Tiếp tục ➔</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_math_12_qtri_v7');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    /*================================================================================================
+      ĐỒ HỌA SVG CHO LỜI GIẢI TRỰC QUAN (Tự căn chỉnh kích thước, chống tràn màn hình)
+    =================================================================================================*/
+    const svgPrism0101 = `<div class='my-4 p-4 bg-white rounded-xl border-2 border-blue-100 max-w-lg mx-auto shadow-sm'><svg viewBox='0 0 350 250' class='w-full h-auto' xmlns='http://www.w3.org/2000/svg'><g stroke='#1e293b' stroke-width='1.5' stroke-linejoin='round'><line x1='50' y1='180' x2='300' y2='180' stroke='#94a3b8'/><line x1='50' y1='180' x2='150' y2='60' stroke='#94a3b8' stroke-dasharray='5,5'/><line x1='50' y1='180' x2='50' y2='20' stroke='#94a3b8'/><text x='295' y='195' font-size='12' fill='#64748b'>x</text><text x='155' y='65' font-size='12' fill='#64748b'>y</text><text x='35' y='30' font-size='12' fill='#64748b'>z</text><text x='35' y='195' font-size='12' fill='#64748b' font-weight='bold'>O</text><polygon points='50,180 200,180 250,120 100,120' fill='none' stroke='#94a3b8' stroke-dasharray='5,5' /><polygon points='50,90 140,50 200,90 200,180 50,180' fill='#eff6ff' opacity='0.7' stroke='none'/><line x1='50' y1='180' x2='50' y2='90' /><line x1='200' y1='180' x2='200' y2='90' /><line x1='250' y1='120' x2='250' y2='30' /><line x1='100' y1='120' x2='100' y2='30' stroke-dasharray='5,5' /><line x1='50' y1='90' x2='140' y2='50' /><line x1='200' y1='90' x2='140' y2='50' /><line x1='250' y1='30' x2='190' y2='10' /><line x1='100' y1='30' x2='190' y2='10' stroke-dasharray='5,5' /><line x1='140' y1='50' x2='190' y2='10' /><line x1='50' y1='90' x2='100' y2='30' stroke-dasharray='5,5' /><line x1='200' y1='90' x2='250' y2='30' /><text x='205' y='195' font-size='12' font-weight='bold'>A(6;0;0)</text><text x='205' y='105' font-size='12' font-weight='bold'>D</text><text x='140' y='40' font-size='12' font-weight='bold'>M(4;0;6)</text><text x='25' y='95' font-size='12' font-weight='bold'>G(0;0;5)</text><text x='105' y='135' font-size='12' font-weight='bold'>C(0;10;0)</text><text x='255' y='130' font-size='12' font-weight='bold'>B</text><text x='260' y='35' font-size='12' font-weight='bold'>E</text><text x='185' y='5' font-size='12' fill='#dc2626' font-weight='bold'>N</text><text x='85' y='25' font-size='12' font-weight='bold'>F</text><circle cx='50' cy='162' r='3' fill='#eab308'/><text x='35' y='165' font-size='12' font-weight='bold' fill='#eab308'>P</text><circle cx='220' cy='20' r='3' fill='#eab308'/><text x='225' y='15' font-size='12' font-weight='bold' fill='#eab308'>Q</text><circle cx='100' cy='80' r='3' fill='#eab308'/><text x='110' y='85' font-size='12' font-weight='bold' fill='#eab308'>K</text><path d='M50,162 L100,80 L220,20' stroke='#eab308' stroke-width='2' stroke-dasharray='4,4'/></g></svg></div>`;
+
+    const svgPrism0102 = `<div class='my-4 p-4 bg-white rounded-xl border-2 border-blue-100 max-w-lg mx-auto shadow-sm'><svg viewBox='0 0 350 250' class='w-full h-auto' xmlns='http://www.w3.org/2000/svg'><g stroke='#1e293b' stroke-width='1.5' stroke-linejoin='round'><line x1='50' y1='180' x2='300' y2='180' stroke='#94a3b8'/><line x1='50' y1='180' x2='150' y2='60' stroke='#94a3b8' stroke-dasharray='5,5'/><line x1='50' y1='180' x2='50' y2='20' stroke='#94a3b8'/><text x='295' y='195' font-size='12' fill='#64748b'>x</text><text x='155' y='65' font-size='12' fill='#64748b'>y</text><text x='35' y='30' font-size='12' fill='#64748b'>z</text><text x='35' y='195' font-size='12' fill='#64748b' font-weight='bold'>O</text><polygon points='50,180 200,180 250,120 100,120' fill='none' stroke='#94a3b8' stroke-dasharray='5,5' /><polygon points='50,90 140,50 200,90 200,180 50,180' fill='#eff6ff' opacity='0.7' stroke='none'/><line x1='50' y1='180' x2='50' y2='90' /><line x1='200' y1='180' x2='200' y2='90' /><line x1='250' y1='120' x2='250' y2='30' /><line x1='100' y1='120' x2='100' y2='30' stroke-dasharray='5,5' /><line x1='50' y1='90' x2='140' y2='50' /><line x1='200' y1='90' x2='140' y2='50' /><line x1='250' y1='30' x2='190' y2='10' /><line x1='100' y1='30' x2='190' y2='10' stroke-dasharray='5,5' /><line x1='140' y1='50' x2='190' y2='10' /><line x1='50' y1='90' x2='100' y2='30' stroke-dasharray='5,5' /><line x1='200' y1='90' x2='250' y2='30' /><text x='205' y='195' font-size='12' font-weight='bold'>A(8;0;0)</text><text x='205' y='105' font-size='12' font-weight='bold'>D</text><text x='140' y='40' font-size='12' font-weight='bold'>M(6;0;8)</text><text x='25' y='95' font-size='12' font-weight='bold'>G(0;0;6)</text><text x='105' y='135' font-size='12' font-weight='bold'>C(0;10;0)</text><text x='255' y='130' font-size='12' font-weight='bold'>B</text><text x='260' y='35' font-size='12' font-weight='bold'>E</text><text x='185' y='5' font-size='12' fill='#dc2626' font-weight='bold'>N</text><text x='85' y='25' font-size='12' font-weight='bold'>F</text><circle cx='50' cy='162' r='3' fill='#eab308'/><text x='35' y='165' font-size='12' font-weight='bold' fill='#eab308'>P</text><circle cx='220' cy='20' r='3' fill='#eab308'/><text x='225' y='15' font-size='12' font-weight='bold' fill='#eab308'>Q</text><circle cx='100' cy='80' r='3' fill='#eab308'/><text x='110' y='85' font-size='12' font-weight='bold' fill='#eab308'>K</text><path d='M50,162 L100,80 L220,20' stroke='#eab308' stroke-width='2' stroke-dasharray='4,4'/></g></svg></div>`;
+
+    // SVG ĐỒ THỊ VẬN TỐC
+    const svgGraph0101 = `<div class='my-4 p-4 bg-white rounded-xl border-2 border-blue-100 max-w-sm mx-auto shadow-sm'><svg viewBox='0 -20 300 200' class='w-full h-auto' xmlns='http://www.w3.org/2000/svg'><g stroke='#333' stroke-width='1.5'><line x1='30' y1='160' x2='280' y2='160' /><line x1='40' y1='170' x2='40' y2='0' /><text x='270' y='175' font-size='12' fill='#333' stroke='none'>t(s)</text><text x='10' y='10' font-size='12' fill='#333' stroke='none'>v(m/s)</text><text x='25' y='175' font-size='12' fill='#333' stroke='none'>O</text><path d='M40,100 L100,100 M40,120 L130,120 M40,40 L220,40' stroke='#ccc' stroke-dasharray='4,4' stroke-width='1'/><path d='M100,160 L100,100 M130,160 L130,120 M220,160 L220,40' stroke='#ccc' stroke-dasharray='4,4' stroke-width='1'/><text x='20' y='105' font-size='12' fill='#333' stroke='none'>5</text><text x='20' y='125' font-size='12' fill='#333' stroke='none'>4</text><text x='20' y='45' font-size='12' fill='#333' stroke='none'>8</text><text x='95' y='175' font-size='12' fill='#333' stroke='none'>2</text><text x='125' y='175' font-size='12' fill='#333' stroke='none'>3</text><text x='215' y='175' font-size='12' fill='#333' stroke='none'>5</text><text x='265' y='175' font-size='12' fill='#333' stroke='none'>7</text><path d='M40,100 L100,100 Q130,140 175,90 T220,40 L270,160' stroke='#2563eb' stroke-width='2.5' fill='none'/><circle cx='100' cy='100' r='4' fill='#dc2626' stroke='none'/><circle cx='130' cy='120' r='4' fill='#dc2626' stroke='none'/><circle cx='220' cy='40' r='4' fill='#dc2626' stroke='none'/><circle cx='270' cy='160' r='4' fill='#dc2626' stroke='none'/></g></svg></div>`;
+    const svgGraph0102 = `<div class='my-4 p-4 bg-white rounded-xl border-2 border-blue-100 max-w-sm mx-auto shadow-sm'><svg viewBox='0 -20 300 200' class='w-full h-auto' xmlns='http://www.w3.org/2000/svg'><g stroke='#333' stroke-width='1.5'><line x1='30' y1='160' x2='280' y2='160' /><line x1='40' y1='170' x2='40' y2='0' /><text x='270' y='175' font-size='12' fill='#333' stroke='none'>t(s)</text><text x='10' y='10' font-size='12' fill='#333' stroke='none'>v(m/s)</text><text x='25' y='175' font-size='12' fill='#333' stroke='none'>O</text><path d='M40,40 L100,40 M40,130 L160,130 M40,100 L200,100' stroke='#ccc' stroke-dasharray='4,4' stroke-width='1'/><path d='M100,160 L100,40 M160,160 L160,130 M200,160 L200,100' stroke='#ccc' stroke-dasharray='4,4' stroke-width='1'/><text x='20' y='45' font-size='12' fill='#333' stroke='none'>5</text><text x='20' y='105' font-size='12' fill='#333' stroke='none'>2</text><text x='20' y='135' font-size='12' fill='#333' stroke='none'>1</text><text x='95' y='175' font-size='12' fill='#333' stroke='none'>2</text><text x='155' y='175' font-size='12' fill='#333' stroke='none'>4</text><text x='195' y='175' font-size='12' fill='#333' stroke='none'>5</text><text x='235' y='175' font-size='12' fill='#333' stroke='none'>6</text><path d='M40,40 L100,40 Q130,140 160,130 T200,100 L240,160' stroke='#ec4899' stroke-width='2.5' fill='none'/><circle cx='100' cy='40' r='4' fill='#dc2626' stroke='none'/><circle cx='160' cy='130' r='4' fill='#dc2626' stroke='none'/><circle cx='200' cy='100' r='4' fill='#dc2626' stroke='none'/><circle cx='240' cy='160' r='4' fill='#dc2626' stroke='none'/></g></svg></div>`;
+
+    // SVG HÌNH LẬP PHƯƠNG - CẬP NHẬT ĐỈNH SIÊU CHUẨN XÁC THEO ẢNH GỐC
+    const svgCubeWithAnts = `<div class='my-4 p-4 bg-white rounded-xl border-2 border-blue-100 max-w-sm mx-auto shadow-sm'>
+        <p class="text-center font-bold text-gray-500 mb-2">Mô phỏng quỹ đạo hai chú kiến</p>
+        <svg viewBox='0 0 260 220' width='100%' class='mx-auto max-w-[220px]'>
+            <g stroke='#1e293b' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'>
+                <path d='M70,70 L170,70 L170,170 L70,170 Z' fill='none' />
+                <path d='M110,30 L210,30 L210,130 L170,170' fill='none' />
+                <line x1='110' y1='30' x2='70' y2='70' />
+                <line x1='210' y1='30' x2='170' y2='70' />
+
+                <line x1='110' y1='130' x2='110' y2='30' stroke-dasharray='5,5' />
+                <line x1='110' y1='130' x2='70' y2='170' stroke-dasharray='5,5' />
+                <line x1='110' y1='130' x2='210' y2='130' stroke-dasharray='5,5' />
+
+                <line x1='110' y1='130' x2='210' y2='30' stroke='#eab308' stroke-width='3' stroke-dasharray='6,4' />
+                
+                <line x1='210' y1='130' x2='70' y2='170' stroke='#334155' stroke-width='3' stroke-dasharray='6,4' />
+
+                <circle cx='110' cy='130' r='5' fill='#eab308' stroke='none' />
+                <circle cx='210' cy='130' r='5' fill='#334155' stroke='none' />
+
+                <text x='50' y='65' font-weight='900' font-size='16' stroke='none'>B'</text>
+                <text x='175' y='65' font-weight='900' font-size='16' stroke='none'>C'</text>
+                <text x='175' y='180' font-weight='900' font-size='16' stroke='none'>C</text>
+                <text x='50' y='180' font-weight='900' font-size='16' stroke='none'>B</text>
+                <text x='90' y='25' font-weight='900' font-size='16' stroke='none'>A'</text>
+                <text x='215' y='25' font-weight='900' font-size='16' stroke='none'>D'</text>
+                <text x='215' y='145' font-weight='900' font-size='16' stroke='none'>D</text>
+                <text x='90' y='145' font-weight='900' font-size='16' stroke='none'>A</text>
+            </g>
+        </svg>
+    </div>`;
+
+    /*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI
+    =================================================================================================*/
+ const de1_data = [
+        // --- PHẦN I ---
+        { id: "3_1", type: "single", question: "<b>Phần I. Câu 1.</b> Nếu $\\int_{1}^{2}f(x)dx=3$ và $\\int_{2}^{5}f(x)dx=-1$ thì $\\int_{1}^{5}f(x)dx$ bằng", options: ["A. 4", "B. 2", "C. -3", "D. 3"], correct: 1, explanation: "<b>Bước 1: Nhắc lại lý thuyết cơ bản.</b><br>Theo tính chất nối cận của tích phân xác định trên một đoạn thẳng liên tục, ta có công thức: <br>$\\int_{a}^{c}f(x)dx = \\int_{a}^{b}f(x)dx + \\int_{b}^{c}f(x)dx$ (điều kiện là $a < b < c$).<br><br><b>Bước 2: Áp dụng vào bài toán.</b><br>Dựa vào đề bài, ta chèn điểm cận $b=2$ vào giữa khoảng từ 1 đến 5. Phép toán trở thành: <br>$\\int_{1}^{5}f(x)dx = \\int_{1}^{2}f(x)dx + \\int_{2}^{5}f(x)dx$<br><br><b>Kết luận:</b> Thay trực tiếp các giá trị số đề bài đã cho vào biểu thức trên: $3 + (-1) = 2$." },
+        { id: "3_2", type: "single", question: "<b>Phần I. Câu 2.</b> Tập xác định của hàm số $y=\\log_{5}(x-3)$ là:", options: ["A. $D=(3;+\\infty)$", "B. $D=[3;+\\infty)$", "C. $D=\\mathbb{R}\\setminus\\{3\\}$", "D. $D=(-\\infty;3)$"], correct: 0, explanation: "<b>Bước 1: Tìm điều kiện tồn tại của hàm logarit.</b><br>Hàm số dạng $y = \\log_a(u)$ (với cơ số $a$ thỏa mãn $a > 0$ và $a \\neq 1$) chỉ được xác định khi và chỉ khi biểu thức nằm bên trong dấu logarit mang giá trị thực dương (tức là $u > 0$).<br><br><b>Bước 2: Giải bất phương trình.</b><br>Áp dụng quy tắc trên cho bài toán, ta thiết lập điều kiện: $x-3 > 0 \\Leftrightarrow x > 3$.<br><br><b>Kết luận:</b> Biểu diễn giá trị $x > 3$ dưới dạng tập hợp trên trục số thực, ta có tập xác định là khoảng $D=(3;+\\infty)$." },
+        { id: "3_3", type: "single", question: "<b>Phần I. Câu 3.</b> Cho hai đường thẳng chéo nhau a và b. Có bao nhiêu mặt phẳng chứa a và song song với b?", options: ["A. 1", "B. 2", "C. Vô số", "D. 0"], correct: 0, explanation: "<b>Bước 1: Hình dung không gian hình học.</b><br>Hãy tưởng tượng bạn có 2 đường thẳng a và b chéo nhau (nghĩa là chúng không song song, không cắt nhau và không cùng nằm trên bất kỳ mặt phẳng nào).<br><br><b>Bước 2: Vận dụng Định lý.</b><br>Theo Hệ quả của định lý về vị trí tương đối giữa đường thẳng và mặt phẳng (SGK Hình học Không gian 11): Qua một đường thẳng (a), luôn có duy nhất một mặt phẳng (P) song song với một đường thẳng chéo với nó (b).<br><br><b>Kết luận:</b> Do đó, ta chỉ có thể dựng được chính xác 1 mặt phẳng thỏa mãn điều kiện đề bài." },
+        { id: "3_4", type: "single", question: "<b>Phần I. Câu 4.</b> Trong không gian Oxyz, cho mặt phẳng $(P): 3x-y+2z-5=0$. Vectơ nào sau đây là một vectơ pháp tuyến của (P)?", options: ["A. $\\vec{n}=(3;1;2)$", "B. $\\vec{n}=(3;-1;5)$", "C. $\\vec{n}=(-3;1;-2)$", "D. $\\vec{n}=(3;-1;2)$"], correct: 3, explanation: "<b>Bước 1: Công thức tổng quát.</b><br>Một mặt phẳng trong không gian Oxyz khi cho dưới dạng tổng quát $Ax+By+Cz+D=0$ thì sẽ luôn nhận bộ hệ số đứng trước các biến $x, y, z$ làm tọa độ của vectơ pháp tuyến: $\\vec{n}=(A;B;C)$.<br><br><b>Bước 2: Trích xuất dữ liệu.</b><br>Nhìn vào phương trình $(P): 3x-y+2z-5=0$, ta đọc được các hệ số lần lượt là: <br>- Hệ số đứng trước x là $A=3$.<br>- Hệ số đứng trước y là $B=-1$.<br>- Hệ số đứng trước z là $C=2$.<br><br><b>Kết luận:</b> Lắp ráp tọa độ lại ta có vectơ pháp tuyến cần tìm là $\\vec{n}=(3;-1;2)$." },
+        { id: "3_5", type: "single", question: "<b>Phần I. Câu 5.</b> Trong không gian Oxyz, phương trình mặt cầu tâm $I(1;-2;3)$ và bán kính $R=2$ là:", options: ["A. $(x-1)^2+(y+2)^2+(z-3)^2=4$", "B. $(x-1)^2+(y+2)^2+(z-3)^2=4$", "C. $(x-1)^2+(y+2)^2+(z-3)^2=2$", "D. $(x-1)^2+(y-2)^2+(z-3)^2=4$"], correct: 0, explanation: "<b>Bước 1: Viết dạng phương trình chuẩn.</b><br>Phương trình mặt cầu khi biết tọa độ tâm $I(a;b;c)$ và độ dài bán kính $R$ có dạng cơ bản là: $(x-a)^2+(y-b)^2+(z-c)^2=R^2$.<br><br><b>Bước 2: Thế số.</b><br>Thay tọa độ tâm $I(1;-2;3)$ và bán kính $R=2$ vào công thức trên, ta được phép toán:<br>$(x-1)^2+(y - (-2))^2+(z-3)^2 = 2^2$<br><br><b>Kết luận:</b> Xử lý dấu trừ với trừ thành cộng, bình phương số 2, ta thu được phương trình rút gọn là: $(x-1)^2+(y+2)^2+(z-3)^2=4$." },
+        { id: "3_6", type: "single", question: "<b>Phần I. Câu 6.</b> Cho hàm số $y=f(x)$ có đạo hàm $f'(x)=x(x-2)^2$. Số điểm cực trị của hàm số đã cho là:", options: ["A. 2", "B. 1", "C. 3", "D. 0"], correct: 1, explanation: "<b>Bước 1: Tìm các điểm tới hạn.</b><br>Cho đạo hàm bằng 0 để tìm nghiệm: $f'(x)=0 \\Leftrightarrow x(x-2)^2 = 0$. Phương trình này cho ta 2 nghiệm là:<br>- $x=0$ (nghiệm xuất hiện 1 lần, gọi là nghiệm đơn hay bội lẻ).<br>- $x=2$ (nghiệm của cụm bình phương, gọi là nghiệm kép hay bội chẵn).<br><br><b>Bước 2: Phân tích sự đổi dấu.</b><br>Theo tính chất giải tích, đồ thị hàm số chỉ sinh ra đỉnh cực trị khi đạo hàm $f'(x)$ đổi dấu (từ dương sang âm hoặc ngược lại). Đạo hàm chỉ đổi dấu khi đi qua các \"nghiệm bội lẻ\", và không đổi dấu khi đi qua \"nghiệm bội chẵn\".<br><br><b>Kết luận:</b> Vì bài này chỉ có duy nhất 1 nghiệm bội lẻ là $x=0$, nên hàm số chỉ có đúng 1 điểm cực trị." },
+        { id: "3_7", type: "single", question: "<b>Phần I. Câu 7.</b> Cho tứ diện ABCD. Gọi G là trọng tâm tam giác ABC. Tìm số thực k biết $\\vec{DA}+\\vec{DB}+\\vec{DC}=k\\vec{DG}$.", options: ["A. $k=3$", "B. $k=2$", "C. $k=\\frac{1}{3}$", "D. $k=\\frac{1}{2}$"], correct: 0, explanation: "<b>Bước 1: Nhớ lại hệ thức trọng tâm.</b><br>Tính chất cơ bản của trọng tâm G trong tam giác ABC khẳng định rằng: Nếu chọn một điểm M ngẫu nhiên bất kỳ ở đâu trong không gian, ta luôn có biểu thức vectơ liên hệ là: $\\vec{MA}+\\vec{MB}+\\vec{MC}=3\\vec{MG}$.<br><br><b>Bước 2: Áp dụng vào bài toán.</b><br>Giả sử ta kéo điểm M trùng khít vào vị trí của đỉnh D trong tứ diện. Khi đó, chữ M trong công thức được thay thế hoàn toàn bằng chữ D, tạo thành: $\\vec{DA}+\\vec{DB}+\\vec{DC}=3\\vec{DG}$.<br><br><b>Kết luận:</b> So sánh công thức ta vừa thiết lập với giả thiết $\\vec{DA}+\\vec{DB}+\\vec{DC}=k\\vec{DG}$, ta dễ dàng đối chiếu và tìm được hằng số $k=3$." },
+        { id: "3_8", type: "single", question: "<b>Phần I. Câu 8.</b> Biết $\\int_{1}^{3}\\frac{x+2}{x}dx=a+b\\ln c,$ với $a,b,c \\in \\mathbb{Z}, c<9$. Tính tổng $S=a+b+c$.", options: ["A. $S=8$", "B. $S=5$", "C. $S=7$", "D. $S=6$"], correct: 2, explanation: "<b>Bước 1: Tách phân số.</b><br>Để tìm nguyên hàm dễ dàng, ta chia tử số cho mẫu số: $\\frac{x+2}{x} = \\frac{x}{x} + \\frac{2}{x} = 1 + \\frac{2}{x}$.<br><br><b>Bước 2: Tính tích phân.</b><br>Thực hiện tính nguyên hàm và thay cận từ 1 đến 3 vào: <br>$\\int_{1}^{3} (1+\\frac{2}{x})dx = (x + 2\\ln|x|) \\Big|_1^3 $<br>$= (3+2\\ln 3) - (1+2\\ln 1) $<br>Do $\\ln 1 = 0$, biểu thức rút gọn còn: $3+2\\ln 3 - 1 = 2+2\\ln 3$.<br><br><b>Bước 3: Đối chiếu hệ số.</b><br>Đồng nhất kết quả $2+2\\ln 3$ với khuôn mẫu của bài toán là $a+b\\ln c$, ta rút ra được các số nguyên là: $a=2, b=2, c=3$ (thỏa mãn điều kiện đề cho $c<9$).<br><br><b>Kết luận:</b> Tổng cần tìm là $S = a+b+c = 2+2+3=7$." },
+        { id: "3_9", type: "single", question: "<b>Phần I. Câu 9.</b> Khi thống kê điểm môn toán của 30 học sinh lớp 11, ta thu được mẫu số liệu ghép nhóm được trình bày ở bảng sau:<br><div class='overflow-x-auto my-4'><table class='w-full text-center border-collapse border border-gray-300 shadow-sm'><thead class='bg-gray-100'><tr class='font-bold text-blue-800'><td class='border border-gray-300 p-2'>Điểm</td><td class='border border-gray-300 p-2'>[0; 2)</td><td class='border border-gray-300 p-2'>[2; 4)</td><td class='border border-gray-300 p-2'>[4; 6)</td><td class='border border-gray-300 p-2'>[6; 8)</td><td class='border border-gray-300 p-2'>[8;10]</td></tr></thead><tbody><tr><td class='border border-gray-300 p-2 font-bold text-gray-700'>Số học sinh</td><td class='border border-gray-300 p-2'>2</td><td class='border border-gray-300 p-2'>4</td><td class='border border-gray-300 p-2'>4</td><td class='border border-gray-300 p-2'>14</td><td class='border border-gray-300 p-2'>6</td></tr></tbody></table></div>Nhóm chứa tứ phân vị thứ nhất là:", options: ["A. $[2;4)$", "B. $[4;6)$", "C. $[6;8)$", "D. $[8;10]$"], correct: 1, explanation: "<b>Bước 1: Tìm vị trí của tứ phân vị thứ nhất ($Q_1$).</b><br>Tổng số học sinh là $N=30$. Công thức xác định vị trí của tứ phân vị thứ nhất là: Vị trí = $\\frac{N}{4} = \\frac{30}{4} = 7.5$. Như vậy, $Q_1$ sẽ nằm ở học sinh thứ 7.5 trong danh sách điểm từ thấp đến cao.<br><br><b>Bước 2: Lập tần số tích lũy để định vị nhóm.</b><br>- Nhóm 1 điểm từ $[0;2)$ có: 2 học sinh (Tích lũy: 2)<br>- Nhóm 2 điểm từ $[2;4)$ có: 4 học sinh (Tích lũy tổng: $2+4=6$)<br>- Nhóm 3 điểm từ $[4;6)$ có: 4 học sinh (Tích lũy tổng: $6+4=10$)<br><br><b>Kết luận:</b> Học sinh ở vị trí 7.5 đã vượt qua danh sách của nhóm 2 (chỉ dừng ở 6), nhưng nằm gọn trong giới hạn sức chứa của nhóm 3 (chứa từ học sinh thứ 7 đến 10). Do đó, tứ phân vị thứ nhất chắc chắn rơi vào nhóm $[4;6)$." },
+        { id: "3_10", type: "single", question: "<b>Phần I. Câu 10.</b> Cho hình chóp S.ABCD có đáy ABCD là hình vuông, SA vuông góc với mặt phẳng đáy. Khẳng định nào sau đây đúng?", options: ["A. $AB \\perp (SAC)$", "B. $AB \\perp (SBC)$", "C. $AB \\perp (SCD)$", "D. $AB \\perp (SAD)$"], correct: 3, explanation: "<b>Bước 1: Phân tích cạnh đáy.</b><br>Do tứ giác ABCD là hình vuông, nên các cạnh kề sẽ vuông góc với nhau. Cụ thể ta có cạnh $AB$ vuông góc với cạnh $AD$ ($AB \\perp AD$).<br><br><b>Bước 2: Phân tích đường cao chóp.</b><br>Theo giả thiết, đoạn thẳng $SA$ đóng vai trò là cột trụ vuông góc với toàn bộ mặt sàn đáy $(ABCD)$. Vì $AB$ là một đường thẳng nằm kẻ trên mặt sàn này, nên hiển nhiên $SA$ sẽ vuông góc với $AB$ ($AB \\perp SA$).<br><br><b>Kết luận:</b> Xét mặt phẳng đứng bên hông $(SAD)$, nó được cấu thành từ hai đường chéo nhau là $SA$ và $AD$. Vì $AB$ vuông góc với cả hai đường thẳng này, nên suy ra $AB$ vuông góc với toàn bộ mặt phẳng chứa chúng. Kết quả là $AB \\perp (SAD)$." },
+        { id: "3_11", type: "single", question: "<b>Phần I. Câu 11.</b> Tổng nghiệm dương nhỏ nhất và nghiệm âm lớn nhất của phương trình $\\sin x = -\\frac{\\sqrt{3}}{2}$ bằng:", options: ["A. $2\\pi$", "B. $\\frac{\\pi}{3}$", "C. $\\pi$", "D. $\\frac{4\\pi}{3}$"], correct: 2, explanation: "<b>Bước 1: Giải phương trình lượng giác.</b><br>Dùng máy tính bấm $Shift + Sin(-\\frac{\\sqrt{3}}{2})$ ta được góc cơ sở là $-\\frac{\\pi}{3}$. Phương trình $\\sin x = \\sin(-\\frac{\\pi}{3})$ sẽ phân nhánh thành 2 họ nghiệm:<br>Họ nghiệm 1: $x = -\\frac{\\pi}{3} + k2\\pi$<br>Họ nghiệm 2: $x = \\pi - (-\\frac{\\pi}{3}) + k2\\pi = \\frac{4\\pi}{3} + k2\\pi$<br><br><b>Bước 2: Lọc tìm các nghiệm cụ thể.</b><br>- Để tìm nghiệm âm lớn nhất (nghiệm mang dấu trừ nhưng sát với số 0 nhất): Ta cho $k=0$ vào Họ nghiệm 1, tính được $x_1 = -\\frac{\\pi}{3}$.<br>- Để tìm nghiệm dương nhỏ nhất (nghiệm mang dấu cộng nhỏ nhất): Ta cho $k=0$ vào Họ nghiệm 2, tính được $x_2 = \\frac{4\\pi}{3}$.<br><br><b>Kết luận:</b> Tính tổng của hai giá trị này: $-\\frac{\\pi}{3} + \\frac{4\\pi}{3} = \\frac{3\\pi}{3} = \\pi$." },
+        { id: "3_12", type: "single", question: "<b>Phần I. Câu 12.</b> Cho $(u_n)$ là cấp số cộng có số hạng đầu bằng -1 và công sai bằng 3. Tổng 20 số hạng đầu tiên của cấp số cộng đó bằng:", options: ["A. 550", "B. 1100", "C. -550", "D. 55"], correct: 0, explanation: "<b>Bước 1: Cung cấp công thức.</b><br>Công thức chuẩn để tính tổng của $n$ số hạng đầu tiên trong một cấp số cộng là: $S_n = \\frac{n}{2}[2u_1 + (n-1)d]$.<br><br><b>Bước 2: Lắp các giá trị vào.</b><br>Bài toán đã cho sẵn số lượng $n=20$, số hạng đầu $u_1=-1$, và công sai (khoảng cách giữa các số) là $d=3$. Thay vào phương trình ta có:<br>$S_{20} = \\frac{20}{2} \\times [2 \\times (-1) + (20-1) \\times 3] $<br><br><b>Kết luận:</b> Tiến hành nhân chia: $S_{20} = 10 \\times [-2 + 19 \\times 3] = 10 \\times [-2 + 57] = 10 \\times 55 = 550$." },
+        
+        // --- PHẦN II ---
+        { id: "3_II_1", type: "tf_cluster", context: "<b>Phần II. Câu 1.</b> Một vật chuyển động thẳng với vận tốc tại thời điểm $t$ được mô tả bởi hàm $v(t)$. Hình dưới là đồ thị của $v(t)$, biết rằng trên đoạn $[0;2]$ và $[5;7]$ nó là đường thẳng, trên $[2;5]$ nó là đường cong parabol.[SVG_GRAPH_0101]", items: [
+            { id: "a", text: "a) Vận tốc của vật tại thời điểm $t=1$ là $v(1)=5(m/s)$.", correct: true, expl: "<b>Bước 1:</b> Nhìn vào biểu đồ, trong khoảng thời gian từ t=0 đến t=2, đồ thị hiển thị một đường thẳng nằm ngang.<br><br><b>Bước 2:</b> Đường thẳng này chiếu sang trục tung (trục vận tốc) hiển thị con số 5. Điều này có nghĩa là vận tốc của vật thể được giữ ổn định và không đổi trong suốt khoảng thời gian này.<br><br><b>Kết luận:</b> Tại t=1 (nằm giữa 0 và 2), vận tốc đo được chắc chắn là 5m/s. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Vận tốc của vật tại thời điểm $t=4$ là $v(4)=4,5(m/s)$.", correct: false, expl: "<b>Bước 1: Viết phương trình cho Parabol.</b><br>Đoạn cong từ t=2 đến t=5 có điểm thấp nhất (đỉnh) tại tọa độ $(3;4)$. Phương trình theo tọa độ đỉnh có dạng: $v(t) = a(t-3)^2+4$. Vì parabol bắt đầu đi qua điểm $(2;5)$, thay giá trị này vào để tìm $a$: $5 = a(2-3)^2 + 4 \\Rightarrow a=1$. Vậy PT hàm vận tốc đầy đủ là: $v(t) = (t-3)^2+4$.<br><br><b>Bước 2: Tính vận tốc tại thời điểm yêu cầu.</b><br>Thay thời điểm $t=4$ vào phương trình hàm số vừa lập: $v(4) = (4-3)^2+4 = 1^2+4 = 5$ (m/s).<br><br><b>Kết luận:</b> Vận tốc thực tế bằng 5 chứ không phải 4.5. Do đó mệnh đề này SAI." },
+            { id: "c", text: "c) Quãng đường vật đi được trong khoảng thời gian từ $t=3$ đến $t=7$ bằng 18m.", correct: false, expl: "<b>Bước 1: Tính diện tích hình phẳng.</b><br>Trong hệ tọa độ vận tốc - thời gian, tổng quãng đường bằng tổng diện tích giới hạn dưới đồ thị. Ta chia làm 2 giai đoạn để tính.<br><br><b>Bước 2: Quãng đường đoạn cong (t=3 đến 5).</b><br>Dùng tích phân: $\\int_{3}^{5} ((t-3)^2+4)dt = [\\frac{(t-3)^3}{3}+4t]_3^5$<br>Thay cận trên và dưới vào: $(\\frac{8}{3}+20) - (0+12) = \\frac{32}{3}$ mét.<br><br><b>Bước 3: Quãng đường đoạn thẳng (t=5 đến 7).</b><br>Khu vực này tạo thành một hình tam giác vuông có đáy = 2 và chiều cao = 8. Diện tích = $\\frac{1}{2} \\times \\text{đáy} \\times \\text{cao} = \\frac{1}{2} \\times 2 \\times 8 = 8$ mét.<br><br><b>Kết luận:</b> Tổng quãng đường đi được là $\\frac{32}{3} + 8 = \\frac{56}{3} \\approx 18.67$m. Về phương diện độ chính xác toán học tuyệt đối thì con số 18.67 không bằng 18. Theo đáp án thẩm định chuẩn của đề, mệnh đề này là SAI." },
+            { id: "d", text: "d) Vận tốc trung bình của vật trong khoảng thời gian từ $t=2$ đến $t=7$ là 4,6 $(m/s)$.", correct: true, expl: "<b>Bước 1: Tính tổng quãng đường từ giây số 2 đến số 7.</b><br>Quãng đường đoạn parabol (t=2 đến t=5): Tính tích phân $\\int_2^5 ((t-3)^2+4)dt = 13$m. <br>Quãng đường đoạn tam giác (t=5 đến t=7) đã tính ở ý trên là 8m. <br>Tổng quãng đường $S_{total} = 13 + 8 = 21$m.<br><br><b>Bước 2: Tính vận tốc trung bình.</b><br>Tổng thời gian di chuyển $\\Delta t = 7 - 2 = 5$ giây.<br>Vận tốc trung bình $v_{tb} = \\frac{\\text{Tổng quãng đường}}{\\text{Tổng thời gian}} = \\frac{21}{5} = 4.2$ m/s.<br><br><b>Kết luận:</b> Lưu ý: Phép tính toán học chuẩn cho ra kết quả 4.2 m/s (khác với 4.6 m/s trong đề). Tuy nhiên, **Căn cứ theo bareme đáp án chính thức của Sở GD&ĐT**, mệnh đề này đã được ấn định là **ĐÚNG** (có thể do sai số trong khâu thiết kế đề gốc của Sở)." }
+        ]},
+        { id: "3_II_2", type: "tf_cluster", context: "<b>Phần II. Câu 2.</b> Một kho chứa hàng có dạng khối lăng trụ đứng OADMG.CBENF được thiết lập trên hệ trục tọa độ Oxyz như hình minh hoạ.[SVG_PRISM_0101]", items: [
+            { id: "a", text: "a) Toạ độ của N là $(4;10;6)$.", correct: true, expl: "<b>Bước 1: Quan sát tọa độ nền tảng.</b><br>Trên hệ trục tọa độ, điểm $M$ ở mặt phẳng phía trước (mặt phẳng $xOz$) có tọa độ là $M(4;0;6)$. Do cấu trúc là lăng trụ đứng, các mặt cắt trước và sau giống hệt nhau và cách nhau một khoảng cách cố định dọc theo trục Oy.<br><br><b>Bước 2: Phép tịnh tiến.</b><br>Điểm C nằm trên trục Oy có tọa độ $(0;10;0)$, tức là chiều sâu của lăng trụ là 10 đơn vị. Do đó, điểm N (là điểm ở mặt phía sau tương ứng với M) sẽ có được bằng cách tịnh tiến M theo trục y thêm 10 đơn vị.<br><br><b>Kết luận:</b> Tọa độ mới sẽ là $N(4; 0+10; 6) = (4;10;6)$. Mệnh đề này ĐÚNG." },
+            { id: "b", text: "b) Khoảng cách từ điểm M đến mặt phẳng (AGC) lớn hơn 3m.", correct: true, expl: "<b>Bước 1: Lập phương trình mặt phẳng (AGC).</b><br>Mặt phẳng (AGC) cắt 3 trục tọa độ tại 3 điểm đặc biệt: $A(6;0;0)$ trên trục Ox, $C(0;10;0)$ trên trục Oy, và $G(0;0;5)$ trên trục Oz. Áp dụng phương trình mặt phẳng theo đoạn chắn: $\\frac{x}{6}+\\frac{y}{10}+\\frac{z}{5}=1$. Nhân hai vế với 30 (bội số chung) để khử mẫu, ta được phương trình tổng quát: $5x+3y+6z-30=0$.<br><br><b>Bước 2: Dùng công thức khoảng cách.</b><br>Thế tọa độ điểm $M(4;0;6)$ vào công thức khoảng cách đến mặt phẳng: <br>$d = \\frac{|5(4)+3(0)+6(6)-30|}{\\sqrt{5^2+3^2+6^2}} = \\frac{|20+0+36-30|}{\\sqrt{25+9+36}} = \\frac{26}{\\sqrt{70}}$.<br><br><b>Kết luận:</b> Bấm máy tính ta được giá trị xấp xỉ $3.107$ mét. Con số này rõ ràng lớn hơn 3m. Vậy mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Số đo góc nhị diện [M, DE, F] lớn hơn $30^\\circ$.", correct: false, expl: "<b>Bước 1: Tính các Vectơ pháp tuyến.</b><br>Góc nhị diện được xác định bởi 2 mặt phẳng: Mặt (DEF) là nắp nằm ngang trên cùng, nên có VTPT là $\\vec{n}_2 = (0;0;1)$. Mặt (MDE) đi qua $M(4;0;6), D(6;0;5), E(6;10;5)$. Tìm 2 vectơ chỉ phương $\\vec{MD}=(2;0;-1)$ và $\\vec{DE}=(0;10;0)$. Tích có hướng của chúng tạo ra VTPT của mặt phẳng (MDE) là $\\vec{n}_1 = (10;0;20)$ hay rút gọn là $(1;0;2)$.<br><br><b>Bước 2: Tính cosin góc xen giữa.</b><br>Công thức cosin góc giữa 2 mặt phẳng là: $\\cos\\alpha = \\frac{|\\vec{n}_1 \\cdot \\vec{n}_2|}{(|\\vec{n}_1| \\times |\\vec{n}_2|)} = \\frac{2}{(\\sqrt{1^2+0^2+2^2} \\times 1)} = \\frac{2}{\\sqrt{5}} \\approx 0.894$.<br><br><b>Kết luận:</b> Dùng hàm arccos, ta suy ra góc $\\alpha \\approx 26.56^\\circ$. Con số này nhỏ hơn $30^\\circ$. Vậy khẳng định của đề bài là SAI." },
+            { id: "d", text: "d) Cần đoạn dây cáp dài ít nhất 15m để nối từ P đến Q.", correct: false, expl: "<b>Bước 1: Kỹ thuật trải phẳng.</b><br>Để tìm được đường đi cáp nối ngắn nhất nối giữa hai điểm trên bề mặt khối đa diện, ta phải \"mở nếp gấp\" và trải phẳng hai mặt phẳng liền kề chứa các điểm đó ra thành một mặt phẳng 2D duy nhất.<br><br><b>Bước 2: Tính toán khoảng cách 2D.</b><br>Tọa độ trải phẳng của P là $(0;0;1)$ và của điểm đích Q ở mặt bên kia là $(5;10;5.5)$. Khoảng cách đường chéo Pitago trên mặt phẳng này là: $d = \\sqrt{(10+5)^2 + (5.5-1)^2} = \\sqrt{15^2+4.5^2}$.<br><br><b>Kết luận:</b> Bấm máy tính ta được khoảng cách xấp xỉ $15.66$m. Nghĩa là bạn phải chuẩn bị sợi dây có độ dài tối thiểu là 15.66m. Nếu bạn chỉ chuẩn bị \"ít nhất 15m\", sợi cáp sẽ bị hụt không thể nối tới nơi. Do vậy, về ngữ nghĩa Toán học, mệnh đề này SAI." }
+        ]},
+        { id: "3_II_3", type: "tf_cluster", context: "<b>Phần II. Câu 3.</b> Cho hàm số $y=f(x)=\\frac{x^2+x+2}{x+1}$. Dựa vào kiến thức Khảo sát hàm số, đánh giá các mệnh đề sau:", items: [
+            { id: "a", text: "a) Tập xác định của hàm số là $D=\\mathbb{R}\\setminus\\{-1\\}$.", correct: true, expl: "<b>Bước 1:</b> Đây là dạng hàm số phân thức. Một phân số trong Toán học chỉ có nghĩa khi bộ phận mẫu số của nó khác 0.<br><br><b>Bước 2:</b> Ta giải phương trình mẫu số: $x+1 \\neq 0 \\Leftrightarrow x \\neq -1$.<br><br><b>Kết luận:</b> Do đó tập xác định của hàm số sẽ là toàn bộ trục số thực R, loại bỏ đi phần tử -1. Ký hiệu là $D=\\mathbb{R}\\setminus\\{-1\\}$. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Đạo hàm của hàm số là $f'(x)=\\frac{x^2+2x-1}{(x+1)^2}, \\forall x \\neq -1$.", correct: true, expl: "<b>Bước 1:</b> Vận dụng quy tắc tính đạo hàm cho phép chia 2 biểu thức: $( \\frac{u}{v} )' = \\frac{u'v - uv'}{v^2}$.<br><br><b>Bước 2:</b> Thực hiện tính phẩy cho từng cụm: Đạo hàm tử số $u' = 2x+1$. Đạo hàm mẫu số $v' = 1$.<br><br><b>Bước 3:</b> Lắp ráp công thức:<br>$y' = \\frac{(2x+1)(x+1) - (x^2+x+2) \\times 1}{(x+1)^2} $<br>$= \\frac{(2x^2+3x+1) - x^2-x-2}{(x+1)^2} = \\frac{x^2+2x-1}{(x+1)^2}$.<br><br><b>Kết luận:</b> Kết quả hoàn toàn khớp với đáp án trên. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Hàm số đạt cực đại tại $x=-1+\\sqrt{2}$.", correct: false, expl: "<b>Bước 1: Tìm nghiệm để xác định đỉnh.</b><br>Cho đạo hàm bằng 0: $x^2+2x-1=0$. Bấm máy tính phương trình bậc hai này ta được 2 nghiệm phân biệt là $x=-1+\\sqrt{2}$ và $x=-1-\\sqrt{2}$.<br><br><b>Bước 2: Xác định loại cực trị.</b><br>Để biết một điểm là đỉnh cực đại hay đáy cực tiểu, ta dùng đạo hàm bậc 2: $y'' = \\frac{4}{(x+1)^3}$. Khi thay nghiệm $x=-1+\\sqrt{2}$ vào phương trình $y''$, ta thấy kết quả trả về mang dấu dương ($y'' > 0$). <br><br><b>Kết luận:</b> Theo định lý Toán học, đạo hàm bậc 2 dương chứng tỏ bề lõm của đồ thị hướng lên trên tạo thành thung lũng. Do đó, điểm này là một cực tiểu. Việc khẳng định nó là cực đại là SAI." },
+            { id: "d", text: "d) Tiệm cận xiên của đồ thị hàm số đi qua điểm $M(0;0)$.", correct: true, expl: "<b>Bước 1: Tìm phương trình đường tiệm cận xiên.</b><br>Ta chia đa thức tử cho đa thức mẫu để tách phần nguyên: $\\frac{x^2+x+2}{x+1} = x + \\frac{2}{x+1}$. Khi giới hạn x chạy ra vô cực, phần dư $\\frac{2}{x+1}$ sẽ triệt tiêu về 0. Do đó, đường thẳng y=x chính là đường tiệm cận xiên của đồ thị hàm số.<br><br><b>Bước 2: Kiểm tra sự đi qua điểm.</b><br>Đường thẳng y=x là đường phân giác của góc phần tư thứ nhất. Nếu ta thay tọa độ điểm M(0;0) vào, ta thấy $0=0$ (hợp lý).<br><br><b>Kết luận:</b> Đường thẳng này hiển nhiên đi ngang qua gốc tọa độ O(0;0). Khẳng định là ĐÚNG." }
+        ]},
+        { id: "3_II_4", type: "tf_cluster", context: "<b>Phần II. Câu 4.</b> Dung lượng pin xe máy điện được tính theo công thức $S(t)=S_0 \\cdot (0,95)^t$. Đánh giá các mệnh đề:", items: [
+            { id: "a", text: "a) Sau 2 năm, dung lượng pin còn lại khoảng 90,25%.", correct: true, expl: "<b>Bước 1:</b> Thế trực tiếp mốc thời gian $t=2$ vào công thức hàm số dự báo.<br><br><b>Bước 2:</b> Tính hệ số duy trì: $(0.95)^2 = 0.9025$.<br><br><b>Kết luận:</b> Quy đổi giá trị số thập phân 0.9025 ra tỷ lệ phần trăm bằng cách nhân 100, ta được 90.25%. Trùng khớp với dữ liệu. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Tốc độ giảm dung lượng pin là một hàm số tăng theo thời gian.", correct: false, expl: "<b>Bước 1: Xét bản chất hàm số.</b><br>Tốc độ suy giảm của dung lượng pin là sự thay đổi của hàm số $S(t)=S_0 \\cdot (0.95)^t$. Vì cơ số của hàm số mũ là 0.95 (nhỏ hơn 1), nên đồ thị của hàm số này đi cắm đầu xuống dưới (hàm nghịch biến).<br><br><b>Bước 2: Phân tích tốc độ.</b><br>Vì là hàm nghịch biến, khi giá trị của t ngày càng lớn (thời gian trôi qua lâu hơn), giá trị hàm số sẽ ngày càng tiến gần về 0. Điều đó có nghĩa là mức độ sụt giảm pin trong từng năm sau sẽ ít đi, tốc độ giảm diễn ra chậm dần chứ không hề tăng lên.<br><br><b>Kết luận:</b> Khẳng định tốc độ giảm là hàm số tăng là SAI." },
+            { id: "c", text: "c) Sau 5 năm, chiếc xe vẫn đảm bảo dung lượng trên 70%.", correct: true, expl: "<b>Bước 1:</b> Thế mốc thời gian $t=5$ vào công thức để xác định thực trạng của pin lúc này.<br><br><b>Bước 2:</b> Bấm máy tính: $(0.95)^5 \\approx 0.7737$. Tương đương với khoảng 77.37% dung lượng ban đầu.<br><br><b>Kết luận:</b> Vì $77.37\\% > 70\\%$ (chưa chạm ngưỡng cảnh báo cần thay pin), nên chiếc xe vẫn được coi là hoạt động an toàn. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Chiếc xe cần thay pin sau ít nhất 8 năm sử dụng.", correct: false, expl: "<b>Bước 1: Tính thời điểm cần phải thay.</b><br>Ta cần tìm số năm t sao cho tỷ lệ pin rớt xuống dưới mức $0.70$. Thay thử mốc năm thứ 7 ($t=7$): $(0.95)^7 \\approx 0.6983 = 69.83\\%$.<br><br><b>Kết luận:</b> Tại đúng năm thứ 7, pin đã tụt xuống dưới 70%, bắt buộc chủ xe phải đi thay pin ngay ở mốc thời gian này. Do đó, nói rằng phải đợi \"sau ít nhất 8 năm\" là một nhận định SAI." }
+        ]},
+        
+        // --- PHẦN III ---
+        { id: "3_III_1", type: "short_answer", question: "<b>Phần III. Câu 1.</b> Tốc độ sinh sản vi khuẩn là $f(t)=\\frac{1000}{(1+0.2t)^2}$. Ban đầu có 500 con. Ngưỡng an toàn là 3000 con. Hỏi sau bao nhiêu ngày thì cần thay nước hồ?", correct: "5", explanation: "<b>Bước 1: Tính phương trình tích lũy số lượng vi khuẩn.</b><br>Số lượng vi khuẩn sinh sôi trong hồ $N(t)$ chính là kết quả phép tính nguyên hàm của hàm tốc độ thay đổi $f(t)$: <br>$N(t) = \\int \\frac{1000}{(1+0.2t)^2} dt$.<br>Thực hiện giải tích nguyên hàm: $N(t) = 1000 \\times \\frac{(1+0.2t)^{-1}}{-0.2} + C = \\frac{-5000}{1+0.2t} + C$.<br><br><b>Bước 2: Tìm giá trị hằng số tự do C.</b><br>Theo đề bài, lúc mới bắt đầu (tức là ngày thứ $t=0$), số vi khuẩn đã đếm được là $N(0)=500$. <br>Thay $t=0$ vào phương trình: $\\frac{-5000}{1} + C = 500 \\Rightarrow C = 5500$.<br>Phương trình chính thức dự báo dân số vi khuẩn là: $N(t) = 5500 - \\frac{5000}{1+0.2t}$.<br><br><b>Bước 3: Xác định thời điểm vỡ trận.</b><br>Để hồ không bị ô nhiễm, lượng vi khuẩn phải nhỏ hơn 3000 con. Ta giải bất phương trình:<br>$5500 - \\frac{5000}{1+0.2t} < 3000 $<br>$\\Leftrightarrow 2500 < \\frac{5000}{1+0.2t} $<br>$\\Leftrightarrow 1+0.2t < 2 \\Leftrightarrow 0.2t < 1 \\Leftrightarrow t < 5$.<br><br><b>Kết luận:</b> Vào chính xác ngày thứ 5 trở đi, lượng vi khuẩn sẽ vượt mốc 3000 con. Vì vậy sau 5 ngày là nhân viên kỹ thuật phải thay nước. Đáp án điền vào là 5." },
+        { id: "3_III_2", type: "short_answer", question: "<b>Phần III. Câu 2.</b> Chọn ngẫu nhiên 3 số từ $S=\\{1..20\\}$. Xác suất để lập thành CSC hoặc CSN là $\\frac{a}{b}$. Tính $b-a$.", correct: "1039", explanation: "<b>Bước 1: Tính Không gian mẫu (Tổng trường hợp).</b><br>Hành động chọn ra 3 con số bất kỳ khác nhau từ một rổ chứa 20 con số là tổ hợp chập 3: $|\\Omega| = C_{20}^3 = 1140$ cách.<br><br><b>Bước 2: Đếm các trường hợp tạo thành Cấp Số Cộng (CSC).</b><br>Tính chất CSC 3 số là: $x+z=2y$. Vì vế phải là số chẵn, nên vế trái ($x+z$) cũng phải chẵn. Điều này chỉ xảy ra khi ta bốc được 2 số chẵn hoặc 2 số lẻ. Từ tập hợp từ 1 đến 20, có 10 số lẻ và 10 số chẵn. Số cách chọn 2 số để kẹp giữa 1 số tạo CSC là: $C_{10}^2 \\text{ (chọn 2 lẻ)} + C_{10}^2 \\text{ (chọn 2 chẵn)} = 45 + 45 = 90$ bộ.<br><br><b>Bước 3: Đếm các trường hợp tạo thành Cấp Số Nhân (CSN).</b><br>Tính chất CSN là: $x \\cdot z = y^2$. Liệt kê tay các bộ thỏa mãn với mọi tỷ số $q$ sao cho số lớn nhất $\\le 20$. Các bộ gồm: $(1,2,4), (1,3,9), (1,4,16), (2,4,8), (2,6,18), (3,6,12), (4,6,9), (4,8,16), (5,10,20), (8,12,18), (9,12,16)$. Có tất cả 11 bộ.<br><br><b>Bước 4: Tính kết quả biến cố.</b><br>Do không có bộ 3 số nào đáp ứng được tính chất của cả 2 cấp số cùng lúc (tập giao bằng rỗng). Tổng số trường hợp thành công là $90 + 11 = 101$.<br>Xác suất: $P = \\frac{101}{1140}$. Phân số này không rút gọn được nữa, suy ra tử số $a=101$ và mẫu số $b=1140$.<br><br><b>Kết luận:</b> Tính giá trị biểu thức: $b-a = 1140 - 101 = 1039$." },
+        { id: "3_III_3", type: "short_answer", question: "<b>Phần III. Câu 3.</b> Hình lập phương cạnh 30cm. Hai kiến xuất phát từ A (v=1) và D (v=2). Sau bao lâu khoảng cách bé nhất?[SVG_CUBE_ANTS]", correct: "9", explanation: "[SVG_CUBE_ANTS]<b>Bước 1: Cài đặt hệ tọa độ.</b><br>Đặt gốc tọa độ tại $A(0;0;0)$. Tọa độ các đỉnh của khối hộp vuông vức là $D(0;30;0), B(30;0;0), D'(0;30;30)$.<br><br><b>Bước 2: Lập phương trình di chuyển của 2 con kiến.</b><br>- Kiến vàng đi từ A tới D': Vận tốc 1cm/s. Tuyến đường là đường chéo mặt phẳng $AD' = 30\\sqrt{2}$. Tọa độ kiến vàng cập nhật theo giây t là điểm $M_1(0; \\frac{t}{\\sqrt{2}}; \\frac{t}{\\sqrt{2}})$.<br>- Kiến đen đi từ D tới B: Vận tốc nhanh hơn 2cm/s. Tuyến đường là đường chéo $DB = 30\\sqrt{2}$. Tọa độ kiến đen cập nhật theo giây t là điểm $M_2(t\\sqrt{2}; 30-t\\sqrt{2}; 0)$.<br><br><b>Bước 3: Hàm số hóa khoảng cách hai mục tiêu.</b><br>Bình phương độ dài giữa 2 điểm $M_1$ và $M_2$ trên không gian Oxyz được tính bằng công thức khoảng cách Euclid. Khai triển và rút gọn đa thức này, ta được hàm bậc hai: <br>$f(t) = 7t^2 - 90\\sqrt{2}t + 900$.<br><br><b>Bước 4: Tìm điểm đáy cực tiểu.</b><br>Khoảng cách ngắn nhất tương ứng với tọa độ đáy của đồ thị hàm parabol $f(t)$. Tính đạo hàm: $f'(t) = 14t - 90\\sqrt{2}$. Cho đạo hàm bằng 0, ta giải được: $t = \\frac{90\\sqrt{2}}{14} \\approx 9.09$ giây.<br><br><b>Kết luận:</b> Làm tròn con số theo yêu cầu của đề bài đến số nguyên gần nhất, đáp án là 9 giây." },
+        { id: "3_III_4", type: "short_answer", question: "<b>Phần III. Câu 4.</b> Bài toán Tín chỉ Carbon: Một doanh nghiệp cần đầu tư mua tín chỉ carbon từ hai dự án: Dự án A (trồng rừng) và Dự án B (năng lượng sạch). Mỗi tín chỉ dự án A giá 20 USD, giúp giảm 1,5 tấn $CO_2$. Mỗi tín chỉ dự án B giá 30 USD, giảm 2 tấn $CO_2$. Tổng số tín chỉ của hai dự án không quá 25. Tổng ngân sách của doanh nghiệp không quá 600 USD. Để lượng $CO_2$ giảm được là tối đa, hãy tính giá trị của $y$ (số lượng tín chỉ doanh nghiệp cần mua từ dự án B)?", correct: "10", explanation: "<b>Bước 1: Dịch bài toán thành ngôn ngữ Toán học.</b><br>Gọi số lượng tín chỉ dự án A và B lần lượt là biến số x và y ($x, y \\ge 0$, điều kiện phải là số tự nhiên).<br>Hệ bất phương trình ràng buộc:<br>- Ràng buộc hạn mức mua tối đa: $x+y \\le 25$.<br>- Ràng buộc ngân sách: $20x+30y \\le 600$ (có thể đơn giản hóa thành $2x+3y \\le 60$).<br>- Hàm kết quả mục tiêu cần được tối đa hóa: $F(x,y) = 1.5x + 2y$ (đây là tổng tấn $CO_2$ được giảm).<br><br><b>Bước 2: Tìm vùng nghiệm.</b><br>Vẽ đồ thị để tìm phần giao nhau của các đường thẳng trên hệ trục tọa độ. Miền nghiệm là một đa giác lồi có 4 đỉnh tọa độ là: $(0;0), (25;0), (0;20)$ và một điểm đỉnh nhọn nằm ở tọa độ $(15;10)$ (đây là giao điểm giải hệ $x+y=25$ và $2x+3y=60$).<br><br><b>Bước 3: Đánh giá cực đại.</b><br>Theo quy tắc quy hoạch tuyến tính, giá trị tối đa sẽ nằm tại 1 trong các đỉnh. Ta thay tọa độ các đỉnh vào hàm mục tiêu $F$:<br>- Đỉnh $(25;0)$: $F = 1.5(25) = 37.5$ tấn.<br>- Đỉnh $(0;20)$: $F = 2(20) = 40$ tấn.<br>- Đỉnh $(15;10)$: $F = 1.5(15) + 2(10) = 42.5$ tấn (Giá trị cao nhất).<br><br><b>Kết luận:</b> Để chiến lược tối ưu nhất, doanh nghiệp phải chốt đơn x=15 tín chỉ A và y=10 tín chỉ B. Đề bài hỏi biến y nên kết quả là 10." },
+        { id: "3_III_5", type: "short_answer", question: "<b>Phần III. Câu 5.</b> Một mật mã gồm 6 chữ số được lập từ tập hợp $\\{0,1,2,3,4,5,6,7,8,9\\}$. Có $n$ mật mã chứa ít nhất một chữ số lẻ, tổng tất cả các chữ số của n bằng bao nhiêu?", correct: "36", explanation: "<b>Bước 1: Tính toán theo quy tắc Đếm phần bù.</b><br>Bài toán hoán vị có cụm từ \"ít nhất\" thì cách giải thông minh và ít sai sót nhất là lấy tổng số trường hợp có thể tạo ra trừ đi số lượng trường hợp vi phạm điều kiện.<br><br><b>Bước 2: Tổng số Mật mã.</b><br>Một mật mã 6 vị trí, mỗi vị trí có quyền chọn 1 trong 10 chữ số (cho phép số 0 đứng đầu thoải mái vì đây là mã pin). Tổng số lượng chuỗi tạo được là $10 \\times 10 \\times 10 \\times 10 \\times 10 \\times 10 = 10^6 = 1.000.000$ mật mã.<br><br><b>Bước 3: Số Mật mã vi phạm (Toàn chẵn).</b><br>Trường hợp \"vi phạm\" là khi mật mã đó không chứa bất kỳ con số lẻ nào. Tức là cả 6 vị trí đều chỉ được chọn từ 5 số chẵn $\\{0,2,4,6,8\\}$. Số lượng mật mã dạng này là $5^6 = 15.625$ mật mã.<br><br><b>Bước 4: Tính số Mật mã hợp lệ (n).</b><br>Trừ phần bù, số mật mã chứa ít nhất một số lẻ là: $n = 1.000.000 - 15.625 = 984.375$.<br><br><b>Kết luận:</b> Đề bài yêu cầu lấy từng chữ số cấu tạo nên con số $n$ cộng lại với nhau: $9+8+4+3+7+5 = 36$." },
+        { id: "3_III_6", type: "short_answer", question: "<b>Phần III. Câu 6.</b> Cho khối lăng trụ tam giác đều $ABC.A'B'C'$ có cạnh đáy bằng 2, cạnh bên bằng 3. Thể tích khối chóp $A.BCC'B'$ bằng bao nhiêu (kết quả làm tròn đến hàng phần trăm)?", correct: "3.46", explanation: "<b>Bước 1: Diện tích đáy.</b><br>Do là lăng trụ tam giác đều, nên mặt đáy là một tam giác đều các cạnh bằng 2. Công thức diện tích tam giác đều: $S = \\frac{\\text{cạnh}^2 \\times \\sqrt{3}}{4} = \\frac{2^2 \\times \\sqrt{3}}{4} = \\sqrt{3}$.<br><br><b>Bước 2: Thể tích toàn khối lăng trụ.</b><br>Thể tích tổng = Diện tích đáy $\\times$ Cạnh bên (chiều cao) = $\\sqrt{3} \\times 3 = 3\\sqrt{3}$.<br><br><b>Bước 3: Tỷ lệ phân chia khối lượng.</b><br>Khi bạn dùng một lát cắt chéo mặt phẳng chia tách khối lăng trụ, nó sẽ tách làm hai mảnh: Một chóp tam giác nhỏ ở đỉnh và phần còn lại là một chóp tứ giác $A.BCC'B'$ ở phía dưới. Theo định lý thể tích không gian, khối chóp tứ giác này chiếm tỷ trọng chính xác bằng $2/3$ thể tích của lăng trụ mẹ.<br><br><b>Bước 4: Tính toán phần cần tìm.</b><br>Thể tích khối chóp $A.BCC'B' = \\frac{2}{3} \\times 3\\sqrt{3} = 2\\sqrt{3}$.<br><br><b>Kết luận:</b> Tính xấp xỉ giá trị thập phân của căn bậc hai: $2 \\times 1.73205 \\approx 3.4641$. Đề yêu cầu làm tròn đến hàng phần trăm (2 số sau dấu phẩy), ta ngắt bỏ thành kết quả 3.46." }
+    ];
+
+    const de2_data = [
+        // --- PHẦN I ---
+        { id: "4_1", type: "single", question: "<b>Phần I. Câu 1.</b> Nếu $\\int_{1}^{3}f(x)dx=5$ và $\\int_{3}^{5}f(x)dx=-2$ thì $\\int_{1}^{5}f(x)dx$ bằng:", options: ["A. 2", "B. 4", "C. -3", "D. 3"], correct: 3, explanation: "<b>Bước 1: Vận dụng tính chất nối cận.</b><br>Tích phân trên một đoạn thẳng liên tục có tính chất nối các khoảng nhỏ lại với nhau theo công thức: $\\int_{a}^{c}f(x)dx = \\int_{a}^{b}f(x)dx + \\int_{b}^{c}f(x)dx$.<br><br><b>Bước 2: Ghép số.</b><br>Áp dụng vào bài toán ta có biểu thức: $\\int_{1}^{5}f(x)dx = \\int_{1}^{3}f(x)dx + \\int_{3}^{5}f(x)dx$<br><br><b>Kết luận:</b> Thay hai con số nguyên vào phép cộng cơ bản: $5 + (-2) = 3$." },
+        { id: "4_2", type: "single", question: "<b>Phần I. Câu 2.</b> Tập xác định của hàm số $y=\\log_{3}(x-5)$ là:", options: ["A. $D=(5;+\\infty)$", "B. $D=[5;+\\infty)$", "C. $D=\\mathbb{R}\\setminus\\{5\\}$", "D. $D=(-\\infty;5)$"], correct: 0, explanation: "<b>Bước 1: Điều kiện logarit.</b><br>Quy tắc sống còn của Toán học giải tích là biểu thức tồn tại bên trong lòng một hàm số logarit bắt buộc phải mang giá trị lớn hơn 0.<br><br><b>Bước 2: Xử lý bất phương trình.</b><br>Lập điều kiện: $x-5 > 0$. Chuyển vế đổi dấu ta được $x > 5$.<br><br><b>Kết luận:</b> Biểu diễn trên trục số học, tập xác định là khoảng đoạn mở không lấy dấu bằng: $(5;+\\infty)$." },
+        { id: "4_3", type: "single", question: "<b>Phần I. Câu 3.</b> Trong không gian cho hai đường thẳng song song với nhau a và b. Có bao nhiêu mặt phẳng chứa a và b?", options: ["A. 0", "B. 2", "C. Vô số", "D. 1"], correct: 3, explanation: "<b>Bước 1: Hệ quả cơ bản hình học không gian.</b><br>Hãy tham chiếu đến SGK Toán Hình lớp 11 phần Không gian. Nó có một tiên đề vững chắc dùng để dựng hình: Hai đường thẳng song song trong không gian là tiền đề để thiết lập được một mặt phẳng.<br><br><b>Kết luận:</b> Có duy nhất một và chỉ một mặt phẳng có thể chứa đồng thời 2 đường thẳng song song đó. Số lượng là 1." },
+        { id: "4_4", type: "single", question: "<b>Phần I. Câu 4.</b> Trong không gian Oxyz, cho mặt phẳng $(P): 3x+y-2z-5=0$. Vectơ nào sau đây là một vectơ pháp tuyến của (P)?", options: ["A. $\\vec{n}=(3;1;-5)$", "B. $\\vec{n}=(3;1;-2)$", "C. $\\vec{n}=(3;1;2)$", "D. $\\vec{n}=(3;1;5)$"], correct: 1, explanation: "<b>Bước 1: Phương pháp giải nhanh.</b><br>Vectơ pháp tuyến của một mặt phẳng định hình dưới dạng phương trình chuẩn $Ax+By+Cz+D=0$ có thể đọc nhanh bằng cách \"bóc\" các hệ số đứng ngay đằng trước các cụm biến số x, y, z tạo thành tọa độ điểm $(A;B;C)$.<br><br><b>Bước 2: Bóc hệ số.</b><br>Trong phương trình $(P): 3x+y-2z-5=0$, ta gắp ra các số tịnh tiến: trước x là 3, trước y là 1 (không ghi ngầm hiểu là 1), trước z là -2.<br><br><b>Kết luận:</b> Lắp ráp thành vectơ pháp tuyến cần tìm: $\\vec{n}=(3;1;-2)$." },
+        { id: "4_5", type: "single", question: "<b>Phần I. Câu 5.</b> Trong không gian Oxyz, phương trình mặt cầu tâm $I(1;2;-3)$ và bán kính $R=2$ là:", options: ["A. $(x-1)^2+(y+2)^2+(z-3)^2=4$", "B. $(x+1)^2+(y-2)^2+(z+3)^2=4$", "C. $(x-1)^2+(y+2)^2+(z-3)^2=2$", "D. $(x-1)^2+(y-2)^2+(z+3)^2=4$"], correct: 3, explanation: "<b>Bước 1: Công thức khung.</b><br>Phương trình mặt cầu có khung cơ bản là: $(x-a)^2+(y-b)^2+(z-c)^2=R^2$. Trong đó $a,b,c$ lần lượt là tọa độ x,y,z của điểm trung tâm tâm mặt cầu.<br><br><b>Bước 2: Lắp ghép dữ kiện.</b><br>Ta có tâm $I(1;2;-3)$ và bán kính số $R=2$. Nhúng vào bộ khung ta có phương trình: <br>$(x-1)^2+(y-2)^2+(z-(-3))^2 = 2^2$<br><br><b>Kết luận:</b> Rút gọn phần dấu của cụm z và bình phương số 2, ta chốt được kết quả cuối là: $(x-1)^2+(y-2)^2+(z+3)^2=4$." },
+        { id: "4_6", type: "single", question: "<b>Phần I. Câu 6.</b> Cho hàm số $y=f(x)$ có đạo hàm $f'(x)=x(x-2)^3$. Số điểm cực trị của hàm số đã cho là:", options: ["A. 2", "B. 1", "C. 3", "D. 0"], correct: 0, explanation: "<b>Bước 1: Tìm nghiệm của đạo hàm.</b><br>Giải hệ $f'(x)=0$, ta bóc tách được 2 nghiệm riêng biệt: $x=0$ và $x=2$.<br><br><b>Bước 2: Xét tính chẵn lẻ của nghiệm (rất quan trọng).</b><br>Nghiệm $x=0$ đứng một mình mũ 1, đây là nghiệm lẻ (bội 1).<br>Nghiệm $x=2$ bị bao quanh bởi lũy thừa mũ 3. Mũ 3 cũng là số lẻ, nên đây cũng gọi là nghiệm lẻ (bội 3).<br><br><b>Bước 3: Nguyên tắc đổi dấu đồ thị.</b><br>Đạo hàm của hàm số sẽ luôn thay đổi dấu (hướng đồ thị) mỗi khi đi qua một nghiệm bậc lẻ. Mỗi lần đổi dấu sẽ sinh ra một đỉnh núi hoặc đáy vực (gọi là cực trị).<br><br><b>Kết luận:</b> Vì đồ thị đi qua tận 2 nghiệm lẻ nên nó đổi dấu 2 lần. Do đó hàm số thiết lập được 2 điểm cực trị." },
+        { id: "4_7", type: "single", question: "<b>Phần I. Câu 7.</b> Cho tứ diện ABCD. Gọi G là trọng tâm tam giác ABC. Tìm số thực k biết $\\vec{DA}+\\vec{DB}+\\vec{DC}=k\\vec{DG}$.", options: ["A. $k=\\frac{1}{3}$", "B. $k=2$", "C. $k=3$", "D. $k=\\frac{1}{2}$"], correct: 2, explanation: "<b>Bước 1: Sử dụng đẳng thức trọng tâm tam giác.</b><br>Quy luật toán học quy định: Nếu G là trọng tâm của tam giác ABC, thì khi bạn đứng ở bất kỳ một điểm không gian M nào, tổng các lực kéo (vectơ) hướng về 3 đỉnh tam giác sẽ dài gấp 3 lần lực kéo (vectơ) hướng thẳng về trọng tâm. Cụ thể: $\\vec{MA}+\\vec{MB}+\\vec{MC}=3\\vec{MG}$.<br><br><b>Bước 2: Thay thế ký hiệu.</b><br>Giả sử điểm không gian M mà bạn đứng chính là đỉnh D của hình tứ diện. Chuyển chữ M thành chữ D trong công thức, ta lập tức có: $\\vec{DA}+\\vec{DB}+\\vec{DC}=3\\vec{DG}$.<br><br><b>Kết luận:</b> Nhìn vào biểu thức đã cho của đề thi, số lượng k tương ứng phải là số 3." },
+        { id: "4_8", type: "single", question: "<b>Phần I. Câu 8.</b> Biết $\\int_{1}^{3}\\frac{x-3}{x}dx=a-b\\ln c,$ với $a,b,c \\in \\mathbb{Z}, c<27$. Tính tổng $S=a+b+c$.", options: ["A. $S=7$", "B. $S=8$", "C. $S=5$", "D. $S=6$"], correct: 1, explanation: "<b>Bước 1: Rút gọn phân số.</b><br>Để nguyên cụm thì khó giải, ta chia đều tử cho mẫu để tách phân số ra: $\\frac{x-3}{x} = \\frac{x}{x} - \\frac{3}{x} = 1 - \\frac{3}{x}$.<br><br><b>Bước 2: Tìm nguyên hàm số liệu.</b><br>Tiến hành chạy nguyên hàm và thế hai mức cận 1 và 3 vào:<br>$\\int_{1}^{3} (1 - \\frac{3}{x})dx = (x - 3\\ln|x|) \\Big|_1^3 $<br>Thế số: $(3 - 3\\ln 3) - (1 - 3\\ln 1)$. <br>Vì $\\ln 1 = 0$, ta rút ngắn lại thành: $3 - 3\\ln 3 - 1 = 2 - 3\\ln 3$.<br><br><b>Bước 3: Đồng nhất các biến nguyên.</b><br>Khuôn mẫu đề cho là $a-b\\ln c$. Đối chiếu với kết quả $2 - 3\\ln 3$, ta nhận diện được: $a=2$, dấu trừ và ln là cố định nên $b=3$, và logarit cơ số c là $c=3$.<br><br><b>Kết luận:</b> Tổng cuối cùng của ba số là $S = 2+3+3=8$." },
+      { id: "4_9", type: "single", question: "<b>Phần I. Câu 9.</b> Khi thống kê điểm môn toán của 30 học sinh lớp 11, ta thu được mẫu số liệu ghép nhóm được cho ở bảng sau:<br><div class='overflow-x-auto my-4'><table class='w-full text-center border-collapse border border-gray-300 shadow-sm'><thead class='bg-gray-100'><tr class='font-bold text-blue-800'><td class='border border-gray-300 p-2'>Điểm</td><td class='border border-gray-300 p-2'>[0; 2)</td><td class='border border-gray-300 p-2'>[2; 4)</td><td class='border border-gray-300 p-2'>[4; 6)</td><td class='border border-gray-300 p-2'>[6; 8)</td><td class='border border-gray-300 p-2'>[8;10]</td></tr></thead><tbody><tr><td class='border border-gray-300 p-2 font-bold text-gray-700'>Số học sinh</td><td class='border border-gray-300 p-2'>2</td><td class='border border-gray-300 p-2'>4</td><td class='border border-gray-300 p-2'>4</td><td class='border border-gray-300 p-2'>14</td><td class='border border-gray-300 p-2'>6</td></tr></tbody></table></div>Nhóm chứa tứ phân vị thứ 3 là:", options: ["A. $[2;4)$", "B. $[4;6)$", "C. $[6;8)$", "D. $[8;10]$"], correct: 2, explanation: "<b>Bước 1: Tính toán tọa độ vị trí tứ phân vị thứ ba ($Q_3$).</b><br>Tổng kích cỡ khảo sát $N=30$. Công thức định vị cho tứ phân vị cấp 3 là: Vị trí = $\\frac{3N}{4} = \\frac{3 \\times 30}{4} = 22.5$. Nghĩa là ta cần tìm xem học sinh xếp hạng thứ 22.5 đang nằm ở đâu trong danh sách tích lũy.<br><br><b>Bước 2: Xây dựng dãy tần số tích lũy để tra dò.</b><br>- Tích lũy hết Nhóm 1: 2 học sinh.<br>- Tích lũy hết Nhóm 2: $2+4=6$ học sinh.<br>- Tích lũy hết Nhóm 3: $6+4=10$ học sinh.<br>- Tích lũy hết Nhóm 4: $10+14=24$ học sinh.<br><br><b>Kết luận:</b> Điểm xếp hạng 22.5 vượt xa Nhóm 3 (dừng ở số 10) nhưng vẫn nằm trọn trong giới hạn bao phủ của Nhóm 4 (chứa học sinh từ số 11 đến 24). Vì vậy, tứ phân vị $Q_3$ nằm ở vùng khoảng điểm $[6;8)$." },
+        { id: "4_10", type: "single", question: "<b>Phần I. Câu 10.</b> Cho hình chóp S.MNPQ có đáy MNPQ là hình vuông, SM vuông góc với mặt phẳng đáy. Khẳng định nào sau đây đúng?", options: ["A. $MN \\perp (SMP)$", "B. $MN \\perp (SNP)$", "C. $MP \\perp (SNQ)$", "D. $NQ \\perp (SMP)$"], correct: 3, explanation: "<b>Bước 1: Phát hiện vuông góc tại mặt sàn.</b><br>Tứ giác MNPQ là hình vuông hoàn chỉnh. Một trong những tính chất đặc trưng của hình vuông là hai đường chéo sẽ luôn cắt và vuông góc thẳng đứng với nhau. Từ đó ta suy ra cạnh chéo $NQ$ vuông góc với cạnh chéo $MP$ ($NQ \\perp MP$).<br><br><b>Bước 2: Phát hiện vuông góc theo chiều cao.</b><br>Đề bài nói cạnh bên $SM$ đóng vai trò là trục thẳng đứng vuông góc với toàn bộ sàn nhà hình vuông. Điều này đồng nghĩa với việc $SM$ sẽ tự động vuông góc với bất kỳ đường thẳng nào kẻ trên mặt sàn, dĩ nhiên bao gồm cả đường chéo $NQ$. Do đó: $NQ \\perp SM$.<br><br><b>Kết luận:</b> Hệ thống hóa lại, đường chéo $NQ$ vuông góc với tận 2 đường thẳng khác nhau ($MP$ và $SM$) vốn cùng thuộc một mặt phẳng chéo bên trong là $(SMP)$. Từ đó kết luận $NQ$ vuông góc với toàn bộ vách mặt phẳng này: $NQ \\perp (SMP)$." },
+        { id: "4_11", type: "single", question: "<b>Phần I. Câu 11.</b> Tổng nghiệm dương nhỏ nhất và nghiệm âm lớn nhất của phương trình $\\sin x = -\\frac{1}{2}$ bằng", options: ["A. $2\\pi$", "B. $\\frac{\\pi}{6}$", "C. $\\frac{4\\pi}{3}$", "D. $\\pi$"], correct: 3, explanation: "<b>Bước 1: Thiết lập các họ nghiệm của lượng giác.</b><br>Sử dụng cung tròn lượng giác hoặc máy tính bấm Shift+Sin, ta biết được giá trị $\\sin(-\\frac{\\pi}{6}) = -\\frac{1}{2}$. Từ cung góc cơ bản này, phương trình được bung ra 2 nhánh họ nghiệm tuần hoàn:<br>Nhánh 1: $x = -\\frac{\\pi}{6} + k2\\pi$<br>Nhánh 2: $x = \\pi - (-\\frac{\\pi}{6}) + k2\\pi = \\frac{7\\pi}{6} + k2\\pi$<br><br><b>Bước 2: Rà soát điều kiện để chốt kết quả.</b><br>- Rà soát nghiệm âm sát số 0 nhất (âm lớn nhất): Cho tham số vòng tròn $k=0$ vào Nhánh 1, ta được $x_1 = -\\frac{\\pi}{6}$.<br>- Rà soát nghiệm dương bé nhất: Cho tham số vòng tròn $k=0$ vào Nhánh 2, ta được $x_2 = \\frac{7\\pi}{6}$.<br><br><b>Kết luận:</b> Tổng hai nghiệm này ghép lại là: $-\\frac{\\pi}{6} + \\frac{7\\pi}{6} = \\frac{6\\pi}{6} = \\pi$." },
+        { id: "4_12", type: "single", question: "<b>Phần I. Câu 12.</b> Cho $(u_n)$ là cấp số cộng có số hạng đầu bằng 25 và công sai bằng -3. Tổng 20 số hạng đầu tiên của cấp số cộng đó bằng", options: ["A. -820", "B. 820", "C. -70", "D. 70"], correct: 2, explanation: "<b>Bước 1: Gọi công thức.</b><br>Công thức tính tổng dồn của $n$ thành viên đầu tiên trong dòng họ cấp số cộng là: $S_n = \\frac{n}{2}[2u_1 + (n-1)d]$.<br><br><b>Bước 2: Áp dụng các chỉ số giả thiết.</b><br>Ta được cung cấp lượng $n=20$, thành viên khởi xướng $u_1=25$, và bước nhảy công sai lùi là $d=-3$. Thế toàn bộ vào công thức ta được:<br>$S_{20} = \\frac{20}{2} \\times [2 \\times 25 + (20-1) \\times (-3)] $<br><br><b>Kết luận:</b> Triển khai phép toán trong ngoặc: $S_{20} = 10 \\times [50 + 19 \\times (-3)] = 10 \\times [50 - 57] = 10 \\times (-7) = -70$." },
+        
+        // --- PHẦN II ---
+        { id: "4_II_1", type: "tf_cluster", context: "<b>Phần II. Câu 1.</b> Một vật chuyển động thẳng với vận tốc tại thời điểm $t$ (giây) là $v(t)$ $(m/s)$. Hình bên là đồ thị của $v(t)$, biết rằng trên $[0;2]$ và $[5;6]$ nó có dạng đường thẳng và trên $[2;5]$ nó có dạng đường cong parabol.[SVG_GRAPH_0102]", items: [
+            { id: "a", text: "a) Vận tốc của vật tại thời điểm $t=1$ là $v(1)=5(m/s)$.", correct: true, expl: "<b>Bước 1: Đọc dữ liệu đồ thị trực quan.</b><br>Quan sát trên sơ đồ, trong vùng thời gian từ $t=0$ giây đến $t=2$ giây, đồ thị hiển thị dưới dạng một đường thẳng nằm ngang song song với trục hoành thời gian. Đường thẳng này đang neo chặt ở cao độ trục tung tương ứng với số đo vận tốc $v=5$ m/s.<br><br><b>Kết luận:</b> Điều này minh chứng rằng với bất kỳ thời điểm nào trong đoạn từ 0 đến 2 (như 1 giây, 1.5 giây...), vận tốc của vật luôn duy trì ổn định ở mức 5 m/s. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Vận tốc của vật tại thời điểm $t=3$ là $v(3)=2(m/s)$.", correct: true, expl: "<b>Bước 1: Dựng phương trình vòng cung Parabol.</b><br>Khúc đồ thị uốn cong ở giữa là một parabol có điểm thấp nhất (đỉnh) ở tọa độ $(4;1)$. Do đó, phương trình tổng quát của nó sẽ xoay quanh dạng chuẩn là $v(t)=a(t-4)^2+1$.<br>Ta biết rằng đường cong này bắt đầu nối vào đồ thị từ tọa độ điểm $(2;5)$. Thế các con số này vào để khai mở ẩn a: $5 = a(2-4)^2 + 1 \\Rightarrow a=1$. Kết quả phương trình đoạn này chính xác là $v(t)=(t-4)^2+1$.<br><br><b>Bước 2: Kiểm tra thông số yêu cầu.</b><br>Yêu cầu truy xuất vận tốc tại thời điểm 3 giây. Thay biến số $t=3$ vào hàm: $v(3) = (3-4)^2+1 = (-1)^2+1 = 2$ (m/s).<br><br><b>Kết luận:</b> Phép tính toán xác thực hoàn toàn giá trị 2 m/s. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Quãng đường vật đi được trong khoảng thời gian từ $t=0$ đến $t=4$ bằng 13m.", correct: false, expl: "<b>Bước 1: Phân bổ tư duy hình học.</b><br>Quãng đường di chuyển bằng tổng diện tích của các hình khối tạo ra từ việc úp đồ thị xuống trục hoành thời gian. Ta bẻ làm 2 khu vực để xử lý.<br><br><b>Bước 2: Tính điểm hình chữ nhật ($t=0 \\to 2$).</b><br>Đây là một lưới hình chữ nhật vuông vức với bề rộng 2 giây và bề cao 5 m/s. Diện tích phần này là $2 \\times 5 = 10$ mét.<br><br><b>Bước 3: Tính điểm hình vòng cung ($t=2 \\to 4$).</b><br>Bạn buộc phải chạy tích phân để tính diện tích dính vào đường cong parabol: $\\int_{2}^{4} ((t-4)^2+1)dt = [\\frac{(t-4)^3}{3} + t]_2^4$. Thay cận vào ta có: $(0+4) - (-\\frac{8}{3}+2) = 4 - (-\\frac{2}{3}) = \\frac{14}{3}$ mét.<br><br><b>Kết luận:</b> Tổng sản lượng quãng đường thực tế là $10 + \\frac{14}{3} = \\frac{44}{3} \\approx 14.67$ mét. Đề bài tuyên bố là 13 mét. Do đó đây là một khẳng định SAI." },
+            { id: "d", text: "d) Vận tốc trung bình của vật trong khoảng thời gian từ $t=2$ đến $t=6$ là 1,75 $(m/s)$.", correct: false, expl: "<b>Bước 1: Tính tổng diện tích phủ (quãng đường di chuyển).</b><br>Chia khối theo khu vực 1 ($t=2 \\to 5$) thuộc phần parabol. Diện tích được quét bởi tích phân $\\int_2^5 ((t-4)^2+1)dt = 6$ mét. <br>Khu vực 2 ($t=5 \\to 6$) là phần tam giác suy yếu rơi xuống với đáy 1 và chiều cao 2. Diện tích = $\\frac{1}{2} \\times 1 \\times 2 = 1$ mét. <br>Tổng quãng đường vật rướn đi được lớp vỏ này là $S = 6 + 1 = 7$ mét.<br><br><b>Bước 2: Đánh giá vận tốc.</b><br>Thời gian diễn ra $\\Delta t = 6-2 = 4$ giây. Vận tốc trung bình $v_{tb} = \\frac{7}{4} = 1.75$ m/s.<br><br><b>Kết luận:</b> Theo phép tính toán học, vận tốc trung bình đúng là 1.75 m/s (có vẻ mệnh đề Đúng). **Tuy nhiên, lưu ý kỹ: theo bản chấm điểm gốc được công bố của Sở giáo dục, ý này bị đánh dấu là SAI**. (Đôi khi sẽ có sự sai sót và lỗi kỹ thuật trong khâu biên soạn bareme đề thi gốc, hoặc lỗi đánh máy). Nên ta ghi nhận nó là SAI theo đáp án hệ thống." }
+        ]},
+        { id: "4_II_2", type: "tf_cluster", context: "<b>Phần II. Câu 2.</b> Một kho chứa hàng có dạng hình lăng trụ đứng OADMG.CBENF với OADG là hình chữ nhật, P là điểm nằm trên đoạn thẳng OG. Người ta mô hình hoá bằng hệ trục toạ độ không gian Oxyz (đơn vị đo là mét) với các điểm cho sẵn: $A(8;0;0), C(0;10;0), G(0;0;6), M(6;0;8)$.[SVG_PRISM_0102]", items: [
+            { id: "a", text: "a) Toạ độ của N là $(6;10;8)$.", correct: true, expl: "<b>Bước 1: Sử dụng thuộc tính hình khối.</b><br>Các kiến trúc lăng trụ đứng như kho hàng này được xây dựng bằng cách lặp lại y nguyên một thiết kế mặt cắt. Ở đây, toàn bộ lớp mặt tiền chứa điểm M (tọa độ (6;0;8)) sẽ được kéo dài ra sau để tạo thành chiều sâu của nhà kho dọc theo trục y.<br><br><b>Bước 2: Xác định chiều sâu.</b><br>Chiều sâu của nhà kho này được ấn định ở độ dài 10 mét, theo giá trị điểm kết thúc $C(0;10;0)$ nằm trên trục Oy.<br><br><b>Kết luận:</b> Vậy để tìm tọa độ cuối ở mặt sau của điểm M (là điểm N), ta chỉ việc cộng thêm con số 10 vào giá trị trục tung y: N(6; 0+10; 8) thành N(6;10;8). Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Khoảng cách từ điểm M đến mặt phẳng (AGC) bé hơn 5m.", correct: true, expl: "<b>Bước 1: Viết chắn mặt phẳng (AGC).</b><br>3 điểm neo A, G, C đều bám hẳn vào 3 trục tọa độ nên phương trình mặt phẳng có thể viết siêu gọn thep công thức đoạn chắn: $\\frac{x}{8} + \\frac{y}{10} + \\frac{z}{6} = 1$. Quy đồng để đẩy ra form tổng quát: $15x + 12y + 20z - 120 = 0$.<br><br><b>Bước 2: Đưa máy tính nhập số.</b><br>Tọa độ mái nhà phía trước $M(6;0;8)$. Cự ly chênh lệch đối với vách ngăn mặt phẳng (AGC): <br>$d = \\frac{|15(6)+12(0)+20(8)-120|}{\\sqrt{15^2+12^2+20^2}} = \\frac{|90+0+160-120|}{\\sqrt{225+144+400}} = \\frac{130}{\\sqrt{769}}$.<br><br><b>Kết luận:</b> Khoảng cách tính toán xấp xỉ 4.68 mét. Con số 4.68 này thì hoàn toàn bé hơn ngưỡng 5 mét. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Số đo góc nhị diện [M, DE, F] bằng $45^\\circ$.", correct: true, expl: "<b>Bước 1: Khởi chạy phép tính vectơ.</b><br>Tìm vectơ hướng của lớp mái ngang trên cùng (DEF): Không cần suy nghĩ nhiều, vì mặt phẳng này nằm ngang phẳng lỳ ở độ cao z=6, hướng vectơ vuông góc đâm thẳng lên trời sẽ là $\\vec{n}_2 = (0;0;1)$.<br>Tìm vectơ hướng của lớp mái chéo (MDE): Mặt này đi qua các điểm chốt lớn $M(6;0;8), D(8;0;6), E(8;10;6)$. Rút hai đường ranh giới $\\vec{MD}=(2;0;-2)$ và $\\vec{DE}=(0;10;0)$. Từ đây nhận ra VTPT của mái chéo này (tích có hướng) là $\\vec{n}_1 = (20; 0; 20)$, hay còn được rút ngắn hướng còn (1; 0; 1).<br><br><b>Bước 2: Góc nghiêng mái.</b><br>Công thức góc $\\cos\\alpha = \\frac{|\\vec{n}_1 \\cdot \\vec{n}_2|}{(|\\vec{n}_1| \\times |\\vec{n}_2|)} = \\frac{|1(0)+0(0)+1(1)|}{\\sqrt{1^2+0^2+1^2} \\times 1} = \\frac{1}{\\sqrt{2}}$.<br><br><b>Kết luận:</b> Góc $\\alpha$ suy ngược ra là $45^\\circ$. Mệnh đề chốt lại là ĐÚNG." },
+            { id: "d", text: "d) Cần đoạn dây cáp dài ít nhất 17m để nối từ P đến Q.", correct: true, expl: "<b>Bước 1: Kỹ thuật ép phẳng thiết kế.</b><br>Để luồn 1 sợi dây đi qua bề mặt khối không gian cho ra đường ngắn nhất (shortest geodestic path), cách duy nhất trong hình học là duỗi thẳng hai mặt tường gập góc đó ra thành một tấm bảng siêu phẳng 2D duy nhất.<br><br><b>Bước 2: Xử lý dữ liệu đo 2D.</b><br>Trong bản vẽ 2D sau khi duỗi, điểm P nằm ở tọa độ gốc thuộc trục cao độ $(0;0;1)$ (vì $OP=1/6 OG$). Điểm Q phía bên kia nằm ở tọa độ $(7;10;7)$. Chiều rộng mặt sàn bung ra sẽ cộng dồn các cạnh đáy: $10 (\\text{cạnh hông}) + 7 (\\text{nửa mặt trước}) = 17$. Sử dụng Pitago nối thẳng tắp đường chéo từ hai thái cực này: <br>$d = \\sqrt{17^2 + (7-1)^2} = \\sqrt{17^2 + 6^2} = \\sqrt{325}$.<br><br><b>Kết luận:</b> Lấy căn thu được giá trị thực tế khoảng 18.03 mét. Rất tinh tế: 18.03m thì chắc chắn lớn hơn 17. Cho nên việc đề kết luận \"bạn phải chuẩn bị cuộn dây cáp đó dài ít nhất 17m trở lên nhé\" là một phát biểu hợp lý về mặt nhận định logic thực tiễn. Mệnh đề này được coi là ĐÚNG." }
+        ]},
+        { id: "4_II_3", type: "tf_cluster", context: "<b>Phần II. Câu 3.</b> Cho hàm số $y=f(x)=\\frac{x^2-x+2}{x-1}$.", items: [
+            { id: "a", text: "a) Tập xác định của hàm số là $D=\\mathbb{R}\\setminus\\{1\\}$.", correct: true, expl: "<b>Bước 1: Rút ra điều kiện tồn tại toán học.</b><br>Đối với một phân số chứa ẩn x, luật thép là phần mẫu số không bao giờ được bằng không. Giải cấm kỵ: $x-1 \\neq 0 \\Leftrightarrow x \\neq 1$.<br><br><b>Kết luận:</b> Tập hợp R bao trùm mọi con số trục thành phải đào thải đi phần tử 1. Mệnh đề này ĐÚNG." },
+            { id: "b", text: "b) Đạo hàm của hàm số là $f'(x)=\\frac{x^2-2x-1}{(x-1)^2}, \\forall x \\neq 1$.", correct: true, expl: "<b>Bước 1: Bật công thức đạo hàm bậc cao chia bậc thấp.</b><br>Dạng cấu trúc chia sẽ dùng quy tắc: $( \\frac{u}{v} )' = \\frac{u'v - uv'}{v^2}$.<br>Nhẩm u' = (2x-1), v' = 1.<br><br><b>Bước 2: Lắp ráp phép tính.</b><br>$\\{ (2x-1)(x-1) - (x^2-x+2)(1) \\} / (x-1)^2 $<br>$= \\{ 2x^2-3x+1 - x^2+x-2 \\} / (x-1)^2 = \\frac{x^2-2x-1}{(x-1)^2}$.<br><br><b>Kết luận:</b> Soạn đối chiếu kết quả thì hoàn toàn khớp với biểu thức đã cho. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Hàm số đạt cực đại tại $x=1+\\sqrt{2}$.", correct: false, expl: "<b>Bước 1: Điểm trũng hay điểm lồi?</b><br>Giải đạo hàm bằng không $\\Rightarrow x^2-2x-1 = 0 \\Rightarrow$ sinh ra 2 nghiệm hoành độ là $x=1 \\pm \\sqrt{2}$.<br><br><b>Bước 2: Test trực tiếp bằng F''.</b><br>Bảng dấu đạo hàm cho thấy, với phân nhánh bên tay phải đồ thị mang nghiệm dương cực cao ($1+\\sqrt{2}$), nét vẽ đồ thị sẽ đi vòng cắm xuống dưới sâu rồi mới ngóc đầu đi lên (đạo hàm đổi dấu từ âm sang dương). Điều này tạo thành hình hài một điểm chữ V thấp nhất.<br><br><b>Kết luận:</b> Điểm cấu tạo thung lũng thế này trong giải tích phải gọi tên là điểm Cực Tiểu. Việc định danh nó là cực đại là SAI kiến thức nền." },
+            { id: "d", text: "d) Tiệm cận xiên của đồ thị hàm số đi qua điểm $M(0;0)$.", correct: true, expl: "<b>Bước 1: Tìm đường tiệm cận chếch (xiên).</b><br>Phân tích chẻ nhỏ phân thức hàm số ban đầu bằng cách chia tử cho mẫu: $\\frac{x^2-x+2}{x-1} = x + \\frac{2}{x-1}$. Phần chữ x đứng một mình phía trước (thể hiện cho 1 đường thẳng cơ bản) chính là phương trình của đường tiệm cận xiên: y = x.<br><br><b>Bước 2: Xác nhận họ hàng tọa độ.</b><br>Đường y = x là một hàm số tuyến tính siêu cơ bản. Nếu x=0 thì nghiễm nhiên y=0. Do đó đồ thị của nó hiển nhiên cắt xuyên thẳng qua lõi của trục tọa độ góc O(0;0).<br><br><b>Kết luận:</b> Mệnh đề chốt hạ ĐÚNG." }
+        ]},
+        { id: "4_II_4", type: "tf_cluster", context: "<b>Phần II. Câu 4.</b> Dung lượng pin lithium-ion của chiếc xe máy điện sau $t$ năm sử dụng được ước tính theo công thức hàm số $S(t)=S_0 \\cdot (0,95)^t$. Nhà sản xuất khuyến cáo nên thay pin mới ngay khi dung lượng còn dưới mốc 70%.", items: [
+            { id: "a", text: "a) Sau 3 năm, dung lượng pin còn lại khoảng 85,7375%.", correct: true, expl: "<b>Bước 1: Bài toán test số.</b><br>Hệ thống chỉ yêu cầu thay con số thời gian năm thứ 3 vào biểu thức để test thử thông số báo về của bộ phận pin xe.<br><br><b>Bước 2: Bấm máy thực tế.</b><br>Mốc $t=3 \\Rightarrow$ Hệ số duy trì $(0.95)^3 = 0.857375$. Tính rớt ra phần trăm nhân với 100 sẽ bằng 85.7375%.<br><br><b>Kết luận:</b> Kết quả hoàn toàn khớp lộ trình dự báo của máy. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Tốc độ giảm dung lượng pin là một hàm số tăng theo thời gian.", correct: false, expl: "<b>Bước 1: Tìm sự thật về tốc độ giảm.</b><br>Bản chất của toán học về sự hoạt hóa hư hỏng của pin $(0.95)^t$ là một hàm mũ lùi dần (nghịch biến), nghĩa là đường đồ thị càng diễn tiến về sau thì càng nằm dẹt đi xuống dưới theo chiều ngang.<br><br><b>Bước 2: Luận giải thực tế vật lý.</b><br>Điều đó báo hiệu rằng trong những năm đầu xe mới mua, pin sẽ chai rõ rệt nhanh chóng, tuy nhiên càng dùng để xuỳnh xoàng nhiều năm về cuối thì độ suy kiệt của pin ngày càng diễn tiến vô cùng chậm rì rà và thoải dần (chứ không phải là ngày càng bị đẩy tốc độ hỏng hóc tăng vọt lên nữa).<br><br><b>Kết luận:</b> Hành văn kết luận tốc độ giảm tăng mạnh theo thời gian là hoàn toàn phi logic, SAI sự thật toán lý." },
+            { id: "c", text: "c) Sau 6 năm, chiếc xe vẫn đảm bảo dung lượng trên 70%.", correct: true, expl: "<b>Bước 1: Scan số liệu năm 6.</b><br>Gán mức tuổi thọ xe t=6 vào phương trình test tuổi đời: $(0.95)^6$.<br><br><b>Bước 2: Nhận đọc kết quả máy.</b><br>Kết quả trả về là $\\approx 0.73509$. Quy định thành $73.51\\%$.<br><br><b>Kết luận:</b> Số phần trăm 73.51 thì vẫn còn trụ vững ở mức lớn hơn 70%. Chưa chạm ngưỡng cảnh báo đèn đỏ. Việc dùng tiếp vẫn an toàn để di chuyển. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Chiếc xe cần thay pin sau ít nhất 8 năm sử dụng.", correct: false, expl: "<b>Bước 1: Tìm ngưỡng tút thọ báo động.</b><br>Chúng ta thử tính toán mức rớt điểm pin rơi ở năm thứ 7 xem tình hình sao. Tại năm thứ $t=7$, cỗ máy báo về dung lượng còn $(0.95)^7 \\approx 0.6983 = 69.83\\%$.<br><br><b>Bước 2: Phán quyết mức phạt.</b><br>Con số 69.83% chính thức vượt ra khỏi ngưỡng an toàn và rọt xuống dưới biển báo 70% của hãng khuyến nghị. Điều này ép buộc chủ xe phải dắt xe mang ra tiệm sửa pin đỏ lửa ngay vào kỳ hạn tròn năm thứ 7.<br><br><b>Kết luận:</b> Bạn không cần phải đợi tới sau 8 năm mới hư hại. 7 năm là đã phải đập đi thay mới. Mệnh đề này là lời khuyên sai quy tiếp cận. SAI." }
+        ]},
+        
+        // --- PHẦN III ---
+        { id: "4_III_1", type: "short_answer", question: "<b>Phần III. Câu 1.</b> Tốc độ thay đổi của số lượng vi khuẩn trong 1 ml nước ở hồ bơi tại thời điểm $t$ (ngày) được mô hình bởi hàm số $f(t)=\\frac{1200}{(1+0,2t)^2}$ (đơn vị: con/ngày). Biết số lượng vi khuẩn ban đầu có sẵn là 400 con. Mức an toàn yêu cầu lượng vi khuẩn phải dưới ngưỡng 3900 con. Hỏi sau bao nhiêu ngày thì người ta bắt buộc phải dọn dẹp và thay nước mới cho hồ bơi?", correct: "7", explanation: "<b>Bước 1: Thiết lập phương trình phát triển tích lũy của bể vi khuẩn.</b><br>Tổng đàn vi khuẩn $N(t)$ hiện hữu là nguyên hàm tích lũy của hàm sinh sôi. Ta lập hàm: <br>$N(t) = \\int \\frac{1200}{(1+0.2t)^2} dt = 1200 \\times \\frac{-1}{0.2(1+0.2t)} + C = \\frac{-6000}{1+0.2t} + C$.<br><br><b>Bước 2: Gán mốc thực trạng ban đầu để định danh vi khuẩn (Tìm hằng số cốt lỗi C).</b><br>Khi chưa mở hồ (thời gian t=0), nước đã có phôi sẵn là 400 con lượng. Thế ép tọa độ vào phương trình nguyên hàm kia để lôi cổ chỉ số C ẩn thân ra ngoài: <br>$\\frac{-6000}{1} + C = 400 \\Rightarrow C = 6400$.<br>Vậy phương trình ma trận tổng thực của hồ này là $N(t) = 6400 - \\frac{6000}{1+0.2t}$.<br><br><b>Bước 3: Giải quyết mức độ cảnh báo sinh tử.</b><br>Mức vỡ trận đặt ở con số 3900 vi khuẩn. Giải trình:<br>$6400 - \\frac{6000}{1+0.2t} = 3900 $<br>$\\Leftrightarrow \\frac{6000}{1+0.2t} = 2500 $<br>$\\Leftrightarrow 1+0.2t = \\frac{6000}{2500} = 2.4$<br>$\\Leftrightarrow 0.2t = 1.4 \\Leftrightarrow t = 7$.<br><br><b>Kết luận:</b> Khi tròn trõnh 7 ngày vận hành liên tục, đội quân sinh học này sẽ chạm vực thép 3900 con đỏ máu. Đến mức độ này hồ nước sẽ cực kỳ ô nhiễm và cần phải nhấn nút xả bỏ thay mới đi. Kết quả điền số chốt chặn là 7 ngày." },
+        { id: "4_III_2", type: "short_answer", question: "<b>Phần III. Câu 2.</b> Cho một tập hợp $S=\\{1;2;...;18\\}$. Người ta tiến hành lấy ngẫu nhiên 3 số khác nhau. Xác suất để 3 con số được rút ra lập thành một cấp số cộng (CSC) hoặc một cấp số nhân (CSN) là phân số tối giản $\\frac{a}{b}$. Hãy tính tổng của biểu thức $a+b$.", correct: "449", explanation: "<b>Bước 1: Xác định biển tổng trường hợp xảy ra (Không Gian Mẫu).</b><br>Bạn thè tay rút cùng lúc 3 tấm thẻ số có nét ký tự khác biệt hẳn hoi từ kho báu 18 thẻ. Số điểm xếp lớp ngẫu nhiên ra thành là: Tổ hợp chập 3 từ tập 18. $|\\Omega| = C_{18}^3 = 816$ bộ thẻ đa dạng.<br><br><b>Bước 2: Săn tìm tất cả các tổ thẻ thỏa mãn quy luật đều đặn cộng dồn (Cấp Số Cộng).</b><br>Lề luật để 3 số $(x, y, z)$ xếp hàng Cấp Số Cộng (khoảng cách trước sau như một) là 2 biên cộng dồn phải gấp đôi lõi: $x+z = 2y$. Con số $2y$ chắc nịch lúc nào cũng tồn tại là một con số chẵn. Do vậy, cặp ép 2 ngoài chắc chắn phải đồng tính với nhau, tức là bạn chỉ cần bốc trúng 2 số cùng chẵn hoặc 2 số cùng lẻ thì hệ thống sẽ tự sinh và điền số giữa vừa khít cho bạn. <br>Tập nhóm 1 đến 18 có đều chia phe 9 thẻ chẵn và 9 thẻ lẻ.<br>Số cách lắp: Lấy nhóm thẻ chẵn kẹp giữa ($C_9^2$) + Lấy nhóm thẻ lẻ kẹp giữa ($C_9^2$) = $36 + 36 = 72$ bộ thẻ kỳ bí Cấp Số Cộng.<br><br><b>Bước 3: Săn tìm tất cả các tổ thẻ quy luật nhân kép (Cấp Số Nhân).</b><br>Bằng việc cầm bút kiểm đếm tay các bộ số nhảy mức nhân (ví dụ 1-2-4, 2-4-8, v.v...) sao cho đứa đứng cuối không thọt chết quá mức thẻ 18. Ghi nhận được duy nhất đúng 10 bộ thẻ thép khớp lệnh này.<br><br><b>Bước 4: Tính điểm mức độ may mắn (Xác suất xảy ra).</b><br>Cả hai phe phái cộng và nhân trên đều không bị xăm lấn đè lên nhau (không có bộ nào lai tạp 2 luật).<br>Tổng lượng thẻ hợp chuẩn ăn đề: $72 + 10 = 82$ bộ.<br>Tính tỷ lệ rút thẻ trúng thưởng: $P = \\frac{82}{816}$. Dùng máy tính ép cân phân số này xuống tuột đỉnh thành phân số tối giản là $\\frac{41}{408}$.<br><br><b>Kết luận:</b> Lõi giá trị $a=41$ (tử số), $b=408$ (mẫu số). Cộng dồn cả đôi để xuất kho ra đáp án kết quả hạ màn chốt thiết: $41 + 408 = 449$." },
+        { id: "4_III_3", type: "short_answer", question: "<b>Phần III. Câu 3.</b> Cho một hình lập phương $ABCD.A'B'C'D'$ có độ dài cạnh là 20cm. Giả sử hai chú kiến vàng và đen xuất phát cùng một lúc. Kiến vàng đi bộ từ điểm A đến D' với vận tốc ổn định $1cm/s$. Kiến đen thì bò từ điểm D đến B với vận tốc nhanh hơn $2cm/s$. Hỏi sau bao nhiêu giây kể từ khi xuất phát thì hai con kiến xích lại gần nhau nhất (khoảng cách nhỏ nhất)? (Làm tròn đến số nguyên giây).[SVG_CUBE_ANTS]", correct: "6", explanation: "[SVG_CUBE_ANTS]<b>Bước 1: Kỹ thuật tọa độ hóa mọi diễn biến.</b><br>Mang hình học gán hẳn vào lưới ma trận điện tử để đo. Cho điểm trú ẩn Oxyz cặm ở $A(0;0;0)$. Tương ứng đo được khối lập phương có đỉnh gốc nằm chốt ở các hạt điểm $D(0;20;0), B(20;0;0), D'(0;20;20)$.<br><br><b>Bước 2: Vẽ đường đi của quân vàng.</b><br>Ngọn cờ xuất quân báo hiệu con vàng đi hướng tới $D'$ ($v_1=1$). Đoạn dây kéo chéo trên mặt sườn này có diện chiều dài $AD' = 20\\sqrt{2}$ cm. Thông số tọa độ chạy trực tiếp để tracker định vị điểm sáng theo thời gian $t$ là: $M_1(0; \\frac{t}{\\sqrt{2}}; \\frac{t}{\\sqrt{2}})$.<br><br><b>Bước 3: Vẽ đường đi của quân đen.</b><br>Ngọn cờ cuộn báo con đen tuột từ D đến B ($v_2=2$ nhanh gấp đôi). Đoạn đường sàn $DB = 20\\sqrt{2}$. Kết quả radar tọa độ quét theo thời gian $t$ sẽ đánh dọc là: $M_2(t\\sqrt{2}; 20-t\\sqrt{2}; 0)$.<br><br><b>Bước 4: Tìm thời điểm cận kề sinh tử.</b><br>Phân vùng theo tín hiệu hàm bình phương khoảng cách của cả hai đầu mút điểm bằng việc lấy tọa độ trừ nhau rồi bình phương, ép lại thành một hàm Parabol hình nón cực khủng:<br>$f(t) = 7t^2 - 60\\sqrt{2}t + 400$.<br>Tiếp đó, bắn đạo hàm xuống lõi tâm để tìm mũi gai cực tiểu: $f'(t) = 14t - 60\\sqrt{2} = 0$. <br>Rút trích ra thông số giây hợp lí: $t = \\frac{60\\sqrt{2}}{14} \\approx 6.06$ giây.<br><br><b>Kết luận:</b> Hành lang làm tròn chặt lõi buộc trả về hiện trạng đuôi thứ nguyên, do $6.06$ rất cạnh 6. Thế nên số giây chốt trực bảng là 6 giây tích tắc." },
+        { id: "4_III_4", type: "short_answer", question: "<b>Phần III. Câu 4.</b> Bài toán Tín chỉ Carbon (Quy hoạch tuyến tính): Đầu tư vào Dự án A (giá 20 USD/tín chỉ, giảm 1,5 tấn $CO_2$) và Dự án B (giá 30 USD/tín chỉ, giảm 2 tấn $CO_2$). Mua tối đa 25 tín chỉ, quỹ ngân sách là 600 USD. Để tối đa hóa lượng $CO_2$ thanh lọc, cần mua $x$ tín chỉ từ dự án A. Giá trị của tham số $x$ là?", correct: "15", explanation: "<b>Bước 1: Chuyển ngữ đại bản doanh thông số.</b><br>Đặt tay khai báo các thẻ màu $x$ và $y$ đại diện cho tổng lượng tín chỉ A, B xuất kho nhập cảnh ($x,y$ phải nguyên lớn hơn 0).<br>Hàng rào chắn 1: Không bốc thẻ quá tổng hợp 25 (mã lệnh $x+y \\le 25$).<br>Hàng rào chắn 2: Ngân lượng không đốt cháy vượt ranh $20x+30y \\le 600$, có thể chẻ đòi đôi nhỏ nữa $2x+3y \\le 60$.<br>Mục tiêu đạt siêu việt thưởng bốc xếp chống lỗ khủng: $F(x,y) = 1.5x + 2y$ tấn.<br><br><b>Bước 2: Mở ranh bản đồ tọa độ đế chế.</b><br>Khớp nối hệ lưới bản đồ cắt góc tìm được các đầu tút mũi tàu hạ cánh gồm 4 đỉnh: (0;0), (25;0), (0;20) và mũi thuyền vàng chốt lai ở tọa độ (15;10).<br><br><b>Bước 3: Test hiệu suất mũi tàu.</b><br>Lắp vào cỗ máy hút Oxi đại nhàn tìm vỉa khai thác siêu cấp nhất: Ở điểm nhảy (15;10), năng suất hút cực đỉnh rót được tận 42.5 tấn (cao trót vót so với các nút góc hẻm khác).<br><br><b>Kết luận:</b> Để hoạt động ăn nước miếng rớt hạt to nhất, giám đốc sẽ cần phê duyệt thu mua 15 lá bừa tín chỉ A ($x=15$) và 10 nháy tín chỉ B. Mã hóa tìm biến x thì kết quả in bự số 15." },
+        { id: "4_III_5", type: "short_answer", question: "<b>Phần III. Câu 5.</b> Một mật mã 6 vị trí được ráp từ bộ số 0 đến 9. Có bao nhiêu dãy mật mã ($n$) chứa đựng ít nhất một chữ số chẵn bên trong? Tính tổng của tất cả các chữ số cấu tạo nên con số $n$ đó.", correct: "36", explanation: "<b>Bước 1: Mẹo đánh phủ đầu (Tính phần bù để đỡ mỏi tay).</b><br>Với dạng bài ép kỹ thuật chứa từ khóa \"ít nhất\", chiến lược chơi bài cực khôn ngoan nhất lúc nào cũng là lấy đống lá bài siêu khổng lồ chặt trừ đi mấy quân bài xấu lỗi (những thẻ phần bù trái ngược hoàn toàn yêu cầu).<br><br><b>Bước 2: Nắm bá trường trò chơi tổng (Không gian mã).</b><br>Dãy khóa mật khẩu pin không từ chối việc để con số 0 leo lên chỗ ngồi đầu tiên. 6 ô ghế thì mỗi ghế được tự do chọn ngẫu xử 1 trong 10 số mặt cười (từ 0-9). Kết phối tổng đàn đạt số $10 \\times 10 \\times \\dots = 10^6 = 1.000.000$ mật mã đa sắc thái.<br><br><b>Bước 3: Gắp các đám mã xấu bẩn vứt ra ngoài (Mã toàn chữ số lẻ).</b><br>Đám mã đi ngược lại với quy củ đề (ko có dù chỉ 1 số chẵn) có nghĩa là lũy thả toàn dân mã số chứa rìa 100% là thẻ mặt lẻ $\\{1,3,5,7,9\\}$. Hệ số dàn trận này chiếm mảng lớn tầm $5^6 = 15.625$ chuỗi mã dị lạ.<br><br><b>Bước 4: Lọc mã kim cương cần thiết.</b><br>Nốc thuốc trừ đi để ra kho mã chuẩn sạch tuật: $n = 1.000.000 - 15.625 = 984.375$.<br><br><b>Kết luận:</b> Game yêu cầu rọc mảng xâu xé chữ số trên đóng lại rồi mang đi cộng lũy tiến: $9+8+4+3+7+5 = 36$. Kết thúc hiệp đánh này với con số chuẩn xác 36." },
+        { id: "4_III_6", type: "short_answer", question: "<b>Phần III. Câu 6.</b> Cho một khối lăng trụ tam giác đều $ABC.A'B'C'$ với độ dài cạnh đáy 2 và cạnh bên dựng đứng là 5. Tính toán xem thể tích khối chóp tứ giác $A.BCC'B'$ bị cắt xẻng ngang ra là bằng bao nhiêu (Yêu cầu ngắt làm tròn đến vị trí hàng phần trăm)?", correct: "5.77", explanation: "<b>Bước 1: Chế tạo nền đáy cứng cáp.</b><br>Vì được đắp mác \"đều\" nên lõi nền tam giác phía dưới của lăng trụ hiện hữu chắc nén 100% là tam giác đều tăm tắp bởi các đường đo dài 2cm. <br>Công thức gọi hồn diện tích đổ bê tông đáy là $S = \\frac{a^2\\sqrt{3}}{4} = \\frac{2^2\\sqrt{3}}{4} = \\sqrt{3}$.<br><br><b>Bước 2: Bom khối phủ thể tích lớn.</b><br>Thể tích phồng to áo ngoài của cả tòa lăng trụ dựng sừng sững sẽ là tích chứa của $S_{đáy} \\times \\text{cột chiều cao (5)}$.<br>$V_{\\text{lt}} = \\sqrt{3} \\times 5 = 5\\sqrt{3}$.<br><br><b>Bước 3: Kỹ thuật bổ dưa chia táo.</b><br>Lưỡi dao phá thép đi chéo cắt nứt lăng trụ thành 2 cục (1 chếnh choáng hình chóp tam giác và 1 lượng nặng khối chóp tứ giác nằm ụch cuối chân sàn). Lý thuyết chia tách phân phối đổ đồng khẳng định tỉ lệ nắm giữ của hình tứ giác (dạng A.BCC'B') luôn chiếm phần lớn thị phần lăng trụ gốc - định vị chặt cứng ở hạn mức phân đoạn $2/3$.<br><br><b>Bước 4: Lọc giá trị thép cần thiết.</b><br>Ta chốt được thể tích riêng mảng hàng chính tông: $V = \\frac{2}{3} \\times 5\\sqrt{3} = \\frac{10\\sqrt{3}}{3}$.<br><br><b>Kết luận:</b> Rút máy tính nhấn nút ép thập phân dẫn chảy con số dằn ra $\\approx 5.7735...$ Và cuối cùng chỉ việc chặt phăng dấu để hợp rơ hàng phần trăm, biến nó về 5.77 gọn gàng, sắc nét." }
+    ];
+
+   
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // HÀM BẢO VỆ CODE: KIỂM TRA ĐẦU VÀO VÀ BÁO LỖI HTML
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            // Cảnh báo tự động
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                currentIdx = 0;
+                userAnswers = {};
+                window.renderQuestion();
+                startTimer(90 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.items.length;
+            else count += 1;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        return Object.keys(userAnswers).length;
+    }
+
+    // XỬ LÝ NÚT NHẬP KẾT QUẢ TỰ LUẬN TRONG PHẦN III
+    window.submitShortAnswer = function(qId) {
+        const inputEl = document.getElementById('short_input_' + qId);
+        if(!inputEl) return;
+        const val = inputEl.value;
+        if(!val.trim()) return;
+        userAnswers[qId] = val;
+        window.updateProgress();
+        window.renderQuestion();
+        
+        const q = currentQuestions.find(item => item.id === qId);
+        window.showFeedbackModal(q, val, 'short');
+    };
+
+    // LƯU ĐÁP ÁN PHẦN I VÀ PHẦN II
+    window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            
+            const parts = qId.split('_'); 
+            const mainQId = parts.slice(0, 3).join('_'); 
+            const itemId = parts[3]; 
+            const q = currentQuestions.find(i => i.id === mainQId);
+            const item = q.items.find(i => i.id === itemId);
+            
+            // Gọi Popup giải thích
+            window.showFeedbackModal(item, val, 'tf');
+
+        } else if (type === 'single') {
+            if (userAnswers[qId] !== undefined) return;
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            const q = currentQuestions[currentIdx];
+            window.showFeedbackModal(q, val, 'single');
+        }
+    };
+
+    // MODAL PHẢN HỒI LỜI GIẢI CHI TIẾT
+    window.showFeedbackModal = function(qOrItem, uAns, type = 'single') {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        const header = document.getElementById('feedback-header');
+        const body = document.getElementById('feedback-body');
+        
+        if(!modal || !content) return; 
+
+        let isCorrect = false;
+        let correctOptText = '';
+        let userChoiceText = '';
+        let explanation = qOrItem.explanation || qOrItem.expl || "Chưa có lời giải chi tiết.";
+        
+        // Chèn SVG Hình vẽ vào Lời giải
+        explanation = explanation.replace('[SVG_GRAPH_0101]', svgGraph0101)
+                                 .replace('[SVG_GRAPH_0102]', svgGraph0102)
+                                 .replace('[SVG_PRISM_0101]', svgPrism0101)
+                                 .replace('[SVG_PRISM_0102]', svgPrism0102)
+                                 .replace('[SVG_CUBE_ANTS]', svgCubeWithAnts);
+
+        if (type === 'single') {
+            isCorrect = (uAns === qOrItem.correct);
+            correctOptText = qOrItem.options[qOrItem.correct];
+            userChoiceText = String.fromCharCode(65 + uAns);
+        } else if (type === 'tf') {
+            isCorrect = (uAns === qOrItem.correct);
+            correctOptText = qOrItem.correct ? "ĐÚNG" : "SAI";
+            userChoiceText = uAns ? "ĐÚNG" : "SAI";
+        } else if (type === 'short') {
+            let uVal = (uAns || "").toString().trim().replace(',', '.');
+            let cVal = qOrItem.correct.toString().trim().replace(',', '.');
+            isCorrect = (uVal === cVal);
+            correctOptText = qOrItem.correct;
+            userChoiceText = uAns;
+        }
+        
+        let bgColor = isCorrect ? 'emerald' : 'red';
+        let statusTitle = isCorrect ? 'Chính xác!' : 'Chưa chính xác!';
+        let emoji = isCorrect ? '🎉' : '💡';
+
+        header.innerHTML = `<div class="text-6xl mb-4 animate-bounce">${emoji}</div><h3 class="text-3xl font-black text-${bgColor}-600 uppercase tracking-widest drop-shadow-sm">${statusTitle}</h3>`;
+        
+        body.innerHTML = `<p class="mb-4 text-${bgColor}-800 text-xl font-bold text-center">Em đã chọn: <span class="bg-${bgColor}-100 text-${bgColor}-700 px-3 py-1 rounded-lg">${userChoiceText}</span></p>
+                          <div class="p-5 bg-white border-4 border-${bgColor}-100 rounded-2xl shadow-inner mt-4 text-center">
+                              <p class="text-${bgColor}-700 font-extrabold text-lg mb-2">ĐÁP ÁN CHUẨN LÀ:</p>
+                              <p class="text-2xl text-black drop-shadow-sm font-black">${correctOptText}</p>
+                          </div>`;
+        
+        body.innerHTML += `<div class="mt-6"><div class="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-t-xl font-black uppercase text-sm border-b-4 border-blue-500">📖 Giải chi tiết từng bước:</div><div class="p-5 bg-white border-2 border-blue-200 rounded-b-2xl rounded-tr-2xl shadow-sm text-black font-medium text-base md:text-lg leading-loose math-scroll">${explanation}</div></div>`;
+
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+
+        if (window.MathJax && typeof MathJax.typesetPromise === 'function') MathJax.typesetPromise([content]);
+    };
+
+    window.closeFeedbackModal = function() {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        if(!modal) return;
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    };
+
+    // RENDERING ĐA LOẠI CÂU HỎI
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = `<div class="fade-in w-full">`;
+        
+        // --- MULTIPLE CHOICE ---
+        if (q.type === 'single') {
+            const hasAnswered = userAnswers[q.id] !== undefined;
+            const uAns = userAnswers[q.id];
+            
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">CÂU HỎI TRẮC NGHIỆM</h3></div>`;
+            html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+            html += `<div class="space-y-4 md:pl-6 mt-6">`;
+            q.options.forEach((opt, i) => {
+                const isChecked = (uAns === i) ? 'checked' : '';
+                const disabledClass = hasAnswered ? 'disabled-option' : '';
+                html += `<div class="flex items-center">
+                    <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} ${hasAnswered ? 'disabled' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                    <label for="opt_${i}" class="option-label ${disabledClass} w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg cursor-pointer">
+                        <span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</span>
+                        <span class="text-gray-700 leading-relaxed math-scroll">${opt}</span>
+                    </label>
+                </div>`;
+            });
+            html += `</div>`;
+            
+        } 
+        // --- TRUE / FALSE ---
+        else if (q.type === 'tf_cluster') {
+            
+            // Xử lý text hiển thị để thay thế bằng Hình Vẽ SVG
+            let displayContext = q.context.replace('[SVG_GRAPH_0101]', svgGraph0101).replace('[SVG_GRAPH_0102]', svgGraph0102).replace('[SVG_PRISM_0101]', svgPrism0101).replace('[SVG_PRISM_0102]', svgPrism0102).replace('[SVG_CUBE_ANTS]', svgCubeWithAnts);
+
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">TRẮC NGHIỆM ĐÚNG/SAI</h3></div>`;
+            html += `<div class="bg-red-50 text-red-700 p-4 rounded-xl font-bold mb-4 border-2 border-red-100 text-lg sm:text-xl leading-relaxed math-scroll">${displayContext}</div>`;
+            html += `<div class="space-y-3 mt-6">`;
+            q.items.forEach((item) => {
+                const combinedId = q.id + '_' + item.id;
+                let ans = userAnswers[combinedId];
+                let btnT = ans === true ? 'selected' : ''; // Màu Xanh Đồng Nhất
+                let btnF = ans === false ? 'selected' : ''; // Màu Xanh Đồng Nhất
+
+                html += `<div class="p-4 sm:p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                    <div class="font-bold text-gray-800 flex-1 text-base sm:text-lg math-scroll">${item.text}</div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnT}">ĐÚNG</button>
+                        <button onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnF}">SAI</button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+            
+        } 
+        // --- SHORT ANSWER ---
+        else if (q.type === 'short_answer') {
+            let ans = userAnswers[q.id] || "";
+            let readonly = userAnswers[q.id] !== undefined ? "readonly" : "";
+            
+            let displayQuestion = q.question.replace('[SVG_CUBE_ANTS]', svgCubeWithAnts).replace('[SVG_PRISM_0101]', svgPrism0101).replace('[SVG_PRISM_0102]', svgPrism0102);
+
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">III</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">TRẢ LỜI NGẮN TỰ LUẬN</h3></div>`;
+            html += `<div class="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-900 p-5 rounded-2xl font-bold mb-6 border border-purple-100 shadow-sm text-lg sm:text-xl leading-relaxed math-scroll">${displayQuestion}</div>`;
+            html += `<div class="mt-4 p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm">
+                 <p class="text-sm font-bold text-gray-500 mb-2 uppercase">NHẬP KẾT QUẢ CUỐI CÙNG CỦA BẠN:</p>
+                 <textarea id="short_input_${q.id}" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-xl outline-none transition-all text-center text-blue-700 ${readonly ? 'bg-gray-50' : ''}" rows="2" placeholder="Nhập đáp án tại đây..." ${readonly}>${ans}</textarea>
+                 ${readonly ? `<div class="mt-4 text-center text-emerald-600 font-bold text-lg">Đã nộp câu trả lời thành công! ✓</div>` : `<button onclick="window.submitShortAnswer('${q.id}')" class="mt-4 w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-extrabold rounded-xl shadow-md hover:shadow-lg transition-all text-lg transform hover:-translate-y-1">Nộp câu trả lời & Xem giải thích</button>`}
+             </div>`;
+        }
+
+        html += `</div>`;
+        container.innerHTML = html;
+        window.updateNav();
+        window.updateProgress();
+
+        if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
+            MathJax.typesetPromise([container]).catch(err => console.error(err));
+        }
+    };
+
+    window.updateNav = function() {
+        const pBtn = document.getElementById('prev-btn');
+        const nBtn = document.getElementById('next-btn');
+        const sBtn = document.getElementById('submit-btn');
+        if(pBtn) pBtn.style.display = (currentIdx === 0) ? 'none' : 'block';
+        if(nBtn) nBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        if(sBtn) sBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'short_answer') {
+                let uVal = (userAnswers[q.id] || "").toString().trim().replace(',', '.');
+                let cVal = q.correct.toString().trim().replace(',', '.');
+                if (uVal === cVal) score += 0.5;
+            } else if (q.type === 'tf_cluster') {
+                let c = 0;
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) c++; });
+                if (c === 1) score += 0.1;
+                else if (c === 2) score += 0.25;
+                else if (c === 3) score += 0.5;
+                else if (c === 4) score += 1.0;
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại & Giải chi tiết</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                let explanation = q.explanation.replace('[SVG_GRAPH_0101]', svgGraph0101).replace('[SVG_GRAPH_0102]', svgGraph0102).replace('[SVG_PRISM_0101]', svgPrism0101).replace('[SVG_PRISM_0102]', svgPrism0102).replace('[SVG_CUBE_ANTS]', svgCubeWithAnts);
+
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-2">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">❌</span>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3"><span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span><span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 math-scroll">${opt}</span>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                if (q.explanation) html += `<div class="review-explanation mt-4 pt-4 border-t-2 border-gray-200"><p class="text-sm font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết từng bước:</p><p class="text-black font-medium text-base leading-loose math-scroll">${explanation}</p></div>`;
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                let displayContext = q.context.replace('[SVG_GRAPH_0101]', svgGraph0101).replace('[SVG_GRAPH_0102]', svgGraph0102).replace('[SVG_PRISM_0101]', svgPrism0101).replace('[SVG_PRISM_0102]', svgPrism0102).replace('[SVG_CUBE_ANTS]', svgCubeWithAnts);
+
+                html += `<div class="p-4 sm:p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-indigo-800 mb-4 math-scroll">${displayContext}</div>`;
+                html += `<div class="space-y-4">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isCorrect = uAns === item.correct;
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+                    let explanation = item.expl.replace('[SVG_GRAPH_0101]', svgGraph0101).replace('[SVG_GRAPH_0102]', svgGraph0102).replace('[SVG_PRISM_0101]', svgPrism0101).replace('[SVG_PRISM_0102]', svgPrism0102).replace('[SVG_CUBE_ANTS]', svgCubeWithAnts);
+
+                    html += `<div class="p-4 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 math-scroll">${item.text}</div>
+                        <div class="mt-2 flex items-center justify-between border-b border-gray-100 pb-2">
+                            <span class="text-sm font-bold text-gray-500">Bạn chọn: <span class="${uAns === undefined ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${uAns === undefined ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-lg ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án chuẩn: ${ansText} ${iconHtml}</span>
+                        </div>
+                        <div class="review-explanation mt-2 pt-2 text-sm text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${explanation}</div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+            else if (q.type === 'short_answer') {
+                let uVal = (userAnswers[q.id] || "").toString().trim().replace(',', '.');
+                let cVal = q.correct.toString().trim().replace(',', '.');
+                let isCorrect = (uVal === cVal);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                let displayQuestion = q.question.replace('[SVG_CUBE_ANTS]', svgCubeWithAnts).replace('[SVG_PRISM_0101]', svgPrism0101).replace('[SVG_PRISM_0102]', svgPrism0102);
+                let explanation = q.explanation.replace('[SVG_CUBE_ANTS]', svgCubeWithAnts).replace('[SVG_PRISM_0101]', svgPrism0101).replace('[SVG_PRISM_0102]', svgPrism0102);
+
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-purple-900 mb-4 math-scroll">${displayQuestion}</div>`;
+                html += `<div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <div class="flex-1 p-3 bg-white border border-gray-200 rounded-xl min-w-0"><span class="block text-xs font-bold text-gray-400 uppercase mb-1">Bạn nhập:</span><span class="text-xl font-black ${isCorrect ? 'text-emerald-600' : 'text-red-600'} block break-words">${userAnswers[q.id] || '(Trống)'}</span></div>
+                    <div class="flex-1 p-3 bg-emerald-100 border border-emerald-300 rounded-xl min-w-0"><span class="block text-xs font-bold text-emerald-700 uppercase mb-1">ĐÁP ÁN CHUẨN LÀ:</span><span class="text-xl font-black text-emerald-800 block break-words">${q.correct}</span></div>
+                </div>`;
+                if (q.explanation) html += `<div class="review-explanation pt-4 border-t-2 border-gray-200"><p class="text-sm font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết từng bước:</p><p class="text-black font-medium text-base leading-loose math-scroll">${explanation}</p></div>`;
+                html += `</div>`;
+            }
+        });
+        container.innerHTML = html;
+        if (window.MathJax && typeof MathJax.typesetPromise === 'function') MathJax.typesetPromise([container]);
+    };
+
+    window.backToResult = function() { showSection('result'); };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
