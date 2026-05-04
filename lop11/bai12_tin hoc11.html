@@ -52,7 +52,7 @@
       background-color: #dc2626; border: 4px solid #fbbf24; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       color: white; font-weight: bold; font-size: 1.5rem;
-      position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
+      margin: 0 auto 1rem auto;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
@@ -78,13 +78,18 @@
     .status-doing { background-color: #dbeafe; color: #1d4ed8; animation: pulse 2s ease-in-out infinite; }
     .status-finished { background-color: #d1fae5; color: #047857; }
 
-    /* CSS Cho Bảng Xếp Hạng Mới */
     .table-leaderboard { width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; }
     .table-leaderboard th { background-color: #f97316; color: white; padding: 14px 10px; font-weight: bold; text-align: center; font-size: 16px; }
     .table-leaderboard th:first-child { border-top-left-radius: 12px; }
     .table-leaderboard th:last-child { border-top-right-radius: 12px; }
     .table-leaderboard td { padding: 14px 10px; border-bottom: 1px solid #f3f4f6; text-align: center; font-size: 16px; }
     .table-leaderboard tbody tr:hover { background-color: #f8fafc; }
+
+    .timer-alert {
+      background-color: #fee2e2 !important;
+      color: #dc2626 !important;
+      animation: pulse 1s infinite;
+    }
   </style>
  </head>
  <body>
@@ -92,7 +97,7 @@
     
    <!-- Màn hình 1: Đăng nhập -->
    <main id="loginScreen" class="w-full max-w-[450px] fade-in mt-8">
-    <div class="main-card px-8 pb-8 pt-14">
+    <div class="main-card px-8 pb-8 pt-8">
         <div class="logo-badge">HS</div>
         
         <header class="text-center mb-8">
@@ -138,6 +143,12 @@
                Câu <span id="currentQuestion" class="text-[#0ea5e9]">1</span>/10
            </div>
        </div>
+
+       <!-- ĐỒNG HỒ ĐẾM NGƯỢC -->
+       <div id="timerContainer" class="bg-gray-100 px-4 py-2 rounded-xl text-[20px] font-bold text-gray-700 flex items-center gap-2 border border-gray-200 shadow-sm transition-all duration-300">
+           <i class="fas fa-clock"></i> <span id="countdownTimer">10:00</span>
+       </div>
+
        <div class="text-[24px] font-bold text-red-600 pulse-animation">
            <i class="fas fa-star text-yellow-400"></i> <span id="currentScore">0</span> điểm
        </div>
@@ -160,8 +171,11 @@
 
      <!-- Sidebar: Bảng xếp hạng realtime -->
      <div class="lg:col-span-1 main-card p-6">
-      <h3 class="text-[22px] font-bold text-red-600 mb-4 pb-2 border-b flex items-center">
-          <i class="fas fa-users text-[#0ea5e9] mr-2"></i> Đang Thi 
+      <h3 class="text-[22px] font-bold text-red-600 mb-4 pb-2 border-b flex items-center justify-between">
+          <div class="flex items-center">
+              <i class="fas fa-users text-[#0ea5e9] mr-2"></i> Đang Thi 
+          </div>
+          <span id="activeCount" class="bg-[#0ea5e9] text-white text-[14px] px-3 py-1 rounded-full shadow-sm">0</span>
       </h3>
       <div id="liveLeaderboard" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
        <!-- Live leaderboard render here -->
@@ -185,10 +199,14 @@
          </h2>
      </div>
 
-     <!-- Personal Info (Chỉ hiện khi vừa thi xong) -->
+     <!-- Personal Info (Đã thêm Thứ Hạng cạnh Điểm) -->
      <div id="personalResultInfo" class="hidden mb-8 bg-blue-50 border border-blue-100 rounded-xl p-6 text-center">
-         <h3 class="text-[26px] font-bold text-gray-800 mb-2">Hoàn Thành Bài Thi!</h3>
-         <p class="text-[22px] text-gray-700">Điểm của bạn: <span id="finalScore" class="font-extrabold text-green-600 text-[30px]">0</span></p>
+         <h3 class="text-[26px] font-bold text-gray-800 mb-4" id="finishMessageTitle">Hoàn Thành Bài Thi!</h3>
+         <div class="flex flex-wrap justify-center items-center gap-6 text-[22px] text-gray-700">
+             <p>Điểm của bạn: <span id="finalScore" class="font-extrabold text-green-600 text-[32px]">0</span></p>
+             <span class="text-gray-400 hidden sm:inline-block">|</span>
+             <p>Thứ hạng: <span id="finalRank" class="font-extrabold text-[#f97316] text-[32px]">--</span></p>
+         </div>
      </div>
 
      <!-- Bảng Xếp Hạng -->
@@ -346,7 +364,9 @@
     let allRecords = []; 
     let isProcessingAnswer = false;
 
-    // --- Chức năng chuyển màn hình ---
+    let timerInterval;
+    let timeLimitInSeconds = 10 * 60; // 10 phút
+
     function showScreen(screenId) {
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('quizScreen').classList.add('hidden');
@@ -369,13 +389,18 @@
     }
 
     function goHome() {
+        clearInterval(timerInterval); 
         currentQuestionIndex = 0; 
         score = 0;
+        
+        if(currentPlayer.ref) {
+            currentPlayer.ref.onDisconnect().cancel();
+        }
+
         showScreen('loginScreen');
         document.getElementById('loginForm').reset();
     }
 
-    // --- Helper Format Thời Gian ---
     function formatTime(dateObject) {
         let h = dateObject.getHours().toString().padStart(2, '0');
         let m = dateObject.getMinutes().toString().padStart(2, '0');
@@ -390,7 +415,35 @@
         return `${d}/${m}/${y}`;
     }
 
-    // --- Giao diện Live Leaderboard (Sidebar) ---
+    function startTimer() {
+        clearInterval(timerInterval);
+        let timeRemaining = timeLimitInSeconds;
+        updateTimerDisplay(timeRemaining);
+        
+        const timerContainer = document.getElementById('timerContainer');
+        timerContainer.className = 'bg-gray-100 px-4 py-2 rounded-xl text-[20px] font-bold text-gray-700 flex items-center gap-2 border border-gray-200 shadow-sm transition-all duration-300';
+
+        timerInterval = setInterval(() => {
+            timeRemaining--;
+            updateTimerDisplay(timeRemaining);
+            
+            if (timeRemaining <= 60 && timeRemaining > 0) {
+                timerContainer.classList.add('timer-alert');
+            }
+            
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                finishQuiz(true); 
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay(seconds) {
+        let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        let s = (seconds % 60).toString().padStart(2, '0');
+        document.getElementById('countdownTimer').textContent = `${m}:${s}`;
+    }
+
     function displayLiveLeaderboard() {
       const liveLeaderboard = document.getElementById('liveLeaderboard');
       if (!liveLeaderboard) return;
@@ -399,12 +452,20 @@
       allPlayers.sort((a, b) => b.score - a.score);
       liveLeaderboard.innerHTML = '';
       
+      const doingCount = allPlayers.filter(p => p.status === 'doing').length;
+      const countBadge = document.getElementById('activeCount');
+      if (countBadge) {
+          countBadge.textContent = doingCount;
+          if(doingCount > 0) countBadge.classList.add('pulse-animation');
+          else countBadge.classList.remove('pulse-animation');
+      }
+
       if (allPlayers.length === 0) {
         liveLeaderboard.innerHTML = '<p class="text-center text-gray-400 text-[14px] italic mt-4">Chưa có ai tham gia</p>';
         return;
       }
       
-      allPlayers.slice(0, 15).forEach((player, index) => {
+      allPlayers.forEach((player, index) => {
         const item = document.createElement('div');
         item.className = 'bg-white border rounded-lg p-3 mb-2 shadow-sm flex items-center justify-between transition-transform hover:scale-[1.02]';
         
@@ -431,12 +492,10 @@
       });
     }
 
-    // --- Giao diện Bảng Xếp Hạng Chung Cuộc (Table) ---
     function renderTableLeaderboard() {
         const tbody = document.getElementById('leaderboardTableBody');
         tbody.innerHTML = '';
 
-        // Lọc những người đã thi xong
         const finishedRecords = allRecords.filter(r => r.status === 'finished');
         
         if (finishedRecords.length === 0) {
@@ -444,35 +503,41 @@
             return;
         }
 
-        // Xếp hạng: Ưu tiên Điểm cao, nếu bằng điểm thì ưu tiên Tổng thời gian ngắn hơn
         finishedRecords.sort((a, b) => {
             if (b.score !== a.score) {
-                return b.score - a.score; // Điểm giảm dần
+                return b.score - a.score;
             }
-            return (a.totalSeconds || 0) - (b.totalSeconds || 0); // Thời gian tăng dần
+            return (a.totalSeconds || 0) - (b.totalSeconds || 0); 
         });
+
+        let myCurrentRank = "--";
 
         finishedRecords.forEach((record, index) => {
             let rank = index + 1;
             
-            // Highlight Vị thứ top 3
+            // Tìm rank của user hiện tại
+            if (currentPlayer && currentPlayer.ref && record.id === currentPlayer.ref.key) {
+                myCurrentRank = rank;
+            }
+            
             let rankHtml = `<span class="font-bold text-gray-600">${rank}</span>`;
             if (rank === 1) rankHtml = `<span class="font-extrabold text-[#f97316] text-[18px]">1 🏆</span>`;
             else if (rank === 2) rankHtml = `<span class="font-bold text-gray-500 text-[18px]">2 🥈</span>`;
             else if (rank === 3) rankHtml = `<span class="font-bold text-yellow-600 text-[18px]">3 🥉</span>`;
 
-            // Định dạng điểm (màu xanh lá)
             let scoreHtml = `<span class="font-extrabold text-green-600">${record.score}</span>`;
-
-            // Định dạng tổng thời gian (màu cam)
+            
             let timeHtml = `<span class="font-bold text-orange-600">${record.totalTimeStr || '--'}</span>`;
+            if(record.totalTimeStr === 'Bỏ dở (Thi lại)' || record.totalTimeStr === 'Thoát ngang') {
+                timeHtml = `<span class="font-bold text-red-600">${record.totalTimeStr}</span>`;
+            }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="text-gray-500">#${index + 1}</td>
                 <td class="font-bold text-blue-600">${record.class || ''}</td>
                 <td class="font-semibold text-gray-800 text-left">${record.name || ''}</td>
-                                <td>${rankHtml}</td>
+                <td>${rankHtml}</td>
                 <td>${scoreHtml}</td>
                 <td class="text-gray-600">${record.startTimeStr || '--'}</td>
                 <td class="text-gray-600">${record.endTimeStr || '--'}</td>
@@ -481,9 +546,18 @@
             `;
             tbody.appendChild(tr);
         });
+
+        // Tự động cập nhật thứ hạng ở bảng "Hoàn Thành Bài Thi"
+        const finalRankEl = document.getElementById('finalRank');
+        if (finalRankEl && !document.getElementById('personalResultInfo').classList.contains('hidden')) {
+            let rankDisplayStr = myCurrentRank;
+            if (myCurrentRank === 1) rankDisplayStr = `1 🏆`;
+            else if (myCurrentRank === 2) rankDisplayStr = `2 🥈`;
+            else if (myCurrentRank === 3) rankDisplayStr = `3 🥉`;
+            finalRankEl.innerHTML = rankDisplayStr;
+        }
     }
 
-    // --- Logic Quiz ---
     function displayQuestion() {
       const question = questions[currentQuestionIndex];
       document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
@@ -546,12 +620,17 @@
       if (currentQuestionIndex < questions.length) {
         displayQuestion();
       } else {
-        finishQuiz();
+        finishQuiz(false);
       }
     }
 
-    function finishQuiz() {
-      // Tính toán thời gian kết thúc
+    function finishQuiz(isTimeOut = false) {
+      clearInterval(timerInterval); 
+      
+      if (currentPlayer.ref) {
+          currentPlayer.ref.onDisconnect().cancel();
+      }
+
       let endDate = new Date();
       let endTimeStr = formatTime(endDate);
       let totalSeconds = Math.floor((endDate.getTime() - currentPlayer.startTimeMs) / 1000);
@@ -569,20 +648,49 @@
       
       showScreen('resultScreen');
       document.getElementById('personalResultInfo').classList.remove('hidden');
-      document.getElementById('finalScore').textContent = score;
       
+      const finishTitle = document.getElementById('finishMessageTitle');
+      if(isTimeOut) {
+          finishTitle.textContent = "Hết Thời Gian! Bài Đã Tự Động Nộp.";
+          finishTitle.className = "text-[26px] font-bold text-red-600 mb-3 shake-animation";
+      } else {
+          finishTitle.textContent = "Hoàn Thành Bài Thi!";
+          finishTitle.className = "text-[26px] font-bold text-gray-800 mb-3";
+      }
+
+      document.getElementById('finalScore').textContent = score;
       renderTableLeaderboard();
     }
 
-    // --- Khởi tạo và Lắng nghe sự kiện ---
     document.addEventListener('DOMContentLoaded', () => {
       
       scoresRef.on('value', (snapshot) => {
           const data = snapshot.val();
           allRecords = [];
+          const now = Date.now(); 
+
           if (data) {
               Object.keys(data).forEach(key => {
-                  allRecords.push({ id: key, ...data[key] });
+                  const record = data[key];
+                  const recordTime = record.timestamp || now; 
+                  const elapsedMs = now - recordTime;
+                  
+                  if (elapsedMs > 86400000) {
+                      scoresRef.child(key).remove();
+                  } 
+                  else {
+                      if (record.status === 'doing' && elapsedMs > 900000) {
+                          scoresRef.child(key).update({
+                              status: 'finished',
+                              totalTimeStr: 'Bỏ dở (Thi lại)',
+                              endTimeStr: '--'
+                          });
+                          record.status = 'finished';
+                          record.totalTimeStr = 'Bỏ dở (Thi lại)';
+                      }
+                      
+                      allRecords.push({ id: key, ...record });
+                  }
               });
           }
           
@@ -595,11 +703,31 @@
         const nameInput = document.getElementById('studentName').value;
         const classInput = document.getElementById('studentClass').value;
         
+        allRecords.forEach(record => {
+            if (record.name.toLowerCase().trim() === nameInput.toLowerCase().trim() && 
+                record.class.toLowerCase().trim() === classInput.toLowerCase().trim() && 
+                record.status === 'doing') {
+                scoresRef.child(record.id).update({
+                    status: 'finished',
+                    totalTimeStr: 'Bỏ dở (Thi lại)',
+                    endTimeStr: '--'
+                });
+            }
+        });
+
         let startDate = new Date();
         let startTimeStr = formatTime(startDate);
         let dateStr = formatDate(startDate);
         
         const newPlayerRef = scoresRef.push();
+        
+        newPlayerRef.onDisconnect().update({
+            status: 'finished',
+            endTimeStr: formatTime(new Date()),
+            totalTimeStr: "Thoát ngang", 
+            score: 0 
+        });
+
         newPlayerRef.set({
             name: nameInput,
             class: classInput,
@@ -623,6 +751,7 @@
         
         showScreen('quizScreen');
         displayQuestion();
+        startTimer(); 
       });
       
       document.getElementById('nextButton').addEventListener('click', nextQuestion);
