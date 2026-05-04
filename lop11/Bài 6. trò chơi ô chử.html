@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình Số - Ô Chữ Bí Mật</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 28px; 
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #ffffff; 
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Hoa văn trang trí */
+        .flower {
+            position: absolute;
+            font-size: 54px;
+            opacity: 0.6;
+            z-index: -1;
+            user-select: none;
+        }
+        .f1 { top: 5%; left: 5%; transform: rotate(15deg); }
+        .f2 { top: 15%; right: 8%; transform: rotate(-20deg); }
+        .f3 { bottom: 10%; left: 10%; transform: rotate(45deg); }
+        .f4 { bottom: 20%; right: 5%; transform: rotate(-10deg); }
+        .f5 { top: 45%; left: 2%; transform: rotate(30deg); font-size: 44px;}
+        .f6 { top: 50%; right: 2%; transform: rotate(-15deg); font-size: 64px;}
+
+        h1 {
+            color: red; 
+            font-size: 42px;
+            text-align: center;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .subtext {
+            color: blue; 
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* Cửa sổ Popup Trắc nghiệm */
+        .modal-overlay {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(3px); 
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 750px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            border: 3px solid blue;
+        }
+
+        #question-text {
+            color: red; 
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background-color: #f0f4f8; 
+            color: blue;
+            border: 2px solid blue;
+            padding: 15px;
+            font-size: 26px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: blue;
+            color: white;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 28px;
+            text-align: center;
+            min-height: 40px;
+        }
+
+        .close-btn {
+            margin-top: 20px;
+            background-color: blue;
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            padding: 15px 30px;
+            font-size: 26px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .close-btn:hover {
+            background-color: darkblue;
+        }
+
+        /* Bàn cờ Ô chữ */
+        .crossword-board {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .crossword-row {
+            display: flex;
+            gap: 10px;
+            align-items: center; 
+        }
+
+        .num-btn {
+            width: 50px;
+            height: 50px;
+            background-color: #ffca28; 
+            border: 2px solid #333;
+            border-radius: 12px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 28px;
+            cursor: pointer;
+            color: #333;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            transition: 0.1s;
+            margin-right: 10px; 
+        }
+
+        .num-btn.attempted {
+            background-color: #bdbdbd; 
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .num-btn:active:not(.attempted) {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: blue; 
+            border: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 32px;
+            color: white;
+            box-sizing: border-box;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        .cell.vertical-secret {
+            background-color: red; 
+        }
+
+        .cell.empty {
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .controls {
+            margin-top: 40px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background-color: blue; 
+            color: white;
+            padding: 15px 30px;
+            font-size: 30px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .action-btn:hover {
+            background-color: darkblue;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hoa văn trang trí -->
+    <div class="flower f1">🌸</div>
+    <div class="flower f2">🌺</div>
+    <div class="flower f3">🌼</div>
+    <div class="flower f4">🌸</div>
+    <div class="flower f5">🌺</div>
+    <div class="flower f6">🌼</div>
+
+    <h1>HÀNH TRÌNH SỐ - Ô CHỮ BÍ MẬT</h1>
+    <div class="subtext" id="intro-text">Bấm vào các nút số bên trái để trả lời câu hỏi trắc nghiệm nhé!</div>
+
+    <!-- Cửa sổ nổi Trắc nghiệm -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div id="question-text"></div>
+            <div class="options-grid" id="options-container"></div>
+            <div id="feedback"></div>
+            <button class="close-btn" onclick="closeModal()">Trở về</button>
+        </div>
+    </div>
+
+    <!-- Bảng Ô chữ -->
+    <div class="crossword-board" id="board"></div>
+
+    <div class="controls">
+        <button class="action-btn" onclick="revealSecretWord()">Mở Khóa Ô Chữ Bí Mật</button>
+        <button class="action-btn" onclick="resetGame()" style="background-color: #ff9800;">Chơi Lại</button>
+    </div>
+
+    <script>
+        const puzzleData = [
+            { 
+                word: "TAILEN", startCol: 4, 
+                question: "Câu 1: Đưa một tệp tin từ máy tính cá nhân lên mạng gọi là gì? (6 chữ cái)",
+                options: ["A. LƯU TRỮ", "B. TẢI LÊN", "C. ĐỒNG BỘ", "D. GỬI LÊN"],
+                answer: 1, attempted: false
+            },
+            { 
+                word: "INTERNET", startCol: 1, 
+                question: "Câu 2: Mạng toàn cầu giúp chúng ta sử dụng các dịch vụ trực tuyến gọi là gì? (8 chữ cái)",
+                options: ["A. INTERNET", "B. ETHERNET", "C. INTRANET", "D. EXTRANET"],
+                answer: 0, attempted: false
+            },
+            { 
+                word: "DROPBOX", startCol: 1, 
+                question: "Câu 3: Dịch vụ lưu trữ nào có biểu tượng hình chiếc hộp màu xanh? (7 chữ cái)",
+                options: ["A. ONEDISK", "B. ICLOUDS", "C. DROPBOX", "D. 4SHARED"],
+                answer: 2, attempted: false
+            },
+            { 
+                word: "TRUCTUYEN", startCol: 0, 
+                question: "Câu 4: Khi dùng dịch vụ lưu trữ đám mây, máy tính cần kết nối mạng. Ta gọi đó là làm việc...? (9 chữ cái)",
+                options: ["A. MẠNG NỘI BỘ", "B. THIẾT BỊ SỐ", "C. PHẦN MỀM PC", "D. TRỰC TUYẾN"],
+                answer: 3, attempted: false
+            },
+            { 
+                word: "CHIASE", startCol: 2, 
+                question: "Câu 5: Tính năng cho phép nhiều người cùng xem hoặc sửa chung một tệp tin là gì? (6 chữ cái)",
+                options: ["A. BẢO MẬT", "B. CHIA SẺ", "C. TẢI VỀ", "D. GỬI TIN"],
+                answer: 1, attempted: false
+            },
+            { 
+                word: "ONEDRIVE", startCol: 3, 
+                question: "Câu 6: Tên dịch vụ lưu trữ đám mây của hãng Microsoft là gì? (8 chữ cái)",
+                options: ["A. MEDIABOX", "B. DROPBOXS", "C. ONEDRIVE", "D. MACCLOUD"],
+                answer: 2, attempted: false
+            },
+            { 
+                word: "DAMMAY", startCol: 2, 
+                question: "Câu 7: Thuật ngữ quen thuộc dùng để chỉ không gian lưu trữ trực tuyến là 'Lưu trữ...' gì? (6 chữ cái)",
+                options: ["A. ĐÁM MÂY", "B. MÁY CHỦ", "C. FLOPPY", "D. BĂNG TỪ"],
+                answer: 0, attempted: false
+            },
+            { 
+                word: "TAIXUONG", startCol: 3, 
+                question: "Câu 8: Thao tác lấy một tệp tin từ trên mạng lưu về máy tính của mình gọi là gì? (8 chữ cái)",
+                options: ["A. ĐĂNG XUẤT", "B. SAO CHÉP", "C. ĐỒNG BỘ", "D. TẢI XUỐNG"],
+                answer: 3, attempted: false
+            },
+            { 
+                word: "LIENKET", startCol: 1, 
+                question: "Câu 9: Bạn thường gửi đường gì (link) cho bạn bè để rủ họ vào xem chung tài liệu? (7 chữ cái)",
+                options: ["A. MẬT KHẨU", "B. TÀI LIỆU", "C. LIÊN KẾT", "D. WEBSITE"],
+                answer: 2, attempted: false
+            },
+            { 
+                word: "GOOGLE", startCol: 1, 
+                question: "Câu 10: Tên 'ông lớn' công nghệ sở hữu dịch vụ lưu trữ Drive rất quen thuộc với chúng ta? (6 chữ cái)",
+                options: ["A. AMAZON", "B. GOOGLE", "C. ORACLE", "D. GITHUB"],
+                answer: 1, attempted: false
+            }
+        ];
+
+        let currentRowIndex = -1;
+
+        function initializeGame() {
+            const board = document.getElementById("board");
+            board.innerHTML = "";
+
+            for (let row = 0; row < 10; row++) {
+                const rowDiv = document.createElement("div");
+                rowDiv.className = "crossword-row";
+
+                const numBtn = document.createElement("div");
+                numBtn.className = "num-btn";
+                numBtn.id = `num-btn-${row}`;
+                numBtn.innerText = row + 1;
+                numBtn.onclick = () => showMCQ(row);
+                rowDiv.appendChild(numBtn);
+
+                const data = puzzleData[row];
+                for (let col = 0; col < 11; col++) {
+                    const cell = document.createElement("div");
+                    if (col >= data.startCol && col < data.startCol + data.word.length) {
+                        cell.className = "cell";
+                        if (col === 4) cell.classList.add("vertical-secret"); 
+                        
+                        cell.dataset.letter = data.word[col - data.startCol];
+                        cell.id = `cell-${row}-${col}`;
+                    } else {
+                        cell.className = "cell empty";
+                    }
+                    rowDiv.appendChild(cell);
+                }
+                
+                board.appendChild(rowDiv);
+            }
+        }
+
+        function showMCQ(rowIndex) {
+            const data = puzzleData[rowIndex];
+            
+            if (data.attempted) {
+                alert("Câu này bạn đã trả lời rồi, không được mở lại đâu nhé!");
+                return;
+            }
+
+            currentRowIndex = rowIndex;
+            
+            document.getElementById("modal-overlay").style.display = "flex";
+            document.getElementById("feedback").innerText = "";
+            document.getElementById("question-text").innerText = data.question;
+            
+            const optionsContainer = document.getElementById("options-container");
+            optionsContainer.innerHTML = "";
+            
+            data.options.forEach((opt, index) => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function closeModal() {
+            document.getElementById("modal-overlay").style.display = "none";
+        }
+
+        function checkAnswer(selectedIndex, clickedBtn) {
+            const data = puzzleData[currentRowIndex];
+            const feedbackBox = document.getElementById("feedback");
+            const allOptionBtns = document.querySelectorAll(".option-btn");
+            const numBtn = document.getElementById(`num-btn-${currentRowIndex}`);
+
+            data.attempted = true;
+            numBtn.classList.add("attempted"); 
+
+            allOptionBtns.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === data.answer) {
+                feedbackBox.style.color = "green";
+                feedbackBox.innerText = "🎉 Trả lời ĐÚNG! Hãy bấm nút 'Trở về' để xem kết quả lật mở.";
+                revealRow(currentRowIndex);
+            } else {
+                feedbackBox.style.color = "red";
+                feedbackBox.innerText = "❌ Sai rồi! Bạn đã mất lượt ở câu này. Hãy bấm 'Trở về'.";
+            }
+        }
+
+        function revealRow(rowIndex) {
+            const data = puzzleData[rowIndex];
+            for (let col = data.startCol; col < data.startCol + data.word.length; col++) {
+                const cell = document.getElementById(`cell-${rowIndex}-${col}`);
+                if (cell) cell.innerText = cell.dataset.letter;
+            }
+        }
+
+        function revealSecretWord() {
+            for (let row = 0; row < 10; row++) {
+                const secretCell = document.getElementById(`cell-${row}-4`);
+                if(secretCell) secretCell.innerText = secretCell.dataset.letter;
+            }
+            document.getElementById("intro-text").innerText = "TỪ KHÓA BÍ MẬT CHÍNH LÀ: TỆP TIN MẠNG";
+        }
+
+        // Hàm đặt lại trạng thái trò chơi
+        function resetGame() {
+            // Xóa trạng thái đã trả lời
+            puzzleData.forEach(data => data.attempted = false);
+
+            // Cập nhật lại giao diện lưới
+            for (let row = 0; row < 10; row++) {
+                // Đặt lại màu nút số
+                const numBtn = document.getElementById(`num-btn-${row}`);
+                if (numBtn) numBtn.classList.remove("attempted");
+
+                // Xóa chữ trong các ô
+                const data = puzzleData[row];
+                for (let col = data.startCol; col < data.startCol + data.word.length; col++) {
+                    const cell = document.getElementById(`cell-${row}-${col}`);
+                    if (cell) cell.innerText = "";
+                }
+            }
+
+            // Đặt lại lời chào ban đầu
+            document.getElementById("intro-text").innerText = "Bấm vào các nút số bên trái để trả lời câu hỏi trắc nghiệm nhé!";
+            
+            // Cuộn mượt mà lên đầu trang
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        initializeGame();
+    </script>
+</body>
+</html>
