@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình Số - Lật Mảnh Ghép</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px 0; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f7f6; 
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px; 
+            margin-bottom: 5px;
+            flex-wrap: wrap;
+            padding: 0 10px;
+        }
+
+        .logo-hs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 65px; 
+            height: 65px;
+            border-radius: 50%;
+            border: 3px solid #facc15; 
+            background-color: red; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .logo-hs span {
+            color: white;
+            font-weight: 900;
+            font-size: 28px;
+            letter-spacing: -1px;
+        }
+
+        h1 {
+            color: red; 
+            font-size: 38px;
+            text-align: center;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .subtext {
+            color: blue; 
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        /* KHU VỰC BỨC TRANH VÀ MẢNH GHÉP */
+        .game-area {
+            position: relative;
+            width: 90%;
+            max-width: 900px;
+            aspect-ratio: 16 / 9; /* Tỉ lệ khung hình bức tranh */
+            background-color: #ccc;
+            border: 5px solid blue;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+.secret-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Gọi ảnh từ thư mục Anh1 ra */
+            background-image: url('Anh1/bai9.tin11.png'); 
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+       
+
+        /* Lưới 10 mảnh ghép (5 cột x 2 hàng) */
+        .puzzle-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            z-index: 2; /* Nằm trên bức tranh */
+        }
+
+        .puzzle-piece {
+            background-color: #ff9800; /* Màu cam */
+            border: 2px solid white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .puzzle-piece:hover {
+            background-color: #f57c00;
+        }
+
+        .puzzle-piece.hidden {
+            opacity: 0;
+            pointer-events: none; /* Không bấm được nữa khi đã lật */
+            transform: scale(0.8);
+        }
+
+        /* Bảng thông báo (Alert) */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .alert-overlay {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); 
+            z-index: 10000; 
+            justify-content: center;
+            align-items: center;
+        }
+
+        .alert-content {
+            background-color: white;
+            padding: 30px 20px;
+            border-radius: 15px;
+            max-width: 450px;
+            width: 85%;
+            text-align: center;
+            border: 4px solid #ff9800;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: popIn 0.3s ease-out;
+        }
+
+        .alert-icon { font-size: 50px; margin-bottom: 10px; }
+
+        #alert-message {
+            color: #d32f2f;
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .alert-close-btn {
+            background-color: #ff9800;
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            padding: 12px 30px;
+            font-size: 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            -webkit-appearance: none;
+        }
+
+        /* Modal Câu hỏi Trắc nghiệm */
+        .modal-overlay {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); 
+            z-index: 9999; 
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 750px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 3px solid blue;
+            max-height: 90vh;
+            overflow-y: auto; 
+            animation: popIn 0.3s ease-out;
+        }
+
+        #question-text {
+            color: red; 
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background-color: #f0f4f8; 
+            color: blue;
+            border: 2px solid blue;
+            padding: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-appearance: none; 
+        }
+
+        .option-btn:hover:not(.locked) {
+            background-color: blue;
+            color: white;
+        }
+
+        .option-btn.locked { pointer-events: none; }
+        .option-btn.locked:not(.correct-choice):not(.wrong-choice) { opacity: 0.4; }
+
+        .option-btn.correct-choice {
+            background-color: #4caf50 !important; 
+            color: white !important;
+            border: 3px solid #1b5e20 !important;
+            opacity: 1 !important;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+        }
+
+        .option-btn.wrong-choice {
+            background-color: #f44336 !important; 
+            color: white !important;
+            border: 3px solid #b71c1c !important;
+            opacity: 1 !important;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 28px;
+            min-height: 40px;
+        }
+
+        .close-btn {
+            margin-top: 20px;
+            background-color: blue;
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            padding: 15px 30px;
+            font-size: 26px;
+            border-radius: 8px;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 28px; }
+            .subtext { font-size: 20px; }
+            .options-grid { grid-template-columns: 1fr; }
+            #question-text { font-size: 24px; }
+            .option-btn { font-size: 20px; padding: 12px; }
+            .puzzle-piece { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header-wrapper">
+        <div class="logo-hs"><span>HS</span></div>
+        <h1>BÀI 9: GIAO TIẾP AN TOÀN TRÊN INTERNET</h1>
+    </div>
+    
+    <div class="subtext" id="intro-text">Chọn một mảnh ghép để trả lời câu hỏi và khám phá bức tranh!</div>
+
+    <!-- Khu vực Trò chơi -->
+    <div class="game-area">
+        <div class="secret-image"></div>
+        <div class="puzzle-grid" id="puzzle-grid">
+            <!-- JavaScript sẽ tạo 10 mảnh ghép ở đây -->
+        </div>
+    </div>
+
+    <!-- Alert tuỳ chỉnh -->
+    <div class="alert-overlay" id="custom-alert-overlay">
+        <div class="alert-content">
+            <div class="alert-icon">⚠️</div>
+            <div id="alert-message">Nội dung thông báo</div>
+            <button type="button" class="alert-close-btn" onclick="closeCustomAlert()">Đã hiểu</button>
+        </div>
+    </div>
+
+    <!-- Modal Trắc nghiệm -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div id="question-text"></div>
+            <div class="options-grid" id="options-container"></div>
+            <div id="feedback"></div>
+            <button type="button" class="close-btn" id="modal-close-btn" onclick="closeModal()">Đóng</button>
+        </div>
+    </div>
+
+    <script>
+        // Danh sách 10 câu hỏi (5 Nhận biết, 5 Thông hiểu) bám sát Bài 9 SGK
+        const questionData = [
+            // 5 CÂU NHẬN BIẾT
+            {
+                q: "Câu 1 (Nhận biết): Ba nguyên tắc cơ bản để nhận biết và phòng tránh lừa đảo trên không gian số là gì?",
+                options: ["A. Hãy chậm lại, Kiểm tra ngay, Dừng lại, không gửi", "B. Tôn trọng, Lành mạnh, An toàn", "C. Cảnh giác, Tắt máy, Báo công an", "D. Trả lời ngay, Làm theo hướng dẫn, Chuyển tiền"],
+                ans: 0
+            },
+            {
+                q: "Câu 2 (Nhận biết): Bộ Quy tắc ứng xử trên mạng xã hội gồm mấy quy tắc chính?",
+                options: ["A. 2 quy tắc", "B. 3 quy tắc", "C. 4 quy tắc", "D. 5 quy tắc"],
+                ans: 2 // 4 quy tắc: Tôn trọng pháp luật, Lành mạnh, An toàn bảo mật, Trách nhiệm
+            },
+            {
+                q: "Câu 3 (Nhận biết): Hành động nào sau đây thuộc nhóm 'KHÔNG NÊN' làm khi tham gia mạng xã hội?",
+                options: ["A. Quảng bá hình ảnh tốt đẹp", "B. Tung tin giả, sai sự thật", "C. Bảo mật thông tin cá nhân", "D. Tuân thủ điều khoản quy định"],
+                ans: 1
+            },
+            {
+                q: "Câu 4 (Nhận biết): Quy tắc nào yêu cầu hành vi ứng xử trên mạng phải phù hợp với giá trị đạo đức, văn hoá truyền thống Việt Nam?",
+                options: ["A. Quy tắc Tôn trọng, tuân thủ pháp luật", "B. Quy tắc Trách nhiệm", "C. Quy tắc An toàn, bảo mật thông tin", "D. Quy tắc Lành mạnh"],
+                ans: 3
+            },
+            {
+                q: "Câu 5 (Nhận biết): Đâu là một biểu hiện của dạng lừa đảo thông báo 'tin tốt'?",
+                options: ["A. Báo bạn vi phạm luật giao thông", "B. Dọa khóa tài khoản ngân hàng", "C. Báo trúng thưởng nhưng yêu cầu nộp phí trước", "D. Yêu cầu tải phần mềm sửa lỗi máy tính"],
+                ans: 2
+            },
+            
+            // 5 CÂU THÔNG HIỂU
+            {
+                q: "Câu 6 (Thông hiểu): Nhận được cuộc gọi xưng là Công an báo bạn đang liên quan đến vụ án mạng và yêu cầu chuyển tiền bảo lãnh. Bạn vận dụng nguyên tắc nào để xử lí trước tiên?",
+                options: ["A. Hãy chậm lại để giữ bình tĩnh", "B. Nhanh chóng chuyển khoản", "C. Đăng lên Facebook khoe ngay", "D. Gọi ngay cho kẻ lừa đảo để chửi bới"],
+                ans: 0
+            },
+            {
+                q: "Câu 7 (Thông hiểu): Khi click vào link mua hàng 'giá rẻ bất ngờ' gửi qua Zalo, bạn thấy trang web sai chính tả, thiết kế sơ sài. Đây là kết quả của việc áp dụng nguyên tắc nào?",
+                options: ["A. Dừng lại, không gửi", "B. Kiểm tra ngay (đánh giá độ tin cậy của trang)", "C. Cập nhật phần mềm bảo mật", "D. Chia sẻ cho bạn bè cùng mua"],
+                ans: 1
+            },
+            {
+                q: "Câu 8 (Thông hiểu): Việc bạn cẩn thận không cho người quen mượn tài khoản ngân hàng hoặc thẻ căn cước qua tin nhắn là bạn đang tuân thủ quy tắc ứng xử nào?",
+                options: ["A. Quy tắc Trách nhiệm", "B. Quy tắc Lành mạnh", "C. Quy tắc Tôn trọng", "D. Quy tắc An toàn, bảo mật thông tin"],
+                ans: 3
+            },
+            {
+                q: "Câu 9 (Thông hiểu): Bạn thấy một bài viết xúc phạm một bạn học cùng lớp trên Facebook. Việc bạn KHÔNG tham gia bình luận hùa theo thể hiện điều gì?",
+                options: ["A. Tránh sử dụng ngôn ngữ phản cảm, kích động thù hận", "B. Bạn đang bảo mật thông tin", "C. Bạn bị chậm thông tin", "D. Bạn vi phạm luật pháp"],
+                ans: 0
+            },
+            {
+                q: "Câu 10 (Thông hiểu): Tại sao những kẻ lừa đảo thường tạo ra cảm giác cấp bách, bắt bạn phải làm ngay lập tức?",
+                options: ["A. Vì họ thực sự muốn giúp bạn", "B. Vì mạng Internet có tốc độ nhanh", "C. Để bạn vượt qua khả năng nhận định sáng suốt", "D. Để tránh bị công an phát hiện"],
+                ans: 2
+            }
+        ];
+
+        let currentPieceIndex = -1;
+        let answeredPieces = new Array(10).fill(false); // Theo dõi mảnh nào đã trả lời đúng
+
+        // Khởi tạo 10 mảnh ghép
+        function initPuzzle() {
+            const grid = document.getElementById("puzzle-grid");
+            for (let i = 0; i < 10; i++) {
+                const piece = document.createElement("div");
+                piece.className = "puzzle-piece";
+                piece.id = `piece-${i}`;
+                piece.innerText = i + 1;
+                piece.onclick = () => openQuestion(i);
+                grid.appendChild(piece);
+            }
+        }
+
+        // Hiện cảnh báo tuỳ chỉnh
+        function showCustomAlert(msg) {
+            document.getElementById("alert-message").innerText = msg;
+            document.getElementById("custom-alert-overlay").style.display = "flex";
+        }
+        function closeCustomAlert() {
+            document.getElementById("custom-alert-overlay").style.display = "none";
+        }
+
+        // Mở câu hỏi
+        function openQuestion(index) {
+            if (answeredPieces[index]) {
+                return; // Đã lật thì không mở lại được
+            }
+            
+            currentPieceIndex = index;
+            const data = questionData[index];
+
+            document.getElementById("question-text").innerText = data.q;
+            document.getElementById("feedback").innerText = "";
+            document.getElementById("modal-close-btn").style.display = "none"; // Ẩn nút Đóng khi chưa trả lời
+
+            const optsContainer = document.getElementById("options-container");
+            optsContainer.innerHTML = "";
+            
+            data.options.forEach((optText, i) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "option-btn";
+                btn.id = `opt-${i}`;
+                btn.innerText = optText;
+                btn.onclick = () => checkAnswer(i, btn);
+                optsContainer.appendChild(btn);
+            });
+
+            document.getElementById("modal-overlay").style.display = "flex";
+        }
+
+        // Kiểm tra đáp án
+        function checkAnswer(selectedIdx, clickedBtn) {
+            const data = questionData[currentPieceIndex];
+            const allBtns = document.querySelectorAll(".option-btn");
+            const feedback = document.getElementById("feedback");
+
+            // Khóa các nút
+            allBtns.forEach(b => b.classList.add("locked"));
+
+            if (selectedIdx === data.ans) {
+                // ĐÚNG
+                clickedBtn.classList.add("correct-choice");
+                feedback.style.color = "green";
+                feedback.innerText = "🎉 Tuyệt vời! Bạn đã trả lời đúng. Bấm 'Lật mảnh ghép' nhé.";
+                
+                answeredPieces[currentPieceIndex] = true; 
+                
+                // Đổi chữ nút đóng thành Lật mảnh ghép
+                const closeBtn = document.getElementById("modal-close-btn");
+                closeBtn.innerText = "Lật mảnh ghép";
+                closeBtn.style.display = "inline-block";
+                closeBtn.style.backgroundColor = "#4caf50";
+            } else {
+                // SAI
+                clickedBtn.classList.add("wrong-choice");
+                document.getElementById(`opt-${data.ans}`).classList.add("correct-choice");
+                
+                feedback.style.color = "red";
+                feedback.innerText = "❌ Tiếc quá sai rồi! Bạn hãy đọc kĩ lại nhé.";
+                
+                // Vẫn cho phép đóng để lát sau mở lại trả lời lại
+                const closeBtn = document.getElementById("modal-close-btn");
+                closeBtn.innerText = "Đóng & Chọn lại sau";
+                closeBtn.style.display = "inline-block";
+                closeBtn.style.backgroundColor = "blue";
+            }
+        }
+
+        function closeModal() {
+            document.getElementById("modal-overlay").style.display = "none";
+            
+            // Nếu đã trả lời đúng thì ẩn mảnh ghép đi
+            if (answeredPieces[currentPieceIndex]) {
+                const piece = document.getElementById(`piece-${currentPieceIndex}`);
+                piece.classList.add("hidden");
+                checkWin();
+            }
+        }
+
+        function checkWin() {
+            const isAllSolved = answeredPieces.every(status => status === true);
+            if (isAllSolved) {
+                setTimeout(() => {
+                    showCustomAlert("🎉 CHÚC MỪNG! BẠN ĐÃ MỞ KHÓA HOÀN TOÀN BỨC TRANH BÍ MẬT VỀ GIAO TIẾP AN TOÀN TRÊN INTERNET!");
+                }, 500);
+            }
+        }
+
+        // Khởi động game
+        window.onload = initPuzzle;
+    </script>
+</body>
+</html>
