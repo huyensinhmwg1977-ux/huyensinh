@@ -120,6 +120,7 @@
             gap: 15px;
         }
 
+        /* Tối ưu nút bấm để điện thoại không tự làm mờ */
         .option-btn {
             background-color: #f0f4f8; 
             color: blue;
@@ -130,33 +131,39 @@
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s;
+            -webkit-appearance: none; 
+            width: 100%;
         }
 
-        .option-btn:hover:not(:disabled) {
+        .option-btn:hover:not(.locked) {
             background-color: blue;
             color: white;
         }
 
-        .option-btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
+        .option-btn.locked {
+            pointer-events: none; 
         }
 
-        /* Thêm class để báo hiệu đúng/sai rõ ràng */
+        .option-btn.locked:not(.correct-choice):not(.wrong-choice) {
+            opacity: 0.4;
+        }
+
         .option-btn.correct-choice {
-            background-color: #4caf50 !important; /* Xanh lá */
+            background-color: #4caf50 !important; 
             color: white !important;
-            border-color: #2e7d32 !important;
+            border: 3px solid #1b5e20 !important;
             opacity: 1 !important;
             transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
         }
 
         .option-btn.wrong-choice {
-            background-color: #f44336 !important; /* Đỏ */
+            background-color: #f44336 !important; 
             color: white !important;
-            border-color: #c62828 !important;
+            border: 3px solid #b71c1c !important;
             opacity: 1 !important;
             transform: scale(0.98);
+            box-shadow: 0 0 15px rgba(244, 67, 54, 0.6);
         }
 
         #feedback {
@@ -178,6 +185,7 @@
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            -webkit-appearance: none;
         }
 
         .close-btn:hover {
@@ -237,6 +245,7 @@
             box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
             margin-right: 5px; 
             flex-shrink: 0;
+            -webkit-appearance: none;
         }
 
         .num-btn.attempted {
@@ -297,6 +306,11 @@
             border-radius: 10px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            -webkit-appearance: none;
+        }
+
+        .action-btn:hover {
+            background-color: darkblue;
         }
 
         @media (max-width: 768px) {
@@ -325,7 +339,7 @@
         <div class="logo-hs">
             <span>HS</span>
         </div>
-        <h1>HÀNH TRÌNH SỐ - Ô CHỮ BÍ MẬT</h1>
+        <h1>BÀI 6. Ô CHỮ BÍ MẬT</h1>
     </div>
     
     <div class="subtext" id="intro-text">Bấm vào các nút số bên trái để trả lời câu hỏi trắc nghiệm nhé!</div>
@@ -454,6 +468,7 @@
             const data = puzzleData[rowIndex];
             
             if (data.attempted) {
+                alert("Câu này bạn đã trả lời rồi, không được mở lại đâu nhé!");
                 return;
             }
 
@@ -489,21 +504,17 @@
             data.attempted = true;
             numBtn.classList.add("attempted"); 
 
-            // Khoá tất cả các nút
-            allOptionBtns.forEach(btn => btn.disabled = true);
+            // Khoá tất cả các nút bằng CSS
+            allOptionBtns.forEach(btn => btn.classList.add("locked"));
 
             if (selectedIndex === data.answer) {
-                // Đổi màu xanh cho nút bấm đúng
                 clickedBtn.classList.add("correct-choice");
-                
                 feedbackBox.style.color = "green";
                 feedbackBox.innerText = "🎉 Trả lời ĐÚNG! Hãy bấm nút 'Trở về' để lật mở ô chữ.";
                 revealRow(currentRowIndex);
             } else {
-                // Đổi màu đỏ cho nút bấm sai
                 clickedBtn.classList.add("wrong-choice");
                 
-                // Đồng thời tô màu xanh cho đáp án đúng để học sinh biết
                 const correctBtn = document.getElementById(`option-btn-${data.answer}`);
                 if(correctBtn) correctBtn.classList.add("correct-choice");
 
@@ -521,6 +532,15 @@
         }
 
         function revealSecretWord() {
+            // Kiểm tra xem học sinh đã bấm trả lời hết cả 10 câu chưa
+            const allAttempted = puzzleData.every(data => data.attempted);
+            
+            if (!allAttempted) {
+                alert("Bạn phải hoàn thành cả 10 câu hỏi thì mới được mở khóa ô chữ bí mật nhé!");
+                return; // Dừng lại, không lật mở
+            }
+
+            // Nếu đã trả lời hết 10 câu thì lật mở ô chữ đỏ
             for (let row = 0; row < 10; row++) {
                 const secretCell = document.getElementById(`cell-${row}-4`);
                 if(secretCell) secretCell.innerText = secretCell.dataset.letter;
