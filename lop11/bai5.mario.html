@@ -298,7 +298,7 @@
    </div>
    
    <div class="dev-box-general">
-        🏆 📚 Phát triển bởi Cô giáo: Lê Huyền Sinh 📚 🏆
+       🏆 📚 Phát triển bởi Cô giáo: Lê Huyền Sinh 📚 🏆
    </div>
   </div>
 
@@ -327,6 +327,9 @@
    <div class="quiz-area">
     <div class="stats">
      👤 <span id="display-name">...</span> | ĐIỂM: <span id="score">0</span>
+     <span id="timer-container" style="display:none; margin-left: 10px; background: #c0392b; padding: 2px 10px; border-radius: 10px; color: white; border: 1px solid white;">
+        ⏱️ <span id="timer">10:00</span>
+     </span>
     </div>
     <div class="question-text" id="question-text">Loading...</div>
     <div class="options-grid" id="options-area"></div>
@@ -379,7 +382,7 @@
    
    <!-- Khung tác giả rõ ràng ở cuối Bảng xếp hạng -->
    <div class="dev-box-general" style="background: white; border-color: #f39c12; color: #d35400;">
-        🏆 📚 Phát triển bởi Cô giáo: Lê Huyền Sinh 📚 🏆
+       🏆 📚 Phát triển bởi Cô giáo: Lê Huyền Sinh 📚 🏆
    </div>
 
   </div>
@@ -503,6 +506,33 @@
         let sessionID = Date.now().toString() + Math.floor(Math.random()*1000); // Thêm random để ID độc nhất
         let timeStartObj = null;
 
+        // --- THÊM BIẾN CHO ĐỒNG HỒ ---
+        let timeLeft = 600; // 10 phút = 600 giây
+        let timerInterval = null;
+        let isGameFinished = false; // Cờ đánh dấu để tránh nộp bài nhiều lần
+
+        function startTimer() {
+            document.getElementById('timer-container').style.display = 'inline-block';
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                
+                let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                let s = (timeLeft % 60).toString().padStart(2, '0');
+                document.getElementById('timer').innerText = m + ':' + s;
+
+                // Cảnh báo nhấp nháy khi còn dưới 1 phút
+                if (timeLeft <= 60) {
+                    document.getElementById('timer-container').style.backgroundColor = (timeLeft % 2 === 0) ? '#e74c3c' : '#c0392b';
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏳ ĐÃ HẾT 10 PHÚT! Hệ thống sẽ tự động nộp bài với số điểm hiện tại của bạn.");
+                    finishGame();
+                }
+            }, 1000);
+        }
+
         const char = document.getElementById('character'); 
         const qText = document.getElementById('question-text');
         const optArea = document.getElementById('options-area'); 
@@ -523,6 +553,10 @@
             playerName = inputName;
             timeStartObj = new Date(); 
             
+            isGameFinished = false; 
+            timeLeft = 600; 
+            startTimer(); 
+
             document.getElementById('display-name').innerText = playerClass + " - " + playerName;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('game-wrapper').style.display = 'flex';
@@ -646,8 +680,6 @@
             scoreDisplay.textContent = score;
             nextBtn.style.display = "block";
             nextBtn.innerText = (currentIdx === questions.length - 1) ? "NỘP BÀI VÀ XEM ĐIỂM" : "CÂU TIẾP THEO";
-            
-            // Trang sẽ ĐỨNG YÊN để bạn đọc lại câu hỏi, không tự cuộn nữa.
         }
 
         function handleNextQuestion() { 
@@ -656,6 +688,11 @@
         }
 
         function finishGame() {
+            // Ngăn nộp đúp nếu đã nộp rồi
+            if (isGameFinished) return;
+            isGameFinished = true;
+            clearInterval(timerInterval); 
+
             let timeEndObj = new Date();
             
             const resultData = { 
@@ -695,6 +732,22 @@
 
         document.getElementById('start-btn').onclick = enterGame;
         document.getElementById('view-lb-btn').onclick = showLeaderboardOnly;
-    </script>
+
+        // --- XỬ LÝ SỰ KIỆN THOÁT NGANG ---
+        // Xử lý sự kiện học sinh tắt tab hoặc F5 tải lại trang giữa chừng
+        window.addEventListener('beforeunload', function (event) {
+            if (document.getElementById('game-wrapper').classList.contains('active') && !isGameFinished) {
+                finishGame();
+            }
+        });
+        
+        // Dành riêng cho thiết bị di động (Mobile thường dùng visibilitychange khi vuốt tắt app/đổi tab)
+        document.addEventListener("visibilitychange", function() {
+            if (document.visibilityState === 'hidden' && document.getElementById('game-wrapper').classList.contains('active') && !isGameFinished) {
+                finishGame();
+            }
+        });
+
+  </script>
  </body>
 </html>
