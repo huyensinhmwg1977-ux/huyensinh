@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi Giải Mã Mật Thư</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            /* Chèn bức ảnh nền của bạn vào đây */
+            background-image: url('ChatGPT Image 19_36_55 5 thg 5, 2026.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Lớp phủ mờ nhẹ để chữ và bảng câu hỏi nổi bật hơn trên nền ảnh */
+        .overlay {
+            background-color: rgba(0, 0, 0, 0.4);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 30px;
+        }
+
+        /* --- Header Logo HS (Căn giữa, có viền vàng, Chữ đỏ Lớn) --- */
+        .header-wrapper {
+            background: #ffffff;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Căn giữa */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .logo-hs {
+            background: #e74c3c;
+            color: #ffffff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #f1c40f; /* Viền vàng tròn */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .header-title {
+            font-weight: 900;
+            color: #007bff; 
+            font-size: 1.8rem; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- Vùng nội dung chính --- */
+        .main-container {
+            max-width: 850px;
+            margin: 40px auto 0;
+            padding: 0 15px;
+            width: 100%;
+        }
+
+        /* --- Khu vực hiển thị Mật thư --- */
+        .secret-word-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: rgba(14, 52, 107, 0.85); 
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
+        }
+        .letter-box {
+            width: 50px;
+            height: 60px;
+            background: #ffffff;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 26px;
+            font-weight: bold;
+            color: #d32f2f;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+        }
+        .letter-box.empty {
+            background: transparent;
+            color: rgba(255,255,255,0.0);
+            border: 2px dashed rgba(255,255,255,0.4);
+            box-shadow: none;
+        }
+        /* Tạo khoảng cách để tách chữ TRUY - VẤN - SQL */
+        .space-after {
+            margin-right: 25px;
+        }
+
+        /* --- Thẻ Câu hỏi --- */
+        .question-card {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 20px 30px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            margin-bottom: 25px;
+        }
+        .question-text {
+            color: #d32f2f; /* Chữ câu hỏi màu đỏ theo yêu cầu */
+            font-size: 1.65rem; 
+            font-weight: bold;
+            margin-bottom: 15px; 
+            line-height: 1.4;
+        }
+        
+        /* --- Danh sách đáp án --- */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; 
+            margin-bottom: 20px;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            padding: 10px 20px; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.35rem; 
+            color: #000000; 
+            font-weight: bold; 
+        }
+        
+        /* Hiệu ứng hover khi CHƯA bị khóa */
+        .option-item.clickable:hover {
+            border-color: #bdc3c7;
+            background-color: #f9f9f9;
+        }
+        
+        /* Trạng thái bị khóa (không cho click đổi đáp án) */
+        .option-item.locked {
+            cursor: default;
+        }
+        
+        /* KHI ĐƯỢC CHỌN (NỔI XANH ĐẬM DỄ NHÌN) */
+        .option-item.selected {
+            border-color: #004085;
+            background-color: #0056b3; 
+            color: #ffffff; 
+            box-shadow: 0 4px 12px rgba(0, 86, 179, 0.4);
+            transform: scale(1.02); 
+        }
+        
+        .option-letter {
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            font-weight: bold;
+            color: #333;
+            background: #ffffff;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        /* Chữ cái A, B, C, D khi được chọn lật màu để dễ đọc */
+        .option-item.selected .option-letter {
+            background: #ffffff;
+            color: #0056b3;
+            border-color: #ffffff;
+        }
+
+        /* --- Nút Tiếp theo (Màu xanh dương) --- */
+        .btn-next {
+            display: block;
+            width: 100%;
+            background: #007bff; 
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+        .btn-next:hover:not(:disabled) {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .btn-next:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* --- Nút Làm Lại (Màu đỏ) --- */
+        .footer-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .btn-restart {
+            background: #e74c3c; 
+            color: #ffffff;
+            border: 2px solid #ffffff; 
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-restart:hover {
+            background: #c0392b;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* --- Màn hình kết quả --- */
+        #result-screen {
+            display: none;
+            text-align: center;
+            background: #ffffff;
+            padding: 50px 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        .success-text { color: #27ae60; font-size: 1.8rem; font-weight: bold; margin-bottom: 15px;}
+        .fail-text { color: #e74c3c; font-size: 1.8rem; font-weight: bold; margin-bottom: 15px;}
+        .final-word-display { font-size: 2.5rem; color: #007bff; font-weight: 900; letter-spacing: 4px; margin: 25px 0; }
+
+        /* --- Tác Giả (Block xịn xò) --- */
+        .author-wrapper {
+            text-align: center;
+            margin-top: auto;
+            padding-top: 40px;
+        }
+        .author-credit-block {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #d32f2f;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            border: 2px solid #ffb8b8;
+        }
+        .author-icon {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay">
+        <!-- Header -->
+        <div class="header-wrapper">
+            <div class="logo-hs"><span>HS</span></div>
+            <div class="header-title">GIẢI MÃ MẬT THƯ</div>
+        </div>
+
+        <div class="main-container">
+            
+            <!-- Khu vực 10 ô chứa chữ cái -->
+            <div class="secret-word-container" id="secret-word-container">
+                <!-- Javascript sẽ điền các ô vuông vào đây -->
+            </div>
+
+            <!-- Bảng câu hỏi -->
+            <div class="question-card" id="quiz-card">
+                <!-- Câu hỏi màu đỏ -->
+                <div class="question-text" id="question-text">
+                    Đang tải câu hỏi...
+                </div>
+                
+                <div class="options-list" id="options-list">
+                    <!-- Javascript sẽ điền đáp án vào đây -->
+                </div>
+
+                <!-- Nút tiếp theo -->
+                <button class="btn-next" id="btn-next" onclick="nextQuestion()" disabled>Tiếp theo ➔</button>
+            </div>
+
+            <!-- Màn hình kết quả -->
+            <div id="result-screen">
+                <div id="result-message"></div>
+                <div class="final-word-display" id="final-word"></div>
+                <button class="btn-restart" style="margin: 30px auto 0;" onclick="restartGame()">
+                    <span>↻</span> Chơi lại từ đầu
+                </button>
+            </div>
+
+            <!-- Nút làm lại -->
+            <div class="footer-actions">
+                <button class="btn-restart" onclick="restartGame()">
+                    <span style="font-size: 1.2rem;">↻</span> Làm lại
+                </button>
+            </div>
+            
+        </div>
+
+        <!-- Chữ ký tác giả -->
+        <div class="author-wrapper">
+            <div class="author-credit-block">
+                <span class="author-icon">👩‍🏫</span>
+                Phát triển bởi cô Lê Huyền Sinh
+                <span class="author-icon">💖</span>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const quizData = [
+        {
+            text: "Câu 1: Ngôn ngữ truy vấn tiêu chuẩn mà hầu hết các hệ quản trị CSDL hiện nay đều sử dụng là gì?",
+            options: { A: "HTML", B: "SQL", C: "C++", D: "Python" },
+            cipher: { A: "M", B: "T", C: "G", D: "K" } 
+        },
+        {
+            text: "Câu 2: Trong thành phần DDL của SQL, câu lệnh nào dùng để khởi tạo một cơ sở dữ liệu mới?",
+            options: { A: "CREATE DATABASE", B: "CREATE TABLE", C: "ALTER DATABASE", D: "NEW DATABASE" },
+            cipher: { A: "R", B: "H", C: "E", D: "P" } 
+        },
+        {
+            text: "Câu 3: Trong SQL, kiểu dữ liệu VARCHAR(n) mang ý nghĩa gì?",
+            options: { A: "Kiểu số nguyên", B: "Thời gian (Ngày/tháng/năm)", C: "Xâu kí tự độ dài cố định n", D: "Xâu kí tự độ dài thay đổi" },
+            cipher: { A: "C", B: "X", C: "B", D: "U" } 
+        },
+        {
+            text: "Câu 4: Để truy xuất dữ liệu từ một bảng, ta sử dụng câu lệnh nào?",
+            options: { A: "INSERT", B: "UPDATE", C: "SELECT", D: "DELETE" },
+            cipher: { A: "O", B: "I", C: "Y", D: "Z" } 
+        },
+        {
+            text: "Câu 5: Thành phần DCL cung cấp các câu lệnh như GRANT, REVOKE nhằm mục đích gì?",
+            options: { A: "Kiểm soát quyền người dùng", B: "Khởi tạo bảng", C: "Thêm dữ liệu", D: "Sửa dữ liệu" },
+            cipher: { A: "V", B: "D", C: "Q", D: "W" } 
+        },
+        {
+            text: "Câu 6: Ưu điểm lớn nhất của việc sử dụng ngôn ngữ truy vấn SQL so với lập trình trực tiếp là gì?",
+            options: { A: "Không cần cài phần mềm", B: "Chỉ cần viết yêu cầu 'muốn làm gì'", C: "Mã lệnh siêu dài", D: "Phụ thuộc cấu trúc tệp" },
+            cipher: { A: "F", B: "Ấ", C: "J", D: "S" } // Đã đổi chữ Â thành Ấ ở đáp án B
+        },
+        {
+            text: "Câu 7: Câu lệnh DELETE FROM bannhac WHERE Mid = '0005'; có ý nghĩa gì?",
+            options: { A: "Thêm bản nhạc", B: "Xóa toàn bộ", C: "Cập nhật", D: "Xóa dòng có mã 0005" },
+            cipher: { A: "L", B: "K", C: "A", D: "N" } 
+        },
+        {
+            text: "Câu 8: Khi cần liên kết dữ liệu giữa hai bảng, ta sử dụng từ khóa nào?",
+            options: { A: "ORDER BY", B: "WHERE", C: "INNER JOIN", D: "INSERT INTO" },
+            cipher: { A: "D", B: "E", C: "S", D: "H" } 
+        },
+        {
+            text: "Câu 9: Lệnh GRANT select ON music.* TO guest; thực hiện công việc gì?",
+            options: { A: "Cấp quyền SELECT", B: "Thu hồi quyền", C: "Xóa tài khoản", D: "Cấp toàn quyền" },
+            cipher: { A: "Q", B: "I", C: "M", D: "V" } 
+        },
+        {
+            text: "Câu 10: Để thêm khóa chính (Mid) cho bảng (bannhac) đã có, ta dùng lệnh nào?",
+            options: { A: "CREATE TABLE...", B: "ALTER TABLE... ADD PRIMARY KEY", C: "INSERT INTO...", D: "UPDATE..." },
+            cipher: { A: "C", B: "L", C: "O", D: "G" } 
+        }
+    ];
+
+    let currentQ = 0;
+    let userAnswers = new Array(10).fill(null);
+
+    function renderSecretWord() {
+        const container = document.getElementById("secret-word-container");
+        container.innerHTML = "";
+        for (let i = 0; i < 10; i++) {
+            const box = document.createElement("div");
+            if (userAnswers[i]) {
+                box.className = "letter-box";
+                box.innerText = quizData[i].cipher[userAnswers[i]];
+            } else {
+                box.className = "letter-box empty";
+                box.innerText = "?";
+            }
+            
+            // Tách khoảng trống giữa chữ TRUY (index 3) - VẤN (index 6) - SQL
+            if (i === 3 || i === 6) {
+                box.classList.add("space-after");
+            }
+            
+            container.appendChild(box);
+        }
+    }
+
+    function loadQuestion() {
+        if (currentQ >= quizData.length) {
+            showResult();
+            return;
+        }
+
+        const q = quizData[currentQ];
+        document.getElementById("question-text").innerText = q.text;
+        
+        const optionsList = document.getElementById("options-list");
+        optionsList.innerHTML = "";
+
+        const isAnswered = userAnswers[currentQ] !== null;
+        document.getElementById("btn-next").disabled = !isAnswered;
+
+        for (const [key, value] of Object.entries(q.options)) {
+            const optDiv = document.createElement("div");
+            optDiv.className = "option-item";
+            
+            if (isAnswered) {
+                optDiv.classList.add("locked"); // Khóa các nút nếu đã chọn
+                if (userAnswers[currentQ] === key) {
+                    optDiv.classList.add("selected");
+                }
+            } else {
+                optDiv.classList.add("clickable"); // Hiệu ứng hover khi chưa chọn
+                optDiv.onclick = () => selectOption(key);
+            }
+
+            const letterBox = document.createElement("div");
+            letterBox.className = "option-letter";
+            letterBox.innerText = key;
+
+            const textSpan = document.createElement("span");
+            textSpan.innerText = value;
+
+            optDiv.appendChild(letterBox);
+            optDiv.appendChild(textSpan);
+            optionsList.appendChild(optDiv);
+        }
+    }
+
+    function selectOption(key) {
+        // Nếu đã chọn rồi thì không được phép thay đổi
+        if (userAnswers[currentQ] !== null) return;
+        
+        userAnswers[currentQ] = key;
+        renderSecretWord(); 
+        loadQuestion();     
+        document.getElementById("btn-next").disabled = false; 
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        loadQuestion();
+    }
+
+    function showResult() {
+        document.getElementById("quiz-card").style.display = "none";
+        document.querySelector(".footer-actions").style.display = "none";
+        document.getElementById("result-screen").style.display = "block";
+        
+        let finalWord = "";
+        for(let i=0; i<10; i++) {
+            // Chèn khoảng trắng vào finalWord để so sánh đúng định dạng
+            if(i === 4 || i === 7) finalWord += " ";
+            finalWord += quizData[i].cipher[userAnswers[i]];
+        }
+        
+        document.getElementById("final-word").innerText = finalWord;
+
+        const msgBox = document.getElementById("result-message");
+        if(finalWord === "TRUY VẤN SQL") {
+            msgBox.innerHTML = "<div class='success-text'>🎉 XUẤT SẮC! MẬT THƯ ĐÃ ĐƯỢC GIẢI MÃ!</div><p style='color: #555; font-size:1.2rem; font-weight:bold'>Chúc mừng các em đã tìm ra từ khóa của bài học hôm nay.</p>";
+        } else {
+            msgBox.innerHTML = "<div class='fail-text'>❌ MẬT THƯ CHƯA CÓ NGHĨA!</div><p style='color: #555; font-size:1.2rem; font-weight:bold'>Có vẻ các em đã nhầm lẫn ở đâu đó. Hãy làm lại để tìm ra thông điệp đúng nhé.</p>";
+        }
+    }
+
+    function restartGame() {
+        currentQ = 0;
+        userAnswers = new Array(10).fill(null);
+        document.getElementById("quiz-card").style.display = "block";
+        document.querySelector(".footer-actions").style.display = "flex";
+        document.getElementById("result-screen").style.display = "none";
+        renderSecretWord();
+        loadQuestion();
+    }
+
+    renderSecretWord();
+    loadQuestion();
+</script>
+
+</body>
+</html>
