@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình Số - Chuyên Gia CSDL</title>
+    
+    <!-- Tích hợp Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tích hợp Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body {
+            background-color: #f0fdf4;
+            font-size: 20px;
+        }
+        .section-content {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .active-section {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .result-box {
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 10px;
+        }
+        
+        .modal-scale {
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+        .modal-scale.show {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Tối ưu ô nhập liệu, ép tự động ngắt từ và ẩn thanh cuộn để tự động giãn */
+        textarea, .break-text {
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+            white-space: pre-wrap !important;
+            max-width: 100%;
+        }
+        textarea {
+            overflow: hidden; /* Ẩn thanh cuộn để dùng JS co giãn */
+            resize: none; /* Không cho kéo tay vì đã có tự động co giãn */
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased p-4">
+
+    <div class="text-center mb-6">
+        <div class="flex items-center justify-center w-10 h-10 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+            <span class="text-white font-black text-1xl tracking-tighter">HS</span> 
+        </div>
+
+        <div class="text-red-600 font-bold text-xl uppercase tracking-wide">Trường THPT Phan Đình Phùng Quảng Trị</div>
+            <h2 class="text-red-600 font-bold text-lg">BÀI 13: CƠ SỞ DỮ LIỆU QUAN HỆ</h2>
+        <p class="text-blue-600 italic mt-2 text-lg">Chọn nhóm của bạn để làm bài, chỉnh sửa bài hoặc xem bảng xếp hạng!</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-6">
+        <button onclick="showSection('g1')" class="bg-blue-600 text-white text-lg py-3 rounded-xl font-bold shadow-md active:scale-95 transition">Nhóm 1</button>
+        <button onclick="showSection('g2')" class="bg-blue-600 text-white text-lg py-3 rounded-xl font-bold shadow-md active:scale-95 transition">Nhóm 2</button>
+        <button onclick="showSection('g3')" class="bg-blue-600 text-white text-lg py-3 rounded-xl font-bold shadow-md active:scale-95 transition">Nhóm 3</button>
+        <button onclick="showSection('g4')" class="bg-blue-600 text-white text-lg py-3 rounded-xl font-bold shadow-md active:scale-95 transition">Nhóm 4</button>
+        
+        <button onclick="showSection('results')" class="col-span-2 bg-red-600 text-white text-xl py-4 rounded-xl font-bold shadow-md active:scale-95 transition mt-2 flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            BẢNG XẾP HẠNG & KẾT QUẢ
+        </button>
+    </div>
+
+    <!-- KHỐI 1 -->
+    <div id="g1" class="section-content bg-white p-5 rounded-2xl shadow-lg border-t-4 border-red-500 w-full overflow-hidden">
+        <h2 class="text-red-600 font-bold text-xl text-center mb-4">NHÓM 1<br>Khái niệm CSDL Quan Hệ</h2>
+        <div class="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500 mb-4 text-blue-800 text-lg">
+            <p class="mb-2"><strong>1. Khám phá bí ẩn:</strong> Tổ chức dữ liệu dưới dạng các "bảng" trong CSDL mang lại siêu lợi ích gì so với ghi chép trên giấy?</p>
+            <p><strong>2. Phân tích thực tế:</strong> Nếu gộp toàn bộ Nhạc sĩ, Ca sĩ, Bản nhạc vào chung 1 bảng khổng lồ, điều tồi tệ gì sẽ xảy ra khi ta cần sửa tên một ca sĩ?</p>
+        </div>
+        <label class="text-blue-700 font-bold text-lg">Tên các thành viên Nhóm 1:</label>
+        <input type="text" id="members1" class="w-full text-lg p-3 border-2 border-blue-200 rounded-xl mt-2 mb-4 focus:outline-none focus:border-blue-600" placeholder="Ví dụ: An, Bình, Châu...">
+        <label class="text-blue-700 font-bold text-lg">Kết quả thảo luận:</label>
+        <textarea id="ans1" oninput="autoResize(this)" class="w-full text-lg p-3 border-2 border-blue-200 rounded-xl mt-2 mb-4 min-h-[150px] focus:outline-none focus:border-blue-600 break-text" placeholder="Nhập câu trả lời chi tiết của nhóm..."></textarea>
+        <button id="btn-submit-1" onclick="submitGroupData(1)" class="w-full bg-blue-600 text-white text-xl py-3 rounded-xl font-bold shadow-md active:scale-95 transition">Gửi Lên Hệ Thống</button>
+    </div>
+
+    <!-- KHỐI 2 -->
+    <div id="g2" class="section-content bg-white p-5 rounded-2xl shadow-lg border-t-4 border-red-500 w-full overflow-hidden">
+        <h2 class="text-red-600 font-bold text-xl text-center mb-4">NHÓM 2<br>Bản Ghi, Trường & Khoá Chính</h2>
+        <div class="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500 mb-4 text-blue-800 text-lg">
+            <p class="mb-2"><strong>1. Giải mã thuật ngữ:</strong> "Bản ghi" (Record) và "Trường" (Field) chứa đựng những bí mật gì của đối tượng?</p>
+            <p><strong>2. Sứ mệnh Khoá chính:</strong> Tại sao mỗi bảng bắt buộc phải có một "Khoá chính"? Hãy chỉ định một khoá chính cho bảng Bản nhạc và giải thích.</p>
+        </div>
+        <label class="text-blue-700 font-bold text-lg">Tên các thành viên Nhóm 2:</label>
+        <input type="text" id="members2" class="w-full text-lg p-3 border-2 border-blue-200 rounded-xl mt-2 mb-4 focus:outline-none focus:border-blue-600" placeholder="Ví dụ: An, Bình, Châu...">
+        <label class="text-blue-700 font-bold text-lg">Kết quả thảo luận:</label>
+        <textarea id="ans2" oninput="autoResize(this)" class="w-full text-lg p-3 border-2 border-blue-200 rounded-xl mt-2 mb-4 min-h-[150px] focus:outline-none focus:border-blue-600 break-text" placeholder="Nhập câu trả lời chi tiết của nhóm..."></textarea>
+        <button id="btn-submit-2" onclick="submitGroupData(2)" class="w-full bg-blue-600 text-white text-xl py-3 rounded-xl font-bold shadow-md active:scale-95 transition">Gửi Lên Hệ Thống</button>
+    </div>
+
+    <!-- KHỐI 3 -->
+    <div id="g3" class="section-content bg-white p-5 rounded-2xl shadow-lg border-t-4 border-red-500 w-full overflow-hidden">
+        <h2 class="text-red-600 font-bold text-xl text-center mb-4">NHÓM 3<br>Khoá Ngoài & Liên Kết Dữ Liệu</h2>
+        <div class="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500 mb-4 text-blue-800 text-lg">
+            <p class="mb-2"><strong>1. Nhịp cầu nối:</strong> "Khoá ngoài" (Foreign Key) làm nhiệm vụ gì giữa các bảng độc lập?</p>
+            <p><strong>2. Sức mạnh Liên kết:</strong> Khi ghép nối bảng "Bản nhạc" và "Nhạc sĩ" qua trường Aid, hệ thống sẽ giúp chúng ta trả lời được câu hỏi thực tế nào?</p>
+        </div>
+        <label class="text-blue-700 font-bold text-lg">Tên các thành viên Nhóm 3:</label>
+        <input type="text" id="members3" class="w-full text-lg p-3 border-2 border-blue-200 rounded-xl mt-2 mb-4 focus:outline-none focus:border-blue-600" placeholder="Ví dụ: An, Bình, Châu...">
+        <label class="text-blue-700 font-bold text-lg">Kết quả thảo luận:</label>
+        <textarea id="ans3" oninput="autoResize(this)" class="w-full text-lg p-3 border-2 border-blue-200 rounded-xl mt-2 mb-4 min-h-[150px] focus:outline-none focus:border-blue-600 break-text" placeholder="Nhập câu trả lời chi tiết của nhóm..."></textarea>
+        <button id="btn-submit-3" onclick="submitGroupData(3)" class="w-full bg-blue-600 text-white text-xl py-3 rounded-xl font-bold shadow-md active:scale-95 transition">Gửi Lên Hệ Thống</button>
+    </div>
+
+    <!-- KHỐI 4 -->
+    <div id="g4" class="section-content bg-white p-5 rounded-2xl shadow-lg border-t-4 border-red-500 w-full overflow-hidden">
+        <h2 class="text-red-600 font-bold text-xl text-center mb-4">NHÓM 4<br>Các Trường & Dữ Liệu</h2>
+        <div class="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500 mb-4 text-blue-800 text-lg">
+            <p class="mb-2"><strong>1. Người gác cổng:</strong> Việc quy định nghiêm ngặt "Kiểu dữ liệu" cho từng trường nhằm mục đích bảo vệ hệ thống khỏi những rủi ro nào?</p>
+            <p><strong>2. Thử tài phân loại:</strong> Với bảng Quản lý Học sinh, hãy chốt kiểu dữ liệu chuẩn nhất cho: Mã HS, Họ và tên, Ngày sinh, Điểm môn Tin.</p>
+        </div>
+        <label class="text-blue-700 font-bold text-lg">Tên các thành viên Nhóm 4:</label>
+        <input type="text" id="members4" class="w-full text-lg p-3 border-2 border-blue-200 rounded-xl mt-2 mb-4 focus:outline-none focus:border-blue-600" placeholder="Ví dụ: An, Bình, Châu...">
+        <label class="text-blue-700 font-bold text-lg">Kết quả thảo luận:</label>
+        <textarea id="ans4" oninput="autoResize(this)" class="w-full text-lg p-3 border-2 border-blue-200 rounded-xl mt-2 mb-4 min-h-[150px] focus:outline-none focus:border-blue-600 break-text" placeholder="Nhập câu trả lời chi tiết của nhóm..."></textarea>
+        <button id="btn-submit-4" onclick="submitGroupData(4)" class="w-full bg-blue-600 text-white text-xl py-3 rounded-xl font-bold shadow-md active:scale-95 transition">Gửi Lên Hệ Thống</button>
+    </div>
+
+    <!-- KHỐI BẢNG XẾP HẠNG -->
+    <div id="results" class="section-content bg-white p-5 rounded-2xl shadow-lg border-t-4 border-yellow-500 active-section w-full overflow-hidden">
+        <h2 class="text-yellow-600 font-bold text-2xl text-center mb-2">🏆 BẢNG XẾP HẠNG 🏆</h2>
+        <p class="text-center text-blue-600 mb-4">Đội nào hoàn thành nhiệm vụ nhanh nhất?</p>
+        
+        <div id="resultsContainer" class="result-box space-y-4 pb-4 px-1">
+            <div class="text-center text-blue-600 py-6">Đang tải dữ liệu...</div>
+        </div>
+    </div>
+
+    <!-- HỘP THÔNG BÁO (MODAL) -->
+    <div id="customModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm px-4">
+        <div id="modalBox" class="bg-white rounded-3xl p-6 w-full max-w-sm modal-scale shadow-2xl">
+            <div id="modalIcon" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <svg class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            
+            <h3 id="modalTitle" class="text-2xl font-extrabold text-center text-red-600 mb-2">Tuyệt vời!</h3>
+            <p id="modalMessage" class="text-lg text-blue-800 text-center mb-6 leading-relaxed">Nội dung thông báo...</p>
+            
+            <button onclick="closeModal()" class="w-full bg-blue-600 text-white text-xl py-3 rounded-xl font-bold shadow-md active:scale-95 transition">ĐỒNG Ý</button>
+        </div>
+    </div>
+
+    <script>
+        let database;
+        let scoresRef;
+        
+        let groupRecords = {
+            1: { members: "", content: "" },
+            2: { members: "", content: "" },
+            3: { members: "", content: "" },
+            4: { members: "", content: "" }
+        };
+
+        const rankIcons = [
+            '<span class="text-2xl" title="Hạng 1">🏆</span>', 
+            '<span class="text-2xl" title="Hạng 2">🥈</span>', 
+            '<span class="text-2xl" title="Hạng 3">🥉</span>', 
+            '<span class="text-2xl" title="Hạng 4">🏅</span>'
+        ];
+
+        // Hàm tự động co giãn chiều cao của thẻ textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function showModal(title, message, isError = false) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            
+            const iconDiv = document.getElementById('modalIcon');
+            if(isError) {
+                document.getElementById('modalTitle').classList.replace('text-green-600', 'text-red-600');
+                iconDiv.className = "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4";
+                iconDiv.innerHTML = `<svg class="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>`;
+            } else {
+                document.getElementById('modalTitle').className = "text-2xl font-extrabold text-center text-green-600 mb-2";
+                iconDiv.className = "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4";
+                iconDiv.innerHTML = `<svg class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>`;
+            }
+
+            document.getElementById('customModal').classList.replace('hidden', 'flex');
+            setTimeout(() => { document.getElementById('modalBox').classList.add('show'); }, 10);
+        }
+
+        function closeModal() {
+            document.getElementById('modalBox').classList.remove('show');
+            setTimeout(() => { document.getElementById('customModal').classList.replace('flex', 'hidden'); }, 300);
+        }
+
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+                authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+                databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "hanhtrinhso-e3368",
+                storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+                messagingSenderId: "1046142513655",
+                appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+            };
+            
+            if (typeof firebase !== 'undefined') {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                scoresRef = database.ref('bxh_tingk13_3'); 
+                
+                scoresRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    const container = document.getElementById('resultsContainer');
+                    
+                    if (data) {
+                        let validGroups = [];
+                        
+                        Object.keys(data).forEach(key => { 
+                            if(key.startsWith('nhom_')) {
+                                let item = data[key];
+                                item.key = key;
+                                validGroups.push(item);
+
+                                let gNum = parseInt(key.replace("nhom_", ""));
+                                if(gNum >= 1 && gNum <= 4) {
+                                    groupRecords[gNum].members = item.thanh_vien;
+                                    groupRecords[gNum].content = item.noi_dung_tra_loi;
+                                }
+                            }
+                        });
+
+                        validGroups.sort((a, b) => a.timestamp - b.timestamp);
+
+                        let htmlStr = '';
+                        if(validGroups.length > 0) {
+                            validGroups.forEach((item, index) => {
+                                let rankBadge = (index < 4) ? rankIcons[index] : '';
+                                
+                                htmlStr += `
+                                    <div class="bg-gray-50 border-l-4 border-yellow-400 p-4 rounded-r-xl shadow-md mb-4 w-full">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <h3 class="font-bold text-xl text-red-600 flex items-center gap-2">
+                                                ${rankBadge} ${item.ten_nhom}
+                                            </h3>
+                                            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-md inline-block whitespace-nowrap">${item.thoi_gian_nop}</span>
+                                        </div>
+                                        <p class="text-blue-800 font-semibold mb-2 text-sm break-text"><span class="text-gray-600">Thành viên:</span> ${item.thanh_vien}</p>
+                                        <div class="text-gray-800 text-lg bg-white p-3 rounded border border-gray-200 break-text w-full">
+                                            ${item.noi_dung_tra_loi.replace(/\n/g, '<br>')}
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            container.innerHTML = htmlStr;
+                        } else {
+                            container.innerHTML = '<div class="text-center text-blue-600 py-6 font-bold">Chưa có nhóm nào nộp bài.</div>';
+                        }
+                    } else {
+                        container.innerHTML = '<div class="text-center text-blue-600 py-6 font-bold">Chưa có nhóm nào nộp bài.</div>';
+                    }
+                });
+            }
+        } catch(err) {
+            console.error("Lỗi khởi tạo Firebase:", err);
+            document.getElementById('resultsContainer').innerHTML = '<div class="text-center text-red-500 py-6">Lỗi kết nối CSDL!</div>';
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section-content').forEach(el => {
+                el.classList.remove('active-section');
+            });
+            document.getElementById(sectionId).classList.add('active-section');
+
+            if (sectionId.startsWith('g')) {
+                let groupNum = parseInt(sectionId.replace('g', ''));
+                let record = groupRecords[groupNum];
+                
+                const memInput = document.getElementById('members' + groupNum);
+                const ansInput = document.getElementById('ans' + groupNum);
+                const btnSubmit = document.getElementById('btn-submit-' + groupNum);
+
+                if (record && record.members !== "") {
+                    memInput.value = record.members || "";
+                    ansInput.value = record.content || "";
+                    
+                    // Kích hoạt co giãn chiều cao ngay khi vừa mở lại tab
+                    setTimeout(() => {
+                        autoResize(ansInput);
+                    }, 10);
+
+                    btnSubmit.innerText = "Cập Nhật Lại Bài Làm";
+                    btnSubmit.classList.replace("bg-blue-600", "bg-green-600");
+                } else {
+                    memInput.value = "";
+                    ansInput.value = "";
+                    ansInput.style.height = "150px"; // Đặt lại chiều cao mặc định
+                    btnSubmit.innerText = "Gửi Lên Hệ Thống";
+                    btnSubmit.classList.replace("bg-green-600", "bg-blue-600");
+                }
+            }
+        }
+
+        function submitGroupData(groupNum) {
+            const members = document.getElementById('members' + groupNum).value.trim();
+            const answer = document.getElementById('ans' + groupNum).value.trim();
+
+            if (!members || !answer) {
+                showModal("Chú ý!", "Các bạn cần nhập đầy đủ Tên thành viên và Kết quả trước khi gửi nhé!", true);
+                return;
+            }
+
+            const dataToSave = {
+                ten_nhom: "Nhóm " + groupNum,
+                thanh_vien: members,
+                noi_dung_tra_loi: answer,
+                thoi_gian_nop: new Date().toLocaleTimeString('vi-VN') + ' - ' + new Date().toLocaleDateString('vi-VN'),
+                timestamp: Date.now() 
+            };
+
+            if (scoresRef) {
+                scoresRef.child('nhom_' + groupNum).set(dataToSave).then(() => {
+                    showModal("Tuyệt vời!", "Kết quả của Nhóm " + groupNum + " đã được ghi nhận vào Bảng xếp hạng.");
+                    showSection('results'); 
+                }).catch((error) => {
+                    showModal("Lỗi kết nối", "Vui lòng thử lại sau!", true);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
