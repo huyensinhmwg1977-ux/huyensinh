@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Trắc Nghiệm - Hành Trình Số Cỏ Dại</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    /* BẢNG DỮ LIỆU */
+    .table-block {
+        background-color: #f8fafc;
+        border: 1px solid #bae6fd;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+    }
+    .table-block table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 300px;
+        background: white;
+        margin-bottom: 1rem;
+    }
+    .table-block table:last-child { margin-bottom: 0; }
+    .table-block th, .table-block td {
+        border: 1px solid #cbd5e1;
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        color: #1e293b;
+        font-size: 16px;
+    }
+    .table-block th {
+        background-color: #e0f2fe;
+        font-weight: 700;
+        color: #0369a1;
+    }
+    .table-block b {
+        display: block;
+        margin-top: 0.25rem;
+        margin-bottom: 0.5rem;
+        color: #0f172a;
+        font-size: 18px;
+    }
+    @media (min-width: 1024px) {
+        .table-block th, .table-block td { font-size: 20px; }
+        .table-block b { font-size: 22px; }
+    }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-2xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1">GIỚI THIỆU CÁC HỆ CƠ SỞ DỮ LIỆU</h1>
+      <p class="text-gray-600 font-bold">Môn: Tin học 11 </p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">HỆ CƠ SỞ DỮ LIỆU 1</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">HỆ CƠ SỞ DỮ LIỆU 2</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 câu</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-6 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <!-- ĐÃ ĐƯỢC TĂNG KÍCH THƯỚC NÚT (py-4, rounded-2xl) -->
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-lg lg:text-[22px] rounded-2xl shadow-md transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-lg lg:text-[22px] rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-lg lg:text-[22px] rounded-2xl shadow-md hover:shadow-lg hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚 Thiết kế và phát triển bởi cô:  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh 📚 🏆</span>  
+      </p>
+   </footer>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_112');
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ================= KHAI BÁO BẢNG DỮ LIỆU ĐÃ CHỈNH LẠI CHUẨN =================
+    const t_sach = `<div class='table-block text-base'><b>Bảng SÁCH</b><table><tr><th>Ma_sach</th><th>Ten_sach</th><th>Tac_gia</th></tr><tr><td>S01</td><td>Toán</td><td>Tác giả A</td></tr><tr><td>S02</td><td>Văn</td><td>Tác giả B</td></tr><tr><td>S03</td><td>Lí</td><td>Tác giả C</td></tr><tr><td>S04</td><td>Hoá</td><td>Tác giả D</td></tr><tr><td>S05</td><td>Anh</td><td>Tác giả E</td></tr></table></div>`;
+    
+    const t_hocsinh = `<div class='table-block text-base'><b>Bảng HỌC_SINH</b><table><tr><th>STT</th><th>Họ và tên</th><th>Lớp</th></tr><tr><td>1</td><td>Trần Văn A</td><td>10/1</td></tr><tr><td>2</td><td>Nguyễn Thị B</td><td>10/2</td></tr><tr><td>3</td><td>Lê Văn C</td><td>10/3</td></tr></table></div>`;
+    
+    // Đã thêm BẢNG 3: MAT_HANG và chuẩn hoá lại theo đúng yêu cầu Câu 21, 22, 23
+    const t_hoadon_khachhang = `<div class='table-block text-base'>
+        <b>Bảng HOA_DON</b>
+        <table><tr><th>So_don</th><th>Ma_khach_hang</th><th>Ma_mat_hang</th><th>So_luong</th><th>Ngay_giao</th></tr><tr><td>HD01</td><td>KH01</td><td>MH01</td><td>10</td><td>15/05</td></tr><tr><td>HD02</td><td>KH02</td><td>MH02</td><td>5</td><td>16/05</td></tr></table>
+        <b>Bảng KHACH_HANG</b>
+        <table><tr><th>Ma_khach_hang</th><th>Ten_khach_hang</th><th>Dia_chi</th><th>SDT</th></tr><tr><td>KH01</td><td>Nguyễn Văn A</td><td>Hà Nội</td><td>090123...</td></tr><tr><td>KH02</td><td>Trần Thị B</td><td>Hải Phòng</td><td>090234...</td></tr></table>
+        <b>Bảng MAT_HANG</b>
+        <table><tr><th>Ma_mat_hang</th><th>Ten_mat_hang</th><th>Don_gia</th></tr><tr><td>MH01</td><td>Sách Toán</td><td>50000</td></tr><tr><td>MH02</td><td>Sách Văn</td><td>45000</td></tr></table>
+    </div>`;
+    
+    // Đã đưa về đúng 5 trường: Số thẻ, Họ và tên, Ngày sinh, Lớp, Địa chỉ
+    const t_nguoidoc = `<div class='table-block text-base'><b>Bảng NGƯỜI ĐỌC</b><table><tr><th>Số thẻ</th><th>Họ và tên</th><th>Ngày sinh</th><th>Lớp</th><th>Địa chỉ</th></tr><tr><td>TV01</td><td>Nguyễn Văn A</td><td>15/08/2006</td><td>12A1</td><td>Hà Nội</td></tr><tr><td>TV02</td><td>Trần Thị B</td><td>20/10/2006</td><td>12A2</td><td>Đà Nẵng</td></tr></table></div>`;
+    
+    const t_muontra_thuvien = `<div class='table-block text-base'><b>Bảng Quản Lí Mượn Trả</b><table><tr><th>Mã HS</th><th>Tên HS</th><th>Mã Sách</th><th>Tên Sách</th><th>Ngày Mượn</th></tr><tr><td>HS01</td><td>Lê Bình</td><td>S01</td><td>Toán</td><td>01/10</td></tr><tr><td>HS01</td><td>Lê Bình</td><td>S02</td><td>Văn</td><td>05/10</td></tr></table></div>`;
+    
+    const t_cn_lr_sp = `<div class='table-block text-base'><b>CÔNG NHÂN</b><table><tr><th>Ma_cong_nhan</th><th>Ho_ten</th><th>Nam sinh</th><th>SDT</th><th>Gioi tinh</th></tr></table><b>LAP RAP</b><table><tr><th>Ma_san_pham</th><th>Ma_cong_nhan</th><th>So luong</th><th>Ngay_lap_rap</th></tr></table><b>SAN PHAM</b><table><tr><th>Ma_san_pham</th><th>Ten_san_pham</th><th>Đac tính</th><th>Kích thuoc</th><th>Chat_lieu</th></tr></table></div>`;
+    
+    const t_b_gb_kh = `<div class='table-block text-base'><b>BÁO</b><table><tr><th>Ma bao</th><th>Ten bao</th><th>Gia_tien</th><th>Ngay phat hanh</th></tr></table><b>GIAO BÁO</b><table><tr><th>So don</th><th>Ma KH</th><th>Ma bao</th><th>So luong</th><th>Ngay giao</th></tr></table><b>KHÁCH HÀNG</b><table><tr><th>Ma KH</th><th>Ten KH</th><th>Dia_chi</th><th>SDT</th><th>So luong</th></tr></table></div>`;
+    
+    const t_hocsinh_diem = `<div class='table-block text-base'><b>Bảng Học Sinh</b><table><tr><th>STT</th><th>MA_HS</th><th>HO_TEN</th><th>DIEMTOAN</th><th>DIEMVAN</th><th>DIEMTIN</th></tr><tr><td>1</td><td>HS001</td><td>NGUYEN AN</td><td>8.0</td><td>7.5</td><td>9.0</td></tr><tr><td>2</td><td>HS002</td><td>LE BINH</td><td>6.5</td><td>8.0</td><td>7.0</td></tr></table></div>`;
+
+   // ==================== NGÂN HÀNG CÂU HỎI ĐỀ 1 (CƠ SỞ DỮ LIỆU) ====================
+    const de1_data = [
+        { id: "1_1", type: "single", question: "Chọn phương án đúng điền vào chỗ chấm (...) trong phát biểu sau: 'Hệ QTCSDL là ...'", options: ["A. thiết bị cung cấp môi trường để tạo lập, lưu trữ và khai thác dữ liệu của CSDL.", "B. phần mềm cung cấp môi trường để tạo lập, lưu trữ và khai thác dữ liệu của CSDL.", "C. thiết bị cung cấp môi trường để tìm kiếm, thống kê, tính toán dữ liệu của CSDL.", "D. phần mềm cung cấp môi trường để tìm kiếm, thống kê, tính toán dữ liệu của CSDL."], correct: 1 },
+        { id: "1_2", type: "single", question: "Chọn phương án đúng điền vào chỗ chấm (...) trong phát biểu sau: 'Ràng buộc khoá là yêu cầu ...'", options: ["A. khi cập nhật không làm xuất hiện hai bản ghi có giá trị khoá giống nhau.", "B. khi cập nhật phải làm xuất hiện hai bản ghi có giá trị khoá giống nhau.", "C. khi cập nhật không làm xuất hiện hai trường nào giống nhau.", "D. khi cập nhật phải làm xuất hiện hai trường giống nhau."], correct: 0 },
+        { id: "1_3", type: "single", question: "Chọn phương án đúng điền vào chỗ chấm (...) trong phát biểu sau: 'Trong một bảng ...'", options: ["A. có thể có nhiều khoá.", "B. chỉ được phép có một khoá.", "C. luôn có hai khoá.", "D. bắt buộc có nhiều khoá."], correct: 0 },
+        { id: "1_4", type: "single", question: "Chọn phương án sai trong các phương án sau khi nói về tính dư thừa dữ liệu trong bảng.", options: ["A. Xảy ra khi nhập dữ liệu trùng lặp không cần thiết.", "B. Gây tốn nhiều vùng nhớ lưu trữ không cần thiết.", "C. Xảy ra khi nhập quá nhiều dữ liệu.", "D. Gây ra tình trạng không nhất quán khi cập nhật dữ liệu."], correct: 2 },
+        { id: "1_5", type: "single", question: "Chọn phương án đúng điền vào chỗ chấm (...) trong phát biểu sau: 'Khoá ngoài của một bảng là ...'", options: ["A. một trường (hoặc một số trường) của bảng này và đồng thời là khoá của một bảng khác.", "B. một trường (hoặc một số trường) khoá của bảng này và đồng thời là khoá của một bảng khác.", "C. một trường (hoặc một số trường) khoá của bảng này và đồng thời là trường của một bảng khác.", "D. một trường (hoặc một số trường) của bảng này và đồng thời là trường của một bảng khác."], correct: 0 },
+        { id: "1_6", type: "single", question: "Chọn phương án đúng điển vào chỗ chấm (.) trong phát biểu sau: 'Biểu mẫu dùng để...'", options: ["A. tạo lập hồ sơ.", "B. cập nhật dữ liệu.", "C. lưu trữ dữ liệu.", "D. khai thác dữ liệu."], correct: 1 },
+        { id: "1_7", type: "single", question: "Chọn phương án không là chức năng của biểu mẫu:", options: ["A. Hiển thị dữ liệu trong bảng dưới dạng phù hợp để xem.", "B. Cung cấp khuôn dạng thuận tiện để nhập và sửa dữ liệu.", "C. Cung cấp khuôn dạng thuận tiện để tìm kiếm và khai thác dữ liệu.", "D. Cung cấp các nút lệnh để người dùng thuận tiện thao tác với dữ liệu."], correct: 2 },
+        { id: "1_8", type: "single", question: "Chọn phát biểu đúng trong các phát biểu sau?", options: ["A. Khi xoá dữ liệu bằng biểu mẫu thì dữ liệu trong bảng nguồn sẽ bị xoá.", "B. Khi xoá dữ liệu bằng biểu mẫu thì dữ liệu trong bảng nguồn không bị ảnh hưởng.", "C. Dữ liệu vừa được lưu trong bảng vừa được lưu trong biểu mẫu.", "D. Mọi thao tác với dữ liệu trong bảng không ảnh hưởng đến dữ liệu trong biểu mẫu."], correct: 0 },
+        { id: "1_9", type: "single", question: "Chọn phương án đúng điền vào chỗ chấm (...) trong phát biểu: 'Truy vấn CSDL là ...'", options: ["A. một biểu thức điều kiện được viết bởi người dùng CSDL.", "B. một phát biểu thể hiện yêu cầu của người dùng đối với CSDL.", "C. một câu lệnh theo một ngôn ngữ lập trình cụ thể của người dùng.", "D. hình thức hiển thị dữ liệu theo mong muốn của người dùng."], correct: 1 },
+        { id: "1_10", type: "single", question: "Chọn phương án đúng trong các phương án sau, khi nói về bài toán quản lí:", options: ["A. Bài toán quản lí có chung đặc điểm là lưu trữ và xử lí dữ liệu về hoạt động của một tổ chức.", "B. Bài toán quản lí dùng để lưu trữ và xử lí dữ liệu về hoạt động của tất cả tổ chức xã hội.", "C. Bài toán quản lí có chung đặc điểm là giải quyết một vấn đề xã hội trong một lĩnh vực cụ thể", "D. Bài toán quản lí dùng để giải quyết một bài toán khoa học trong một lĩnh vực cụ thể nào đó."], correct: 0 },
+        { id: "1_11", type: "single", question: "Chọn phát biểu sai trong các phát biểu sau, khi nói về khoá của bảng trong CSDL:", options: ["A. Mỗi bảng trong CSDL đều phải có khoá.", "B. Khi bảng có hơn một khoá, thường chọn một khoá làm khoá chính.", "C. Không có hai bản ghi giống nhau ở giá trị khoá.", "D. Khoá của một bảng chỉ là một trường."], correct: 3 },
+        { id: "1_12", type: "single", question: "Phương án nào sau đây mô tả một CSDL?", options: ["A. Thông tin hàng hoá gồm: tên hàng, ngày nhập, hạn sử dụng được lưu dạng bảng trong máy tính.", "B. Phần mềm dùng để khai thác thông tin hàng hoá gồm: tên hàng, ngày nhập, hạn sử dụng, hãng sản xuất.", "C. Thông tin học sinh gồm: họ và tên, ngày sinh, lớp, địa chỉ được lưu dạng bảng trong vở.", "D. Phần mềm dùng để lưu thông tin sách gồm: tên sách, tác giả, số trang, ngày phát hành."], correct: 0 },
+        { id: "1_13", type: "single", question: "Chọn phương án là số lượng các bản ghi trong bảng SÁCH:" + t_sach, options: ["A. 5.", "B. 3.", "C. 6.", "D. 4."], correct: 0 },
+        { id: "1_14", type: "single", question: "Chọn phương án là phát biểu sai trong các phát biểu sau:", options: ["A. Để tránh dư thừa dữ liệu cần thiết kế các bảng dữ liệu riêng về một đối tượng.", "B. Để tránh dư thừa dữ liệu chỉ cần thiết kế một bảng dữ liệu chung các đối tượng.", "C. Dư thừa dữ liệu có thể giúp người quản lí có đủ thông tin để quản lí đối tượng.", "D. Dư thừa dữ liệu làm tốn nhiều vùng nhớ lưu trữ không cần thiết."], correct: 2 },
+        { id: "1_15", type: "single", question: "Chọn phát biểu đúng trong các phát biểu sau:", options: ["A. Biểu mẫu là một yêu cầu cho người dùng tương tác với dữ liệu nguồn trong việc xem và cập nhật dữ liệu của CSDL.", "B. Biểu mẫu là một loại yêu cầu khai thác dữ liệu của người dùng với dữ liệu của CSDL.", "C. Biểu mẫu là một loại giao diện cho người dùng tương tác với dữ liệu nguồn trong việc xem dữ liệu của CSDL.", "D. Biểu mẫu là một loại giao diện cho người dùng tương tác với dữ liệu nguồn trong việc xem và cập nhật dữ liệu của CSDL."], correct: 3 },
+        { id: "1_16", type: "single", question: "Chọn phương án là chức năng mà một hệ QTCSDL không hỗ trợ:", options: ["A. Cung cấp công cụ tạo lập CSDL.", "B. Cung cấp công cụ cập nhật dữ liệu và kiểm tra tính đúng đắn của dữ liệu trong CSDL.", "C. Cung cấp công cụ hỗ trợ truy xuất dữ liệu từ CSDL.", "D. Cung cấp công cụ để tất cả mọi người đều có thể xem được nội dung của các bảng dữ liệu trong CSDL."], correct: 3 },
+        { id: "1_17", type: "single", question: "Cho câu truy vấn SQL sau đây: CREATE DATABASE qlhs; Câu truy vấn trên thuộc thành phần nào sau đây?", options: ["A. Lớp truy cập dữ liệu.", "B. Ngôn ngữ thao tác dữ liệu.", "C. Ngôn ngữ kiểm soát dữ liệu.", "D. Ngôn ngữ định nghĩa dữ liệu."], correct: 3 },
+        { id: "1_18", type: "single", question: "Khi sử dụng CSDL quản lí điểm, giáo viên chủ nhiệm tiến hành thống kê số lượng học sinh giỏi của lớp. Thao tác này của giáo viên thuộc nhóm thao tác nào sau đây?", options: ["A. Tạo lập hồ sơ.", "B. Cập nhật dữ liệu.", "C. Khai thác thông tin.", "D. Tính toán dữ liệu."], correct: 2 },
+        { id: "1_19", type: "single", question: "Chọn phương án là một trường trong bảng HOC_SINH như hình sau:" + t_hocsinh, options: ["A. Họ và tên.", "B. Nguyễn Thị B.", "C. Text.", "D. Number."], correct: 0 },
+        { id: "1_20", type: "single", question: "Chọn phương án là một bản ghi trong bảng HỌC_SINH sau đây:" + t_hocsinh, options: ["A. STT, Họ và tên, Lớp.", "B. 2, Nguyễn Thị B, 10/2.", "C. Number, Text, Text.", "D. AutoNumber, Text, Number."], correct: 1 },
+        { id: "1_21", type: "single", question: "Cho CSDL gồm các bảng sau, chọn phương án là một khoá ngoài:" + t_hoadon_khachhang, options: ["A. Trường So_don của bảng HOA_DON.", "B. Trường Ma_khach_hang của bảng HOA_DON.", "C. Trường Ma_khach_hang của bảng KHACH_HANG.", "D. Trường Ten_khach_hang của bảng KHACH_HANG."], correct: 1 },
+        { id: "1_22", type: "single", question: "Cho CSDL gồm các bảng sau, chọn phương án là phát biểu về liên kết giữa các bảng:" + t_hoadon_khachhang, options: ["A. Bảng HOA_DON liên kết với bảng KHACH_HANG qua trường So_don.", "B. Bảng HOA_DON liên kết với bảng KHACH_HANG qua trường Ma_khach_hang.", "C. Bảng HOA_DON liên kết với bảng KHACH_HANG qua trường Ten_khach_hang.", "D. Bảng HOA_DON liên kết với bảng KHACH_HANG qua trường Ma_mat_hang."], correct: 1 },
+        { id: "1_23", type: "single", question: "Cho CSDL gồm các bảng sau, chọn phương án đúng khi nói về ràng buộc khoá ngoài:" + t_hoadon_khachhang, options: ["A. Khi cập nhật dữ liệu cho bảng HOA_DON, giá trị của trường Ma_khach_hang phải xuất hiện trong trường Ma_khach_hang của bảng KHACH_HANG.", "B. Khi cập nhật dữ liệu cho bảng KHACH_HANG, giá trị của trường Ma_khach_hang phải xuất hiện trong trường Ma_khach_hang của bảng HOA_DON.", "C. Khi cập nhật dữ liệu cho bảng HOA_DON, giá trị của trường Ma_khach_hang không được trùng với giá trị trong trường Ma_khach_hang của bảng KHACH_HANG.", "D. Khi cập nhật dữ liệu cho bảng KHACH_HANG, giá trị của trường Ma_khach_hang không được trùng với giá trị trong trường Ma_khach_hang của bảng HOA_DON."], correct: 0 },
+        { id: "1_24", type: "single", question: "Cho CSDL QLHS gồm các bảng sau:\nBảng HỌC SINH gồm các trường: CCCD, Mã định danh, Họ và tên, Ngày sinh, Lớp.\nBảng ĐIỂM: Mã định danh, Toán, Văn, Tin, Anh.\nHãy chọn phương án sai trong các phương án sau:", options: ["A. Ở bảng HỌC SINH trường CCCD là khoá chính.", "B. Ở bảng ĐIỂM trường Mã định danh là khoá chính.", "C. Ở bảng HỌC SINH trường Mã định danh làm khoá ngoài.", "D. Ở bảng ĐIỂM trường Toán là khoá ngoài."], correct: 3 },
+        { id: "1_25", type: "single", question: "Phương án nào sau đây ứng với cú pháp câu lệnh xoá dữ liệu?", options: ["A. DROP", "B. DELETE WHERE <điều kiện>", "C. DROP TABLE <tên bảng> WHERE <điều kiện>", "D. DELETE FROM <tên bảng>"], correct: 3 },
+        { id: "1_26", type: "single", question: "Cho bảng NGƯỜI ĐỌC có cấu trúc như hình bên. Chọn phương án là số lượng trường của bảng NGƯỜI ĐỌC." + t_nguoidoc, options: ["A. 5.", "B. 3.", "C. 4.", "D. 6."], correct: 0 },
+
+        // 6 CÂU TRẮC NGHIỆM ĐÚNG/SAI
+        { id: '1_c1', type: 'tf_cluster', question: "Tại một phân xưởng lắp ráp ô tô, người quản lí đã tạo CSDL để quản lí thông tin về các sản phẩm được lắp ráp theo từng ngày. CSDL được tạo gồm các bảng như hình sau:" + t_cn_lr_sp + "Người quản lí đã có một số phát biểu như sau:", subQuestions: [
+            { id: 'd1_1a', text: "a) Trong bảng LAP RAP, có thể chọn trường khoá chính là một trong ba trường Ma_san_pham, Ma_cong_nhan hoặc trường Ngay_lap_rap.", correct: "Sai" },
+            { id: 'd1_1b', text: "b) Bảng CONG_NHAN liên kết với bảng LAP RAP thông qua trường Ma_cong_nhan; bảng SAN_PHAM liên kết với bảng LAP RAP thông qua trường Ma_san_pham.", correct: "Đúng" },
+            { id: 'd1_1c', text: "c) Trường Ngay_lap_rap trong bảng LAP RAP là một khoá ngoài.", correct: "Sai" },
+            { id: 'd1_1d', text: "d) Để đưa ra được thông tin về tên công nhân, cùng với tên sản phẩm mà công nhân đó đã làm, người quản lí cần sử dụng cả ba bảng.", correct: "Đúng" }
+        ]},
+        { id: '1_c2', type: 'tf_cluster', question: "Tại một đại lí bản báo, để quản lí thông tin bán hàng của mình, người quản lí đã tạo CSDL gồm các bảng sau:" + t_b_gb_kh + "Người quản lí đã có một số nhận xét sau:", subQuestions: [
+            { id: 'd1_2a', text: "a) Tập hợp gồm hai trường Ma_KH và Ma_bao trong bảng GIAO BÁO có thể được chỉ định làm khoá chính cho bảng.", correct: "Sai" },
+            { id: 'd1_2b', text: "b) Một khoá ngoài của bảng GIAO BÁO là trường Ma_bao.", correct: "Đúng" },
+            { id: 'd1_2c', text: "c) Sau khi đã hình thành liên kết giữa các bảng trong CSDL. Khi thêm dữ liệu cho bảng GIAO BẢO, thì giá trị nhập vào trong trường Ma_KH bắt buộc phải tồn tại trong trường Ma_KH của bảng KHÁCH HÀNG.", correct: "Đúng" },
+            { id: 'd1_2d', text: "d) Khi người quản lí muốn xoá thông tin của một khách hàng (đã từng đặt giao báo trước đây) trong bảng KHÁCH HÀNG, thì người quản lí chỉ cần chọn bản ghi có chứa thông tin khách hàng đó và nhấn phím Delete.", correct: "Sai" }
+        ]},
+        { id: '1_c3', type: 'tf_cluster', question: "Tại một phân xưởng lắp ráp ô tô, người quản lí đã tạo CSDL để quản lí thông tin. CSDL được tạo gồm các bảng như hình sau:" + t_cn_lr_sp + "Người quản lí đã có một số phát biểu như sau:", subQuestions: [
+            { id: 'd1_3a', text: "a) Khi thực hiện thống kê tổng số lượng mã mỗi công nhân đã làm được theo từng ngày thì thao tác này thuộc nhóm thao tác cập nhật dữ liệu.", correct: "Sai" },
+            { id: 'd1_3b', text: "b) Trường Ma cong nhan trong bảng CONG_NHAN và Ma_cong_nhan trong bảng LAP_RAP phải có cùng kiểu dữ liệu.", correct: "Đúng" },
+            { id: 'd1_3c', text: "c) Trường Ma_san_pham là khoá chính của bảng LAP_RAP.", correct: "Sai" },
+            { id: 'd1_3d', text: "d) Để xoá thông tin của một công nhân đã nghỉ việc trong bảng CONG_NHAN, cần phải xoá các bản ghi có mã công nhân (của công nhân đó) trong bảng LAP_RAP trước, rồi mới thực hiện xoá thông tin của công nhân trong bảng CONG_NHAN.", correct: "Đúng" }
+        ]},
+        { id: '1_c4', type: 'tf_cluster', question: "Tại một đại lí bán báo, để quản lí thông tin bán hàng của mình, người quản lí đã tạo CSDL gồm các bảng sau:" + t_b_gb_kh + "Một người đã có một số nhận xét sau:", subQuestions: [
+            { id: 'd1_4a', text: "a) Trong bảng GIAO BÁO trường So_don bắt buộc phải chỉ định kiểu dữ liệu số (Number).", correct: "Sai" },
+            { id: 'd1_4b', text: "b) Trong quá trình quản lí, do nhu cầu cần biết đơn hàng đó đã giao hay chưa, người quản lí đi thêm vào bảng GIAO BẢO trường Da_giao (kiểu dữ liệu logic-Yes/No). Thao tác người quản lí đã làm gọi là cập nhật dữ liệu.", correct: "Sai" },
+            { id: 'd1_4c', text: "c) Bảng GIAO BÁO và bảng KHÁCH HÀNG có quan hệ với nhau qua khoá ngoài Ma_KH.", correct: "Đúng" },
+            { id: 'd1_4d', text: "d) Việc sửa dữ liệu trong trường Ma_bao của bảng BÁO không liên quan gì đến dữ liệu hai bảng còn lại.", correct: "Sai" }
+        ]},
+        { id: '1_c5', type: 'tf_cluster', question: "Tuấn được giao nhiệm vụ thiết kế một CSDL quản lí thông tin cho một bệnh viện ABC. Hệ thống cần lưu trữ thông tin về bệnh nhân, bác sĩ và lịch khám bệnh. Cụ thể:\n• Bảng Bệnh nhân (idBN, Hoten, Ngsinh, Diachi, tell)\n• Bác sĩ (idBS, Hotenbs, khoa, Lienhe)\n• Lịch khám (id Lichkham, BN, BS, ngaykham)\nMột người bạn của Tuấn đã có các nhận xét sau đây:", subQuestions: [
+            { id: 'd1_5a', text: "a) Mỗi lịch khám bệnh chỉ có thể liên kết với một bác sĩ và một bệnh nhân, vì vậy mối quan hệ giữa bảng Lịch khám và bảng Bác sĩ là mối quan hệ n-1.", correct: "Đúng" },
+            { id: 'd1_5b', text: "b) Bảng Bệnh nhân cần có một trường dữ liệu để lưu trữ số điện thoại của bệnh nhân, nhưng không cần thiết phải kiểm tra tính hợp lệ của số điện thoại trong CSDL.", correct: "Sai" },
+            { id: 'd1_5c', text: "c) Một bệnh nhân chỉ có thể có một lịch khám duy nhất trong hệ thống tại một thời điểm.", correct: "Sai" },
+            { id: 'd1_5d', text: "d) Việc sử dụng quy trình chuẩn để nhập liệu thông tin bệnh nhân sẽ không ảnh hưởng đến hiệu suất của hệ thống, vì điều này chỉ xảy ra một lần.", correct: "Đúng" }
+        ]},
+        { id: '1_c6', type: 'tf_cluster', question: "Cho CSDL của một thư viện bao gồm các bảng:\n• Bảng sach (idSach, tenSach, tacGia, nhaXuatBan, giaNhap, giaBan, soLuong)\n• Bảng docgia (idDocGia, hoTen, ngaySinh, tel, diaChi)\n• Bảng muonsach (idMuonSach, idDocGia, ngayMuon, soTienCoc)\n• Bảng chitietmuonsach (idSach, idMuonSach, soLuong)\nMột số bạn học sinh đưa ra nhận xét về khai thác CSDL trên như sau:", subQuestions: [
+            { id: 'd1_6a', text: "a) Khi thư viện nhập thêm một cuốn sách mới mà sách này chưa có trong CSDL thì dữ liệu về sách này sẽ được lưu vào bảng sach.", correct: "Đúng" },
+            { id: 'd1_6b', text: "b) Trường (cột) dữ liệu chitietmuonsach.soLuong là khoá chính của bảng chitietmuonsach, tham chiếu đến trường (cột) dữ liệu sach.soLuong.", correct: "Sai" },
+            { id: 'd1_6c', text: "c) Mỗi khi có giao dịch mượn sách (mỗi lần một độc giả mượn sách), ít nhất 3 bảng dữ liệu cần được cập nhật là: sach, muonsach, chitietmuonsach.", correct: "Đúng" },
+            { id: 'd1_6d', text: "d) Một độc giả chỉ có thể mượn tối đa số lượng sách bằng với số lượng sách còn lại được lưu trữ trong bảng sach. Điều này có nghĩa là nếu sach.soLuong = 0, độc giả sẽ không thể thực hiện giao dịch mượn sách.", correct: "Đúng" }
+        ]}
+    ];
+
+    // ==================== NGÂN HÀNG CÂU HỎI ĐỀ 2 (CƠ SỞ DỮ LIỆU) ====================
+    const de2_data = [
+        { id: "2_1", type: "single", question: "Câu truy vấn sau thực hiện yêu cầu gì?\nSELECT [Mã định danh], [Họ và tên], [Toán]\nFROM [HỌC SINH]\nWHERE [Giới tính]= 'Nữ'", options: ["A. Đưa ra thông tin Mã định danh, Họ và tên, điểm Toán của tất cả học sinh từ bảng HỌC SINH.", "B. Đưa ra thông tin Mã định danh, Họ và tên, điểm Toán của những học sinh nữ, bảng ĐIỂM.", "C. Đưa ra thông tin Mã định danh, Họ và tên, điểm Toán của tất cả học sinh, từ bảng ĐIỂM", "D. Đưa ra thông tin Mã định danh, Họ và tên, điểm Toán của những học sinh nữ, từ bảng HỌC SINH."], correct: 3 },
+        { id: "2_2", type: "single", question: "Một thủ thư tại thư viện trường X, đã tạo CSDL để quản lí việc cho mượn và trả sách của học sinh gồm bảng như sau: Chọn phương án là nhận xét đúng về dữ liệu trong bảng của CSDL trên." + t_muontra_thuvien, options: ["A. CSDL đã lưu đầy đủ dữ liệu.", "B. CSDL vi phạm tính dư thừa dữ liệu.", "C. CSDL vi phạm tính cấu trúc khi lưu dữ liệu.", "D. CSDL đảm bảo tính nhất quán cao khi cập nhật dữ liệu."], correct: 1 },
+        { id: "2_3", type: "single", question: "Chọn phương án đúng điền vào chỗ chấm (...) trong phát biểu sau: 'Tập hợp các dữ liệu được lưu dưới dạng bảng tại máy chủ dịch vụ, để phục vụ cho trang web https://dsvn.vn/ được gọi là …'", options: ["A. Cơ sở dữ liệu.", "B. Hệ cơ sở dữ liệu.", "C. Hệ quản trị cơ sở dữ liệu.", "D. Phần mềm quản trị."], correct: 0 },
+        { id: "2_4", type: "single", question: "Trong quá trình xử lí thông tin của một bài toán quản lí, việc bổ sung thêm dữ liệu vào hồ sơ thuộc nhóm thao tác nào sau đây?", options: ["A. Tạo lập hồ sơ", "B. Cập nhật dữ liệu.", "C. Khai thác thông tin.", "D. Chỉnh sửa dữ liệu."], correct: 1 },
+        { id: "2_5", type: "single", question: "Đặc điểm nào sau đây không là đặc trưng của một bảng dữ liệu trong hệ CSDL quan hệ?", options: ["A. Các bản ghi là phân biệt và thứ tự các bản ghi không quan trọng", "B. Bảng không có thuộc tính đa trị hay phức tạp.", "C. Mỗi thuộc tính có một tên phân biệt và thứ tự các thuộc tính là quan trọng", "D. Tên của các bảng có thể trùng nhau."], correct: 3 },
+        { id: "2_6", type: "single", question: "Trong các phương án sau, chọn phương án là CSDL phân tán:", options: ["A. CSDL dùng để quản lí học sinh được lưu tại máy chủ của một trường học.", "B. CSDL để quản lí thông tin bán vé xe của một cống tỉ vận tải, được lưu trữ tại máy chủ của công tỉ đỏ.", "C. CSDL của một ngân hàng có nhiều chi nhánh, dữ liệu của mỗi chi nhánh sẽ được tổ chức lưu trữ tại chi nhánh đó.", "D. CSDL bán hàng của một siêu thị nhỏ, được lưu tại máy chủ của siêu thị đó."], correct: 2 },
+        { id: "2_7", type: "single", question: "Cho CSDL có bảng NHÂN VIÊN gồm các trường: STT, Họ và tên, Ngày sinh, Giới tính, CCCD. Chọn phương án đúng trong các phương án sau:", options: ["A. Tập hợp gồm các trường CCCD, Họ và tên không phải là khoá.", "B. Tập hợp gồm các trường CCCD, Họ và tên là khoá.", "C. Tập hợp gồm các trường Ngày sinh, Giới tính là khoá.", "D. Tập hợp chỉ có một trường STT không phải là khoá."], correct: 1 },
+        { id: "2_8", type: "single", question: "Cho bảng Khoa. Để tạo bảng GiangVien trong đó magv là khoá chính, makhoa là khoá phụ (khoá ngoài) ta thực hiện lệnh nào sau đây?", options: ["A. Create table GiangVien (magv int not null primary key, hotengv char(30), luong decimal(5,2), makhoa char(10), constraint fk_makhoa foreign key (makhoa) references Khoa (makhoa))", "B. Create table GiangVien (magv int not null primary key, hotengv char(30), luong decimal(5,2), makhoa char(10), constraint fk_makhoa khoaphu (makhoa) references Khoa (makhoa))", "C. Create table GiangVien (magv int not null primary key, hotengv char(30), luong decimal(5,2), makhoa char(10), constraint fk_makhoa primary key (makhoa) references Khoa (makhoa))", "D. Create table GiangVien (magv int not null primary key, hotengv char(30), luong decimal(5,2), makhoa char(10), constraint fk_makhoa foreign key (makhoa) references Giangvien (makhoa))"], correct: 0 },
+        { id: "2_9", type: "single", question: "Hãy chọn câu lệnh Select đúng trong các câu lệnh sau đây:", options: ["A. SELECT * FROM t1 ORDER BY id DESC;", "B. SELECT * FROM t1 WHERE BY id;", "C. SELECT WHERE t1 ORDER BY id ASC;", "D. SELECT % FROM t1 WHERE BY id;"], correct: 0 },
+        { id: "2_10", type: "single", question: "Cơ sở dữ liệu 'QuanLyTuyenSinh' có bảng DiemKhoiA. Hãy chọn phương án ứng với câu lệnh đếm tổng số thí sinh có kết quả 'Đổ' trong các phương án sau đây:", options: ["A. Select count(KetQua) From QuanLyTuyenSinh Where KetQua = 'Đổ'", "B. Select count(KetQua) From QuanLyTuyenSinh Order KetQua='Đổ'", "C. Select count(KetQua) From QuanLyTuyenSinh Having KetQua = 'Đổ'", "D. Select count(KetQua) From QuanLyTuyenSinh Where KetQua='TRƯỢT'"], correct: 0 },
+        { id: "2_11", type: "single", question: "Trong mô hình CSDL quan hệ, tại sao cần tạo khoá chính cho mỗi bảng?", options: ["A. Để tránh mất dữ liệu.", "B. Để giảm dung lượng bảng", "C. Để xác định duy nhất mỗi bản ghi trong bảng.", "D. Để kết hợp dữ liệu từ nhiều bảng khác nhau."], correct: 2 },
+        { id: "2_12", type: "single", question: "Điều gì sẽ xảy ra nếu một khoá ngoài không khớp với khoá chính trong bảng khác?", options: ["A. Dữ liệu vẫn được lưu trữ bình thường.", "B. Sẽ phát sinh lỗi toàn vẹn tham chiếu.", "C. Hệ thống sẽ tự động điều chỉnh khoá ngoài.", "D. Khoá ngoài sẽ bị xoá tự động."], correct: 1 },
+        { id: "2_13", type: "single", question: "Hệ CSDL tập trung có nhược điểm chính nào so với hệ CSDL phân tán?", options: ["A. Khả năng truy cập dữ liệu từ xa bị giới hạn.", "B. Bảo mật cao hơn.", "C. Chi phí quản lí thấp hơn.", "D. Độ tin cậy thấp hơn khi có lỗi hệ thống tại điểm tập trung (bottleneck)."], correct: 3 },
+        { id: "2_14", type: "single", question: "Công ti X quản lí danh sách khách hàng và đơn hàng bằng hệ thống CSDL. Để mỗi đơn hàng được liên kết chính xác với khách hàng tương ứng, cần phải sử dụng loại khoá nào?", options: ["A. Khoá chính.", "B. Khoá ngoài.", "C. Khoá duy nhất.", "D. Chỉ mục."], correct: 1 },
+        { id: "2_15", type: "single", question: "Một công ti tài chính lưu trữ dữ liệu khách hàng và giao dịch của họ trong một hệ thống CSDL. Để tìm kiếm thông tin của khách hàng dựa trên số tài khoản ngân hàng nhanh chóng, bạn nên sử dụng giải pháp nào?", options: ["A. Chỉ mục (Index).", "B. Khoá ngoài.", "C. Bảng tạm thời.", "D. Ràng buộc."], correct: 0 },
+        { id: "2_16", type: "single", question: "Một chuỗi cửa hàng bán lẻ sử dụng hệ thống CSDL để quản lí hàng tồn kho. Nếu họ muốn đảm bảo mỗi sản phẩm trong kho có một mã sản phẩm duy nhất để dễ quản lí, họ nên sử dụng loại ràng buộc nào?", options: ["A. Ràng buộc UNIQUE (hoặc Primary Key).", "B. Khoá ngoài.", "C. Ràng buộc NOT NULL", "D. Chỉ mục."], correct: 0 },
+        { id: "2_17", type: "single", question: "Một bệnh viện sử dụng hệ CSDL để lưu trữ thông tin bệnh nhân và lịch sử điều trị. Để bảo vệ dữ liệu nhạy cảm của bệnh nhân khỏi việc truy cập trái phép, bệnh viện cần thực hiện biện pháp nào?", options: ["A. Xoá các thông tin sau khi bệnh nhân rời khỏi bệnh viện.", "B. Sử dụng hệ thống mã hoá và phân quyền truy cập.", "C. Giảm thiểu dữ liệu lưu trữ.", "D. Sao lưu dữ liệu hằng ngày."], correct: 1 },
+        { id: "2_18", type: "single", question: "Một công ti vận tải muốn thống kê số lượng các chuyến hàng từ kho đến các điểm phân phối khác nhau. Khi cần truy xuất dữ liệu từ cả bảng 'Kho' và bảng 'Chuyến hàng', họ nên sử dụng loại truy vấn nào?", options: ["A. DELETE.", "B. INSERT.", "C. JOIN.", "D. UPDATE."], correct: 2 },
+        { id: "2_19", type: "single", question: "Một ngân hàng muốn theo dõi các giao dịch của khách hàng trong nhiều chi nhánh khác nhau. Họ cần phải đảm bảo rằng dữ liệu từ tất cả các chi nhánh luôn được cập nhật đồng bộ. Hệ CSDL nào phù hợp nhất?", options: ["A. CSDL tập trung.", "B. CSDL phân tán.", "C. CSDL quan hệ.", "D. CSDL không quan hệ (NoSQL)."], correct: 1 },
+        { id: "2_20", type: "single", question: "Một cửa hàng trực tuyến muốn đảm bảo mỗi khách hàng chỉ có thể có một tài khoản với cùng một địa chỉ thư điện tử. Cửa hàng nên sử dụng biện pháp nào trong hệ CSDL?", options: ["A. Sử dụng khoá ngoài trên địa chỉ thư điện tử.", "B. Sử dụng ràng buộc UNIQUE cho trường địa chỉ thư điện tử.", "C. Sử dụng chỉ mục cho địa chỉ thư điện tử.", "D. Sử dụng khoá chính trên địa chỉ thư điện tử."], correct: 1 },
+        { id: "2_21", type: "single", question: "Một công ti bảo hiểm cần lưu trữ thông tin về khách hàng và các hợp đồng bảo hiểm. Để dễ tra cứu hợp đồng bảo hiểm của từng khách hàng, cần thực hiện giải pháp nào?", options: ["A. Lưu trữ thông tin khách hàng và hợp đồng trong cùng một bảng.", "B. Sử dụng khoá ngoài để liên kết bảng khách hàng và bảng hợp đồng bảo hiểm.", "C. Sử dụng truy vấn UPDATE để cập nhật hợp đồng bảo hiểm.", "D. Sử dụng chỉ mục trên bảng khách hàng."], correct: 1 },
+        { id: "2_22", type: "single", question: "Một công ti thương mại điện tử muốn theo dõi đơn hàng từ khi khách hàng đặt hàng cho đến khi hàng được giao thành công ở quy mô lớn, phân bổ nhiều nơi. Hệ CSDL nào là phù hợp?", options: ["A. Hệ CSDL cục bộ.", "B. Hệ CSDL phân tán.", "C. Hệ CSDL không quan hệ đơn giản.", "D. Hệ CSDL tạm thời."], correct: 1 },
+        { id: "2_23", type: "single", question: "Một công ti sản xuất có nhiều nhà máy ở các địa điểm khác nhau và cần quản lí tồn kho một cách hiệu quả chung. Công ti nên sử dụng hệ CSDL nào?", options: ["A. Hệ CSDL không quan hệ (NoSQL).", "B. Hệ CSDL tập trung duy nhất không sao lưu.", "C. Hệ CSDL quan hệ độc lập ở từng nơi.", "D. Hệ CSDL phân tán."], correct: 3 },
+        { id: "2_24", type: "single", question: "Một ngân hàng muốn bảo vệ thông tin tài khoản khi khách hàng truy cập qua nhiều thiết bị khác nhau. Giải pháp nào là hợp lí nhất để đảm bảo an toàn cho hệ CSDL trong tình huống này?", options: ["A. Sử dụng hệ CSDL phân tán để lưu trữ thông tin khách hàng.", "B. Sử dụng mã hoá hai lớp và xác thực hai yếu tố (2FA) cho các giao dịch.", "C. Tạo nhiều bản sao CSDL cho mỗi thiết bị của khách hàng.", "D. Lưu trữ thông tin đăng nhập của khách hàng trong một bảng riêng biệt."], correct: 1 },
+        { id: "2_25", type: "single", question: "Một chuỗi nhà hàng quốc tế quản lí hệ thống CSDL phân tán tại từng chi nhánh. Công ti nên sử dụng chiến lược nào để đảm bảo dữ liệu luôn được cập nhật đồng bộ toàn cục?", options: ["A. Sử dụng sao lưu định kì cho mỗi chi nhánh.", "B. Lưu trữ toàn bộ dữ liệu tại một chi nhánh trung tâm.", "C. Sử dụng cơ chế replication (nhân bản) để đồng bộ dữ liệu giữa các máy chủ.", "D. Tạo bảng tạm thời để lưu trữ các thay đổi trước khi cập nhật dữ liệu."], correct: 2 },
+        { id: "2_26", type: "single", question: "Một hệ thống quản lí dự án cần lưu trữ thông tin về nhân viên, dự án. Mỗi nhân viên có thể tham gia nhiều dự án và mỗi dự án có nhiều nhân viên. Bạn nên thiết kế CSDL như thế nào?", options: ["A. Tạo bảng trung gian giữa bảng nhân viên và bảng dự án để lưu thông tin tham gia/nhiệm vụ.", "B. Tạo bảng duy nhất chứa thông tin cả nhân viên, dự án và nhiệm vụ.", "C. Tạo một bảng để lưu tiến độ nhiệm vụ và liên kết với bảng nhiệm vụ qua Khoá chính.", "D. Chỉ sử dụng khoá ngoài trực tiếp giữa bảng nhân viên và bảng dự án."], correct: 0 },
+
+        // 6 CÂU TRẮC NGHIỆM ĐÚNG/SAI
+        { id: '2_c1', type: 'tf_cluster', question: "Cho CSDL của một khách sạn bao gồm các bảng:\n• Bảng phong (idPhong, tenPhong, loaiPhong, giaPhong, tinhTrang)\n• Bảng khachhang (idKhach lang, hoTen, tel, diaChi)\n• Bảng datphong (dDatPhong, idKhach Hang, ngayDat, ngayCheckIn, ngay CheckOut tong Tiền)\n• Bảng chitietdatphong (idPhong, idDatPhong, soNgayO)\nMột số bạn học sinh đưa ra nhận xét về khai thác CSDL trên như sau:", subQuestions: [
+            { id: 'd2_1a', text: "a) Khi khách hàng đặt một phòng mới mà chưa có thông tin trong hệ thống, thông tin về khách hàng đó sẽ được lưu vào bảng khachhang.", correct: "Đúng" },
+            { id: 'd2_1b', text: "b) Trường (cột) dữ liệu chitietdatphong.soNgayO không thể lớn hơn thời gian giữa ngày check-in và ngày check-out trong bảng datphong.", correct: "Đúng" },
+            { id: 'd2_1c', text: "c) Câu lệnh lấy ra tất cả các phòng mà khách hàng có mã idKhach Hang bằng 1 đã từng đặt cần kết nối 3 bảng dữ liệu.", correct: "Đúng" },
+            { id: 'd2_1d', text: "d) Nếu phòng có tinhTrang = 'đã có người đặt' trong bảng phong, thì khách hàng mới sẽ không thể đặt phòng đó.", correct: "Đúng" }
+        ]},
+        { id: '2_c2', type: 'tf_cluster', question: "Một trường đại học sử dụng phần mềm quản lí sinh viên với CSDL quan hệ gồm 3 bảng:\n• SINHVIEN (MaSV, HoTen, NgaySinh, GioiTinh, MaLop)\n• LOPHOC (MaLop, TenLop, Khoa)\n• KETQUAHOCTAP (MaSV, MonHoc, DiemThi)\nMột số bạn học sinh đưa ra nhận xét:", subQuestions: [
+            { id: 'd2_2a', text: "a) Trong mô hình quan hệ, mỗi hàng trong bảng SINHVIEN đại diện cho thông tin của một sinh viên.", correct: "Đúng" },
+            { id: 'd2_2b', text: "b) MaLop là khoá chính của bảng SINHVIEN.", correct: "Sai" },
+            { id: 'd2_2c', text: "c) Khi có một sinh viên mới nhập học, cần thực hiện thao tác thêm dữ liệu vào cả bảng SINHVIEN và KETQUAHOCTAP.", correct: "Sai" },
+            { id: 'd2_2d', text: "d) Để biết tên lớp và khoa mà sinh viên đang theo học, cần sử dụng cả bảng SINH VIEN và KETQUAHOCTAP.", correct: "Sai" }
+        ]},
+        { id: '2_c3', type: 'tf_cluster', question: "Một CSDL quản lí công việc có tên là QLCONGVIEC, gồm có 3 bảng:\n• Bảng nhanvien (idNhanvien, hoten, chucvu, phongban)\n• Bảng duan (idDuan, tenduan, thoigianbatdau, thoigianketthuc)\n• Bảng thamgia (idNhanvien, idDuan, ngaythamgia, chucvu)\nMột số ý kiến về việc khai thác CSDL trên như sau:", subQuestions: [
+            { id: 'd2_3a', text: "a) Sử dụng câu lệnh SQL là: SELECT * FROM thamgia WHERE idNhanvien=19 để lọc ra các dự án mà nhân viên có mã nhân viên bằng 10 đã tham gia.", correct: "Sai" },
+            { id: 'd2_3b', text: "b) Để thêm thông tin về việc một nhân viên tham gia vào dự án mới, nếu dữ liệu nhân viên đó chưa có, thì cần nhập bảng thamgia trước, bảng nhanvien sau.", correct: "Sai" },
+            { id: 'd2_3c', text: "c) Để trích xuất danh sách các nhân viên đã tham gia vào các dự án, câu lệnh cần dùng INNER JOIN kết nối cả 3 bảng.", correct: "Đúng" },
+            { id: 'd2_3d', text: "d) Cần phải thêm một trường mới vào bảng nhanvien để lưu số dự án mà mỗi nhân viên đã tham gia.", correct: "Sai" }
+        ]},
+        { id: '2_c4', type: 'tf_cluster', question: "Cho bảng Học Sinh và các ý kiến sau đây. Đánh giá các nhận xét sau:" + t_hocsinh_diem, subQuestions: [
+            { id: 'd2_4a', text: "a) Bảng Học Sinh gồm có 5 trường dữ liệu.", correct: "Sai" },
+            { id: 'd2_4b', text: "b) Hàng có STT 1 là 1 bản ghi chứa thông tin của học sinh NGUYEN AN.", correct: "Đúng" },
+            { id: 'd2_4c', text: "c) Trong bảng dữ liệu trên, trường MA HS được chọn làm khoá chính.", correct: "Đúng" },
+            { id: 'd2_4d', text: "d) Từ bảng Hoc Sinh, giáo viên có thể tổng kết được điểm trung bình bằng công thức truy vấn: (DIEMTOAN*2+DIEMVAN*2+DIEMTIN)/5.", correct: "Đúng" }
+        ]},
+        { id: '2_c5', type: 'tf_cluster', question: "Một trường học muốn tạo CSDL quản lí thông tin và điểm số của học sinh được lưu tại máy chủ của trường. Một số giáo viên có những phát biểu sau đây:", subQuestions: [
+            { id: 'd2_5a', text: "a) Trường hợp này là một bài toán quản lí.", correct: "Đúng" },
+            { id: 'd2_5b', text: "b) CSDL này có tính chất phân tán.", correct: "Sai" },
+            { id: 'd2_5c', text: "c) Để đảm bảo tính bảo mật, mỗi học sinh được cấp một tài khoản và có thể truy cập bất cứ lúc nào, bất cứ thông tin nào của CSDL.", correct: "Sai" },
+            { id: 'd2_5d', text: "d) Để đảm bảo tính bảo mật, mỗi học sinh và giáo viên được cấp một tài khoản truy cập dưới sự quản lí và phân quyền của ban quản trị CSDL nhà trường.", correct: "Đúng" }
+        ]},
+        { id: '2_c6', type: 'tf_cluster', question: "Hệ CSDL phân tán mang lại nhiều lợi ích nhưng cũng có những thách thức so với hệ CSDL tập trung. Đánh giá các nhận xét sau:", subQuestions: [
+            { id: 'd2_6a', text: "a) Dữ liệu trong hệ CSDL phân tán có thể được lưu trữ phân tán trên nhiều trạm (máy tính) khác nhau trên mạng máy tính.", correct: "Đúng" },
+            { id: 'd2_6b', text: "b) Hệ CSDL phân tán không có khả năng phục hồi dữ liệu khi một nút mạng bất kì bị hỏng hóc.", correct: "Sai" },
+            { id: 'd2_6c', text: "c) Việc quản lí tính toàn vẹn dữ liệu và đồng bộ hoá trong hệ CSDL phân tán thường phức tạp hơn nhiều so với hệ CSDL tập trung.", correct: "Đúng" },
+            { id: 'd2_6d', text: "d) Chi phí xây dựng phần mềm và bảo trì hệ CSDL phân tán luôn luôn thấp hơn so với hệ CSDL tập trung.", correct: "Sai" }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Vui lòng nhắc học sinh nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                // TỰ ĐỘNG XOÁ CÁC TIỀN TỐ "A. ", "B. ", "C. ", "D. " ĐỂ KHÔNG BỊ LẶP
+                q.options = q.options.map(opt => opt.replace(/^[A-D][\.\:\)]\s*/i, ''));
+            });
+            
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${sub.text}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                let allAnswered = q.subQuestions.every(sub => userAnswers[sub.id] !== undefined);
+                if (allAnswered) count++;
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        // CSS CĂN CHỈNH KÍCH THƯỚC VÀ KHOẢNG CÁCH (lg:text-[24px] cho toàn bộ)
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-5 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl lg:text-[24px] font-bold leading-relaxed shadow-inner">${q.displayQuestion.replace(/\n/g, '<br/>')}</div><div class="space-y-4">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-2 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base lg:text-[24px] leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-4 py-2 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm lg:text-base text-center w-20 sm:w-24 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-4 py-2 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm lg:text-base text-center w-20 sm:w-24 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-4"><div class="w-full"><p class="text-lg sm:text-xl lg:text-[24px] font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion.replace(/\n/g, '<br/>')}</p></div></div><div class="space-y-5 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-2 border border-gray-200 rounded-xl flex items-center gap-4 bg-white shadow-sm"><span class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-sm font-black text-gray-500 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-800 font-medium text-base lg:text-[24px] leading-snug">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} câu`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+        const score = scoreP1P2.toFixed(2);
+        let correctTotal = correctP1P2;
+        let itemsTotal = totalP1P2;
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctTotal, tongCau: itemsTotal,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctTotal, itemsTotal, record.duration); });
+        }
+    };
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-5 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl lg:text-[24px] text-red-600 mb-4 leading-relaxed">${q.displayQuestion.replace(/\n/g, '<br/>')}</div>`;
+                html += `<div class="space-y-2">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-3 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-slate-700 flex-1 lg:text-[24px]">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="text-xl mr-2 drop-shadow-sm">${statusIcon}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'} shadow-sm">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-5 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl lg:text-[24px] text-red-600 mb-4 leading-relaxed">${q.displayQuestion.replace(/\n/g, '<br/>')}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-2 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 lg:text-[24px]">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
