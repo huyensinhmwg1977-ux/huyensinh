@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Trắc Nghiệm - Hành Trình Số Cỏ Dại</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    /* BẢNG DỮ LIỆU */
+    .table-block {
+        background-color: #f8fafc;
+        border: 1px solid #bae6fd;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+    }
+    .table-block table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 300px;
+        background: white;
+        margin-bottom: 1rem;
+    }
+    .table-block table:last-child { margin-bottom: 0; }
+    .table-block th, .table-block td {
+        border: 1px solid #cbd5e1;
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        color: #1e293b;
+        font-size: 16px;
+    }
+    .table-block th {
+        background-color: #e0f2fe;
+        font-weight: 700;
+        color: #0369a1;
+    }
+    .table-block b {
+        display: block;
+        margin-top: 0.25rem;
+        margin-bottom: 0.5rem;
+        color: #0f172a;
+        font-size: 18px;
+    }
+    @media (min-width: 1024px) {
+        .table-block th, .table-block td { font-size: 20px; }
+        .table-block b { font-size: 22px; }
+    }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-2xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1">THỰC HÀNH: HỆ CƠ SỞ DỮ LIỆU</h1>
+      <p class="text-gray-600 font-bold">Môn: Tin học 11 </p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="11A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">THỰC HÀNH: HỆ CSDL 1</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">THỰC HÀNH: HỆ CSDL 2</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 câu</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-6 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-lg lg:text-[22px] rounded-2xl shadow-md transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-lg lg:text-[22px] rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-lg lg:text-[22px] rounded-2xl shadow-md hover:shadow-lg hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚 Thiết kế và phát triển bởi cô:  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh 📚 🏆</span>  
+      </p>
+   </footer>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_1113');
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // Các bảng dữ liệu HTML đính kèm vào câu hỏi
+    const t_KhachHang_Sodon = `<div class='table-block text-base'><b>Bảng KHACH_HANG</b><table><tr><th>Mã KH</th><th>Tên_KH</th><th>SĐT</th></tr><tr><td>KH001</td><td>Nguyễn Văn An</td><td>0909123456</td></tr><tr><td>KH002</td><td>Trần Thị Bé</td><td>0912234567</td></tr></table></div>`;
+    const t_NhanVien_PhongBan = `<div class='table-block text-base'><b>Bảng NHAN_VIEN</b><table><tr><th>Mã_NV</th><th>Tên NV</th><th>Mã_PB</th></tr><tr><td>NV001</td><td>Lê Phú Cam</td><td>PB01</td></tr><tr><td>NV002</td><td>Phạm Dũng</td><td>PB02</td></tr></table><b>Bảng PHONG_BAN</b><table><tr><th>Mã_PB</th><th>Tên_PB</th></tr><tr><td>PB01</td><td>Kế toán</td></tr><tr><td>PB02</td><td>Nhân sự</td></tr></table></div>`;
+    
+    // Cập nhật lại các bảng với đầy đủ bản ghi theo yêu cầu:
+    const t_SanPham = `<div class='table-block text-base'><b>Bảng SAN_PHAM</b><table><tr><th>Mã_SP</th><th>Tên sản phẩm</th><th>Loại Sản phẩm</th><th>Số lượng tồn kho</th><th>Giá</th></tr><tr><td>SP001</td><td>Dell</td><td>Laptop</td><td>10</td><td>20000</td></tr><tr><td>SP002</td><td>Iphone</td><td>Điện thoại</td><td>15</td><td>15000</td></tr><tr><td>SP003</td><td>Samsung</td><td>Máy tính bảng</td><td>5</td><td>30000</td></tr><tr><td>SP004</td><td>HP</td><td>Laptop</td><td>10</td><td>21000</td></tr></table></div>`;
+    const t_SinhVien = `<div class='table-block text-base'><b>Bảng SINH_VIEN</b><table><tr><th>Mã SV</th><th>Tên sinh viên</th><th>Ngành học</th><th>Diem GPA</th></tr><tr><td>SV001</td><td>Nguyễn Văn Đạt</td><td>Công nghệ thông tin</td><td>3.5</td></tr><tr><td>SV002</td><td>Lê Thị Hương</td><td>Quản trị kinh doanh</td><td>3.7</td></tr><tr><td>SV003</td><td>Trần Đức Anh</td><td>Kĩ thuật phần mềm</td><td>3.2</td></tr></table></div>`;
+    const t_KhachHang_HD = `<div class='table-block text-base'><b>Bảng KHACH_HANG</b><table><tr><th>Mã_KH</th><th>Tên khách hàng</th><th>Số điện thoại</th><th>Địa chỉ</th></tr><tr><td>KH001</td><td>Nguyễn Thị Thu</td><td>098765432112</td><td>Lê Lợi, Hà Nội</td></tr><tr><td>KH002</td><td>Trần Văn Hùng</td><td>097865432189</td><td>Trần Phú, Đà Nẵng</td></tr><tr><td>KH003</td><td>Phạm Văn Khoa</td><td>090125478923</td><td>Nguyễn Huệ, TP.HCM</td></tr></table><b>Bảng SODON</b><table><tr><th>Mã đơn</th><th>Mã_KH</th><th>Mã hàng</th><th>Số lượng mua</th></tr><tr><td>HD001</td><td>KH001</td><td>MH001</td><td>8</td></tr><tr><td>HD002</td><td>KH002</td><td>MH002</td><td>9</td></tr><tr><td>HD003</td><td>KH003</td><td>MH003</td><td>10</td></tr></table></div>`;
+
+    // =========================================================================
+    // NGÂN HÀNG CÂU HỎI ĐỀ 1 (30 Câu Đơn + 5 Câu Đúng/Sai = 35 Câu)
+    // =========================================================================
+    const de1_data = [
+        { id: "1_1", type: "single", question: "Câu 1. Hệ QTCSDL nào sau đây là sản phẩm mã nguồn mở miễn phí?", options: ["A. ORACLE.", "B. SQL Server.", "C. DB2.", "D. MySQL."], correct: 3 },
+        { id: "1_2", type: "single", question: "Câu 2. Hãy chọn phương án đúng về lợi ích chính của việc sử dụng hệ QTCSDL.", options: ["A. Lưu trữ dữ liệu tạm thời.", "B. Quản lí tập nhanh chóng.", "C. Quản lí dữ liệu một cách an toàn và hiệu quả.", "D. Tăng cường tốc độ của hệ điều hành."], correct: 2 },
+        { id: "1_3", type: "single", question: "Câu 3. Ưu điểm của hệ CSDL quản lí dự án là gì?", options: ["A. Đồng bộ thông tin giữa các bộ phận khác nhau.", "B. Dự đoán và quản lí nhu cầu cung cấp.", "C. Đơn giản hoá quá trình tuyển dụng.", "D. Cung cấp dữ liệu chính xác về nhân viên."], correct: 0 },
+        { id: "1_4", type: "single", question: "Câu 4. Trong CSDL, về mặt cấu trúc, dữ liệu được thể hiện trong thành phần nào sau đây?", options: ["A. Trường (Field).", "B. Bản ghi (Record).", "C. Bảng (Table).", "D. Báo cáo (Report)."], correct: 2 },
+        { id: "1_5", type: "single", question: "Câu 5. Khoá chính (Primary Key) có đặc điểm nào sau đây?", options: ["A. Có thể chứa giá trị NULL.", "B. Mỗi bản ghi trong bảng có thể có nhiều giá trị khoá chính.", "C. Khoá chính phải có giá trị duy nhất và không được NULL.", "D. Khoá chính chỉ có thể là một trường duy nhất."], correct: 2 },
+        { id: "1_6", type: "single", question: "Câu 6. Hãy chọn đáp án đúng về khoá ngoài (Foreign Key) được sử dụng trong CSDL.", options: ["A. Xác định duy nhất các bản ghi trong bảng.", "B. Liên kết các bản ghi giữa hai bảng.", "C. Sắp xếp dữ liệu theo thứ tự tăng dần.", "D. Xoá dữ liệu trong bảng liên kết."], correct: 1 },
+        { id: "1_7", type: "single", question: "Câu 7. Khi tạo bảng GIAO_VIEN trong CSDL, trường MaGV nên được thiết lập như thế nào để đảm bảo tính duy nhất?", options: ["A. Thiết lập là khoá ngoài.", "B. Thiết lập là khoá chính.", "C. Thiết lập là khoá tổng hợp.", "D. Thiết lập là khoá phụ."], correct: 1 },
+        { id: "1_8", type: "single", question: "Câu 8. Phương án nào sau đây nêu đúng về dấu * trong câu lệnh SELECT * FROM <tên bảng>?", options: ["A. Xác định trường muốn chọn.", "B. Nơi muốn trích xuất dữ liệu.", "C. Chọn tất cả các trường trong bảng.", "D. Chọn 3 trường đầu tiên."], correct: 2 },
+        { id: "1_9", type: "single", question: "Câu 9. Từ khoá nào cho phép truy vấn được nhiều hơn hai bảng theo liên kết khoá ngoài?", options: ["A. JOIN.", "B. ORDER BY.", "C. WHERE.", "D. GROUP BY."], correct: 0 },
+        { id: "1_10", type: "single", question: "Câu 10. Cho câu lệnh SELECT <các trường> FROM <tên_bảng> WHERE <điều kiện>. Phương án nào sau đây nói về chức năng của từ khoá FROM?", options: ["A. Chỉ định bảng hoặc bảng con để truy xuất dữ liệu.", "B. Lọc dữ liệu dựa trên điều kiện cụ thể.", "C. Sắp xếp kết quả truy vấn theo thứ tự.", "D. Xác định các trường dữ liệu sẽ được lấy từ bảng."], correct: 0 },
+        { id: "1_11", type: "single", question: "Câu 11. Cập nhật dữ liệu là thực hiện:", options: ["A. Thêm và chỉnh sửa dữ liệu.", "B. Sửa và xoá bỏ dữ liệu.", "C. Thêm, sửa và xoá dữ liệu.", "D. Thêm và xoá dữ liệu."], correct: 2 },
+        { id: "1_12", type: "single", question: "Câu 12. Hãy chọn phương án đúng để chia sẻ dữ liệu trong hệ QTCSDL nhưng vẫn đảm bảo an toàn dữ liệu:", options: ["A. Thu hồi quyền truy cập người dùng.", "B. Thêm quyền truy cập người dùng.", "C. Phân quyền truy cập người dùng.", "D. Bỏ hết tất cả người dùng."], correct: 2 },
+        { id: "1_13", type: "single", question: "Câu 13. Kiểu dữ liệu của các giá trị trong một trường của bảng phải tuân theo điều kiện nào sau đây?", options: ["A. Mỗi trường có thể chứa nhiều kiểu dữ liệu khác nhau.", "B. Kiểu dữ liệu có thể được thay đổi cho từng bản ghi.", "C. Mỗi trường không cần phải có kiểu dữ liệu xác định.", "D. Mỗi giá trị trong một trường chỉ chứa một kiểu dữ liệu duy nhất."], correct: 3 },
+        { id: "1_14", type: "single", question: "Câu 14. Hai bảng A và B được gọi là có quan hệ với nhau qua:", options: ["A. Khoá chính của bảng A.", "B. Khoá ngoài của bảng A.", "C. Khoá chính của bảng B.", "D. Khoá chính của bảng này và khoá ngoài của bảng kia."], correct: 3 },
+        { id: "1_15", type: "single", question: "Câu 15. Trường số điện thoại nên chọn kiểu dữ liệu nào sau đây?", options: ["A. Kiểu xâu kí tự.", "B. Kiểu số nguyên.", "C. Kiểu số tự động.", "D. Kiểu số thực."], correct: 0 },
+        { id: "1_16", type: "single", question: "Câu 16. Để truy vấn dữ liệu từ CSDL trong SQL, câu lệnh nào sau đây được sử dụng?", options: ["A. Dùng mệnh đề ORDER BY.", "B. Dùng câu lệnh SELECT.", "C. Dùng toán tử BETWEEN...AND.", "D. Dùng mệnh đề FROM."], correct: 1 },
+        { id: "1_17", type: "single", question: "Câu 17. Câu lệnh nào trong SQL được dùng để thay đổi dữ liệu của một bản ghi hiện có?", options: ["A. UPDATE.", "B. ALTER.", "C. MODIFY.", "D. CHANGE."], correct: 0 },
+        { id: "1_18", type: "single", question: "Câu 18. Từ khoá nào được sử dụng để liên kết dữ liệu từ hai bảng dựa trên một điều kiện chung?", options: ["A. JOIN.", "B. UNION.", "C. GROUP BY.", "D. DISTINCT."], correct: 0 },
+        { id: "1_19", type: "single", question: "Câu 19. Câu lệnh SQL nào dùng để xoá bản ghi khỏi bảng?", options: ["A. REMOVE.", "B. DELETE.", "C. DROP.", "D. CLEAR."], correct: 1 },
+        { id: "1_20", type: "single", question: "Câu 20. Phương án nào sau đây là thao tác đầu tiên cần thực hiện khi làm việc với một CSDL?", options: ["A. Tạo lập bảng.", "B. Thu thập dữ liệu.", "C. Xử lí dữ liệu.", "D. Cập nhật dữ liệu."], correct: 0 },
+        { id: "1_21", type: "single", question: "Câu 21. Phương án nào sau đây thể hiện đúng thứ tự các bước thực hiện tạo bảng trong CSDL?", options: ["A. Xác định cấu trúc bảng / Khai báo cấu trúc bảng.", "B. Xác định cấu trúc bảng / Nhập dữ liệu cho bảng.", "C. Khai báo cấu trúc bảng / Nhập dữ liệu cho bảng.", "D. Xác định cấu trúc bảng / Khai báo cấu trúc bảng / Nhập dữ liệu cho bảng."], correct: 0 },
+        { id: "1_22", type: "single", question: "Câu 22. Phương án nào sau đây thể hiện đúng thứ tự các bước khai báo cấu trúc bảng trong CSDL?", options: ["A. Đặt tên bảng / Chỉ định kiểu dữ liệu.", "B. Đặt tên bảng / Khai báo kích thước của mỗi trường.", "C. Chỉ định kiểu dữ liệu / Khai báo kích thước của mỗi trường.", "D. Đặt tên trường / Chỉ định kiểu dữ liệu / Khai báo kích thước của mỗi trường."], correct: 3 },
+        { id: "1_23", type: "single", question: "Câu 23. Cho bảng KHACH_HANG. Để đảm bảo mỗi mã khách hàng là duy nhất và không trùng lặp, trường Mã_KH cần được đặt là loại khoá nào sau đây?" + t_KhachHang_Sodon, options: ["A. Foreign Key.", "B. Primary Key.", "C. Unique Key.", "D. Index."], correct: 1 },
+        { id: "1_24", type: "single", question: "Câu 24. Hãy chọn phương án đúng khi xác định nguồn để tạo biểu mẫu:", options: ["A. Bảng hoặc truy vấn.", "B. Một báo cáo.", "C. Một Macro.", "D. Một mô đun."], correct: 0 },
+        { id: "1_25", type: "single", question: "Câu 25. Cho bảng NHAN_VIEN và PHONG_BAN. Để thực hiện truy vấn hiển thị tên nhân viên cùng với tên phòng ban của họ thì truy vấn sẽ cần liên kết hai bảng qua trường nào?" + t_NhanVien_PhongBan, options: ["A. Mã_NV.", "B. Tên_NV.", "C. Mã_PB.", "D. Tên_PB."], correct: 2 },
+        { id: "1_26", type: "single", question: "Câu 26. Cho bảng SAN_PHAM. Phát biểu nào sau đây sai về khoá chính của bảng?" + t_SanPham, options: ["A. Trường Mã_SP là khoá chính.", "B. Trường Loại sản phẩm có thể làm khoá chính.", "C. Mỗi sản phẩm có một Mã_SP duy nhất.", "D. Khoá chính giúp định danh duy nhất các bản ghi trong bảng."], correct: 1 },
+        { id: "1_27", type: "single", question: "Câu 27. Cho bảng SINH_VIEN. Phát biểu nào sau đây là đúng về kiểu dữ liệu của các trường trong bảng?" + t_SinhVien, options: ["A. Trường Mã_SV có kiểu dữ liệu số nguyên.", "B. Trường Tên sinh viên có kiểu dữ liệu chuỗi kí tự.", "C. Trường Điểm GPA có kiểu dữ liệu số nguyên.", "D. Trường Ngành học có kiểu dữ liệu số nguyên."], correct: 1 },
+        { id: "1_28", type: "single", question: "Câu 28. Cho bảng KHACH_HANG và SODON. Phát biểu nào sau đây là đúng về khoá ngoài?" + t_KhachHang_HD, options: ["A. Trường Mã_KH trong bảng SODON là khoá ngoài.", "B. Trường Địa chỉ trong bảng KHACH_HANG có thể làm khoá ngoài.", "C. Trường Số điện thoại trong bảng KHACH_HANG có thể làm khoá ngoài.", "D. Không có trường nào trong bảng SODON có thể làm khoá ngoài."], correct: 0 },
+        { id: "1_29", type: "single", question: "Câu 29. Khi tạo biểu mẫu nhập liệu cho bảng MON_HỌC (MaMH, TenMH), tính năng nào giúp kiểm tra và đảm bảo rằng mã môn học không bị trùng lặp?", options: ["A. Thiết lập độ dài tối đa cho trường MaMH.", "B. Tạo thông báo lỗi nếu trường TenMH trống.", "C. Thiết lập MaMH là khoá chính của bảng MON_HỌC.", "D. Sắp xếp các trường theo thứ tự bảng chữ cái."], correct: 2 },
+        { id: "1_30", type: "single", question: "Câu 30. Cho hai bảng DAY_HOC(ID, MaMH, MaGV) và MON_HOC(MaMH, TenMH, SoTiet). Để đảm bảo rằng mỗi giáo viên chỉ có thể dạy một môn học trong cùng một học kì, ta cần thiết lập mối quan hệ nào giữa bảng DẠY_HỌC và MON_HỌC?", options: ["A. Một – nhiều.", "B. Nhiều – nhiều.", "C. Một – một.", "D. Không có mối quan hệ."], correct: 0 },
+        
+        { id: '1_c31', type: 'tf_cluster', question: "Câu 31. Học sinh xây dựng CSDL QUẢN LÍ NHÂN VIÊN gồm bảng NhanVien(MaNV, HoTen, PhongBan) và DuAn(MaDA, MaNV, TenDA). Khẳng định nào sau đây là ĐÚNG?", subQuestions: [
+            { id: 'd1_31a', text: "a) Một nhân viên có thể tham gia nhiều dự án.", correct: "Đúng" },
+            { id: 'd1_31b', text: "b) MaNV cần được đặt làm khoá chính trong cả hai bảng.", correct: "Sai" },
+            { id: 'd1_31c', text: "c) Mã dự án nhập sai thì cần phải thay đổi thông tin trong cả bảng NhanVien và DuAn.", correct: "Sai" },
+            { id: 'd1_31d', text: "d) Có thể thiết lập liên kết một – nhiều giữa bảng NhanVien và bảng DuAn.", correct: "Đúng" }
+        ]},
+        { id: '1_c32', type: 'tf_cluster', question: "Câu 32. CSDL kì thi gồm bảng ThiSinh(SBD, HoTen, Truong), PhachThi(SBD, SoPhach) và KetQua(SoPhach, Diem). Khẳng định nào sau đây là ĐÚNG?", subQuestions: [
+            { id: 'd1_32a', text: "a) Khoá chính của bảng ThiSinh là SBD.", correct: "Đúng" },
+            { id: 'd1_32b', text: "b) Liên kết giữa bảng PhachThi và KetQua là liên kết một – một.", correct: "Đúng" },
+            { id: 'd1_32c', text: "c) SELECT HoTen FROM KetQua INNER JOIN PhachThi ON KetQua.SoPhach = PhachThi.SoPhach INNER JOIN ThiSinh ON PhachThi.SBD = ThiSinh.SBD sẽ cho ra danh sách điểm thi.", correct: "Đúng" },
+            { id: 'd1_32d', text: "d) Lệnh JOIN giữa ThiSinh và KetQua qua trường SBD vẫn hợp lệ nếu KetQua không có trường SBD.", correct: "Sai" }
+        ]},
+        { id: '1_c33', type: 'tf_cluster', question: "Câu 33. CSDL gồm bảng Tỉnh_Thành(MaTTP, TenTTP) và Quận_Huyện(MaQH, TenQH, DienTich, DanSo). Khẳng định nào sau đây là ĐÚNG?", subQuestions: [
+            { id: 'd1_33a', text: "a) Cần thiết lập liên kết một – nhiều giữa bảng Tỉnh_Thành và bảng Quận_Huyện.", correct: "Đúng" },
+            { id: 'd1_33b', text: "b) Các trường MaTTP và MaQH nhất thiết phải cùng kiểu dữ liệu.", correct: "Sai" },
+            { id: 'd1_33c', text: "c) Khi tạo xong cấu trúc 2 bảng, ta nên nhập dữ liệu trước rồi mới tạo liên kết.", correct: "Sai" },
+            { id: 'd1_33d', text: "d) Cần thêm trường Mã tỉnh/thành (MaTTP) làm khoá ngoài cho bảng Quận_Huyện.", correct: "Đúng" }
+        ]},
+        { id: '1_c34', type: 'tf_cluster', question: "Câu 34. CSDL quản lí gồm bảng HocVien(MaHV, HoTen, NgaySinh) và KhoaHoc(MaKH, MaHV, TenKH). Khẳng định nào sau đây là ĐÚNG?", subQuestions: [
+            { id: 'd1_34a', text: "a) Một học viên có thể tham gia nhiều khoá học.", correct: "Đúng" },
+            { id: 'd1_34b', text: "b) Mã học viên cần được đặt làm khoá chính trong cả hai bảng.", correct: "Sai" },
+            { id: 'd1_34c', text: "c) Mã khoá học nhập sai thì phải thay đổi thông tin trong cả hai bảng.", correct: "Sai" },
+            { id: 'd1_34d', text: "d) Có thể thiết lập liên kết 1-1 giữa bảng HocVien và bảng KhoaHoc.", correct: "Sai" }
+        ]},
+        { id: '1_c35', type: 'tf_cluster', question: "Câu 35. CSDL thư viện gồm bảng ThuVien(MaTV, TenTV, DiaChi) và Sach(MaSach, MaTV, TenSach, SoLuong). Khẳng định nào sau đây là ĐÚNG?", subQuestions: [
+            { id: 'd1_35a', text: "a) Một thư viện có thể quản lí nhiều sách.", correct: "Đúng" },
+            { id: 'd1_35b', text: "b) Mã sách cần được đặt làm khoá chính trong bảng ThuVien.", correct: "Sai" },
+            { id: 'd1_35c', text: "c) Nếu thông tin địa chỉ của thư viện thay đổi, phải sửa đổi luôn trong bảng Sach.", correct: "Sai" },
+            { id: 'd1_35d', text: "d) Quan hệ giữa bảng ThuVien và bảng Sach là n-1.", correct: "Sai" }
+        ] }
+    ];
+
+    // =========================================================================
+    // NGÂN HÀNG CÂU HỎI ĐỀ 2 (30 Câu Đơn + 5 Câu Đúng/Sai = 35 Câu)
+    // =========================================================================
+    const de2_data = [
+        { id: "2_1", type: "single", question: "Câu 1. Hãy chọn phương án đúng khi nói về ý nghĩa của mối quan hệ một – nhiều giữa hai bảng A và B trong một CSDL quan hệ:", options: ["A. Mỗi bản ghi trong bảng A liên kết với nhiều bản ghi trong bảng B.", "B. Mỗi bản ghi trong bảng B liên kết với nhiều bản ghi trong bảng A.", "C. Mỗi bản ghi trong bảng A chỉ liên kết với một bản ghi trong bảng B.", "D. Mỗi bản ghi trong bảng B chỉ liên kết với một bản ghi trong bảng A."], correct: 0 },
+        { id: "2_2", type: "single", question: "Câu 2. Phát biểu nào sau đây sai khi nói về hệ CSDL quản lí sản phẩm và kho hàng?", options: ["A. Dự đoán và quản lí nhu cầu cung cấp và cải thiện quy trình đặt hàng.", "B. Quản lí tối ưu hoá dòng sản phẩm, đồng bộ hoá thông tin giữa các phòng ban.", "C. Nhân viên bán hàng có thể tự do thay đổi cấu trúc của bảng sản phẩm mới.", "D. Đồng bộ thông tin giữa các kho hàng."], correct: 2 },
+        { id: "2_3", type: "single", question: "Câu 3. Tại sao cần phải tổ chức lưu trữ dữ liệu?", options: ["A. Để dễ dàng tìm kiếm và truy xuất dữ liệu.", "B. Để giảm dung lượng lưu trữ.", "C. Để bảo vệ dữ liệu tránh bị mất mát do phần cứng.", "D. Để tăng tốc độ của hệ điều hành."], correct: 0 },
+        { id: "2_4", type: "single", question: "Câu 4. Câu lệnh nào sau đây cho phép tạo bảng MON_HOC gồm có các trường MaMH, TenMH và SoTiet?", options: ["A. CREATE TABLE MON_HOC (MaMH VARCHAR(10), TenMH VARCHAR(50), SoTiet INT);", "B. CREATE DATABASE MON_HOC (MaMH CHAR(10), TenMH CHAR(50), SoTiet NUMBER);", "C. INSERT TABLE MON_HOC (MaMH TEXT, TenMH TEXT, SoTiet NUMBER);", "D. ALTER TABLE MON_HOC (MaMH TEXT, TenMH TEXT, SoTiet INTEGER);"], correct: 0 },
+        { id: "2_5", type: "single", question: "Câu 5. Để tạo bảng SAN_PHAM với trường MaSP là khoá chính, câu lệnh SQL nào sau đây là đúng?", options: ["A. CREATE TABLE SAN_PHAM (MaSP INT, TenSP VARCHAR(100), Gia INT);", "B. CREATE TABLE SAN_PHAM (MaSP INT PRIMARY KEY, TenSP VARCHAR(100), Gia INT);", "C. CREATE TABLE SAN_PHAM (MaSP PRIMARY KEY, TenSP VARCHAR(100), Gia INT);", "D. CREATE DATABASE SAN_PHAM (MaSP INT, TenSP VARCHAR(100), Gia INT);"], correct: 1 },
+        { id: "2_6", type: "single", question: "Câu 6. Bảng DIEM có các trường GIUA_KY, HOC_KY. Biểu thức số học nào sau đây là đúng để tạo trường mới TRUNG_BINH?", options: ["A. TRUNG_BINH: (2*[GIUA_KY] + 3*[HOC_KY])/5.", "B. TRUNG_BINH: (2*GIUA_KY + 3*HOC_KY)/5.", "C. TRUNG_BINH: (2*[GIUA_KY] + 3*[HOC_KY]):5.", "D. TRUNG_BINH = (2*[GIUA_KY] + 3*[HOC_KY])/5."], correct: 0 },
+        { id: "2_7", type: "single", question: "Câu 7. Để xoá đơn hàng có MaDH là '1001' ra khỏi bảng DON_HANG, câu lệnh SQL nào sau đây là chính xác?", options: ["A. REMOVE FROM DON_HANG WHERE MaDH = '1001';", "B. DELETE FROM DON_HANG WHERE MaDH = '1001';", "C. DROP FROM DON_HANG WHERE MaDH = '1001';", "D. ERASE FROM DON_HANG WHERE MaDH = '1001';"], correct: 1 },
+        { id: "2_8", type: "single", question: "Câu 8. Trong CSDL QuanLy_HS, để tìm các học sinh nữ có điểm trung bình môn Tin học từ 5.0 trở lên, biểu thức logic nào đúng?", options: ["A. [GT] = 'Nữ' AND [Tin] >= 5.", "B. GT = 'Nữ' OR Tin >= 5.", "C. [GT] = 'N' AND [Tin] >= 5.", "D. [GT] ='Nữ' OR [Tin] >= 5."], correct: 0 },
+        { id: "2_9", type: "single", question: "Câu 9. Để liên kết dữ liệu giữa các bảng SINH_VIEN và DIEM qua trường MaSV, cần sử dụng câu lệnh SQL nào?", options: ["A. SELECT * FROM SINH_VIEN WHERE DIEM ON SINH_VIEN.MaSV = DIEM.MaSV;", "B. SELECT * FROM SINH_VIEN LEFT JOIN DIEM ON SINH_VIEN.MaSV = DIEM.MaSV;", "C. SELECT * FROM SINH_VIEN, DIEM ON SINH_VIEN.MaSV = DIEM.MaSV;", "D. SELECT * FROM SINH_VIEN INNER JOIN DIEM ON SINH_VIEN.MaSV = DIEM.MaSV;"], correct: 3 },
+        { id: "2_10", type: "single", question: "Câu 10. Để xoá một giáo viên có MaGV là 'GV002' khỏi bảng GIAO_VIEN, câu lệnh SQL nào sau đây chính xác?", options: ["A. DELETE FROM GIAO_VIEN WHERE MAGV = 'GV002';", "B. REMOVE FROM GIAO_VIEN WHERE MAGV = 'GV002';", "C. DROP GIAO_VIEN WHERE MaGV = 'GV002';", "D. ERASE FROM GIAO_VIEN WHERE MAGV = 'GV002';"], correct: 0 },
+        { id: "2_11", type: "single", question: "Câu 11. Để cập nhật ChuyenMon là 'Tin học' của một giáo viên có MaGV là 'GV001' trong bảng GIAO_VIEN, lệnh SQL nào đúng?", options: ["A. UPDATE GIAO_VIEN SET ChuyenMon='Tin học' WHERE MaGV = 'GV001';", "B. MODIFY GIAO_VIEN SET ChuyenMon = 'Tin học' WHERE MaGV = 'GV001';", "C. CHANGE GIAO_VIEN SET ChuyenMon='Tin học' WHERE MAGV ='GV001';", "D. ALTER GIAO_VIEN SET ChuyenMon='Tin học' WHERE MAGV ='GV001';"], correct: 0 },
+        { id: "2_12", type: "single", question: "Câu 12. Cho bảng DAY_HOC (MaDH, NamHoc, HocKy, MaLop, MaGV INT, MaMH). Câu lệnh nào sau đây cho phép tạo bảng DAY_HOC?", options: ["A. CREATE TABLE DAY_HOC (MADH INT, NamHoc VARCHAR(10), Hocky VARCHAR(10));", "B. CREATE TABLE DAY_HOC (MaDH VARCHAR(10), NamHoc CHAR(10), HocKy VARCHAR(10), MaLop INT, MaGV INT, MaMH INT);", "C. CREATE TABLE DAY_HOC (MaDH, NamHoc, Hocky);", "D. INSERT TABLE DAY_HOC (MaDH, NamHoc, Hocky);"], correct: 1 },
+        { id: "2_13", type: "single", question: "Câu 13. Câu lệnh SQL nào đúng để cập nhật TenSach thành 'Lập trình Python' cho cuốn sách có mã MaSach = 10 trong bảng SACH?", options: ["A. UPDATE SACH SET TenSach = 'Lập trình Python' WHERE MaSach = 10;", "B. UPDATE SACH SET TenSach = 'Lập trình Python';", "C. UPDATE BAN_DOC SET TenSach = 'Lập trình Python' WHERE MaBanDoc = 10;", "D. UPDATE SACH WHERE MaSach = 10 SET TenSach = 'Lập trình Python';"], correct: 0 },
+        { id: "2_14", type: "single", question: "Câu 14. Câu lệnh SQL nào đúng để tạo bảng SACH với các trường MaSach (khoá chính), TenSach, TacGia và NamXuatBan?", options: ["A. CREATE TABLE SACH (MaSach PRIMARY KEY, TenSach DATE, TacGia INTEGER, NamXuatBan VARCHAR(255));", "B. CREATE TABLE SACH (MaSach PRIMARY KEY, TenSach TEXT, TacGia TEXT, NamXuatBan TEXT);", "C. CREATE TABLE SACH (MaSach INTEGER, TenSach VARCHAR(255), TacGia INTEGER, NamXuatBan DATE);", "D. CREATE TABLE SACH (MaSach INT PRIMARY KEY, TenSach VARCHAR(255), TacGia VARCHAR(255), NamXuatBan INTEGER);"], correct: 3 },
+        { id: "2_15", type: "single", question: "Câu 15. Câu lệnh nào đúng để xoá tất cả các bản ghi mượn trả sách có mã MaBanDoc = 5 trong bảng MUON_TRA?", options: ["A. DELETE FROM MUON_TRA WHERE MaSach=5;", "B. DELETE FROM MUON_TRA WHERE MaBanDoc = 5;", "C. DELETE MUON_TRA WHERE MaBanDoc = 5;", "D. DROP FROM MUON_TRA WHERE MaBanDoc = 5;"], correct: 1 },
+        { id: "2_16", type: "single", question: "Câu 16. Câu truy vấn SQL nào đúng để lấy danh sách tất cả các sách trong bảng SACH?", options: ["A. SELECT MaSach, TenSach, TacGia, NamXuatBan FROM SACH;", "B. SELECT * FROM BAN_DOC;", "C. SELECT TenSach, TacGia FROM MUON_TRA;", "D. SELECT * FROM MUON_TRA;"], correct: 0 },
+        { id: "2_17", type: "single", question: "Câu 17. Cho bảng SACH và MUON_TRA. Câu truy vấn nào đúng để lấy danh sách tên sách mà bạn đọc có MaBanDoc = 1 đã mượn?", options: ["A. SELECT TenSach FROM SACH WHERE MaBanDoc = 1;", "B. SELECT TenSach FROM SACH, MUON_TRA WHERE SACH.MaSach = MUON_TRA.MaSach AND MUON_TRA.MaBanDoc = 1;", "C. SELECT FROM MUON_TRA WHERE MaBanDoc = 1;", "D. SELECT TenSach FROM BAN_DOC WHERE MaBanDoc = 1;"], correct: 1 },
+        { id: "2_18", type: "single", question: "Câu 18. Cho bảng SACH, BAN_DOC và MUON_TRA. Truy vấn nào lấy danh sách họ tên bạn đọc và sách mà họ đã mượn?", options: ["A. SELECT HoTen, TenSach FROM BAN_DOC, SACH WHERE BAN_DOC.MaBanDoc = SACH.MaBanDoc;", "B. SELECT HoTen, TenSach FROM BAN_DOC INNER JOIN MUON_TRA ON BAN_DOC.MaBanDoc = MUON_TRA.MaBanDoc INNER JOIN SACH ON MUON_TRA.MaSach = SACH.MaSach;", "C. SELECT HoTen, TenSach FROM BAN_DOC INNER JOIN SACH ON BAN_DOC.MaBanDoc = SACH.MaBanDoc;", "D. SELECT FROM SACH, BAN_DOC WHERE SACH.MaBanDoc = BAN_DOC.MaBanDoc;"], correct: 1 },
+        { id: "2_19", type: "single", question: "Câu 19. Trong bảng MUON_TRA, trường MaSach là khoá ngoài từ bảng SACH. Điều này đảm bảo điều gì?", options: ["A. MaSach trong bảng MUON_TRA phải tồn tại trước đó trong bảng SACH.", "B. Mỗi MaSach trong bảng MUON_TRA phải là duy nhất.", "C. MaSach có thể có giá trị rỗng trong bảng MUON_TRA.", "D. MaSach không thể có giá trị trùng lặp trong bảng SACH."], correct: 0 },
+        { id: "2_20", type: "single", question: "Câu 20. Bạn muốn tìm danh sách các sinh viên có điểm lớn hơn 7 và sắp xếp theo điểm giảm dần. Câu truy vấn SQL nào đúng?", options: ["A. SELECT * FROM SINHVIEN WHERE Diem > 7 ORDER BY Diem ASC;", "B. SELECT * FROM SINHVIEN WHERE Diem > 7 ORDER BY Diem DESC;", "C. SELECT FROM SINHVIEN WHERE Diem < 7 ORDER BY Diem DESC;", "D. SELECT * FROM SINHVIEN WHERE Diem > 7 ORDER BY Diem;"], correct: 1 },
+        { id: "2_21", type: "single", question: "Câu 21. Câu truy vấn nào sau đây dùng để tính tổng số lượng sách hiện có trong thư viện dựa vào trường SoLuong của bảng SACH?", options: ["A. SELECT COUNT(*) FROM SACH;", "B. SELECT SUM(SoLuong) FROM SACH;", "C. SELECT * FROM SACH WHERE SoLuong > 0;", "D. SELECT SoLuong FROM SACH;"], correct: 1 },
+        { id: "2_22", type: "single", question: "Câu 22. Câu truy vấn nào sau đây sẽ tìm danh sách các bạn đọc chưa trả sách dựa vào bảng MUON_TRA?", options: ["A. SELECT * FROM MUON_TRA WHERE NgayTra IS NULL;", "B. SELECT * FROM MUON_TRA WHERE MaBanDoc IS NULL;", "C. SELECT * FROM SACH WHERE DaMuon = 1;", "D. SELECT * FROM MUON_TRA WHERE NgayMuon IS NULL;"], correct: 0 },
+        { id: "2_23", type: "single", question: "Câu 23. Câu truy vấn nào sau đây trả về danh sách các sinh viên có điểm trung bình lớn hơn 8 trong bảng SINHVIEN?", options: ["A. SELECT * FROM SINHVIEN WHERE DiemTrungBinh >= 8;", "B. SELECT * FROM SINHVIEN WHERE DiemTrungBinh > 8;", "C. SELECT * FROM SINHVIEN WHERE DiemTrungBinh < 8;", "D. SELECT * FROM SINHVIEN WHERE DiemTrungBinh = 8;"], correct: 1 },
+        { id: "2_24", type: "single", question: "Câu 24. Câu lệnh nào sau đây dùng để cập nhật điểm của sinh viên có MaSV = 'SV01' thành 9?", options: ["A. MODIFY SINHVIEN SET Diem = 9 WHERE MaSV = 'SV01';", "B. UPDATE SINHVIEN SET Diem = 9 WHERE MaSV = 'SV01';", "C. ALTER SINHVIEN SET Diem = 9 WHERE MaSV = 'SV01';", "D. CHANGE SINHVIEN SET Diem = 9 WHERE MaSV = 'SV01';"], correct: 1 },
+        { id: "2_25", type: "single", question: "Câu 25. Câu truy vấn nào sau đây dùng để xoá sinh viên có mã sinh viên là 'SV05' khỏi bảng SINHVIEN?", options: ["A. DELETE FROM SINHVIEN WHERE MaSV = 'SV05';", "B. REMOVE FROM SINHVIEN WHERE MaSV = 'SV05';", "C. DROP SINHVIEN WHERE MaSV = 'SV05';", "D. ERASE SINHVIEN WHERE MaSV = 'SV05';"], correct: 0 },
+        { id: "2_26", type: "single", question: "Câu 26. Câu lệnh SQL nào được dùng để thêm một bản ghi mới vào cơ sở dữ liệu?", options: ["A. INSERT INTO", "B. ADD RECORD", "C. UPDATE", "D. CREATE ROW"], correct: 0 },
+        { id: "2_27", type: "single", question: "Câu 27. Từ khoá nào được sử dụng kèm với SELECT để loại bỏ các dòng dữ liệu trùng lặp trong kết quả truy vấn?", options: ["A. UNIQUE", "B. DISTINCT", "C. DIFFERENT", "D. SEPARATE"], correct: 1 },
+        { id: "2_28", type: "single", question: "Câu 28. Trong SQL, hàm gộp (aggregate function) nào được sử dụng để đếm số lượng bản ghi thoả mãn một điều kiện?", options: ["A. SUM()", "B. AVG()", "C. COUNT()", "D. TOTAL()"], correct: 2 },
+        { id: "2_29", type: "single", question: "Câu 29. Toán tử nào trong mệnh đề WHERE được dùng để tìm kiếm theo một mẫu kí tự (pattern)?", options: ["A. LIKE", "B. MATCH", "C. EXACT", "D. IN"], correct: 0 },
+        { id: "2_30", type: "single", question: "Câu 30. Một trường dữ liệu được chọn làm khoá chính (Primary Key) bắt buộc phải thoả mãn tính chất nào?", options: ["A. Phải luôn là kiểu số (Integer).", "B. Có thể để trống (NULL).", "C. Phải có giá trị duy nhất (Unique) và không được rỗng (Not Null).", "D. Chỉ được phép chứa tối đa 10 kí tự."], correct: 2 },
+
+        { id: '2_c31', type: 'tf_cluster', question: "Câu 31. Cho CSDL gồm bảng SinhVien(SBD, HoTen, Lop) và BaiThi(SoPhach, MaBT, SBD). Khẳng định nào sau đây là ĐÚNG?", subQuestions: [
+            { id: 'd2_31a', text: "a) Khoá chính của bảng SinhVien là SBD, và SBD là khoá ngoại trong bảng BaiThi.", correct: "Đúng" },
+            { id: 'd2_31b', text: "b) Liên kết giữa bảng BaiThi và bảng SinhVien là liên kết nhiều - nhiều.", correct: "Sai" },
+            { id: 'd2_31c', text: "c) Sử dụng lệnh GROUP BY MaBT có thể gom nhóm được điểm thi của từng môn.", correct: "Đúng" },
+            { id: 'd2_31d', text: "d) Một bài thi (MaBT) có thể được liên kết với nhiều sinh viên thông qua SoPhach.", correct: "Đúng" }
+        ]},
+        { id: '2_c32', type: 'tf_cluster', question: "Câu 32. Cho CSDL kì thi gồm bảng HocSinh(MaHS, HoTen), PhachThi(SoPhach, MaHS, MaMT) và KetQuaThi(SoPhach, Diem, MaMT). Khẳng định nào ĐÚNG?", subQuestions: [
+            { id: 'd2_32a', text: "a) Khoá chính của bảng HocSinh là MaHS và MaHS là khoá ngoài trong bảng PhachThi.", correct: "Đúng" },
+            { id: 'd2_32b', text: "b) Mối quan hệ giữa bảng PhachThi và KetQuaThi là 1-nhiều.", correct: "Sai" },
+            { id: 'd2_32c', text: "c) Sử dụng INNER JOIN có thể liệt kê được điểm số của học sinh kèm theo họ tên.", correct: "Đúng" },
+            { id: 'd2_32d', text: "d) Một môn thi (MaMT) có thể liên kết với nhiều số phách trong bảng PhachThi.", correct: "Đúng" }
+        ]},
+        { id: '2_c33', type: 'tf_cluster', question: "Câu 33. Cho CSDL quản lí nhân sự gồm bảng NhanVien(MaNV, HoTen, MaPB) và PhongBan(MaPB, TenPB, SoLuongNV). Khẳng định nào ĐÚNG?", subQuestions: [
+            { id: 'd2_33a', text: "a) Cần thiết lập liên kết 1-n giữa bảng PhongBan và bảng NhanVien.", correct: "Đúng" },
+            { id: 'd2_33b', text: "b) Các trường MaNV và MaPB nhất thiết phải có cùng kiểu dữ liệu.", correct: "Sai" },
+            { id: 'd2_33c', text: "c) Ta nên nhập toàn bộ dữ liệu cho hai bảng trước khi thiết lập liên kết khoá ngoại.", correct: "Sai" },
+            { id: 'd2_33d', text: "d) Cần thêm trường Mã phòng ban (MaPB) làm khoá ngoại trong bảng NhanVien.", correct: "Đúng" }
+        ]},
+        { id: '2_c34', type: 'tf_cluster', question: "Câu 34. Cho bảng Sach(MaSach, TenSach, MaLoai) và LoaiSach(MaLoai, TenLoai, MoTa). Khẳng định nào sau đây là ĐÚNG?", subQuestions: [
+            { id: 'd2_34a', text: "a) Cần thiết lập liên kết 1-nhiều giữa bảng LoaiSach và bảng Sach.", correct: "Đúng" },
+            { id: 'd2_34b', text: "b) Trường MaSach nên đặt làm khoá chính trong bảng LoaiSach.", correct: "Sai" },
+            { id: 'd2_34c', text: "c) Khi thiết lập liên kết, cần chọn kiểu dữ liệu của MaLoai trong hai bảng giống nhau.", correct: "Đúng" },
+            { id: 'd2_34d', text: "d) Truy vấn INNER JOIN qua trường MaLoai sẽ trả về danh sách tên sách và thể loại tương ứng.", correct: "Đúng" }
+        ]},
+        { id: '2_c35', type: 'tf_cluster', question: "Câu 35. Cho các phát biểu về thao tác quản trị trên cơ sở dữ liệu quan hệ, phát biểu nào sau đây là ĐÚNG?", subQuestions: [
+            { id: 'd2_35a', text: "a) Thao tác thêm một bản ghi mới được thực hiện bằng lệnh INSERT INTO.", correct: "Đúng" },
+            { id: 'd2_35b', text: "b) Khi muốn xoá một trường dữ liệu khỏi bảng, ta dùng lệnh DELETE.", correct: "Sai" },
+            { id: 'd2_35c', text: "c) Cập nhật lại giá trị dữ liệu cho các dòng đang tồn tại dùng lệnh UPDATE.", correct: "Đúng" },
+            { id: 'd2_35d', text: "d) Lệnh SELECT chỉ cho phép lấy toàn bộ dữ liệu từ 1 bảng duy nhất, không thể lấy từ 2 bảng.", correct: "Sai" }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Vui lòng nhắc học sinh nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, `Câu ${idx + 1}: `);
+                q.options = q.options.map(opt => opt.replace(/^[A-D][\.\:\)]\s*/i, ''));
+            });
+            
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                q.displayQuestion = q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, `Câu ${part1.length + idx + 1}: `);
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${sub.text}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                let allAnswered = q.subQuestions.every(sub => userAnswers[sub.id] !== undefined);
+                if (allAnswered) count++;
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-5 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl lg:text-[24px] font-bold leading-relaxed shadow-inner">${q.displayQuestion.replace(/\n/g, '<br/>')}</div><div class="space-y-4">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-2 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base lg:text-[24px] leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-4 py-2 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm lg:text-base text-center w-20 sm:w-24 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-4 py-2 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm lg:text-base text-center w-20 sm:w-24 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-4"><div class="w-full"><p class="text-lg sm:text-xl lg:text-[24px] font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion.replace(/\n/g, '<br/>')}</p></div></div><div class="space-y-5 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-2 border border-gray-200 rounded-xl flex items-center gap-4 bg-white shadow-sm"><span class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-sm font-black text-gray-500 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-800 font-medium text-base lg:text-[24px] leading-snug">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} câu`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+        const score = scoreP1P2.toFixed(2);
+        let correctTotal = correctP1P2;
+        let itemsTotal = totalP1P2;
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctTotal, tongCau: itemsTotal,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctTotal, itemsTotal, record.duration); });
+        }
+    };
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-5 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl lg:text-[24px] text-red-600 mb-4 leading-relaxed">${q.displayQuestion.replace(/\n/g, '<br/>')}</div>`;
+                html += `<div class="space-y-2">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-3 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-slate-700 flex-1 lg:text-[24px]">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="text-xl mr-2 drop-shadow-sm">${statusIcon}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'} shadow-sm">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-5 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl lg:text-[24px] text-red-600 mb-4 leading-relaxed">${q.displayQuestion.replace(/\n/g, '<br/>')}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-2 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 lg:text-[24px]">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
