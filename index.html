@@ -796,24 +796,25 @@
     </footer>
 
 <script>
-        // CHỈ gỡ bùa tàng hình khi chạm đúng vào nút chứa menu
-        function clearHide(element) {
-            let drop = element.querySelector('.banner-dropdown-content');
-            if(drop) drop.classList.remove('force-hide');
-        }
+        // --- 1. THÊM CSS ĐỘNG ĐỂ XỬ LÝ LỖI ĐIỆN THOẠI ---
+        let style = document.createElement('style');
+        style.innerHTML = `
+            .banner-dropdown-content.mobile-show { display: block !important; }
+            .banner-dropdown-content.mobile-hide { display: none !important; }
+        `;
+        document.head.appendChild(style);
 
+        // --- 2. HÀM XỬ LÝ KHI CHỌN MÔN BẤT KỲ ---
         function showGrade(grade) {
-            // 1. Ẩn tất cả các khung
+            // Ẩn tất cả các khung bài học
             let sections = document.getElementsByClassName('grade-section');
-            for(let sec of sections) { 
-                sec.style.display = 'none'; 
-            }
+            for(let sec of sections) sec.style.display = 'none'; 
 
-            // 2. Hiện khung được chọn
+            // Hiện khung được chọn
             let target = document.getElementById('grade-' + grade);
             if(target) target.style.display = 'block';
 
-            // 3. Cập nhật màu nút
+            // Cập nhật màu nút
             let buttons = document.getElementsByClassName('banner-btn');
             for (let btn of buttons) {
                 btn.classList.remove('active-10', 'active-11', 'active-12', 'active-exam', 'active-tuyensinh', 'active-thidaihoc');
@@ -826,12 +827,70 @@
             if(grade.startsWith('ts-')) buttons[4].classList.add('active-tuyensinh'); 
             if(grade.startsWith('dh-')) buttons[5].classList.add('active-thidaihoc'); 
 
-            // 4. Ép ẩn menu lập tức sau khi chọn môn
-            let dropdowns = document.getElementsByClassName('banner-dropdown-content');
-            for(let drop of dropdowns) {
-                drop.classList.add('force-hide'); 
-            }
+            // Ép đóng menu ngay lập tức sau khi chọn
+            document.querySelectorAll('.banner-dropdown-content').forEach(drop => {
+                drop.classList.remove('mobile-show');
+                drop.classList.add('mobile-hide'); 
+            });
         }
+
+        // --- 3. XỬ LÝ SỰ KIỆN BẤM / RÊ CHUỘT ---
+        let dropButtons = document.querySelectorAll('.banner-dropdown > .banner-btn');
+        
+        dropButtons.forEach(btn => {
+            // Dành cho điện thoại: Bấm để Tắt/Mở menu
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                let menu = this.nextElementSibling;
+                
+                // Nếu menu đang mở thì đóng lại
+                if (menu.classList.contains('mobile-show')) {
+                    menu.classList.remove('mobile-show');
+                    menu.classList.add('mobile-hide');
+                } else {
+                    // Đóng tất cả menu khác trước
+                    document.querySelectorAll('.banner-dropdown-content').forEach(d => {
+                        d.classList.remove('mobile-show');
+                        d.classList.add('mobile-hide');
+                    });
+                    // Mở menu này
+                    menu.classList.remove('mobile-hide');
+                    menu.classList.add('mobile-show');
+                }
+            });
+            
+            // Dành cho máy tính: Xóa bùa ép ẩn khi chuột lướt vào để CSS Hover chạy
+            btn.parentElement.addEventListener('mouseenter', function() {
+                let menu = this.querySelector('.banner-dropdown-content');
+                if(menu) menu.classList.remove('mobile-hide');
+            });
+
+            // Dành cho máy tính: Trả về mặc định khi chuột rời đi
+            btn.parentElement.addEventListener('mouseleave', function() {
+                let menu = this.querySelector('.banner-dropdown-content');
+                if(menu) {
+                    menu.classList.remove('mobile-show');
+                    menu.classList.remove('mobile-hide');
+                }
+            });
+        });
+
+        // --- 4. BẤM RA VÙNG TRỐNG THÌ ĐÓNG MENU ---
+        document.addEventListener('click', function(e) {
+            // Bỏ qua nếu đang bấm ở bên trong menu
+            if(e.target.closest('.banner-dropdown-content')) return;
+            
+            // Đóng tất cả nếu bấm ra ngoài
+            document.querySelectorAll('.banner-dropdown-content').forEach(d => {
+                d.classList.remove('mobile-show');
+                d.classList.remove('mobile-hide');
+            });
+        });
+
+        // (Giữ lại hàm rỗng này để tránh lỗi HTML cũ gọi nhầm)
+        function clearHide() {}
+   
     </script>
 </body>
 </html>
