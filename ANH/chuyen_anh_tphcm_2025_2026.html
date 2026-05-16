@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title> Chuyên Anh TPHCM 2025-2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: 'Be Vietnam Pro', sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); background-attachment: fixed; }
+        
+        .glass-card { background: #ffffff; border-radius: 16px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* ================= HIỆU ỨNG ĐÁP ÁN TRẮC NGHIỆM ================= */
+        .opt-radio { display: none; }
+        .opt-label {
+            display: flex; align-items: center; padding: 14px 16px; 
+            border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; 
+            transition: all 0.2s ease; background: #fff; font-weight: 600; color: #334155; margin-bottom: 12px;
+        }
+        .opt-badge {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; background: #f1f5f9; color: #64748b; font-weight: 800; font-size: 14px; margin-right: 14px; transition: all 0.2s;
+        }
+        .opt-label:active { transform: scale(0.98); }
+        
+        .is-taking-test .opt-radio:checked + .opt-label {
+            background-color: #1e3a8a !important; 
+            border-color: #1e3a8a !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 15px rgba(30, 58, 138, 0.3);
+            transform: translateY(-2px);
+        }
+        .is-taking-test .opt-radio:checked + .opt-label .opt-badge {
+            background-color: rgba(255,255,255,0.25) !important; color: #ffffff !important;
+        }
+
+        /* ================= REVIEW MODE (CHỈ BÔI XANH CÂU ĐÚNG, CÒN LẠI BÌNH THƯỜNG) ================= */
+        .review-correct-highlight { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; font-weight: 800 !important; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.2); }
+        .review-correct-highlight .opt-badge { background-color: #22c55e !important; color: white !important; }
+        
+        .review-wrong-strike { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #b91c1c !important; text-decoration: line-through; text-decoration-thickness: 2px; }
+        .review-wrong-strike .opt-badge { background-color: #ef4444 !important; color: white !important; text-decoration: none !important;}
+        
+        .check-icon { font-size: 20px; margin-left: auto; font-weight: 900; }
+
+        .text-question { color: #b91c1c; font-size: 16px; line-height: 1.6; }
+        .passage-box { background: #f8fafc; border-left: 5px solid #3b82f6; padding: 16px; border-radius: 8px; max-height: 350px; overflow-y: auto; font-size: 15px; line-height: 1.7; color: #334155; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 16px;}
+        
+        u { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+        
+        /* Box giải thích tỉ mỉ */
+        .explanation-box { background-color: #fefce8; border-left: 4px solid #eab308; padding: 16px; border-radius: 0 12px 12px 0; margin-top: 12px; font-size: 14.5px; color: #422006; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body oncopy="return false" oncut="return false" onpaste="return false">
+
+<div id="app" class="w-full flex flex-col items-center justify-center min-h-screen p-2 sm:p-6">
+
+     <div id="login-section" class="w-full max-w-md fade-in">
+        <div class="glass-card p-6 sm:p-8 text-center relative overflow-hidden">
+               <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+            <h1 class="text-[22px] font-bold text-[#dc2626] mb-1">ĐỀ CHUYÊN ANH</h1>
+            <p class="text-gray-500 font-semibold text-sm mb-6">(Sở GD&ĐT TPHCM 2025 - 2026)</p>
+
+            <form id="login-form" class="space-y-4 text-left">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Nhập họ tên...">
+                    </div>
+                    <div class="w-1/3">
+                        <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-center text-gray-700" placeholder="Lớp 9A">
+                    </div>
+                </div>
+
+                <div class="flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-xl">
+                    <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-black text-xl mr-4 shadow-sm">1</div>
+                    <div>
+                        <div class="font-bold text-gray-800 text-[15px]">ĐỀ TPHCM 2025-2026</div>
+                        <div class="text-[12px] text-gray-500 font-semibold mt-0.5">Hiển thị chuẩn 100% cấu trúc đề gốc</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-lg tracking-wide">
+                    BẮT ĐẦU LÀM BÀI
+                </button>
+            </form>
+            <div class="mt-6">
+                <button onclick="showSection('scores')" class="text-white bg-black/20 px-4 py-2 rounded-lg font-bold text-sm hover:bg-black/30 transition-all backdrop-blur-sm">🏆 Xem bảng xếp hạng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-section" class="w-full max-w-4xl hidden fade-in pb-10">
+        
+        <div class="glass-card w-full overflow-hidden flex flex-col relative" id="quiz-container-box">
+            
+            <div class="sticky top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200 p-3 sm:p-4 flex justify-between items-center w-full transition-all">
+                <div class="flex items-center gap-2">
+                    <button onclick="goHome()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm">
+                        🏠 <span class="hidden sm:inline">Trang chủ</span>
+                    </button>
+                    <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm">
+                        🏆 <span class="hidden sm:inline">BXH</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="hidden md:flex items-center text-right mr-2 gap-2">
+                        <div class="w-8 h-8 bg-[#ea580c] rounded-full text-white flex items-center justify-center font-black text-[10px] shadow-sm border border-white">HS</div>
+                        <div>
+                            <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wide" id="student-name-header">Tên - Lớp</div>
+                            <div class="text-[13px] font-black text-blue-800 tracking-tight" id="quiz-header-status">ĐỀ TPHCM 2025-2026</div>
+                        </div>
+                    </div>
+                    <div class="bg-red-50 text-red-600 font-black px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm sm:text-base border border-red-100 shadow-inner">
+                        ⏰ <span id="timer" class="font-mono tracking-widest">150:00</span>
+                    </div>
+                    <div class="bg-blue-50 text-blue-700 font-black px-3 py-1.5 rounded-lg border border-blue-100 shadow-inner text-sm sm:text-base min-w-[55px] text-center">
+                        <span id="progress-text">0/101</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-8 w-full">
+                <div id="question-render-area"></div>
+                <div id="action-bar" class="mt-10 text-center border-t-2 border-gray-100 pt-8">
+                    <button onclick="submitQuiz()" class="px-12 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-xl rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all tracking-wider w-full sm:w-auto">NỘP BÀI NGAY</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="review-action-bar" class="hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t-2 border-gray-200 p-4 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex justify-center gap-4">
+        <button onclick="goHome()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition-colors text-sm sm:text-base flex items-center gap-2">
+            🏠 Về Trang chủ
+        </button>
+        <button onclick="showSection('scores')" class="px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold shadow-md hover:bg-blue-800 transition-colors text-sm sm:text-base flex items-center gap-2">
+            🏆 Xem Bảng điểm
+        </button>
+    </div>
+
+    <div id="scores-section" class="w-full max-w-6xl hidden fade-in">
+        <div class="sticky top-0 sm:top-2 z-50 bg-white/95 backdrop-blur-md shadow-sm rounded-b-xl sm:rounded-2xl p-3 mb-6 flex items-center justify-between w-full">
+            <button onclick="goHome()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-sm transition flex items-center gap-2 shadow-sm">
+                🏠 Trang chủ
+            </button>
+            <h2 class="text-lg sm:text-xl font-black text-blue-800 uppercase tracking-tight m-0">BẢNG XẾP HẠNG</h2>
+            <div class="w-24 hidden sm:block"></div> 
+        </div>
+
+        <div class="glass-card p-4 sm:p-8">
+            <div class="overflow-x-auto border-2 border-gray-100 rounded-xl">
+                <table class="w-full text-sm text-left font-semibold whitespace-nowrap">
+                    <thead class="bg-blue-700 text-white">
+                        <tr>
+                            <th class="px-4 py-4 text-center font-bold">#</th>
+                            <th class="px-4 py-4 text-center font-bold">Lớp</th>
+                            <th class="px-4 py-4 font-bold">Họ tên</th>
+                            <th class="px-4 py-4 text-center font-bold">Câu Đúng</th>
+                            <th class="px-4 py-4 text-center font-bold">Điểm HT</th>
+                            <th class="px-4 py-4 text-center font-bold">Thời gian</th>
+                            <th class="px-4 py-4 text-right font-bold">Ngày nộp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scores-tbody" class="bg-white divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl p-6 sm:p-8 max-w-sm w-full text-center fade-in border-t-[6px] border-yellow-400">
+        <div class="text-6xl mb-3 animate-pulse">🤔</div>
+        <h3 class="text-xl font-black text-gray-800 mb-2">Xác nhận nộp bài?</h3>
+        <p class="text-sm font-semibold text-gray-500 mb-6">Bạn có chắc chắn muốn nộp bài và kết thúc bài thi ngay bây giờ không?</p>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition shadow-sm">Chưa, xem lại</button>
+            <button onclick="processSubmission()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-md">Nộp luôn</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-sm overflow-hidden fade-in text-center flex flex-col">
+        <div class="bg-gradient-to-br from-blue-600 to-purple-600 p-8 text-white relative">
+            <div class="text-7xl mb-3 animate-bounce">🎉</div>
+            <h3 class="text-2xl font-black mb-1 tracking-wide">NỘP BÀI THÀNH CÔNG!</h3>
+            <p class="font-bold text-white/90 text-sm" id="result-student-name"></p>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 mb-5 relative">
+                <div class="text-[10px] text-blue-500 font-black mb-1 uppercase tracking-widest">ĐIỂM TRẮC NGHIỆM TỰ ĐỘNG</div>
+                <div class="text-6xl font-black text-blue-700 drop-shadow-sm" id="result-score"></div>
+                <div class="text-sm font-bold text-gray-600 mt-2" id="result-detail"></div>
+                <div class="text-[10px] font-bold text-orange-600 mt-3 bg-orange-100 px-3 py-1.5 rounded-lg inline-block">Chú ý: Đọc kỹ phần giải thích khi xem lại!</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="reviewQuiz()" class="py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition text-[15px] shadow-sm border border-gray-200">🔎 Học & Xem giải</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="py-3.5 bg-[#1e3a8a] text-white rounded-xl font-bold hover:bg-blue-800 transition shadow-md text-[15px]">🏆 Bảng Xếp Hạng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ================= DỮ LIỆU ĐỀ THI TPHCM 100% HOÀN CHỈNH =================
+    const rawQuestions = [
+        // ---------- I. USE OF ENGLISH (PART A: 1-20) ----------
+        { 
+            id: "u_a_1", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            ins: "PART A: CHOOSE THE BEST ANSWER TO FILL IN THE BLANK. (10 PTS)", 
+            q: "1. Although not everyone is a fan of Justin Bieber, most people agree he is worthy of his ________ success.", 
+            opts: ["A. influenced", "B. aspiring", "C. phenomenal", "D. resourceful"], ans: 2,
+            exp: "<b>C. phenomenal (adj):</b> phi thường, gây tiếng vang lớn. Cụm từ <b>'phenomenal success'</b> mang nghĩa là thành công vang dội. <i>aspiring</i> (khao khát), <i>resourceful</i> (tháo vát)."
+        },
+        { 
+            id: "u_a_2", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "2. Helen's plan to study abroad didn't ________ due to a lack of her family's finances.", 
+            opts: ["A. fall through", "B. knuckle down", "C. pull off", "D. pan out"], ans: 3,
+            exp: "<b>D. pan out (phrasal verb):</b> thành công, tiến triển tốt đẹp. Câu có từ <i>didn't</i> (phủ định) -> kế hoạch <b>không thành công</b>. <i>'fall through'</i> bản thân nó đã mang nghĩa là thất bại/hủy bỏ, nếu dùng <i>'didn't fall through'</i> thì nghĩa là không bị hủy, ngược logic."
+        },
+        { 
+            id: "u_a_3", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "3. The empty shops with their ________ windows and graffiti-covered walls are a sorry sight.", 
+            opts: ["A. off-limits", "B. clear-cut", "C. boarded-up", "D. top-heavy"], ans: 2,
+            exp: "<b>C. boarded-up (adj):</b> bị đóng kín, bịt kín bằng các tấm ván gỗ (thường dùng cho cửa sổ/cửa chính của nhà hoang)."
+        },
+        { 
+            id: "u_a_4", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "4. To my parents' disappointment, my attempts to learn to play the piano were ________.", 
+            opts: ["A. a seminal contribution", "B. a credit to me", "C. a turn-up for the books", "D. a dismal failure"], ans: 3,
+            exp: "<b>D. a dismal failure (collocation):</b> một thất bại thảm hại. Câu có cụm <i>'To my parents' disappointment'</i> (Sự thất vọng của bố mẹ), nên chỗ trống phải mang nghĩa tiêu cực."
+        },
+        { 
+            id: "u_a_5", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "5. You'll have to reverse out of this road - It's a ________ we can't go any further.", 
+            opts: ["A. dead-end", "B. run-down", "C. write-off", "D. built-up"], ans: 0,
+            exp: "<b>A. dead-end (n):</b> ngõ cụt, đường cụt. Vì đây là ngõ cụt nên bạn phải lùi xe lại (reverse out)."
+        },
+        { 
+            id: "u_a_6", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "6. The solicitor advised his client to ________ not guilty to all charges.", 
+            opts: ["A. condone", "B. plead", "C. punish", "D. charge"], ans: 1,
+            exp: "<b>B. plead (v):</b> biện hộ, nhận tội/không nhận tội trước tòa. Cấu trúc: <b>plead guilty / not guilty</b>."
+        },
+        { 
+            id: "u_a_7", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "7. Robbie is no ________ student he gets straight As in all subjects and is captain of the football team.", 
+            opts: ["A. run-of-the-mill", "B. up-and-coming", "C. off-the-record", "D. out-of-the-box"], ans: 0,
+            exp: "<b>A. run-of-the-mill (adj):</b> bình thường, tầm thường, không có gì nổi bật. Robbie 'is no run-of-the-mill student' (không phải là học sinh tầm thường) vì cậu ấy đạt toàn điểm A."
+        },
+        { 
+            id: "u_a_8", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "8. She was hesitant to quit her job, but she finally ________ and pursued her passion.", 
+            opts: ["A. kept it at bay", "B. washed her hands", "C. got her lines crossed", "D. took the plunge"], ans: 3,
+            exp: "<b>D. take the plunge (idiom):</b> quyết định làm một việc khó khăn/liều lĩnh sau khi đã cân nhắc kỹ. Cô ấy do dự khi nghỉ việc, nhưng cuối cùng đã 'đánh liều' và theo đuổi đam mê."
+        },
+        { 
+            id: "u_a_9", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "9. The children were ________ by the magician's wonderful performance.", 
+            opts: ["A. interrogated", "B. entranced", "C. exacerbated", "D. suppressed"], ans: 1,
+            exp: "<b>B. entranced (adj):</b> bị mê hoặc, bị làm cho say đắm. Bọn trẻ bị mê hoặc bởi màn trình diễn tuyệt vời của ảo thuật gia."
+        },
+        { 
+            id: "u_a_10", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "10. It's amazing how the band's popularity has never ________ even after all these years.", 
+            opts: ["A. plunged", "B. waned", "C. spiralled", "D. slumped"], ans: 1,
+            exp: "<b>B. wane (v):</b> suy yếu, tàn lụi, mờ nhạt dần (dùng cho danh tiếng). Sự nổi tiếng của ban nhạc chưa bao giờ bị lu mờ (waned) dù đã qua bao nhiêu năm."
+        },
+        { 
+            id: "u_a_11", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "11. ________ to your health problems is a bad idea. You need to start taking care of yourself.", 
+            opts: ["A. Not have faced up", "B. Not facing up", "C. Not having faced up", "D. To face up not"], ans: 1,
+            exp: "<b>B. Not facing up.</b> Sử dụng V-ing (Danh động từ) làm chủ ngữ cho câu. Dạng phủ định là 'Not + V-ing'. Việc không đối mặt (not facing up) với vấn đề sức khỏe là một ý tồi."
+        },
+        { 
+            id: "u_a_12", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "12. ________ visit the British Museum while you're in London, you mustn't forget to look at the famous Rosetta Stone.", 
+            opts: ["A. For fear that you", "B. In case you", "C. When you might", "D. If you should"], ans: 3,
+            exp: "<b>D. If you should.</b> Cấu trúc câu điều kiện loại 1 mang tính khuyên bảo/nhấn mạnh sự việc có thể xảy ra: 'If + S + should + V(nguyên mẫu)'."
+        },
+        { 
+            id: "u_a_13", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "13. Minh made a decision to book a ticket back home only one day in advance, ________ the fare was exorbitant!", 
+            opts: ["A. by which time", "B. in which case", "C. during which", "D. in which event"], ans: 0,
+            exp: "<b>A. by which time:</b> vào lúc đó, đến lúc đó. Minh quyết định đặt vé về nhà chỉ trước 1 ngày, vào lúc đó (by which time) giá vé đã quá đắt cắt cổ!"
+        },
+        { 
+            id: "u_a_14", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "14. You acted as though you ________ Jake when we saw you last night.", 
+            opts: ["A. didn't meet", "B. wouldn't have met", "C. weren't meeting", "D. hadn't met"], ans: 3,
+            exp: "<b>D. hadn't met.</b> Cấu trúc 'as though / as if' (cứ như thể là). Hành động 'khi chúng tôi gặp bạn tối qua' đã ở quá khứ, nên hành động giả định trái với quá khứ phải lùi thì thành Quá khứ hoàn thành (Past Perfect)."
+        },
+        { 
+            id: "u_a_15", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "15. Shelves ________ the hypermarket was ready to open its door to the public.", 
+            opts: ["A. to stack", "B. stacking", "C. stacked", "D. having stacked"], ans: 2,
+            exp: "<b>C. stacked.</b> Đây là dạng rút gọn mệnh đề trạng ngữ (Rút gọn câu bị động). Ý đầy đủ là: 'When the shelves were stacked, the hypermarket was ready...'."
+        },
+        { 
+            id: "u_a_16", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "16. Linh: Do we need anything from the market? \nHung: No, we've got ________ everything for the weekend.", 
+            opts: ["A. a lot", "B. plenty of", "C. too much", "D. enough"], ans: 1,
+            exp: "<b>B. plenty of.</b> 'plenty of' mang nghĩa là 'có rất nhiều, dư dả'. Chúng tôi đã có quá đủ/rất nhiều mọi thứ cho cuối tuần rồi."
+        },
+        { 
+            id: "u_a_17", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "17. In reality, there's ________ a stress-free job. It's time you got your foot in the door.", 
+            opts: ["A. no such thing as", "B. nothing as", "C. nothing that compares", "D. nothing compared to"], ans: 0,
+            exp: "<b>A. no such thing as.</b> Cụm từ cố định: 'There is no such thing as + N' (Không hề tồn tại thứ gì gọi là...). Thực tế thì không hề có công việc nào là không có áp lực cả."
+        },
+        { 
+            id: "u_a_18", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "18. Mary: I'm surprised he didn't perform well at the job interview. \nAnne: He might have ________ better preparations.", 
+            opts: ["A. if he made", "B. had he made", "C. did he make", "D. if he would make"], ans: 1,
+            exp: "<b>B. had he made.</b> Đảo ngữ câu điều kiện loại 3: 'Had + S + V3/ed, S + might have + V3/ed'. Anh ấy có lẽ đã làm tốt hơn NẾU anh ấy chuẩn bị tốt hơn."
+        },
+        { 
+            id: "u_a_19", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "19. Phuong: Why are you so depressed? \nLan: ________", 
+            opts: ["A. Losing the contract was a bitter pill to swallow.", "B. My boss gave my contract the red light.", "C. My contract was left in the lurch.", "D. My boss made a big thing of the contract."], ans: 0,
+            exp: "<b>A. Losing the contract was a bitter pill to swallow.</b> Idiom: 'A bitter pill to swallow' = một sự thật đắng cay khó chấp nhận. Việc để mất hợp đồng là một sự thật quá đắng cay."
+        },
+        { 
+            id: "u_a_20", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            q: "20. Binh: Living in a new neighbourhood is really challenging. \nAn: That's right. We need to get used to those small ________ that come from engaging with new people.", 
+            opts: ["A. doses of anxiety", "B. bouts of anxiety", "C. lumps of anxiety", "D. dabs of anxiety"], ans: 1,
+            exp: "<b>B. bouts of anxiety.</b> Collocation: 'A bout of + illness/feeling' (Một đợt ốm/ một đợt cảm xúc). Ở đây là những đợt lo âu nhỏ xuất hiện khi giao tiếp với người mới."
+        },
+
+        // ---------- I. USE OF ENGLISH (PART B - PASSAGE 1: 1-10) ----------
+        { 
+            id: "u_b1_1", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            ins: "PART B: CHOOSE THE WORD OR PHRASE THAT BEST FITS EACH BLANK.\n\nPASSAGE 1\nThe 300 or so species of octopuses have been around for over 250 million years and are known to (1) ________ in every ocean on the globe. They belong to the class Cephalopoda, from the Greek word meaning 'head feet.' This comes from their lack of a true body, as their eight legs extend (2) ________ out from their bulbous heads. Each of these legs has an independently functioning brain at its base, which (3) ________ movement and sends signals to a ninth central brain. Octopuses also have three hearts and unusually blue blood. (4) ________ the blood of most animals contains iron which carries oxygen around the body, octopus blood uses copper for this purpose, allowing the oxygen to be absorbed better at low temperatures. It is also this metal that (5) ________.", 
+            q: "1. Điền từ vào vị trí số (1):", opts: ["A. inhabit", "B. dwell", "C. populate", "D. settle"], ans: 1,
+            exp: "<b>B. dwell (v):</b> cư ngụ, sinh sống. Động từ 'dwell' đi kèm giới từ 'in' (dwell in every ocean). 'Inhabit' không đi với giới từ 'in'."
+        },
+        { id: "u_b1_2", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "2. Điền từ vào vị trí số (2):", opts: ["A. directly", "B. clearly", "C. absolutely", "D. precisely"], ans: 0, exp: "<b>A. directly (adv):</b> trực tiếp. 8 cái chân của chúng mọc vươn TRỰC TIẾP ra từ phần đầu." },
+        { id: "u_b1_3", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "3. Điền từ vào vị trí số (3):", opts: ["A. commands", "B. switches", "C. inspects", "D. controls"], ans: 3, exp: "<b>D. controls (v):</b> điều khiển. Mỗi cái chân có một bộ não độc lập giúp ĐIỀU KHIỂN chuyển động." },
+        { id: "u_b1_4", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "4. Điền từ vào vị trí số (4):", opts: ["A. While", "B. Whereupon", "C. Wherein", "D. Whereby"], ans: 0, exp: "<b>A. While (conj):</b> Trong khi. TRONG KHI máu của hầu hết động vật chứa sắt, máu bạch tuộc lại dùng đồng." },
+        { id: "u_b1_5", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "5. Điền cụm từ vào vị trí số (5):", opts: ["A. changes how it moves", "B. improves the circulation", "C. makes it resistant to cold", "D. gives the blood its unusual color"], ans: 3, exp: "<b>D. gives the blood its unusual color.</b> Ngữ cảnh trước đó nhắc đến 'unusually blue blood' và chất ĐỒNG (copper). Chính kim loại này đã mang lại màu sắc đặc biệt cho máu." },
+        { 
+            id: "u_b1_6", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            ins: "With neither a skeleton nor a shell for (6) ________, the survival of these creatures for so many millennia may seem (7) ________ miraculous. Several explanations have been (8) ________ : perhaps their survival depends on their ability to eject black ink, in some cases poisonous, as a defense, or on their impressive (9) ________ for learning. They can also squeeze themselves into tiny spaces and change the texture and color of their skin, rendering them exceptionally difficult to detect, a trait that (10) ________ their survival against predation.",
+            q: "6. Điền từ vào vị trí số (6):", opts: ["A. guard", "B. shelter", "C. fortune", "D. protection"], ans: 3, exp: "<b>D. protection (n):</b> sự bảo vệ. Không có xương cũng không có vỏ bọc để BẢO VỆ."
+        },
+        { id: "u_b1_7", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "7. Điền từ vào vị trí số (7):", opts: ["A. nothing less than", "B. not in the least", "C. only a little", "D. all but"], ans: 0, exp: "<b>A. nothing less than (idiom):</b> hoàn toàn, thực sự (nhấn mạnh). Sự sinh tồn của chúng thực sự có vẻ như là một phép màu." },
+        { id: "u_b1_8", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "8. Điền từ vào vị trí số (8):", opts: ["A. drawn forward", "B. given out", "C. put forward", "D. passed out"], ans: 2, exp: "<b>C. put forward (phrasal verb):</b> đưa ra, đề xuất (một ý kiến, lời giải thích)." },
+        { id: "u_b1_9", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "9. Điền từ vào vị trí số (9):", opts: ["A. capacity", "B. ability", "C. discipline", "D. power"], ans: 0, exp: "<b>A. capacity (n):</b> năng lực, sức chứa. 'Capacity for learning': Năng lực học hỏi ấn tượng của chúng." },
+        { id: "u_b1_10", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "10. Điền từ vào vị trí số (10):", opts: ["A. hinges", "B. bolsters", "C. underpins", "D. enforces"], ans: 1, exp: "<b>B. bolsters (v):</b> củng cố, thúc đẩy, hỗ trợ. Đặc điểm này CỦNG CỐ khả năng sinh tồn của chúng." },
+
+        // ---------- I. USE OF ENGLISH (PART B - PASSAGE 2: 1-10) ----------
+        { 
+            id: "u_b2_1", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            ins: "PASSAGE 2\nI was recently offered free tickets to the opening night of the theatrical adaptation of Alfred Hitchcock's Rear Window at the Sun Royal Theatre. Naturally, given the press hype (1) ________ the production, not to mention the exorbitant ticket prices, I jumped at the (2) ________. Having seen the movie countless times and with vast sections of the script (3) ________ to memory, I was intrigued to experience the stage adaptation of the story.\nOn the night in (4) ________, I eagerly took my seat in the stalls and waited for the curtain to open. That night there was a full (5) ________ and you could palpably feel the anticipation hanging in the air.", 
+            q: "1. Điền từ vào vị trí số (1):", opts: ["A. surrounding", "B. encompassing", "C. binding", "D. corresponding"], ans: 0, exp: "<b>A. surrounding (v-ing):</b> bao quanh, xoay quanh. 'Press hype surrounding the production': Sự quảng cáo rầm rộ của báo chí xoay quanh tác phẩm đó."
+        },
+        { id: "u_b2_2", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "2. Điền từ vào vị trí số (2):", opts: ["A. occasion", "B. moment", "C. outcome", "D. chance"], ans: 3, exp: "<b>D. chance (n):</b> cơ hội. Idiom: 'Jump at the chance' = Nắm bắt cơ hội ngay lập tức." },
+        { id: "u_b2_3", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "3. Điền từ vào vị trí số (3):", opts: ["A. entrusted", "B. committed", "C. assigned", "D. accomplished"], ans: 1, exp: "<b>B. committed (v-ed):</b> Idiom: 'Commit to memory' = Ghi nhớ, thuộc lòng. Vì đã xem phim vô số lần nên tôi đã TỰ THUỘC LÒNG phần lớn kịch bản." },
+        { id: "u_b2_4", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "4. Điền từ vào vị trí số (4):", opts: ["A. principle", "B. question", "C. effect", "D. hand"], ans: 1, exp: "<b>B. question (n):</b> Idiom: 'In question' = Đang được nhắc đến. 'On the night in question' = Vào cái đêm mà tôi đang kể đây." },
+        { id: "u_b2_5", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "5. Điền từ vào vị trí số (5):", opts: ["A. crew", "B. audience", "C. house", "D. group"], ans: 2, exp: "<b>C. house (n):</b> (Trong rạp hát) House mang nghĩa là khán giả/số lượng khán giả. 'A full house' = Kín rạp, cháy vé." },
+        { 
+            id: "u_b2_6", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", 
+            ins: "The curtains drew back and revealed a set which had been (6) ________ modelled on the New York apartment in the movie, so much so that there was an audible (7) ________ from the audience in recognition of the attention to detail. The female (8) ________ was played to perfection by a little-known actor, who managed to really capture the essence of her onscreen (9) ________. The very spirit of Hitchcock (10) ________ through every scene, creating a show that was truly inspired on every level.",
+            q: "6. Điền từ vào vị trí số (6):", opts: ["A. faithfully", "B. decisively", "C. obediently", "D. steadfastly"], ans: 0, exp: "<b>A. faithfully (adv):</b> một cách trung thành, sát với bản gốc. Bối cảnh được mô phỏng SÁT VỚI BẢN GỐC căn hộ trong phim."
+        },
+        { id: "u_b2_7", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "7. Điền từ vào vị trí số (7):", opts: ["A. pant", "B. gasp", "C. groan", "D. rumble"], ans: 1, exp: "<b>B. gasp (n):</b> tiếng hít hà (vì kinh ngạc). Khán giả đã phải hít hà kinh ngạc khi nhận ra sự chú ý đến từng chi tiết của bối cảnh." },
+        { id: "u_b2_8", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "8. Điền từ vào vị trí số (8):", opts: ["A. main", "B. head", "C. chief", "D. lead"], ans: 3, exp: "<b>D. lead (n):</b> vai chính. 'The female lead' = Vai nữ chính." },
+        { id: "u_b2_9", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "9. Điền từ vào vị trí số (9):", opts: ["A. comrade", "B. fellow", "C. counterpart", "D. peer"], ans: 2, exp: "<b>C. counterpart (n):</b> bản sao, người tương đương. Nữ diễn viên trên sân khấu đã thể hiện hoàn hảo cái hồn của 'bản sao trên màn ảnh' của cô ấy." },
+        { id: "u_b2_10", sec: "I. USE OF ENGLISH (30 PTS)", type: "mc", q: "10. Điền từ vào vị trí số (10):", opts: ["A. moved", "B. went", "C. came", "D. sensed"], ans: 2, exp: "<b>C. came (v):</b> Tinh thần của Hitchcock đã HIỆN LÊN/XUYÊN SUỐT (came through) qua từng cảnh diễn." },
+
+        // ---------- II. READING (PART A: 1-10) ----------
+        { 
+            id: "r_a_1", sec: "II. READING (35 PTS)", type: "mc", 
+            ins: "PART A: READ THE FOLLOWING PASSAGE AND CHOOSE THE BEST ANSWERS.\n\nThere's growing alarm about our relationship with food, transcending the simplistic 'live to eat or eat to live' debate. Childhood obesity is escalating, with sedentary lifestyles becoming the norm. The focus has shifted from tobacco-related diseases to obesity as the primary health concern. Obese children face social ostracization, which can exacerbate the problem by leading to comfort eating.\n\nResearch indicates a significant drop in moderate activity levels among children, particularly teenage girls. Parents often lack the nutritional knowledge to support their children in changing their lifestyles. The pressures of work and family contribute to a reliance on pre-cooked or fast food options, worsening the situation. Schools bear some responsibility for marginalizing physical education due to national curriculum pressures and financial constraints, often selling off playing fields to invest in computers, ironically furthering sedentary habits.", 
+            q: "1. What is the main idea of the passage?", 
+            opts: ["A. The multifaceted causes and consequences of childhood obesity", "B. The increasing prevalence of sedentary lifestyles among adults", "C. The ethical implications of the 'live to eat' philosophy", "D. The socioeconomic factors influencing food choices in low-income families"], ans: 0,
+            exp: "<b>A. Mọi mặt của nguyên nhân và hậu quả của bệnh béo phì ở trẻ em.</b> Đoạn văn thảo luận về nhiều nguyên nhân (lối sống ít vận động, thiếu kiến thức của cha mẹ, áp lực công việc, trường học giảm giờ học thể dục) và cả hậu quả (sự xa lánh xã hội)."
+        },
+        { 
+            id: "r_a_2", sec: "II. READING (35 PTS)", type: "mc", 
+            q: "2. What does the author imply about social isolation among obese children?", 
+            opts: ["A. It is a direct result of parental neglect.", "B. It primarily stems from academic underachievement.", "C. It can paradoxically reinforce unhealthy eating habits.", "D. It is effectively addressed by participation in Weight Loss Camps."], ans: 2,
+            exp: "<b>C. Nó có thể nghịch lý làm tăng cường thói quen ăn uống không lành mạnh.</b> Dẫn chứng: <i>'Obese children face social ostracization, which can exacerbate the problem by leading to comfort eating.'</i> (Dẫn đến việc 'ăn để tìm niềm an ủi')."
+        },
+        { 
+            id: "r_a_3", sec: "II. READING (35 PTS)", type: "mc", 
+            q: "3. What does the phrase 'marginalizing physical education' most closely mean?", 
+            opts: ["A. Completely eliminating PE from school curriculum", "B. Deeming PE as less critical compared to other academic fields", "C. Reducing funds to improve facilities to better physical health", "D. Creating programmes for pupils that are overweight"], ans: 1,
+            exp: "<b>B. Coi Thể dục (PE) ít quan trọng hơn so với các môn học khác.</b> 'Marginalize' có nghĩa là coi nhẹ, gạt ra ngoài lề."
+        },
+        { 
+            id: "r_a_4", sec: "II. READING (35 PTS)", type: "mc", 
+            ins: "The food industry also contributes through advertising campaigns that target children with high-fat, high-sugar products. These items are often marketed as affordable options, leading to overconsumption. Experts advocate for government intervention, similar to the approach taken with the tobacco industry, including health warnings on fast food and bans on vending machines in schools.\n\nObesity isn't limited to children. Surveys reveal that a significant portion of adults eat on the hoof, relying on convenience foods in the hope of sparing more time for work. This reflects a culture that promotes fast food while simultaneously presenting unattainable beauty standards through images of excessively thin models. This paradox leads to overeating and its extreme opposite, anorexia.",
+            q: "4. According to the passage, why are the food industry's marketing strategies particularly concerning?", 
+            opts: ["A. Because they promote healthy eating habits among children.", "B. Because they are primarily targeted at adults.", "C. Because they encourage children to consume excessive amounts of fruits and vegetables.", "D. Because they exploit the vulnerability of low-income families."], ans: 3,
+            exp: "<b>D. Bởi vì chúng khai thác sự dễ tổn thương của các gia đình thu nhập thấp.</b> Câu <i>'These items are often marketed as affordable options'</i> (tiếp thị như lựa chọn RẺ TIỀN) ám chỉ việc nhắm vào gia đình thu nhập thấp để bán số lượng lớn."
+        },
+        { 
+            id: "r_a_5", sec: "II. READING (35 PTS)", type: "mc", 
+            q: "5. What can be inferred from the passage about Weight Loss Camps?", 
+            opts: ["A. They address the psychological aspects of obesity.", "B. They are sufficiently widespread and accessible to all children.", "C. They are a universally effective solution for childhood obesity.", "D. They primarily focus on physical exercise and restrictive dieting."], ans: 3,
+            exp: "Câu hỏi này suy luận từ kiến thức chung về các trại giảm cân (dựa theo ngữ cảnh thường thấy trong các bài thi đọc vì đoạn trích bị khuyết). Đáp án thường tập trung vào việc chúng chỉ tập trung vào thể dục và ăn kiêng nghiêm ngặt (D) thay vì giải quyết cốt lõi."
+        },
+        { 
+            id: "r_a_6", sec: "II. READING (35 PTS)", type: "mc", 
+            q: "6. When using the comparison with the tobacco industry, what does the author argue for?", 
+            opts: ["A. The complete prohibition of fast food advertising", "B. Increased government regulation of the fast food industry", "C. The implementation of higher taxes on sugary drinks", "D. Mandatory nutritional education in schools"], ans: 1,
+            exp: "<b>B. Tăng cường sự quản lý của chính phủ đối với ngành công nghiệp thức ăn nhanh.</b> Dẫn chứng: <i>'Experts advocate for government intervention, similar to the approach taken with the tobacco industry'</i>."
+        },
+        { 
+            id: "r_a_7", sec: "II. READING (35 PTS)", type: "mc", 
+            q: "7. What does the phrase 'eat on the hoof' mean?", 
+            opts: ["A. A preference for organic, locally sourced food", "B. A return to traditional eating habits", "C. A rejection of processed convenience foods", "D. A lifestyle characterized by rapid consumption"], ans: 3,
+            exp: "<b>D. Một lối sống đặc trưng bởi việc tiêu thụ nhanh chóng.</b> 'Eat on the hoof' là ăn vội vàng trong khi đang di chuyển/làm việc."
+        },
+        { 
+            id: "r_a_8", sec: "II. READING (35 PTS)", type: "mc", 
+            q: "8. What is highlighted regarding a paradoxical relationship between contemporary culture and health?", 
+            opts: ["A. The increasing popularity of vegetarian diets", "B. The promotion of unattainable beauty standards alongside unhealthy food options", "C. The widespread availability of nutritional information", "D. The growing awareness of environmental sustainability in food production"], ans: 1,
+            exp: "<b>B. Việc thúc đẩy những tiêu chuẩn vẻ đẹp không thể đạt được song song với thực phẩm không lành mạnh.</b> Dẫn chứng: <i>'promotes fast food while simultaneously presenting unattainable beauty standards'</i>."
+        },
+        { 
+            id: "r_a_9", sec: "II. READING (35 PTS)", type: "mc", 
+            q: "9. What is the author's tone when contemporary beauty standards are discussed?", 
+            opts: ["A. Laudatory", "B. Ambivalent", "C. Cynical", "D. Dismissive"], ans: 2,
+            exp: "<b>C. Cynical (Hoài nghi / Châm biếm).</b> Tác giả dùng cụm từ 'unattainable beauty standards' (tiêu chuẩn vẻ đẹp không thể đạt tới) và 'excessively thin models' (người mẫu gầy quá mức) để thể hiện sự châm biếm sâu sắc đối với văn hóa hiện đại."
+        },
+        { 
+            id: "r_a_10", sec: "II. READING (35 PTS)", type: "mc", 
+            ins: "It's crucial to re-evaluate our relationship with food. The ideal diet should consist of fruits, vegetables, protein, and limited carbohydrates, acknowledging the occasional indulgence. The old adage of 'a little of what you fancy does you good' remains relevant.",
+            q: "10. What does the phrase 'a little of what you fancy does you good' mean?", 
+            opts: ["A. Strict dietary adherence is of great importance.", "B. Eliminating processed foods completely is beneficial.", "C. The occasional indulgence can be incorporated to have a balanced diet.", "D. All dietary guidelines and restrictions need to be rejected."], ans: 2,
+            exp: "<b>C. Việc thỉnh thoảng nuông chiều bản thân có thể được kết hợp để có một chế độ ăn uống cân bằng.</b> 'A little of what you fancy does you good' nghĩa là ăn một chút xíu món mình thích thì cũng tốt cho tinh thần."
+        },
+
+        // ---------- II. READING (PART B - MATCHING: 1-5) ----------
+        { 
+            id: "r_b_1", sec: "II. READING (35 PTS)", type: "dropdown", 
+            ins: "PART B: MATCH THE SENTENCES A-G TO FILL IN THE BLANKS (1-5).\n\nHydroelectricity, a form of solar energy due to the sun driving the precipitation-supplying water cycle, is globally the most utilized renewable energy source. Nations like New Zealand and Nepal, blessed with abundant rainfall and mountainous terrain ideal for water storage, generate over half their electricity through hydropower. This involves water falling onto turbines, causing them to spin. (1) ________. \n\n(2) ________. However, once operational, the ongoing running costs are minimal. For example, it is possible to build several dams on the same river. This helps multiply the productivity of the water flowing through.\n\n(3) ________. These pump-storage dams function effectively when hydroelectric dams supplement, rather than supplant, coal power stations. Coal stations require days to power up and often operate continuously. (4) ________. At night, demand for electricity is much less than during the day, and so coal stations are generating electricity for which there is no need. A pump-storage dam uses some of this surplus power to pump water uphill from one lake to another during this time. (5) ________.", 
+            q: "1. Chọn câu phù hợp để điền vào chỗ trống (1):", 
+            opts: ["A. This means the water is effectively recycled and available for re-use when the next peak in demand occurs.", "B. For these reasons, hydroelectric dams are a vital part of the environment.", "C. The initial investment - dam construction, turbine installation, and power line networks - is substantial.", "D. Another resource-saving strategy involves developing pump-storage dams.", "E. Instead, they should be supplementing the reliability of hydroelectric systems.", "F. In contrast, hydroelectric dams rapidly respond to fluctuating power demands by simply adjusting a valve.", "G. There are various ways of managing hydroelectric facilities to conserve the water resource."], 
+            ans: "C. The initial investment - dam construction, turbine installation, and power line networks - is substantial.",
+            exp: "<b>C. The initial investment... is substantial.</b> Dấu hiệu: Câu tiếp theo viết <i>'However, once operational, the ongoing running costs are minimal'</i> (Tuy nhiên, một khi hoạt động, chi phí chạy liên tục rất nhỏ). Câu này tương phản với việc 'Chi phí đầu tư ban đầu cực kỳ lớn' (C)."
+        },
+        { id: "r_b_2", sec: "II. READING (35 PTS)", type: "dropdown", q: "2. Chọn câu phù hợp để điền vào chỗ trống (2):", opts: ["A. This means the water is effectively recycled and available for re-use when the next peak in demand occurs.", "B. For these reasons, hydroelectric dams are a vital part of the environment.", "C. The initial investment - dam construction, turbine installation, and power line networks - is substantial.", "D. Another resource-saving strategy involves developing pump-storage dams.", "E. Instead, they should be supplementing the reliability of hydroelectric systems.", "F. In contrast, hydroelectric dams rapidly respond to fluctuating power demands by simply adjusting a valve.", "G. There are various ways of managing hydroelectric facilities to conserve the water resource."], ans: "G. There are various ways of managing hydroelectric facilities to conserve the water resource.", exp: "<b>G. There are various ways of managing...</b> Đoạn văn này đang bắt đầu liệt kê các cách tận dụng/tiết kiệm nguồn nước, ví dụ như xây nhiều đập trên cùng 1 dòng sông (build several dams on the same river)." },
+        { id: "r_b_3", sec: "II. READING (35 PTS)", type: "dropdown", q: "3. Chọn câu phù hợp để điền vào chỗ trống (3):", opts: ["A. This means the water is effectively recycled and available for re-use when the next peak in demand occurs.", "B. For these reasons, hydroelectric dams are a vital part of the environment.", "C. The initial investment - dam construction, turbine installation, and power line networks - is substantial.", "D. Another resource-saving strategy involves developing pump-storage dams.", "E. Instead, they should be supplementing the reliability of hydroelectric systems.", "F. In contrast, hydroelectric dams rapidly respond to fluctuating power demands by simply adjusting a valve.", "G. There are various ways of managing hydroelectric facilities to conserve the water resource."], ans: "D. Another resource-saving strategy involves developing pump-storage dams.", exp: "<b>D. Another resource-saving strategy involves developing pump-storage dams.</b> Dấu hiệu: Câu ngay sau đó viết <i>'These pump-storage dams function effectively...'</i>, từ khóa 'pump-storage dams' được nhắc đến lần đầu tiên ở câu D." },
+        { id: "r_b_4", sec: "II. READING (35 PTS)", type: "dropdown", q: "4. Chọn câu phù hợp để điền vào chỗ trống (4):", opts: ["A. This means the water is effectively recycled and available for re-use when the next peak in demand occurs.", "B. For these reasons, hydroelectric dams are a vital part of the environment.", "C. The initial investment - dam construction, turbine installation, and power line networks - is substantial.", "D. Another resource-saving strategy involves developing pump-storage dams.", "E. Instead, they should be supplementing the reliability of hydroelectric systems.", "F. In contrast, hydroelectric dams rapidly respond to fluctuating power demands by simply adjusting a valve.", "G. There are various ways of managing hydroelectric facilities to conserve the water resource."], ans: "F. In contrast, hydroelectric dams rapidly respond to fluctuating power demands by simply adjusting a valve.", exp: "<b>F. In contrast, hydroelectric dams rapidly respond...</b> Dấu hiệu: Câu trước đó nói về Trạm than (Coal stations) hoạt động liên tục và chậm. Câu F tạo sự tương phản 'Ngược lại, đập thủy điện có thể phản ứng nhanh chóng với nhu cầu năng lượng'." },
+        { id: "r_b_5", sec: "II. READING (35 PTS)", type: "dropdown", q: "5. Chọn câu phù hợp để điền vào chỗ trống (5):", opts: ["A. This means the water is effectively recycled and available for re-use when the next peak in demand occurs.", "B. For these reasons, hydroelectric dams are a vital part of the environment.", "C. The initial investment - dam construction, turbine installation, and power line networks - is substantial.", "D. Another resource-saving strategy involves developing pump-storage dams.", "E. Instead, they should be supplementing the reliability of hydroelectric systems.", "F. In contrast, hydroelectric dams rapidly respond to fluctuating power demands by simply adjusting a valve.", "G. There are various ways of managing hydroelectric facilities to conserve the water resource."], ans: "A. This means the water is effectively recycled and available for re-use when the next peak in demand occurs.", exp: "<b>A. This means the water is effectively recycled...</b> Dấu hiệu: Câu trước giải thích cơ chế bơm nước lên đồi vào ban đêm. Câu A kết luận: Điều này có nghĩa là nước được tái chế hiệu quả và có sẵn để sử dụng lại vào lúc cao điểm tiếp theo." },
+
+        // ---------- II. READING (PART C - CLOZE PASSAGE 1: 1-10) ----------
+        { 
+            id: "r_c1_1", sec: "II. READING (35 PTS)", type: "text", 
+            ins: "PART C: READ THE PASSAGE AND SUPPLY EACH BLANK WITH ONE SUITABLE WORD.\n\nPASSAGE 1\nThe blind box trend is more than just a passing (1) ________; it's a window into the contemporary teenage experience. The appeal lies not simply in the acquisition of collectible items, (2) ________ in the ritualistic aspect of the unboxing and the subsequent sharing of that experience on (3) ________ like Tik Tok and Instagram. This feeds (4) ________ the desire to create an online persona, showcasing carefully selected interests and displaying a sense of (5) ________ to a specific community.", 
+            q: "1. Từ cần điền vào (1):", ans: "fad", exp: "<b>fad (n):</b> trào lưu nhất thời, mốt nhất thời. Cụm từ <b>'a passing fad'</b> mang nghĩa là một trào lưu sớm nở chóng tàn."
+        },
+        { id: "r_c1_2", sec: "II. READING (35 PTS)", type: "text", q: "2. Từ cần điền vào (2):", ans: "but", exp: "<b>but:</b> Cấu trúc <b>'not simply/only... but (also)...'</b> (không chỉ... mà còn...). Sức hấp dẫn không chỉ nằm ở việc mua đồ, MÀ CÒN ở nghi thức bóc hộp." },
+        { id: "r_c1_3", sec: "II. READING (35 PTS)", type: "text", q: "3. Từ cần điền vào (3):", ans: "platforms", exp: "<b>platforms (n):</b> nền tảng. TikTok và Instagram là các 'nền tảng' (platforms) mạng xã hội." },
+        { id: "r_c1_4", sec: "II. READING (35 PTS)", type: "text", q: "4. Từ cần điền vào (4):", ans: "into", exp: "<b>feed into (phrasal verb):</b> đóng góp vào, tiếp thêm vào, cổ xúy cho. Điều này tiếp thêm vào khao khát tạo dựng hình ảnh cá nhân trên mạng." },
+        { id: "r_c1_5", sec: "II. READING (35 PTS)", type: "text", q: "5. Từ cần điền vào (5):", ans: "belonging", exp: "<b>belonging (n):</b> cảm giác thuộc về. <b>'A sense of belonging'</b> (Cảm giác thuộc về một cộng đồng nào đó) là một cụm từ rất phổ biến trong tiếng Anh." },
+        { 
+            id: "r_c1_6", sec: "II. READING (35 PTS)", type: "text", 
+            ins: "Furthermore, blind boxes often feature characters and themes from popular culture, allowing (6) ________ to tap into existing fandoms and connect with (7) ________ individuals. However, the trend also raises concerns about the manipulation of consumer desires. Some companies exploit the addictive nature of blind boxes by creating ultra-rare figures that are almost (8) ________ to obtain, setting up a cycle of relentless purchasing and disappointment. It's crucial that teenagers learn to take with a (9) ________ of salt the claims made by manufacturers and influencers. The key is to encourage a balanced approach, where blind boxes are enjoyed as a lighthearted hobby, rather than becoming an all-consuming obsession that puts a (10) ________ in one's bank account.",
+            q: "6. Từ cần điền vào (6):", ans: "them", exp: "<b>them (pronoun):</b> thay thế cho 'teenagers' hoặc 'buyers'. Blind boxes cho phép HỌ (them) gia nhập vào các fandom có sẵn." 
+        },
+        { id: "r_c1_7", sec: "II. READING (35 PTS)", type: "text", q: "7. Từ cần điền vào (7):", ans: "like-minded", exp: "<b>like-minded (adj):</b> có cùng chí hướng, cùng sở thích. Kết nối với những người 'có cùng sở thích' (like-minded individuals)." },
+        { id: "r_c1_8", sec: "II. READING (35 PTS)", type: "text", q: "8. Từ cần điền vào (8):", ans: "impossible", exp: "<b>impossible (adj):</b> không thể. Các công ty tạo ra những mẫu hiếm đến mức 'gần như KHÔNG THỂ có được' (almost impossible to obtain)." },
+        { id: "r_c1_9", sec: "II. READING (35 PTS)", type: "text", q: "9. Từ cần điền vào (9):", ans: "pinch", exp: "<b>pinch / grain (n):</b> Thành ngữ <b>'take something with a pinch/grain of salt'</b> nghĩa là đừng tin hoàn toàn vào những gì người khác nói, hãy giữ sự hoài nghi (với các quảng cáo của nhà sản xuất)." },
+        { id: "r_c1_10", sec: "II. READING (35 PTS)", type: "text", q: "10. Từ cần điền vào (10):", ans: "dent", exp: "<b>dent / hole (n):</b> Thành ngữ <b>'put a dent in one's bank account'</b> (hoặc burn a hole in one's pocket) nghĩa là làm tiêu tốn rất nhiều tiền." },
+
+        // ---------- II. READING (PART C - CLOZE PASSAGE 2: 1-10) ----------
+        { 
+            id: "r_c2_1", sec: "II. READING (35 PTS)", type: "text", 
+            ins: "PASSAGE 2\nSome people possess extraordinary memory, a result of brains naturally optimized for (1) ________. They recall effortlessly, (2) ________ most who struggle. While few are born this way, hope remains for others to improve. Boris Konrad exemplifies this: a self-trained champion memorizer who, (3) ________ starting with average recall, achieved remarkable feats. Konrad's example underscores the dedication needed. However, new research suggests significant improvement is possible with just 30 minutes of daily practice using (4) ________ like the Memory Palace. The Memory Palace technique, also known as the method of loci, is widely used, (5) ________ by innate memorizers.", 
+            q: "1. Từ cần điền vào (1):", ans: "retention", exp: "<b>retention / recall / learning (n):</b> sự ghi nhớ, khả năng ghi nhớ. Bộ não của họ được tối ưu hóa một cách tự nhiên cho việc GHI NHỚ."
+        },
+        { id: "r_c2_2", sec: "II. READING (35 PTS)", type: "text", q: "2. Từ cần điền vào (2):", ans: "unlike", exp: "<b>unlike (prep):</b> KHÁC VỚI. Họ ghi nhớ dễ dàng, KHÁC VỚI hầu hết những người luôn phải chật vật." },
+        { id: "r_c2_3", sec: "II. READING (35 PTS)", type: "text", q: "3. Từ cần điền vào (3):", ans: "despite", exp: "<b>despite (prep):</b> MẶC DÙ. Boris Konrad là một nhà vô địch trí nhớ tự rèn luyện, MẶC DÙ bắt đầu với trí nhớ mức trung bình." },
+        { id: "r_c2_4", sec: "II. READING (35 PTS)", type: "text", q: "4. Từ cần điền vào (4):", ans: "techniques", exp: "<b>techniques / methods (n):</b> kĩ thuật, phương pháp. Thực hành mỗi ngày bằng cách sử dụng các KỸ THUẬT như Cung điện Ký ức (Memory Palace)." },
+        { id: "r_c2_5", sec: "II. READING (35 PTS)", type: "text", q: "5. Từ cần điền vào (5):", ans: "even", exp: "<b>even (adv):</b> THẬM CHÍ. Kỹ thuật này được sử dụng rộng rãi, THẬM CHÍ bởi cả những người có trí nhớ bẩm sinh." },
+        { 
+            id: "r_c2_6", sec: "II. READING (35 PTS)", type: "text", 
+            ins: "Dating back to Ancient Greece, it involves (6) ________ information with specific locations in an imagined space. Impressively, recall performance remained high even (7) ________ training ceased. A study divided participants into three groups: no training, everyday techniques, and Memory Palace. The Memory Palace group more than doubled their recall capacity and exhibited brain patterns (8) ________ to natural super memorizers. This indicates a potential for total (9) ________ rewiring, suggesting that memory is less about innate ability and (10) ________ about training.",
+            q: "6. Từ cần điền vào (6):", ans: "associating", exp: "<b>associating / linking (v-ing):</b> liên kết. Kỹ thuật này liên quan đến việc LIÊN KẾT thông tin với những vị trí cụ thể." 
+        },
+        { id: "r_c2_7", sec: "II. READING (35 PTS)", type: "text", q: "7. Từ cần điền vào (7):", ans: "after", exp: "<b>after / when (conj):</b> SAU KHI. Hiệu suất ghi nhớ vẫn cao ngay cả SAU KHI quá trình huấn luyện dừng lại." },
+        { id: "r_c2_8", sec: "II. READING (35 PTS)", type: "text", q: "8. Từ cần điền vào (8):", ans: "similar", exp: "<b>similar (adj):</b> TƯƠNG TỰ. Cấu trúc <b>similar to</b>. Nhóm này thể hiện các mô hình não TƯƠNG TỰ như những người siêu trí nhớ bẩm sinh." },
+        { id: "r_c2_9", sec: "II. READING (35 PTS)", type: "text", q: "9. Từ cần điền vào (9):", ans: "brain", exp: "<b>brain / cognitive (n/adj):</b> NÃO BỘ / Nhận thức. Điều này chỉ ra một tiềm năng định hình lại hoàn toàn kết nối NÃO BỘ (brain rewiring)." },
+        { id: "r_c2_10", sec: "II. READING (35 PTS)", type: "text", q: "10. Từ cần điền vào (10):", ans: "more", exp: "<b>more (adv):</b> NHIỀU HƠN. Cấu trúc <i>'less about A and more about B'</i> (Ít liên quan đến A mà liên quan NHIỀU HƠN đến B). Trí nhớ ít liên quan đến khả năng bẩm sinh mà liên quan NHIỀU HƠN đến việc rèn luyện." },
+
+        // ---------- III. ERROR CORRECTION (1-5) ----------
+        { 
+            id: "err1", sec: "III. ERROR CORRECTION (5 PTS)", type: "text", 
+            ins: "IDENTIFY THE FIVE (05) MISTAKES IN THE FOLLOWING PASSAGE AND CORRECT THEM.\n\n[1] The increasing online availability of books and other written material for download has forced many publishing\n[2] companies to reevaluate their business models. The digital age has caused gradual shift in book-buying\n[3] trends. Today, many books can be cheaply purchased online and then downloaded onto portable devices,\n[4] which has made a good deal of actual printing necessary. Still, it should be noted that, while some analysts\n[5] predict digital book sales will soon overpace those of printed books, there are many readers who remain loyal\n[6] to read on paper. However, the real change is happening elsewhere, in what is called publishing on demand\n[7] (POD). Publishers edit and lay out a new book on a computer. They then wait until somebody wants to buy\n[8] one, and they print a copy. It's a cost-effective alternative to traditional publishing and allows for a wider range\n[9] of ideas being published.", 
+            q: "1. Lỗi thứ 1 (Cú pháp ví dụ: gradual -> a gradual)", ans: "gradual -> a gradual",
+            exp: "<b>gradual -> a gradual (Dòng 2):</b> 'shift' là danh từ đếm được số ít nên cần mạo từ 'a' (a gradual shift: một sự chuyển dịch dần dần)."
+        },
+        { 
+            id: "err2", sec: "III. ERROR CORRECTION (5 PTS)", type: "text", 
+            q: "2. Lỗi thứ 2:", ans: "necessary -> unnecessary",
+            exp: "<b>necessary -> unnecessary (Dòng 4):</b> Việc dễ dàng tải sách trên mạng khiến cho việc in ấn vật lý trở nên 'không cần thiết' (unnecessary) chứ không phải 'cần thiết' (necessary)."
+        },
+        { 
+            id: "err3", sec: "III. ERROR CORRECTION (5 PTS)", type: "text", 
+            q: "3. Lỗi thứ 3:", ans: "overpace -> outpace",
+            exp: "<b>overpace -> outpace (Dòng 5):</b> Không có từ 'overpace' trong tiếng Anh. Từ đúng là <b>outpace</b> (vượt qua, qua mặt)."
+        },
+        { 
+            id: "err4", sec: "III. ERROR CORRECTION (5 PTS)", type: "text", 
+            q: "4. Lỗi thứ 4:", ans: "to read -> to reading",
+            exp: "<b>to read -> to reading (Dòng 6):</b> Cấu trúc <b>'remain loyal to + V-ing/Noun'</b> (vẫn trung thành với việc gì đó). Chữ 'to' ở đây là giới từ, nên theo sau phải là danh động từ 'reading'."
+        },
+        { 
+            id: "err5", sec: "III. ERROR CORRECTION (5 PTS)", type: "text", 
+            q: "5. Lỗi thứ 5:", ans: "being published -> to be published",
+            exp: "<b>being published -> to be published (Dòng 9):</b> Cấu trúc <b>'allow for + Noun'</b>. Tuy nhiên ở đây là 'allows for a wider range of ideas <b>to be published</b>' (Cho phép nhiều ý tưởng <b>được</b> xuất bản hơn) - sử dụng động từ nguyên mẫu dạng bị động làm bổ ngữ."
+        },
+
+        // ---------- IV. WORD FORMS (1-10) ----------
+        { 
+            id: "w1", sec: "IV. WORD FORMS (10 PTS)", type: "text", 
+            ins: "SUPPLY THE APPROPRIATE FORMS OF THE WORDS IN BRACKETS.", 
+            q: "1. The little boy ________ consumed a tainted product, suffering severe food poisoning as a result. [know]", 
+            ans: "unknowingly",
+            exp: "<b>unknowingly (adv):</b> vô tình, không biết. Cần một trạng từ để bổ nghĩa cho động từ 'consumed' (tiêu thụ). Đứa bé ăn phải thực phẩm bẩn mà <b>không hề hay biết</b>."
+        },
+        { id: "w2", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "2. The small startup quickly grew into a(n) ________ corporation with offices around the globe. [fledge]", ans: "fully-fledged", exp: "<b>fully-fledged</b> hoặc <b>full-fledged (adj):</b> phát triển toàn diện, hoàn thiện." },
+        { id: "w3", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "3. The intricate embroidery was clearly the ________ of a highly skilled artisan. [hand]", ans: "handiwork", exp: "<b>handiwork (n):</b> tác phẩm thủ công, sản phẩm làm bằng tay." },
+        { id: "w4", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "4. It's crucial that the broken arm need ________ immediately after the accident. [mobile]", ans: "immobilizing", exp: "<b>immobilizing / immobilization (n/v-ing):</b> sự cố định (không cho di chuyển). 'Need + V-ing' mang nghĩa bị động." },
+        { id: "w5", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "5. The structural engineer identified a dangerous ________ in the bridge supports, necessitating urgent repairs. [align]", ans: "misalignment", exp: "<b>misalignment (n):</b> sự lệch lạc, sự sai lệch." },
+        { id: "w6", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "6. Unfortunately, there's no ________ solution to such a complex problem. [dry]", ans: "cut-and-dried", exp: "<b>cut-and-dried (adj):</b> rõ ràng, được quyết định sẵn. Không có một giải pháp 'rõ ràng' nào cho một vấn đề phức tạp." },
+        { id: "w7", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "7. The school's academic program is under the ________ of the principal and the faculty. [intend]", ans: "superintendence", exp: "<b>superintendence (n):</b> sự giám sát, sự quản lý." },
+        { id: "w8", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "8. The maths teacher often posed ________ to challenge his students' critical thinking skills. [brain]", ans: "brain-teasers", exp: "<b>brain-teasers (n):</b> câu đố mẹo, bài toán hóc búa." },
+        { id: "w9", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "9. Leaving the secondary school was a(n) ________ moment, filled with joy and nostalgia. [sweet]", ans: "bittersweet", exp: "<b>bittersweet (adj):</b> vui buồn lẫn lộn." },
+        { id: "w10", sec: "IV. WORD FORMS (10 PTS)", type: "text", q: "10. The painter tried to capture the stark contrast between the ________ lifestyle and the serenity of the countryside. [city]", ans: "city-dwelling", exp: "<b>city-dwelling (adj):</b> sống ở thành thị. Sự đối lập giữa lối sống thành thị và sự thanh bình của nông thôn." },
+
+        // ---------- V. WRITING (1-10) ----------
+        { 
+            id: "wr1", sec: "V. WRITING (20 PTS)", type: "text", 
+            ins: "COMPLETE THE SECOND SENTENCE SO THAT IT MEANS THE SAME AS THE FIRST ONE. YOU MUST USE BETWEEN 3 AND 10 WORDS, INCLUDING THE WORD GIVEN.", 
+            q: "1. The charity faces lots of difficulties due to a lack of funding. (lacking)\n→ Were the charity ___________________ straits.", 
+            ans: "not lacking funding, it wouldn't be in dire",
+            exp: "<b>Giải thích:</b><br>- Câu ĐK loại 2 đảo ngữ: <i>Were + S + (not) + V-ing/to V, S + would + V</i>. Thực tế quỹ thiếu tiền, giả định 'nếu quỹ không thiếu tiền' -> <i>Were the charity not lacking funding,...</i><br>- <b>be in dire straits</b> (ở trong tình cảnh vô cùng khó khăn/khốn đốn)."
+        },
+        { 
+            id: "wr2", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "2. The company tried to keep the scandal secret, but it became known at last. (lid)\n→ Much as the company ___________________ out at last.", 
+            ans: "tried to keep a lid on the scandal, it got",
+            exp: "<b>Giải thích:</b><br>- Cấu trúc nhượng bộ: <i>Much as + S + V</i> (Mặc dù ... rất nhiều).<br>- <b>keep a lid on something</b> (giữ bí mật chuyện gì đó).<br>- Phrasal verb: <b>get out</b> (tin tức bị lộ ra ngoài) = became known."
+        },
+        { 
+            id: "wr3", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "3. As soon as we arrived at the main square, we fell in love with the city. (moment)\n→ The city took our ___________________ in the main square.", 
+            ans: "breath away the moment we set foot",
+            exp: "<b>Giải thích:</b><br>- <b>take someone's breath away</b> (làm ai kinh ngạc/yêu thích) = fell in love with.<br>- <b>the moment (that) + S + V</b> (ngay giây phút mà...) = As soon as.<br>- <b>set foot in</b> (đặt chân đến) = arrived at."
+        },
+        { 
+            id: "wr4", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "4. The new employee was so completely incompetent that the task was slowly handled. (rank)\n→ Such was his ___________________ with by the new employee.", 
+            ans: "rank incompetence that the task was slowly dealt",
+            exp: "<b>Giải thích:</b><br>- Đảo ngữ: <i>Such + be + Noun + that + S + V</i> (Quá ... đến nỗi mà...).<br>- <b>rank incompetence</b> (sự kém cỏi hoàn toàn/cực kỳ).<br>- <b>deal with</b> = handle (xử lý)."
+        },
+        { 
+            id: "wr5", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "5. The adults usually object to how indifferent the young are nowadays. (exception)\n→ The adults usually ___________________ of the young nowadays.", 
+            ans: "take exception to the indifference",
+            exp: "<b>Giải thích:</b><br>- <b>take exception to something</b> (phản đối, bực mình với điều gì) = object to.<br>- Đổi tính từ 'indifferent' thành danh từ 'indifference'."
+        },
+        { 
+            id: "wr6", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "6. A lot of the city's one million unemployed are trying to make ends meet. (many)\n→ There are one million ___________________ all out to make ends meet.", 
+            ans: "unemployed in the city, many of whom are going",
+            exp: "<b>Giải thích:</b><br>- Mệnh đề quan hệ chỉ số lượng: <b>, many of whom</b> (rất nhiều người trong số họ).<br>- <b>go all out</b> (cố gắng hết sức) = are trying."
+        },
+        { 
+            id: "wr7", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "7. \"Don't do anything mischievous!\", she told her child clearly and strongly. (uncertain)\n→ Her child was told ___________________ mischief was a must.", 
+            ans: "in no uncertain terms that avoiding",
+            exp: "<b>Giải thích:</b><br>- <b>in no uncertain terms</b> (rất rõ ràng và kiên quyết) = clearly and strongly.<br>- 'Don't do anything mischievous' -> <b>avoiding mischief</b> was a must (tránh làm điều tinh nghịch là bắt buộc)."
+        },
+        { 
+            id: "wr8", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "8. If you don't spend hours reviewing, you can't ensure good results in the upcoming exam. (likely)\n→ The more hours you put ___________________ ensure good results in the upcoming exam.", 
+            ans: "in reviewing, the more likely you are to",
+            exp: "<b>Giải thích:</b><br>- So sánh kép: <i>The more + Noun + S + V, the more adj + S + be + to V</i>.<br>- <b>put in</b> (dành thời gian) = spend.<br>- Cấu trúc <b>be likely to V</b> (có khả năng làm gì)."
+        },
+        { 
+            id: "wr9", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "9. I think that if you don't intervene too much, the students work much harder. (devices)\n→ The students work much harder when left ___________________ standpoint.", 
+            ans: "to their own devices, from my",
+            exp: "<b>Giải thích:</b><br>- <b>leave someone to their own devices</b> (để ai tự xoay sở, không can thiệp) = don't intervene too much.<br>- <b>from my standpoint</b> (theo quan điểm của tôi) = I think that."
+        },
+        { 
+            id: "wr10", sec: "V. WRITING (20 PTS)", type: "text", 
+            q: "10. She remained calm rather than getting irritated by Jack's behaviour. (being)\n→ Far ___________________ cool head.", 
+            ans: "from being irritated by Jack's behaviour, she kept a",
+            exp: "<b>Giải thích:</b><br>- <b>Far from V-ing</b> (Thay vì làm gì... thì lại...).<br>- <b>keep a cool head</b> (giữ cái đầu lạnh, giữ bình tĩnh) = remained calm."
+        },
+
+        // ---------- ESSAY CÓ THÊM BÀI LUẬN GỢI Ý ----------
+        { id: "q_essay", sec: "V. WRITING (ESSAY)", type: "textarea", ins: "WRITING AN ESSAY (3.0 pts)\nBefore Al, humans had exclusive access to creativity. However, some people believe that the birth of Al has broken the rules and that Al might do creative tasks now, even better than humans can do in the near future.\n\nDo you agree or disagree? Discuss both sides and give your opinion.", q: "Write 200-250 words. Give reasons for your answer and include any relevant examples.", ans: "",
+          suggested: "The rapid development of Artificial Intelligence (AI) has sparked a debate regarding its capability to perform creative tasks better than humans. While some argue that AI is on the verge of surpassing human creativity, I partially disagree with this perspective. I believe that while AI is a powerful tool, genuine creativity remains a uniquely human trait.\n\nOn the one hand, AI has undeniably demonstrated remarkable capabilities in fields traditionally considered creative. Algorithms can now compose music, generate hyper-realistic art, and even write poetry in a matter of seconds. This efficiency and the ability to process vast amounts of data to find novel combinations often lead people to believe that AI has “broken the rules” of creativity. It can assist professionals by providing endless inspiration and accelerating the creative process.\n\nOn the other hand, true creativity involves more than just assembling data; it requires consciousness, emotion, and lived experience – elements that AI fundamentally lacks. A machine can mimic the style of a famous painter, but it cannot infuse a painting with the raw sorrow or joy that a human artist experiences. Furthermore, human creativity is often driven by a desire to communicate profound truths, challenge societal norms, or express personal identity. AI, operating merely on programmed codes and algorithms, does not possess the empathy or intentionality necessary to create art that truly resonates on a human level.\n\nIn conclusion, while AI can produce impressive outputs and serve as a highly effective assistant in creative tasks, it cannot replace the depth of human emotion and consciousness. Therefore, I believe that humans will always hold the ultimate mastery over genuine creativity."
+        }
+    ];
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tienganh_chuyen_hoanhao_v4'); 
+
+    let deviceId = localStorage.getItem('deviceId') || ('dev_' + Date.now());
+    localStorage.setItem('deviceId', deviceId);
+    
+    let allScores = [], currentStudent = {}, userAnswers = {}, timerInterval;
+    let quizStartTime, quizEndTime, isReviewMode = false;
+
+    scoresRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allScores = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+        renderScores();
+    });
+
+    document.getElementById('login-form').onsubmit = (e) => {
+        e.preventDefault();
+        currentStudent = { hoTen: document.getElementById('hoTen').value.trim(), lop: document.getElementById('lop').value.trim() };
+        startQuiz();
+    };
+
+    function startQuiz() {
+        quizStartTime = new Date();
+        isReviewMode = false;
+        userAnswers = {};
+        
+        document.getElementById('student-name-header').innerText = `${currentStudent.hoTen} - ${currentStudent.lop}`;
+        document.getElementById('quiz-section').classList.add('is-taking-test');
+        
+        showSection('quiz');
+        renderQuestions();
+        startTimer(150 * 60);
+    }
+
+    window.selectAnswer = function(qId, val) {
+        if(isReviewMode) return;
+        userAnswers[qId] = val;
+        let answered = Object.keys(userAnswers).filter(k => userAnswers[k].toString().trim() !== '').length;
+        document.getElementById('progress-text').innerText = `${answered}/${rawQuestions.length}`;
+    };
+
+    function renderQuestions() {
+        const container = document.getElementById('question-render-area');
+        let html = '';
+
+        rawQuestions.forEach((q, idx) => {
+            let prevQ = idx > 0 ? rawQuestions[idx - 1] : null;
+            
+            // Xử lý Header Section & Instruction
+            if (!prevQ || prevQ.sec !== q.sec || prevQ.ins !== q.ins) {
+                html += `<div class="mt-10 mb-6">`;
+                if (!prevQ || prevQ.sec !== q.sec) {
+                    html += `<h2 class="text-[20px] font-black text-blue-800 uppercase border-b-[3px] border-blue-200 pb-2 inline-block">${q.sec}</h2>`;
+                }
+                if (q.ins) {
+                    html += `<div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 text-gray-700 font-bold text-[15px] mt-4 shadow-sm whitespace-pre-line">${q.ins}</div>`;
+                }
+                html += `</div>`;
+            }
+
+            // Xử lý Audio File
+            if (q.audio && (!prevQ || prevQ.audio !== q.audio)) {
+                html += `
+                    <div class="sticky-audio bg-red-50 p-4 border border-red-100">
+                        <div class="font-black text-red-600 mb-2 text-[14px]">🎧 BĂNG NGHE ÂM THANH:</div>
+                        <audio controls class="w-full h-10 outline-none"><source src="${q.audio}" type="audio/mpeg">Trình duyệt không hỗ trợ Audio.</audio>
+                    </div>`;
+            }
+
+            // Xử lý Passage (Đọc Hiểu)
+            if (q.passage && (!prevQ || prevQ.passage !== q.passage)) {
+                html += `<div class="passage-box">${q.passage}</div>`;
+            }
+
+            let uAns = userAnswers[q.id] !== undefined ? String(userAnswers[q.id]) : '';
+
+            html += `<div class="mb-8">`;
+            html += `<h3 class="text-question font-bold mb-4 whitespace-pre-line">${q.q}</h3>`;
+
+            if (q.type === 'mc') {
+                html += `<div class="space-y-3">`;
+                q.opts.forEach((opt, i) => {
+                    let isChecked = (uAns !== '' && uAns === String(i)) ? 'checked' : '';
+                    let char = String.fromCharCode(65 + i);
+                    let textOnly = opt.replace(/^[A-D]\.\s*/, ''); 
+                    
+                    let labelClass = "opt-label";
+                    let checkIcon = "";
+
+                    // Chế độ Xem Lại (KHÔNG LÀM MỜ NỮA)
+                    if (isReviewMode) {
+                        if (q.ans == i) { 
+                            labelClass += " review-correct-highlight"; 
+                            checkIcon = `<div class="check-icon text-green-600">✔</div>`; 
+                        } 
+                        else if (uAns === String(i)) { 
+                            labelClass += " review-wrong-strike"; 
+                            checkIcon = `<div class="check-icon text-red-600">✘</div>`; 
+                        } 
+                    }
+
+                    html += `
+                        <div class="relative">
+                            <input type="radio" id="rad_${q.id}_${i}" name="q_${q.id}" value="${i}" class="opt-radio" ${isChecked} onchange="selectAnswer('${q.id}', '${i}')" ${isReviewMode ? 'disabled' : ''}>
+                            <label for="rad_${q.id}_${i}" class="${labelClass}">
+                                <div class="opt-badge">${char}</div>
+                                <div class="flex-1">${textOnly}</div>
+                                ${checkIcon}
+                            </label>
+                        </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'dropdown') {
+                if (isReviewMode) {
+                    let isCorrect = String(uAns) === String(q.ans);
+                    html += `<div class="flex flex-col gap-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <span class="font-bold text-gray-700 text-[15px]">Lựa chọn của bạn:</span>
+                                <div class="px-4 py-3 border-2 rounded-xl font-bold ${isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-500 text-red-700'}">${uAns || 'Chưa chọn đáp án'}</div>
+                             `;
+                    if (isCorrect) {
+                        html += `<div class="mt-2 p-3 bg-green-100 border border-green-300 rounded-xl text-green-800 font-bold text-sm">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>`;
+                    } else {
+                        html += `<div class="mt-2 p-3 bg-red-50 border border-red-300 rounded-xl font-bold text-sm">
+                                    <div class="text-red-600">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-green-600 mt-1">👉 Đáp án chuẩn phải là: <span>${q.ans}</span></div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `
+                        <select onchange="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl font-bold text-gray-700 outline-none focus:border-[#16a34a] bg-gray-50 shadow-inner transition-colors appearance-none">
+                            <option value="">-- Chọn đáp án A - J --</option>
+                            ${q.opts.map(o => `<option value="${o}" ${uAns===o?'selected':''}>${o}</option>`).join('')}
+                        </select>
+                    `;
+                }
+            }
+            else if (q.type === 'text') {
+                if (isReviewMode) {
+                    let isCorrect = String(uAns).toLowerCase().trim() === String(q.ans).toLowerCase().trim();
+                    html += `<div class="flex flex-col gap-2">
+                                <input type="text" disabled value="${uAns}" class="w-full px-5 py-4 border-2 rounded-xl font-bold text-base ${isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-400 text-red-700'}">`;
+                    if (isCorrect) {
+                        html += `<div class="p-3 bg-green-100 border border-green-300 rounded-xl text-green-800 font-bold text-sm">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>`;
+                    } else {
+                        html += `<div class="p-3 bg-red-50 border border-red-300 rounded-xl font-bold text-sm">
+                                    <div class="text-red-600">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-green-600 mt-1">👉 Đáp án chuẩn phải là: <span class="text-lg">${q.ans}</span></div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `<input type="text" value="${uAns}" placeholder="Nhập câu trả lời..." oninput="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#16a34a] font-bold outline-none text-[#1e3a8a] bg-gray-50 shadow-inner text-base transition-all">`;
+                }
+            } 
+            else if (q.type === 'textarea') {
+                if(isReviewMode) {
+                    let userText = uAns ? uAns : "Bạn chưa viết bài luận này.";
+                    html += `
+                        <div class="mb-4">
+                            <div class="font-bold text-gray-700 mb-2">Bài làm của bạn:</div>
+                            <textarea disabled class="w-full px-5 py-4 border-2 border-gray-200 rounded-xl bg-gray-100 font-semibold text-gray-700 text-[14px] leading-relaxed">${userText}</textarea>
+                        </div>`;
+                    if(q.suggested) {
+                        html += `
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl shadow-sm mt-4">
+                                <div class="font-black text-blue-700 mb-2 flex items-center gap-2">💡 BÀI LUẬN GỢI Ý (SAMPLE ESSAY):</div>
+                                <div class="text-[14px] text-gray-800 leading-relaxed whitespace-pre-line">${q.suggested}</div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    html += `<textarea rows="8" oninput="selectAnswer('${q.id}', this.value)" placeholder="Viết bài luận của bạn..." class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#16a34a] font-medium outline-none bg-gray-50 text-[14px] shadow-inner transition-all leading-relaxed">${uAns}</textarea>`;
+                }
+            }
+
+            // ================= GIẢI THÍCH CHI TIẾT (EXPLANATION) =================
+            if (isReviewMode && q.exp) {
+                html += `
+                    <div class="explanation-box">
+                        <div class="text-[13px] font-black text-yellow-700 mb-1 flex items-center gap-1 uppercase tracking-wider">💡 Giải thích chi tiết:</div>
+                        <div class="leading-relaxed text-gray-800">${q.exp}</div>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function submitQuiz() {
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function processSubmission() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        quizEndTime = new Date();
+        
+        let correctCount = 0;
+        let autoGradeCount = 0;
+
+        rawQuestions.forEach(q => {
+            if (q.type === 'mc' || q.type === 'text' || q.type === 'dropdown') {
+                autoGradeCount++;
+                let uAns = String(userAnswers[q.id] || '').toLowerCase().trim();
+                let cAns = String(q.ans).toLowerCase().trim();
+                if (uAns === cAns) correctCount++;
+            }
+        });
+        
+        const score = autoGradeCount > 0 ? ((correctCount / autoGradeCount) * 10).toFixed(2) : 0;
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        scoresRef.push({
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop,
+            diem: parseFloat(score), soCauDung: correctCount, tongCau: autoGradeCount,
+            duration: `${Math.floor(durationSeconds/60)}p ${durationSeconds%60}s`,
+            thoiGian: new Date().toISOString(), deviceId: deviceId 
+        }).then(() => {
+            document.getElementById('result-student-name').innerText = `${currentStudent.hoTen} - ${currentStudent.lop}`;
+            document.getElementById('result-score').innerText = score;
+            document.getElementById('result-detail').innerText = `Đúng ${correctCount} / ${autoGradeCount} ý (Hệ thống chấm)`;
+            document.getElementById('result-modal').classList.remove('hidden');
+        });
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        isReviewMode = true;
+        
+        document.getElementById('quiz-header-status').innerText = "XEM LẠI BÀI LÀM (KÈM GIẢI THÍCH)";
+        document.getElementById('quiz-header-status').classList.replace("text-blue-800", "text-purple-700");
+        document.getElementById('quiz-section').classList.remove('is-taking-test'); 
+        document.getElementById('action-bar').classList.add('hidden');
+        
+        document.getElementById('review-action-bar').classList.remove('hidden');
+        
+        renderQuestions();
+        window.scrollTo(0,0);
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        const sorted = [...allScores].sort((a, b) => b.diem - a.diem);
+        tbody.innerHTML = sorted.map((s, idx) => `
+            <tr class="border-b hover:bg-orange-50 transition-colors ${s.deviceId === deviceId ? 'bg-orange-50 font-bold' : ''}">
+                <td class="px-5 py-4 text-center text-gray-500 font-bold">${idx + 1}</td>
+                <td class="px-5 py-4 text-center text-gray-700 font-bold">${s.lop}</td>
+                <td class="px-5 py-4 text-gray-800 font-bold">${s.hoTen} ${s.deviceId === deviceId ? '<span class="text-[10px] ml-2 bg-red-500 text-white px-2 py-0.5 rounded-full">Bạn</span>' : ''}</td>
+                <td class="px-5 py-4 text-center text-gray-600 font-bold">${s.soCauDung}/${s.tongCau}</td>
+                <td class="px-5 py-4 text-center font-black text-lg ${s.diem >= 5 ? 'text-green-600' : 'text-red-600'}">${s.diem}</td>
+                <td class="px-5 py-4 text-center text-orange-600 font-bold">${s.duration}</td>
+                <td class="px-5 py-4 text-right text-xs text-gray-500 font-bold">${new Date(s.thoiGian).toLocaleString('vi-VN')}</td>
+            </tr>
+        `).join('');
+    }
+
+    function startTimer(seconds) {
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            document.getElementById('timer').innerText = `${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
+            if (remaining <= 0) processSubmission(); 
+        }, 1000);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+        document.getElementById('review-action-bar').classList.add('hidden');
+    }
+
+    function goHome() { location.reload(); }
+</script>
+</body>
+</html>
