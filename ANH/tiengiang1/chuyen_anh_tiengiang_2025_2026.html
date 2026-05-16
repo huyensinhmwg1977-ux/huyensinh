@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Thi Thử Tiếng Anh Chuyên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: 'Be Vietnam Pro', sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; background: linear-gradient(135deg, #f43f5e 0%, #d946ef 100%); background-attachment: fixed; }
+        
+        .glass-card { background: #ffffff; border-radius: 16px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15); }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* ================= HIỆU ỨNG ĐÁP ÁN LÚC LÀM BÀI ================= */
+        .opt-radio { display: none; }
+        .opt-label {
+            display: flex; align-items: center; padding: 14px 16px; 
+            border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; 
+            transition: all 0.2s ease; background: #fff; font-weight: 600; color: #334155; margin-bottom: 12px;
+        }
+        .opt-badge {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; background: #f1f5f9; color: #64748b; font-weight: 800; font-size: 14px; margin-right: 14px; transition: all 0.2s;
+        }
+        .opt-label:active { transform: scale(0.98); }
+        
+        /* Hiệu ứng chọn đáp án (Xanh tươi, đậm vừa phải theo yêu cầu) */
+        .is-taking-test .opt-radio:checked + .opt-label {
+            background-color: #2563eb !important; /* Xanh dương đậm hơn hình 1 một chút */
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.35);
+            transform: translateY(-2px);
+        }
+        .is-taking-test .opt-radio:checked + .opt-label .opt-badge {
+            background-color: rgba(255,255,255,0.25) !important; color: #ffffff !important;
+        }
+
+        /* ================= REVIEW MODE STYLING ================= */
+        .review-correct-highlight { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; font-weight: 800 !important; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.2); }
+        .review-correct-highlight .opt-badge { background-color: #22c55e !important; color: white !important; }
+        
+        .review-wrong-strike { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #b91c1c !important; text-decoration: line-through; text-decoration-thickness: 2px; }
+        .review-wrong-strike .opt-badge { background-color: #ef4444 !important; color: white !important; text-decoration: none !important;}
+        
+        .check-icon { font-size: 20px; margin-left: auto; font-weight: 900; }
+
+        /* Khung câu hỏi & đoạn văn */
+        .text-question { color: #b91c1c; font-size: 16px; line-height: 1.6; }
+        .passage-box { background: #fefce8; border-left: 5px solid #eab308; padding: 16px; border-radius: 8px; max-height: 350px; overflow-y: auto; font-size: 15px; line-height: 1.7; color: #374151; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 16px;}
+        u { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+        
+        /* Băng nghe */
+        .sticky-audio { position: sticky; top: 80px; z-index: 40; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        @media (max-width: 640px) { .sticky-audio { top: 75px; } }
+    </style>
+</head>
+<body oncopy="return false" oncut="return false" onpaste="return false">
+
+<div id="app" class="w-full flex flex-col items-center justify-center min-h-screen p-2 sm:p-6">
+
+    <div id="login-section" class="w-full max-w-md fade-in">
+        <div class="glass-card p-6 sm:p-8 text-center relative overflow-hidden">
+            <div class="w-20 h-20 bg-[#ea580c] rounded-full mx-auto flex items-center justify-center text-white font-black text-3xl shadow-lg border-[4px] border-white ring-4 ring-orange-100 mb-6">HS</div>
+            <h1 class="text-[22px] font-bold text-[#dc2626] mb-1">ĐỀ CHUYÊN ANH TIỀN GIANG</h1>
+            <p class="text-gray-500 font-semibold text-sm mb-6">(Sở GD&ĐT Tiền Giang 2025- 2026)</p>
+
+            <form id="login-form" class="space-y-4 text-left">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Nhập họ tên...">
+                    </div>
+                    <div class="w-1/3">
+                        <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-center text-gray-700" placeholder="Lớp">
+                    </div>
+                </div>
+
+                <div class="flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-xl">
+                    <div class="w-12 h-12 bg-blue-500 text-white rounded-lg flex items-center justify-center font-black text-xl mr-4 shadow-sm">1</div>
+                    <div>
+                        <div class="font-bold text-gray-800 text-[15px]">MÃ ĐỀ CHUYÊN</div>
+                        <div class="text-[12px] text-gray-500 font-semibold mt-0.5">Hiển thị cuộn toàn bộ câu hỏi</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 mt-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-lg tracking-wide">
+                    BẮT ĐẦU LÀM BÀI
+                </button>
+            </form>
+            <div class="mt-6">
+                <button onclick="showSection('scores')" class="text-white bg-black/20 px-4 py-2 rounded-lg font-bold text-sm hover:bg-black/30 transition-all backdrop-blur-sm">🏆 Xem bảng xếp hạng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-section" class="w-full max-w-4xl hidden fade-in pb-10">
+        
+        <div class="glass-card w-full overflow-hidden flex flex-col relative" id="quiz-container-box">
+            
+            <div class="sticky top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200 p-3 sm:p-4 flex justify-between items-center w-full transition-all">
+                <div class="flex items-center gap-2">
+                    <button onclick="goHome()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm">
+                        🏠 <span class="hidden sm:inline">Trang chủ</span>
+                    </button>
+                    <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm">
+                        🏆 <span class="hidden sm:inline">BXH</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="hidden md:block text-right mr-1">
+                        <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wide" id="student-name-header">Tên - Lớp</div>
+                        <div class="text-[13px] font-black text-blue-800 tracking-tight" id="quiz-header-status">MÃ ĐỀ CHUYÊN</div>
+                    </div>
+                    <div class="bg-red-50 text-red-600 font-black px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm sm:text-base border border-red-100 shadow-inner">
+                        ⏰ <span id="timer" class="font-mono tracking-widest">150:00</span>
+                    </div>
+                    <div class="bg-blue-50 text-blue-700 font-black px-3 py-1.5 rounded-lg border border-blue-100 shadow-inner text-sm sm:text-base min-w-[55px] text-center">
+                        <span id="progress-text">0/69</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-8 w-full">
+                <div id="question-render-area"></div>
+                
+                <div id="action-bar" class="mt-10 text-center border-t-2 border-gray-100 pt-8">
+                    <button onclick="submitQuiz()" class="px-12 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-black text-xl rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all tracking-wider w-full sm:w-auto">NỘP BÀI NGAY</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="scores-section" class="w-full max-w-6xl hidden fade-in">
+        <div class="sticky top-0 sm:top-2 z-50 bg-white/95 backdrop-blur-md shadow-sm rounded-b-xl sm:rounded-2xl p-3 mb-6 flex items-center justify-between w-full">
+            <button onclick="goHome()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-sm transition flex items-center gap-2 shadow-sm">
+                🏠 Trang chủ
+            </button>
+            <h2 class="text-lg sm:text-xl font-black text-orange-600 uppercase tracking-tight m-0">BẢNG XẾP HẠNG</h2>
+            <div class="w-24 hidden sm:block"></div> 
+        </div>
+
+        <div class="glass-card p-4 sm:p-8">
+            <div class="overflow-x-auto border-2 border-gray-100 rounded-xl">
+                <table class="w-full text-sm text-left font-semibold whitespace-nowrap">
+                    <thead class="bg-orange-500 text-white">
+                        <tr>
+                            <th class="px-4 py-4 text-center font-bold">#</th>
+                            <th class="px-4 py-4 text-center font-bold">Lớp</th>
+                            <th class="px-4 py-4 font-bold">Họ tên</th>
+                            <th class="px-4 py-4 text-center font-bold">Câu Đúng</th>
+                            <th class="px-4 py-4 text-center font-bold">Điểm HT</th>
+                            <th class="px-4 py-4 text-center font-bold">Thời gian làm</th>
+                            <th class="px-4 py-4 text-right font-bold">Ngày nộp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scores-tbody" class="bg-white divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl p-6 sm:p-8 max-w-sm w-full text-center fade-in border-t-[6px] border-yellow-400">
+        <div class="text-6xl mb-3 animate-pulse">🤔</div>
+        <h3 class="text-xl font-black text-gray-800 mb-2">Xác nhận nộp bài?</h3>
+        <p class="text-sm font-semibold text-gray-500 mb-6">Bạn có chắc chắn muốn nộp bài và kết thúc bài thi ngay bây giờ không?</p>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition shadow-sm">Chưa, xem lại</button>
+            <button onclick="processSubmission()" class="flex-1 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition shadow-md">Nộp luôn</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-sm overflow-hidden fade-in text-center flex flex-col">
+        <div class="bg-gradient-to-br from-blue-500 to-cyan-400 p-8 text-white relative">
+            <div class="text-7xl mb-3 animate-bounce">🎉</div>
+            <h3 class="text-2xl font-black mb-1 tracking-wide">NỘP BÀI THÀNH CÔNG!</h3>
+            <p class="font-bold text-white/90 text-sm" id="result-student-name"></p>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 mb-5 relative">
+                <div class="text-[10px] text-blue-500 font-black mb-1 uppercase tracking-widest">ĐIỂM TRẮC NGHIỆM</div>
+                <div class="text-6xl font-black text-blue-700 drop-shadow-sm" id="result-score"></div>
+                <div class="text-sm font-bold text-gray-600 mt-2" id="result-detail"></div>
+                <div class="text-[10px] font-bold text-orange-500 mt-3 bg-orange-100 px-3 py-1.5 rounded-lg inline-block">Giáo viên sẽ chấm Tự luận sau.</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="reviewQuiz()" class="py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition text-[15px] shadow-sm">🔎 Xem lại</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="py-3.5 bg-[#2563eb] text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-md text-[15px]">🏆 BẢNG XẾP HẠNG</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const matchingOpts = [
+        "A. because smoking isn't allowed in here.",
+        "B. we should stop that campaign.",
+        "C. return it to the shop.",
+        "D. to my advice.",
+        "E. that it was all my fault.",
+        "F. I left without saying goodbye.",
+        "G. I wouldn't have so much trouble now.",
+        "H. out of her mind.",
+        "I. why don't you ask for a raise?",
+        "J. that they had to cancel the match."
+    ];
+
+    const rawQuestions = [
+        // ---------- I. LISTENING SECTION 1 ----------
+        { id: "q1", sec: "I. LISTENING COMPREHENSION", type: "mc", audio: "Section 1.mp3", ins: "SECTION 1: Choose the correct letter A, B or C for Questions from 1 to 8.", q: "1. Why did the lecturer choose to focus on the Pleasanton Town Market?", opts: ["A. It was the first ever Town Market.", "B. It has been covered extensively in local history classes.", "C. It is often mentioned in some literature of the library."], ans: 2 },
+        { id: "q2", sec: "I. LISTENING COMPREHENSION", type: "mc", audio: "Section 1.mp3", q: "2. The Town Market originally made a large profit selling ______", opts: ["A. handicrafts", "B. animals", "C. vegetables"], ans: 1 },
+        { id: "q3", sec: "I. LISTENING COMPREHENSION", type: "mc", audio: "Section 1.mp3", q: "3. The money that the marketers made contributes to local ______", opts: ["A. development", "B. reconstruction", "C. defense"], ans: 0 },
+        { id: "q4", sec: "I. LISTENING COMPREHENSION", type: "mc", audio: "Section 1.mp3", q: "4. Market sales plummeted due to a lack of viable ______", opts: ["A. agriculture", "B. transport", "C. city planning"], ans: 1 },
+        { id: "q5", sec: "I. LISTENING COMPREHENSION", type: "mc", audio: "Section 1.mp3", q: "5. Mayor John C. Wiley decided the Clock tower would be used as a ______ in the early stages of the uprising.", opts: ["A. clock", "B. grounds for battle", "C. jail"], ans: 2 },
+        { id: "q6", sec: "I. LISTENING COMPREHENSION", type: "mc", audio: "Section 1.mp3", ins: "Questions 6-8: Choose the best option for the information on the project.", q: "6. Which thing is NOT MENTIONED as the objects?", opts: ["A. Market", "B. Price", "C. Jim Wiley"], ans: 1 },
+        { id: "q7", sec: "I. LISTENING COMPREHENSION", type: "mc", audio: "Section 1.mp3", q: "7. Which thing is NOT MENTIONED as research methods?", opts: ["A. Interviews", "B. Photographs", "C. Postage stamps"], ans: 2 },
+        { id: "q8", sec: "I. LISTENING COMPREHENSION", type: "mc", audio: "Section 1.mp3", q: "8. Which thing is NOT MENTIONED as the problems?", opts: ["A. There is a lack of experts.", "B. There is too much information.", "C. Bias makes it useless."], ans: 0 },
+
+        // ---------- I. LISTENING SECTION 2 ----------
+        { id: "q9", sec: "I. LISTENING COMPREHENSION", type: "text", audio: "Section 2.mp3", ins: "SECTION 2: Complete the notes below. Write NO MORE THAN ONE WORD.\n\nPenguins in Africa", q: "Appearance and lifestyle:\n - They are also called Jackass Penguins for the sound they make.\n9. The ________ of their body remains constant.", ans: "temperature" },
+        { id: "q10", sec: "I. LISTENING COMPREHENSION", type: "text", audio: "Section 2.mp3", q: "10. They restrict their ________ on land from dusk till dawn.", ans: "movements" },
+        { id: "q11", sec: "I. LISTENING COMPREHENSION", type: "text", audio: "Section 2.mp3", q: "11. They cannot fly because they have heavy ________.", ans: "bones" },
+        { id: "q12", sec: "I. LISTENING COMPREHENSION", type: "text", audio: "Section 2.mp3", q: "12. They nest under ________.", ans: "bushes" },
+        { id: "q13", sec: "I. LISTENING COMPREHENSION", type: "text", audio: "Section 2.mp3", q: "13. Predators: seals, ________.\n- seagulls (eat the penguin chicks) ", ans: "sharks" },
+        { id: "q14", sec: "I. LISTENING COMPREHENSION", type: "text", audio: "Section 2.mp3", q: "14. Threats: They lose ________ in winter.", ans: "feathers" },
+        { id: "q15", sec: "I. LISTENING COMPREHENSION", type: "text", audio: "Section 2.mp3", q: "15. They are fighting for nesting ________ and food because of human activities.", ans: "sites" },
+        { id: "q16", sec: "I. LISTENING COMPREHENSION", type: "text", audio: "Section 2.mp3", q: "16. In order to improve survivorship, it is helpful to increase the ________ of their genes.", ans: "diversity" },
+
+        // ---------- II. PHONETICS ----------
+        { id: "q17", sec: "II. PHONETICS", type: "mc", ins: "QUESTIONS 17-20: Choose the word whose PRIMARY STRESS differs from the other three.", q: "17. Choose the correct answer:", opts: ["A. democracy", "B. panorama", "C. phenomenon", "D. photography"], ans: 1 },
+        { id: "q18", sec: "II. PHONETICS", type: "mc", q: "18. Choose the correct answer:", opts: ["A. conquer", "B. enter", "C. infer", "D. utter"], ans: 2 },
+        { id: "q19", sec: "II. PHONETICS", type: "mc", q: "19. Choose the correct answer:", opts: ["A. agenda", "B. architect", "C. industry", "D. protocol"], ans: 0 },
+        { id: "q20", sec: "II. PHONETICS", type: "mc", q: "20. Choose the correct answer:", opts: ["A. canyon", "B. gorilla", "C. platypus", "D. tributary"], ans: 1 },
+        { id: "q21", sec: "II. PHONETICS", type: "mc", ins: "QUESTIONS 21-24: Choose the word whose underlined part differs in PRONUNCIATION.", q: "21. Choose the correct answer:", opts: ["A. qu<u>ay</u>", "B. sl<u>ay</u>", "C. X-r<u>ay</u>", "D. sw<u>ay</u>"], ans: 0 },
+        { id: "q22", sec: "II. PHONETICS", type: "mc", q: "22. Choose the correct answer:", opts: ["A. <u>g</u>em", "B. <u>g</u>in", "C. E<u>g</u>ypt", "D. tar<u>g</u>et"], ans: 3 },
+        { id: "q23", sec: "II. PHONETICS", type: "mc", q: "23. Choose the correct answer:", opts: ["A. cl<u>o</u>ne", "B. d<u>o</u>ne", "C. pr<u>o</u>ne", "D. z<u>o</u>ne"], ans: 1 },
+        { id: "q24", sec: "II. PHONETICS", type: "mc", q: "24. Choose the correct answer:", opts: ["A. c<u>o</u>ne", "B. dr<u>o</u>ne", "C. g<u>o</u>ne", "D. thr<u>o</u>ne"], ans: 2 },
+        { id: "q25", sec: "II. PHONETICS", type: "mc", ins: "QUESTIONS 25-28: Choose the word that is of different TOPIC or PART OF SPEECH.", q: "25. Choose the correct answer:", opts: ["A. fulcrum", "B. locus", "C. pendulum", "D. pulley"], ans: 1 },
+        { id: "q26", sec: "II. PHONETICS", type: "mc", q: "26. Choose the correct answer:", opts: ["A. podium", "B. polonium", "C. sodium", "D. titanium"], ans: 0 },
+        { id: "q27", sec: "II. PHONETICS", type: "mc", q: "27. Choose the correct answer:", opts: ["A. Atlanta", "B. Delaware", "C. Montana", "D. Oregon"], ans: 0 },
+        { id: "q28", sec: "II. PHONETICS", type: "mc", q: "28. Choose the correct answer:", opts: ["A. attic", "B. relic", "C. tactic", "D. tragic"], ans: 3 },
+
+        // ---------- III. LEXICO - GRAMMAR ----------
+        { id: "q29", sec: "III. LEXICO - GRAMMAR", type: "text", ins: "QUESTIONS 29-32: Complete the passage with the correct form of the words given.", q: "29. Convinced that the general public had a(n) (SATISFY) ________ thirst for knowledge, he took an active part in several educational activities.", ans: "insatiable" },
+        { id: "q30", sec: "III. LEXICO - GRAMMAR", type: "text", q: "30. The architects have made (IMAGINE) ________ use of glass and transparent plastic.", ans: "imaginative" },
+        { id: "q31", sec: "III. LEXICO - GRAMMAR", type: "text", q: "31. Fast-growing trees remove nutrients and (POOR) ________ the soil.", ans: "impoverish" },
+        { id: "q32", sec: "III. LEXICO - GRAMMAR", type: "text", q: "32. One of the (DRAW) ________ of this car is its high petrol consumption.", ans: "drawbacks" },
+        { id: "q33", sec: "III. LEXICO - GRAMMAR", type: "text", ins: "QUESTIONS 33-36: Complete the passage with the correct tense of the verbs given.", q: "33. Not (know) ________ the language, he couldn't understand the question.", ans: "knowing" },
+        { id: "q34", sec: "III. LEXICO - GRAMMAR", type: "text", q: "34. As they remembered (warn) ________ about the danger of getting lost, the tourists closely followed the tour guide.", ans: "being warned" },
+        { id: "q35", sec: "III. LEXICO - GRAMMAR", type: "text", q: "35. The wife said that she hadn't heard from her husband since he (leave) ________ her.", ans: "left" },
+        { id: "q36", sec: "III. LEXICO - GRAMMAR", type: "text", q: "36. It turned out that we (rush) ________ to the airport as the plane was delayed by several hours.", ans: "needn't have rushed" },
+
+        // ---------- III. MATCHING ----------
+        { id: "q37", sec: "III. LEXICO - GRAMMAR", type: "dropdown", ins: "QUESTIONS 37-44: Match each half-sentence in COLUMN A with its suitable one in COLUMN B.", q: "37. Should you have any complaints about the product,", opts: matchingOpts, ans: "C. return it to the shop." },
+        { id: "q38", sec: "III. LEXICO - GRAMMAR", type: "dropdown", q: "38. My friend turned a deaf ear", opts: matchingOpts, ans: "D. to my advice." },
+        { id: "q39", sec: "III. LEXICO - GRAMMAR", type: "dropdown", q: "39. It has been suggested that", opts: matchingOpts, ans: "B. we should stop that campaign." },
+        { id: "q40", sec: "III. LEXICO - GRAMMAR", type: "dropdown", q: "40. He was completely", opts: matchingOpts, ans: "H. out of her mind." },
+        { id: "q41", sec: "III. LEXICO - GRAMMAR", type: "dropdown", q: "41. Such was the anger of the spectators", opts: matchingOpts, ans: "J. that they had to cancel the match." },
+        { id: "q42", sec: "III. LEXICO - GRAMMAR", type: "dropdown", q: "42. Rather than disturbing the meeting,", opts: matchingOpts, ans: "F. I left without saying goodbye." },
+        { id: "q43", sec: "III. LEXICO - GRAMMAR", type: "dropdown", q: "43. You'd better put out your cigarette", opts: matchingOpts, ans: "A. because smoking isn't allowed in here." },
+        { id: "q44", sec: "III. LEXICO - GRAMMAR", type: "dropdown", q: "44. How dare you imply", opts: matchingOpts, ans: "E. that it was all my fault." },
+
+        // ---------- IV. READING COMPREHENSION ----------
+        { id: "q45", sec: "IV. READING COMPREHENSION", type: "mc", passage: "El Nino and Seabirds<br>A. Rhythm of the seasons cannot always be relied upon. At times the tropical Pacific Ocean and large expanses of the global atmosphere seem to be marching to the beat of a different drummer, disrupting the normal patterns of countless species of plants and animals along with hundreds of millions of human beings. So they want to anticipate these occasional lapses in the march of the seasons and help societies plan accordingly, scientists are seeking to understand these competing rhythms: the strongest of which is the alternation between the “normal climate” and a different but still recurrent set of climatic conditions in the Pacific region called El Nino.<br>B. Seabirds are prominent and highly visible components of marine ecosystems that will be affected by global climate change. The Bering Sea region is particularly important to seabirds; populations there are larger and more diverse than in any similar region in North America - over 90% of seabirds breeding in the continental United States are found in this region. Seabirds, so named because they spend at least 80% of their lives at sea, are dependent upon marine resources for food. As prey availability changes in response to climatically driven factors such as surface sea temperature and extent of sea ice, so will populations of seabirds be affected. <br>C. Seabirds are valued as indicators of healthy marine ecosystems and provide a “vicarious use value” or existence value - people appreciate and value seabirds simply because they are there and enjoy them through venues such as pictures, nature programs, and written accounts without ever directly observing seabirds in their native environment. A direct measure of this value is demonstrated by Federal legislation that established specific national wildlife refuges to protect seabirds and international treaty obligations that provide additional protection for seabirds. Seabirds are also an important subsistence resource for many who live within the Bering Sea Region. Furthermore, the rich knowledge base about seabirds makes them a valuable resource as indicator species for measurement of change in the marine environment.<br>D. The most abundant breeding species in Alaska are northern fulmars, storm-petrels, kittiwakes, murres, auklets and puffins. These species also form the largest colonies. Fulmars, storm-petrels and kittiwakes are surface feeders, picking their prey from the surface or just below the surface; murres, auklets, and puffins dive for their food. Fulmars nest primarily on island groups in and around the Bering Sea. They take a wide variety of prey (e.g., fish, squid, zooplankton, jellyfish) from the surface or just below the surface. Storm-petrels are strictly nocturnal and nest below ground in either burrows or crevices between rocks. They forage on zooplankton and squid; in some areas they are dependent upon small fish such as capelin and sand lance caught at the surface. Black-legged kittiwakes are widespread throughout Alaska, Canada and Eurasia while red-legged kittiwakes are found only in the Bering Sea region. Both are surface feeders although black-legged kittiwakes feed primarily on small fish and forage over the continental shelf and shelf break; red-legged kittiwakes feed primarily on myctophids and will forage beyond the shelf break.<br>E. Marine mammals have exhibited similar signs of food stress in recent years. Harbor seals at Tugidak Island in the Gulf of Alaska declined by about 85% between 1976 and 1988. Steller sea lion populations declined by 36% in the Gulf of Alaska between 1977 and 1985, and by another 59% between 1985 and 1988. Northern fur seals declined about 35% by 1986 from their average numbers in the 1970s, although numbers had rebounded somewhat (20%) by 1990. Associated with the declines in Steller sea lions are declines in birth rate, fewer breeding females, fewer pups, decreased adult body condition, decreased juvenile survival, and a change in population age structure. <br>F. Walker noticed that monsoon seasons with low-index conditions are often marked by drought in Australia, Indonesia, India, and parts of Africa. He also claimed that low-index winters tend to be unusually mild in western Canada. One of his British colleagues chided him in print for suggesting that climatic conditions over such widely separated regions of the globe could be linked. In his reply Walker predicted, correctly, that an explanation would be forthcoming, but that it would require a knowledge of wind patterns above ground level, which were not routinely being observed at that time.<br>G. The need for long-term time series. It seems obvious that without good baseline data ornithologists are doomed to be surprised by the arrival of El Nino every few years. Even when ornithologists and ecologists are at hand to take advantage of an incoming El Nino, lack of preexisting data, and of monitoring afterwards, makes it difficult to understand responses of birds to the successive El Nino, La Nina, and “normal” years. Indeed, according to Jaksic, during the last century there were 12 El Nino years and 12 La Nina years, thus leaving about 76 ‘normal’ years in between. Thus, by heavily concentrating attention on only 12% of the time span El Nino, and of neglecting possibly another 12%, ornithologists are essentially ignoring what happens during 76% of the time. This situation may be remedied only as long as data are logged on a regular or continuous basis, that is, as long-term time series. The recipe prescribed by Schreiber & Schreiber to understand El Nino, effects on birds still stands: ‘…carry out long-term studies that will shed further light on the interactions between global atmospheric cycles, oceanographic phenomena, and avian populations.’ <br>H. Populations of seabirds in Alaska are larger and more diverse than any similar region in the Northern Hemisphere. The extensive coastal estuaries and offshore waters of Alaska provide breeding, feeding and migrating habitats for 66 species of seabirds. At least 38 species of seabirds, over 50 million individuals, breed in Alaska. Eight Alaskan species breed only here and in adjacent Siberia. Five additional species range through the North Pacific, but their populations are concentrated in Alaska. In addition to breeding grounds, Alaskan waters also provide important wintering habitat for birds that breed in Canada and Eurasia. Shearwaters, which breed in the southern hemisphere, are the most numerous species in Alaskan waters during the summer.<br>I. As another indication that food has been limiting in recent years, several largescale die-offs of seabirds, mostly surface-feeding species, have been observed in the Gulf of Alaska during the last decade, most notably in 1983, 1989 and 1993. But Hatch thinks that it is too early to decide the these die-offs reports are somehow connected with effect of El Nino. Byrd and Tobish believe that high rainfall can affect survival of chicks in earthen burrows, and incidence of big storms with high winds during the chick-rearing period can cause mortality for chicks of species nesting on cliff- ledges, but this view has not been considered as convincing evidence.", ins: "QUESTIONS 45-52: Read the passage and choose the correct answer.", q: "45. Why do scientists want to investigate El Nino phenomenon at the beginning of the passage?", opts: ["A. To learn patterns of creatures that live in marine environment.", "B. To assist us to map out because it disturbs normal cycle of wildlife and human.", "C. It has profound theory for both the academic side and practical side.", "D. Tropical Pacific Ocean is where El Nino affects most."], ans: 1 },
+        { id: "q46", sec: "IV. READING COMPREHENSION", type: "mc", q: "46. Why do scientists use seabirds as important subjects when observing climate change world-widely?", opts: ["A. Seabirds affected by prey changes according to the temperature and ice.", "B. Its size is large enough to be observed.", "C. El Nino affects seabirds more than other sea creatures.", "D. North America is situated in the area where El Nino affects most."], ans: 0 },
+        { id: "q47", sec: "IV. READING COMPREHENSION", type: "mc", q: "47. What happened for marine mammals that live in Tugidak Island in Gulf of Alaska?", opts: ["A. The number of seals declined about 85% from the mid of 20th century.", "B. The number of Steller sea lions declined while the number of seals grew.", "C. Birth rate and breeding females declined on the Tugidak Island.", "D. The situation of mammals on the island is not that worse than we expected."], ans: 0 },
+        { id: "q48", sec: "IV. READING COMPREHENSION", type: "mc",  q: "48. According to J. Walker, what happens in the monsoon seasons notably?", opts: ["A. Flood and drought seriously damage almost everywhere of the planet.", "B. Walker's prediction would soon come true.", "C. Drought only affects some parts of Africa.", "D. Drought will affect somewhere of the earth such as Australia and Indonesia."], ans: 3 },
+        { id: "q49", sec: "IV. READING COMPREHENSION", type: "mc",  q: "49. In paragraph F, what is closest in meaning to chided?", opts: ["A. blamed", "B. praised", "C. rebuked", "D. voted"], ans: 2 },
+        { id: "q50", sec: "IV. READING COMPREHENSION", type: "mc",  q: "50. In paragraph G, what is closest in meaning to avian?", opts: ["A. of or connected with amphibians", "B. of or connected with birds", "C. of or connected with fish", "D. of or connected with mammals"], ans: 1 },
+        { id: "q51", sec: "IV. READING COMPREHENSION", type: "mc", q: "51. Which of the following statements is NOT TRUE about the passage?", opts: ["A. Seabirds are regarded as precious indicators of changes in oceanic environment.", "B. Seabirds such as Fulmars and Murres feed by the characteristic of prey in different ways.", "C. It is difficult for ornithologists to investigate El Nino because of the lack of statistics.", "D. Steller sea lions only decline in birth rate and fewer pups, but the whole population wouldn't be affected by the changes."], ans: 3 },
+        { id: "q52", sec: "IV. READING COMPREHENSION", type: "mc", q: "52. Which of the following statements is TRUE about the passage?", opts: ["A. With reply of Walker's colleague, knowledge of wind patterns will be very helpful.", "B. Habit of seabirds in Alaska is similar to those in the Northern Hemisphere.", "C. Byrd and Tobish think that heavy rainfall and storms cause mortality for chicks, which has already been a convincing proof.", "D. Hatch thinks that it is too early to determine all the problems that are caused by El Nino."], ans: 3 },
+
+        // ---------- IV. READING (FILL IN BLANKS) ----------
+        { id: "q53", sec: "IV. READING COMPREHENSION", type: "text", passage: "The idea that teaching methods should match a student's particular learning style - their personal way of learning - is popular with teachers and students (53) ________. But the evidence suggests it may not be helpful.\n\nThe concept of learning styles is one of the most influential - and widely criticized - theories in education. It is the idea that each person finds it easier to learn through a particular method of instruction. Some people, for example, are thought to learn better when they’re taught visually; others, when instruction is auditory, or through movement, and so on. \n\nThe idea is popular in part because it reflects the intuition of teachers and students. Everyone knows from personal experience that some kinds of learning feel easier than others, and that they may prefer one way of learning over another. And it is also popular because it claims to be based on science. The idea of learning styles was developed in the 1970s, (54) __________ psychologists and educational theorists were trying to understand how people learn. The idea that different people learn information in different ways was appealing, and it soon became clear that many people had strong preferences about how they liked information to be presented. In a typical research study, one group of students might be classified as ‘visual learners’, while another group would be classified as ‘auditory learners’. All the students would then be asked to learn something, with half the visual learners being taught visually, and half being taught aurally. The auditory learners would also be split into the two groups. If the theory was correct, the visual learners should do better when taught visually, and the auditory learners should do better when taught aurally. But that’s not what psychologists found. As early as 2004, a review of the evidence by cognitive scientists found that the great majority of studies did not provide any evidence (55) __________ the idea that matching the material to a student’s particular learning style was helpful.", ins: "QUESTIONS 53-60: Read the passage and fill in ONE suitable word for each blank.", q: "53. Điền từ vào vị trí (53):", ans: "alike" },
+        { id: "q54", sec: "IV. READING COMPREHENSION", type: "text", q: "54. Điền từ vào vị trí (54):", ans: "when" },
+        { id: "q55", sec: "IV. READING COMPREHENSION", type: "text", q: "55. Điền từ vào vị trí (55):", ans: "for" },
+        { id: "q56", sec: "IV. READING COMPREHENSION", type: "text", passage: "More recently, a team of psychologists led by Daniel Willingham at the University of Virginia has examined the evidence for learning styles again. They found that the vast majority of studies either found no evidence for the theory, or actually contradicted it. As the researchers point out, people may have preferences about how they learn, but that doesn't mean that they will learn better when the teaching (56) ________ those preferences.", q: "56. Điền từ vào vị trí (56):", ans: "matches" },
+        { id: "q57", sec: "IV. READING COMPREHENSION", type: "text", passage: "There are several possible explanations for these findings. One is that some students might not actually have a ‘style’ that is strong enough to affect their learning. Another possibility is that students do have preferences about how they learn, but these preferences don’t affect their learning. A third possibility is that students do have preferences, and these preferences do affect their learning, but only because they have learned less well through other methods in the past. But the most likely explanation is that different ways of learning are useful for learning different things. For example, learning to drive a car involves a mix of visual learning (such as watching the instructor), auditory learning (listening to instructions), and hands-on learning (actually driving the car). In a 2009 article in the journal Psychological Science in the Public Interest, psychologists Harold Pashler, Mark McDaniel, Doug Rohrer and Robert Bjork (57) ________ that the learning styles approach is not only unsupported by science, but may actually be harmful because it leads teachers to teach students in ways that are not very effective. ", q: "57. Điền từ vào vị trí (57):", ans: "concluded" },
+        { id: "q58", sec: "IV. READING COMPREHENSION", type: "text", passage: "For example, a student who is a ‘visual learner’ might be encouraged to learn only through visual materials, and never to practice learning by listening, reading or acting. The idea of learning styles is also harmful because it can give students the impression that they have fixed, or fixed amounts of, intelligence. In recent years, a great deal of research has shown that people’s attitudes to learning can have a large impact on how much they learn. For example, students who believe that intelligence is fixed, and that they are either smart or stupid and there is nothing they can do about it, tend to do less well than students who believe that intelligence can change, and that they can become smarter by working hard at their studies. Similarly, students who have been told that they are ‘visual learners’ might put less effort into tasks that are based on reading or listening.This is particularly worrying because research has shown that students who use a mix of learning methods often learn more effectively than those who (58) ________ to their 'style'.", q: "58. Điền từ vào vị trí (58):", ans: "stick" },
+        { id: "q59", sec: "IV. READING COMPREHENSION", type: "text", passage: "Despite the lack of (59) ________ for learning styles, the idea is still very popular. A 2014 study of more than 400 teachers in the UK and the Netherlands found that more than 90 percent of them believed that people learn better if they are taught in their preferred learning style, and that the majority of them used learning styles as a method of instruction. In the US, a 2017 survey of more than 300 teachers found that 96 percent of them agreed with the idea of learning styles, and 24 percent of them used it to guide their teaching.", q: "59. Điền từ vào vị trí (59):", ans: "evidence" },
+        { id: "q60", sec: "IV. READING COMPREHENSION", type: "text", passage: "The idea of learning styles is also popular among students. In a 2018 study, researchers asked more than 600 students in the US about their beliefs about learning. They found that 93 percent of them agreed with the idea of learning styles, and that 78 percent of them said that they had a particular learning style.The evidence is clear: matching teaching to a student's particular learning style is (60) ________ to lead to better learning. It may in fact be holding students back.", q: "60. Điền từ vào vị trí (60):", ans: "unlikely" },
+
+        // ---------- V. WRITING ----------
+        { id: "q61", sec: "V. WRITING", type: "text", ins: "QUESTIONS 61-68: Rewrite these sentences, beginning with the words given in such a way that their meaning will not change.", q: "61. This train should have left 30 minutes ago.\n→ This train was ___________________", ans: "supposed to leave 30 minutes ago" },
+        { id: "q62", sec: "V. WRITING", type: "text", q: "62. It is your duty to tell him what to do.\n→ You are ___________________", ans: "supposed to tell him what to do" },
+        { id: "q63", sec: "V. WRITING", type: "text", q: "63. He helped us, so we were able to survive.\n→ But for ___________________", ans: "his help, we wouldn't have been able to survive" },
+        { id: "q64", sec: "V. WRITING", type: "text", q: "64. We are proud of what our country has achieved in recent years.\n→ We take ___________________", ans: "pride in what our country has achieved in recent years" },
+        { id: "q65", sec: "V. WRITING", type: "text", q: "65. They must prioritize their study.\n→ Priority must ___________________", ans: "be given to their study" },
+        { id: "q66", sec: "V. WRITING", type: "text", q: "66. They report that the forest fire killed countless wild animals.\n→ Countless wild animals ___________________", ans: "are reported to have been killed by the forest fire" },
+        { id: "q67", sec: "V. WRITING", type: "text", q: "67. This morning I didn't have breakfast, so I'm hungry now.\n→ If ___________________", ans: "I had had breakfast this morning, I wouldn't be hungry now" },
+        { id: "q68", sec: "V. WRITING", type: "text", q: "68. Although the questions are very difficult, my closest friend can answer them.\n→ No matter ___________________", ans: "how difficult the questions are, my closest friend can answer them" },
+
+        // ---------- ESSAY CÓ THÊM BÀI LUẬN GỢI Ý ----------
+        { id: "q69", sec: "V. WRITING (ESSAY)", type: "textarea", ins: "WRITING AN ESSAY (3.0 pts)\nBefore Al, humans had exclusive access to creativity. However, some people believe that the birth of Al has broken the rules and that Al might do creative tasks now, even better than humans can do in the near future.\n\nDo you agree or disagree? Discuss both sides and give your opinion.", q: "69. Write 200-250 words. Give reasons for your answer and include any relevant examples.", ans: "",
+          suggested: "The rapid development of Artificial Intelligence (AI) has sparked a debate regarding its capability to perform creative tasks better than humans. While some argue that AI is on the verge of surpassing human creativity, I partially disagree with this perspective. I believe that while AI is a powerful tool, genuine creativity remains a uniquely human trait.\n\nOn the one hand, AI has undeniably demonstrated remarkable capabilities in fields traditionally considered creative. Algorithms can now compose music, generate hyper-realistic art, and even write poetry in a matter of seconds. This efficiency and the ability to process vast amounts of data to find novel combinations often lead people to believe that AI has “broken the rules” of creativity. It can assist professionals by providing endless inspiration and accelerating the creative process.\n\nOn the other hand, true creativity involves more than just assembling data; it requires consciousness, emotion, and lived experience – elements that AI fundamentally lacks. A machine can mimic the style of a famous painter, but it cannot infuse a painting with the raw sorrow or joy that a human artist experiences. Furthermore, human creativity is often driven by a desire to communicate profound truths, challenge societal norms, or express personal identity. AI, operating merely on programmed codes and algorithms, does not possess the empathy or intentionality necessary to create art that truly resonates on a human level.\n\nIn conclusion, while AI can produce impressive outputs and serve as a highly effective assistant in creative tasks, it cannot replace the depth of human emotion and consciousness. Therefore, I believe that humans will always hold the ultimate mastery over genuine creativity."
+        }
+    ];
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tienganh_chuyen_fix_ui_v3'); 
+
+    let deviceId = localStorage.getItem('deviceId') || ('dev_' + Date.now());
+    localStorage.setItem('deviceId', deviceId);
+    
+    let allScores = [], currentStudent = {}, userAnswers = {}, timerInterval;
+    let quizStartTime, quizEndTime, isReviewMode = false;
+
+    scoresRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allScores = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+        renderScores();
+    });
+
+    document.getElementById('login-form').onsubmit = (e) => {
+        e.preventDefault();
+        currentStudent = { hoTen: document.getElementById('hoTen').value.trim(), lop: document.getElementById('lop').value.trim() };
+        startQuiz();
+    };
+
+    function startQuiz() {
+        quizStartTime = new Date();
+        isReviewMode = false;
+        userAnswers = {};
+        
+        document.getElementById('student-name-header').innerText = `${currentStudent.hoTen} - ${currentStudent.lop}`;
+        document.getElementById('quiz-section').classList.add('is-taking-test');
+        
+        showSection('quiz');
+        renderQuestions();
+        startTimer(150 * 60);
+    }
+
+    window.selectAnswer = function(qId, val) {
+        if(isReviewMode) return;
+        userAnswers[qId] = val;
+        let answered = Object.keys(userAnswers).filter(k => userAnswers[k].toString().trim() !== '').length;
+        document.getElementById('progress-text').innerText = `${answered}/${rawQuestions.length}`;
+    };
+
+    function renderQuestions() {
+        const container = document.getElementById('question-render-area');
+        let html = '';
+
+        rawQuestions.forEach((q, idx) => {
+            let prevQ = idx > 0 ? rawQuestions[idx - 1] : null;
+            
+            // Xử lý Header Section & Instruction
+            if (!prevQ || prevQ.sec !== q.sec || prevQ.ins !== q.ins) {
+                html += `<div class="mt-10 mb-6">`;
+                if (!prevQ || prevQ.sec !== q.sec) {
+                    html += `<h2 class="text-[20px] font-black text-blue-800 uppercase border-b-[3px] border-blue-200 pb-2 inline-block">${q.sec}</h2>`;
+                }
+                if (q.ins) {
+                    html += `<div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 text-gray-700 font-bold text-[15px] mt-4 shadow-sm whitespace-pre-line">${q.ins}</div>`;
+                }
+                html += `</div>`;
+            }
+
+            // Xử lý Audio File
+            if (q.audio && (!prevQ || prevQ.audio !== q.audio)) {
+                html += `
+                    <div class="sticky-audio bg-red-50 p-4 border border-red-100">
+                        <div class="font-black text-red-600 mb-2 text-[14px]">🎧 BĂNG NGHE ÂM THANH:</div>
+                        <audio controls class="w-full h-10 outline-none"><source src="${q.audio}" type="audio/mpeg">Trình duyệt không hỗ trợ Audio.</audio>
+                    </div>`;
+            }
+
+            // Xử lý Passage (Đọc Hiểu)
+            if (q.passage && (!prevQ || prevQ.passage !== q.passage)) {
+                html += `<div class="passage-box">${q.passage}</div>`;
+            }
+
+            let uAns = userAnswers[q.id] !== undefined ? String(userAnswers[q.id]) : '';
+
+            html += `<div class="mb-8">`;
+            html += `<h3 class="text-question font-bold mb-4 whitespace-pre-line">${q.q}</h3>`;
+
+            if (q.type === 'mc') {
+                html += `<div class="space-y-3">`;
+                q.opts.forEach((opt, i) => {
+                    let isChecked = (uAns !== '' && uAns === String(i)) ? 'checked' : '';
+                    let char = String.fromCharCode(65 + i);
+                    let textOnly = opt.replace(/^[A-D]\.\s*/, ''); 
+                    
+                    let labelClass = "opt-label";
+                    let checkIcon = "";
+
+                    // Chế độ Xem Lại (ĐÃ SỬA: KHÔNG LÀM MỜ NỮA)
+                    if (isReviewMode) {
+                        if (q.ans == i) { 
+                            labelClass += " review-correct-highlight"; 
+                            checkIcon = `<div class="check-icon text-green-600">✔</div>`; 
+                        } 
+                        else if (uAns === String(i)) { 
+                            labelClass += " review-wrong-strike"; 
+                            checkIcon = `<div class="check-icon text-red-600">✘</div>`; 
+                        } 
+                    }
+
+                    html += `
+                        <div class="relative">
+                            <input type="radio" id="rad_${q.id}_${i}" name="q_${q.id}" value="${i}" class="opt-radio" ${isChecked} onchange="selectAnswer('${q.id}', '${i}')" ${isReviewMode ? 'disabled' : ''}>
+                            <label for="rad_${q.id}_${i}" class="${labelClass}">
+                                <div class="opt-badge">${char}</div>
+                                <div class="flex-1">${textOnly}</div>
+                                ${checkIcon}
+                            </label>
+                        </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'dropdown') {
+                if (isReviewMode) {
+                    let isCorrect = String(uAns) === String(q.ans);
+                    html += `<div class="flex flex-col gap-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <span class="font-bold text-gray-700 text-[15px]">Lựa chọn của bạn:</span>
+                                <div class="px-4 py-3 border-2 rounded-xl font-bold ${isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-500 text-red-700'}">${uAns || 'Chưa chọn đáp án'}</div>
+                             `;
+                    if (isCorrect) {
+                        html += `<div class="mt-2 p-3 bg-green-100 border border-green-300 rounded-xl text-green-800 font-bold text-sm">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>`;
+                    } else {
+                        html += `<div class="mt-2 p-3 bg-red-50 border border-red-300 rounded-xl font-bold text-sm">
+                                    <div class="text-red-600">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-green-600 mt-1">👉 Đáp án chuẩn phải là: <span>${q.ans}</span></div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `
+                        <select onchange="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl font-bold text-gray-700 outline-none focus:border-[#2563eb] bg-gray-50 shadow-inner transition-colors appearance-none">
+                            <option value="">-- Chọn đáp án A - J --</option>
+                            ${q.opts.map(o => `<option value="${o}" ${uAns===o?'selected':''}>${o}</option>`).join('')}
+                        </select>
+                    `;
+                }
+            }
+            else if (q.type === 'text') {
+                if (isReviewMode) {
+                    let isCorrect = String(uAns).toLowerCase().trim() === String(q.ans).toLowerCase().trim();
+                    html += `<div class="flex flex-col gap-2">
+                                <input type="text" disabled value="${uAns}" class="w-full px-5 py-4 border-2 rounded-xl font-bold text-base ${isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-400 text-red-700'}">`;
+                    if (isCorrect) {
+                        html += `<div class="p-3 bg-green-100 border border-green-300 rounded-xl text-green-800 font-bold text-sm">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>`;
+                    } else {
+                        html += `<div class="p-3 bg-red-50 border border-red-300 rounded-xl font-bold text-sm">
+                                    <div class="text-red-600">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-green-600 mt-1">👉 Đáp án chuẩn phải là: <span class="text-lg">${q.ans}</span></div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `<input type="text" value="${uAns}" placeholder="Nhập câu trả lời..." oninput="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#2563eb] font-bold outline-none text-[#1e3a8a] bg-gray-50 shadow-inner text-base transition-all">`;
+                }
+            } 
+            else if (q.type === 'textarea') {
+                if(isReviewMode) {
+                    let userText = uAns ? uAns : "Bạn chưa viết bài luận này.";
+                    html += `
+                        <div class="mb-4">
+                            <div class="font-bold text-gray-700 mb-2">Bài làm của bạn:</div>
+                            <textarea disabled class="w-full px-5 py-4 border-2 border-gray-200 rounded-xl bg-gray-100 font-medium text-gray-700 text-[14px] leading-relaxed">${userText}</textarea>
+                        </div>`;
+                    if(q.suggested) {
+                        html += `
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl shadow-sm mt-4">
+                                <div class="font-black text-blue-700 mb-2 flex items-center gap-2">💡 BÀI LUẬN GỢI Ý (SAMPLE ESSAY):</div>
+                                <div class="text-[14px] text-gray-800 leading-relaxed whitespace-pre-line">${q.suggested}</div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    html += `<textarea rows="8" oninput="selectAnswer('${q.id}', this.value)" placeholder="Viết bài luận của bạn..." class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#2563eb] font-medium outline-none bg-gray-50 text-[14px] shadow-inner transition-all leading-relaxed">${uAns}</textarea>`;
+                }
+            }
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function submitQuiz() {
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function processSubmission() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        quizEndTime = new Date();
+        
+        let correctCount = 0;
+        let autoGradeCount = 0;
+
+        rawQuestions.forEach(q => {
+            if (q.type === 'mc' || q.type === 'text' || q.type === 'dropdown') {
+                autoGradeCount++;
+                let uAns = String(userAnswers[q.id] || '').toLowerCase().trim();
+                let cAns = String(q.ans).toLowerCase().trim();
+                if (uAns === cAns) correctCount++;
+            }
+        });
+        
+        const score = autoGradeCount > 0 ? ((correctCount / autoGradeCount) * 10).toFixed(2) : 0;
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        scoresRef.push({
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop,
+            diem: parseFloat(score), soCauDung: correctCount, tongCau: autoGradeCount,
+            duration: `${Math.floor(durationSeconds/60)}p ${durationSeconds%60}s`,
+            thoiGian: new Date().toISOString(), deviceId: deviceId 
+        }).then(() => {
+            document.getElementById('result-student-name').innerText = `${currentStudent.hoTen} - ${currentStudent.lop}`;
+            document.getElementById('result-score').innerText = score;
+            document.getElementById('result-detail').innerText = `Đúng ${correctCount} / ${autoGradeCount} ý (Hệ thống chấm)`;
+            document.getElementById('result-modal').classList.remove('hidden');
+        });
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        isReviewMode = true;
+        
+        document.getElementById('quiz-header-status').innerText = "XEM LẠI BÀI LÀM";
+        document.getElementById('quiz-header-status').classList.replace("text-blue-800", "text-purple-700");
+        document.getElementById('quiz-section').classList.remove('is-taking-test'); 
+        document.getElementById('action-bar').classList.add('hidden');
+        
+        renderQuestions();
+        window.scrollTo(0,0);
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        const sorted = [...allScores].sort((a, b) => b.diem - a.diem);
+        tbody.innerHTML = sorted.map((s, idx) => `
+            <tr class="border-b hover:bg-orange-50 transition-colors ${s.deviceId === deviceId ? 'bg-orange-50 font-bold' : ''}">
+                <td class="px-5 py-4 text-center text-gray-500 font-bold">${idx + 1}</td>
+                <td class="px-5 py-4 text-center text-gray-700 font-bold">${s.lop}</td>
+                <td class="px-5 py-4 text-gray-800 font-bold">${s.hoTen} ${s.deviceId === deviceId ? '<span class="text-[10px] ml-2 bg-red-500 text-white px-2 py-0.5 rounded-full">Bạn</span>' : ''}</td>
+                <td class="px-5 py-4 text-center text-gray-600 font-bold">${s.soCauDung}/${s.tongCau}</td>
+                <td class="px-5 py-4 text-center font-black text-lg ${s.diem >= 5 ? 'text-green-600' : 'text-red-600'}">${s.diem}</td>
+                <td class="px-5 py-4 text-center text-orange-600 font-bold">${s.duration}</td>
+                <td class="px-5 py-4 text-right text-xs text-gray-500 font-bold">${new Date(s.thoiGian).toLocaleString('vi-VN')}</td>
+            </tr>
+        `).join('');
+    }
+
+    function startTimer(seconds) {
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            document.getElementById('timer').innerText = `${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
+            if (remaining <= 0) processSubmission(); 
+        }, 1000);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function goHome() { location.reload(); }
+</script>
+</body>
+</html>
