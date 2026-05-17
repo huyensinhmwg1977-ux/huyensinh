@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Đề Minh Họa 2 Tiếng Anh TPHCM 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: 'Be Vietnam Pro', sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); background-attachment: fixed; }
+        
+        .glass-card { background: #ffffff; border-radius: 16px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* ================= HIỆU ỨNG ĐÁP ÁN TRẮC NGHIỆM ================= */
+        .opt-radio { display: none; }
+        .opt-label {
+            display: flex; align-items: center; padding: 14px 16px; 
+            border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; 
+            transition: all 0.2s ease; background: #fff; 
+            font-weight: 700; color: #000000; /* CHỮ ĐEN ĐẬM RÕ NÉT */
+            margin-bottom: 12px;
+        }
+        .opt-badge {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; background: #e2e8f0; color: #000000; font-weight: 900; font-size: 14px; margin-right: 14px; transition: all 0.2s;
+        }
+        .opt-label:active { transform: scale(0.98); }
+        
+        /* ĐỔ MÀU XANH KHI BẤM CHỌN ĐÁP ÁN TRONG LÚC LÀM BÀI */
+        .is-taking-test .opt-radio:checked + .opt-label {
+            background-color: #2563eb !important; 
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+            transform: translateY(-2px);
+        }
+        .is-taking-test .opt-radio:checked + .opt-label .opt-badge {
+            background-color: rgba(255,255,255,0.25) !important; color: #ffffff !important;
+        }
+
+        /* ================= REVIEW MODE (SAU KHI NỘP BÀI) ================= */
+        .review-correct-highlight { 
+            border-color: #22c55e !important; 
+            background-color: #f0fdf4 !important; 
+            color: #15803d !important; 
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.15); 
+        }
+        .review-correct-highlight .opt-badge { background-color: #22c55e !important; color: white !important; }
+        
+        .review-wrong-strike { 
+            border-color: #ef4444 !important; 
+            background-color: #fef2f2 !important; 
+            color: #ef4444 !important; 
+        }
+        .review-wrong-strike .opt-badge { background-color: #ef4444 !important; color: white !important; }
+        
+        /* Gạch ngang chữ cho đáp án sai */
+        .text-strike { text-decoration: line-through; text-decoration-color: #ef4444; text-decoration-thickness: 2px;}
+
+        /* MÀU ĐỎ YÊU CẦU CHO SECTION, INSTRUCTION & QUESTION */
+        .section-header { color: #dc2626 !important; border-bottom: 3px solid #fecaca !important; }
+        .instruction-text { color: #dc2626 !important; font-weight: 700; font-size: 15px; white-space: pre-line; }
+        .text-question { color: #dc2626 !important; font-size: 16px; line-height: 1.6; }
+        
+        .passage-box { background: #f8fafc; border-left: 5px solid #3b82f6; padding: 16px; border-radius: 8px; max-height: 350px; overflow-y: auto; font-size: 15px; line-height: 1.7; color: #000000; font-weight: 600; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 24px;}
+        .explanation-box { background-color: #fefce8; border-left: 4px solid #eab308; padding: 16px; border-radius: 0 12px 12px 0; margin-top: 12px; font-size: 14.5px; color: #422006; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        u { text-decoration: underline !important; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+
+        /* TÙY CHỈNH MÀU SẮC BẢNG ĐIỂM - DỮ LIỆU ĐEN ĐẬM, NỀN SÁNG SỦA */
+        #scores-tbody tr:hover { background-color: #f8fafc; }
+        #scores-tbody tr td { color: #000000 !important; font-weight: 900 !important; border-bottom: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body oncopy="return false" oncut="return false" onpaste="return false">
+
+<div id="app" class="w-full flex flex-col items-center justify-center min-h-screen p-2 sm:p-6">
+
+     <div id="login-section" class="w-full max-w-md fade-in">
+        <div class="glass-card p-6 sm:p-8 text-center relative overflow-hidden">
+               <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+            <h1 class="text-[22px] font-bold text-[#dc2626] mb-1">ĐỀ MINH HỌA VÀO 10</h1>
+            <p class="text-gray-500 font-semibold text-sm mb-6">(Môn Tiếng Anh - TPHCM 2026-2027)</p>
+
+            <form id="login-form" class="space-y-4 text-left">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Nhập họ tên...">
+                    </div>
+                    <div class="w-1/3">
+                        <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-center text-gray-700" placeholder="Lớp 9A">
+                    </div>
+                </div>
+
+                <div class="flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-xl">
+                    <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-black text-xl mr-4 shadow-sm">1</div>
+                    <div>
+                        <div class="font-bold text-gray-800 text-[15px]">ĐỀ 2 TPHCM 2026 -2027</div>
+                        <div class="text-[12px] text-gray-500 font-semibold mt-0.5">Đề thi thử 2</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-lg tracking-wide">
+                    BẮT ĐẦU LÀM BÀI
+                </button>
+            </form>
+            <div class="mt-6">
+                <button onclick="showSection('scores')" class="text-white bg-black/20 px-4 py-2 rounded-lg font-bold text-sm hover:bg-black/30 transition-all backdrop-blur-sm">🏆 Xem bảng xếp hạng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-section" class="w-full max-w-4xl hidden fade-in pb-10">
+        
+        <div class="glass-card w-full overflow-hidden flex flex-col relative" id="quiz-container-box">
+            
+            <div class="sticky top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200 p-3 sm:p-4 flex justify-between items-center w-full transition-all">
+                <div class="flex items-center gap-2">
+                    <button onclick="goHome()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm">
+                        🏠 <span class="hidden sm:inline">Trang chủ</span>
+                    </button>
+                    <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm">
+                        🏆 <span class="hidden sm:inline">Bảng Xếp Hạng</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="hidden md:flex items-center text-right mr-2 gap-2">
+                        <div class="w-8 h-8 bg-[#ea580c] rounded-full text-white flex items-center justify-center font-black text-[10px] shadow-sm border border-white">HS</div>
+                        <div>
+                            <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wide" id="student-name-header">Tên - Lớp</div>
+                            <div class="text-[13px] font-black text-blue-800 tracking-tight" id="quiz-header-status">ĐỀ TPHCM 2026</div>
+                        </div>
+                    </div>
+                    <div class="bg-red-50 text-red-600 font-black px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm sm:text-base border border-red-100 shadow-inner">
+                        ⏰ <span id="timer" class="font-mono tracking-widest">90:00</span>
+                    </div>
+                    <div class="bg-blue-50 text-blue-700 font-black px-3 py-1.5 rounded-lg border border-blue-100 shadow-inner text-sm sm:text-base min-w-[55px] text-center">
+                        <span id="progress-text">0/40</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-8 w-full">
+                <div id="question-render-area"></div>
+                <div id="action-bar" class="mt-10 text-center border-t-2 border-gray-100 pt-8">
+                    <button onclick="submitQuiz()" class="px-12 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-xl rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all tracking-wider w-full sm:w-auto">NỘP BÀI NGAY</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="review-action-bar" class="hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t-2 border-gray-200 p-4 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex justify-center gap-4">
+        <button onclick="goHome()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition-colors text-sm sm:text-base flex items-center gap-2">
+            🏠 Về Trang chủ
+        </button>
+        <button onclick="showSection('scores')" class="px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold shadow-md hover:bg-blue-800 transition-colors text-sm sm:text-base flex items-center gap-2">
+            🏆 Xem Bảng điểm
+        </button>
+    </div>
+
+    <div id="scores-section" class="w-full max-w-6xl hidden fade-in">
+        <div class="glass-card p-4 sm:p-8">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-red-100">
+                <button onclick="goHome()" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-bold text-sm transition flex items-center gap-2 shadow-sm">
+                    🏠 Trang chủ
+                </button>
+                <h2 class="text-lg sm:text-xl font-black text-red-600 uppercase tracking-tight m-0">BẢNG XẾP HẠNG</h2>
+                <div class="w-24 hidden sm:block"></div> 
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border-2 border-blue-600">
+                <table class="w-full text-sm text-left font-semibold whitespace-nowrap">
+                    <thead class="bg-blue-600 text-white">
+                        <tr>
+                            <th class="px-4 py-4 text-center font-bold">#</th>
+                            <th class="px-4 py-4 text-center font-bold">Lớp</th>
+                            <th class="px-4 py-4 font-bold">Họ tên</th>
+                            <th class="px-4 py-4 text-center font-bold">Số ý đúng</th>
+                            <th class="px-4 py-4 text-center font-bold">Điểm số</th>
+                            <th class="px-4 py-4 text-center font-bold">Thời gian</th>
+                            <th class="px-4 py-4 text-right font-bold">Ngày nộp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scores-tbody" class="bg-white divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl p-6 sm:p-8 max-w-sm w-full text-center fade-in border-t-[6px] border-yellow-400">
+        <div class="text-6xl mb-3 animate-pulse">🤔</div>
+        <h3 class="text-xl font-black text-gray-800 mb-2">Xác nhận nộp bài?</h3>
+        <p class="text-sm font-semibold text-gray-500 mb-6">Bạn có chắc chắn muốn nộp bài và kết thúc bài thi ngay bây giờ không?</p>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition shadow-sm">Chưa, xem lại</button>
+            <button onclick="processSubmission()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-md">Nộp luôn</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-sm overflow-hidden fade-in text-center flex flex-col">
+        <div class="bg-gradient-to-br from-blue-600 to-purple-600 p-8 text-white relative">
+            <div class="text-7xl mb-3 animate-bounce">🎉</div>
+            <h3 class="text-2xl font-black mb-1 tracking-wide">NỘP BÀI THÀNH CÔNG!</h3>
+            <p class="font-bold text-white/90 text-sm" id="result-student-name"></p>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 mb-5 relative">
+                <div class="text-[10px] text-blue-500 font-black mb-1 uppercase tracking-widest">ĐIỂM TRẮC NGHIỆM TỰ ĐỘNG</div>
+                <div class="text-6xl font-black text-blue-700 drop-shadow-sm" id="result-score"></div>
+                <div class="text-sm font-bold text-gray-600 mt-2" id="result-detail"></div>
+                <div class="text-[10px] font-bold text-orange-600 mt-3 bg-orange-100 px-3 py-1.5 rounded-lg inline-block">Chú ý: Đọc kỹ phần giải thích khi xem lại!</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="reviewQuiz()" class="py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition text-[15px] shadow-sm border border-gray-200">🔎 Học & Xem giải</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="py-3.5 bg-[#1e3a8a] text-white rounded-xl font-bold hover:bg-blue-800 transition shadow-md text-[15px]">🏆 Bảng Xếp Hạng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+   // ================= DỮ LIỆU ĐỀ THAM KHẢO VÀO 10 TPHCM 2025 - ĐỀ 2 =================
+    const rawQuestions = [
+        // ---------- I. MULTIPLE CHOICE (1-14) ----------
+        { 
+            id: "q1", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "1. Which word has the underlined part pronounced differently from that of the others?", 
+            opts: ["A. <u>e</u>xplore", "B. inv<u>e</u>nt", "C. <u>e</u>mploy", "D. r<u>e</u>cord"], ans: 1,
+            exp: "<b>B. invent.</b> Phần được gạch chân ở phương án B (invent /ɪn'v<b>e</b>nt/) được phát âm là /e/, các phương án còn lại (explore /ɪ/, employ /ɪ/, record /ɪ/) đều được phát âm là /ɪ/."
+        },
+        { 
+            id: "q2", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "2. Which word has the underlined part pronounced differently from that of the others?", 
+            opts: ["A. fu<u>t</u>ure", "B. s<u>t</u>ory", "C. gui<u>t</u>ar", "D. mas<u>t</u>er"], ans: 0,
+            exp: "<b>A. future.</b> Phần được gạch chân ở phương án A (future /ˈfjuː<b>tʃ</b>ər/) được phát âm là /tʃ/, các phương án còn lại đều phát âm là /t/."
+        },
+        { 
+            id: "q3", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "3. Which word has a different stress pattern from that of the others?", 
+            opts: ["A. translate", "B. challenge", "C. adapt", "D. perform"], ans: 1,
+            exp: "<b>B. challenge.</b> Từ 'challenge' có trọng âm rơi vào âm tiết thứ 1 (/ˈtʃælɪndʒ/). Các từ còn lại có trọng âm rơi vào âm tiết thứ 2: translate /trænzˈleɪt/, adapt /əˈdæpt/, perform /pərˈfɔːrm/."
+        },
+        { 
+            id: "q4", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "4. Which word has a different stress pattern from that of the others?", 
+            opts: ["A. imagine", "B. discover", "C. consider", "D. volunteer"], ans: 3,
+            exp: "<b>D. volunteer.</b> Từ 'volunteer' có trọng âm rơi vào âm tiết thứ 3 (/ˌvɑːlənˈtɪr/). Các từ còn lại có trọng âm rơi vào âm tiết thứ 2."
+        },
+        { 
+            id: "q5", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "5. Duong: I promise ________ late again.\nTeacher: Great! I appreciate it.", 
+            opts: ["A. to be", "B. not to be", "C. not being", "D. being"], ans: 1,
+            exp: "<b>B. not to be.</b> Cấu trúc: 'promise + (not) to V' (hứa làm/không làm việc gì). Ở đây ngữ cảnh là 'hứa sẽ không bị muộn nữa'."
+        },
+        { 
+            id: "q6", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "6. Anna: Is it necessary for us to have an English test next week?\nTeacher: I'm sorry, it is. Remember to ________ Unit 4.", 
+            opts: ["A. revise", "B. repair", "C. require", "D. recall"], ans: 0,
+            exp: "<b>A. revise.</b> 'revise' (v) nghĩa là ôn tập. Giáo viên dặn học sinh nhớ ôn tập Bài 4 để làm bài kiểm tra."
+        },
+        { 
+            id: "q7", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "7. Anna: I've heard that you're exploring Son Doong ________ for the first time. I wish you all the best of luck.\nTom: Thank you so much.", 
+            opts: ["A. Cave", "B. Mountain", "C. Waterfall", "D. Valley"], ans: 0,
+            exp: "<b>A. Cave.</b> Sơn Đoòng là một hang động (Cave). 'exploring Son Doong Cave' mang nghĩa là khám phá hang Sơn Đoòng."
+        },
+        { 
+            id: "q8", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "8. Mai: Working ________ space sounds so fascinating! Hopefully, we will have a chance to experience it in the future.\nBilly: I hope so! It will give us marvellous experiences.", 
+            opts: ["A. on", "B. in", "C. at", "D. for"], ans: 1,
+            exp: "<b>B. in.</b> Dùng giới từ 'in' cho không gian: 'in space' (trong không gian/vũ trụ)."
+        },
+        { 
+            id: "q9", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "9. Lan: Hi, Hana! I'm taking ________ in a new project to protect the environment by using technology with our classmates. Why don't you join us?\nHana: Wow! That's a great idea. Let's do it together.", 
+            opts: ["A. up", "B. part", "C. place", "D. over"], ans: 1,
+            exp: "<b>B. part.</b> Cụm động từ: 'take part in' (tham gia vào) một hoạt động hay dự án nào đó."
+        },
+        { 
+            id: "q10", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "10. Hoa: Ms Mai ________ come back until noon. Would you like me to leave a note for her?\nMs Hoai: That's great. Thanks for your help.", 
+            opts: ["A. didn't", "B. won't", "C. doesn't", "D. hasn't"], ans: 1,
+            exp: "<b>B. won't.</b> Sự việc sẽ xảy ra trong tương lai 'until noon' (cho tới trưa nay). 'won't come back' nghĩa là sẽ không quay lại cho đến trưa."
+        },
+        { 
+            id: "q11", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "11. Elena: I wish I could live in Da Lat. It's such a ________ place to live.\nHoa: I like the fresh air here. I guess it's because there are no factories around.", 
+            opts: ["A. polluted", "B. noisy", "C. healthy", "D. crowded"], ans: 2,
+            exp: "<b>C. healthy.</b> Vì có 'fresh air' (không khí trong lành) và không có nhà máy, nên Đà Lạt được mô tả là một nơi 'healthy' (lành mạnh, tốt cho sức khỏe) để sống."
+        },
+        { 
+            id: "q12", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "12. Andy: I think children nowadays have more opportunities to ________ their interests than in the past.\nBinh: I totally agree with you.", 
+            opts: ["A. pursue", "B. follow", "C. support", "D. invest"], ans: 0,
+            exp: "<b>A. pursue.</b> Động từ 'pursue' kết hợp với 'interests' mang nghĩa là theo đuổi sở thích/đam mê."
+        },
+        { 
+            id: "q13", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "13. Jason: What type of person are you?\nRachel: ________", 
+            opts: ["A. Tell me about yourself.", "B. That would be great.", "C. It all sounds positive.", "D. I suppose I'm an optimist."], ans: 3,
+            exp: "<b>D. I suppose I'm an optimist.</b> Khi được hỏi 'Bạn là người thế nào?', câu trả lời phù hợp nhất mô tả tính cách: 'Tôi cho rằng tôi là một người lạc quan' (optimist)."
+        },
+        { 
+            id: "q14", sec: "I. Choose the word / phrase / sentence (A, B, C or D) that best fits the space or best answers the question given in each sentence. (3.5 pts)", type: "mc", 
+            q: "14. Timothy: I think swimming should be part of the school curriculum.\nJeremy: ________ It is an essential life skill.", 
+            opts: ["A. I can't agree with you more.", "B. Not at all.", "C. You can make it.", "D. That's a big problem."], ans: 0,
+            exp: "<b>A. I can't agree with you more.</b> Cụm từ mang ý nghĩa đồng tình hoàn toàn. Jeremy đồng ý với Timothy vì bơi lội là một kỹ năng sống cần thiết."
+        },
+
+        // ---------- II. SIGNS / NOTICES (15-16) ----------
+        { 
+            id: "q15", sec: "II. Look at each sign or notice. Choose the best answer (A, B, C or D) that matches its meaning. (0.5 pt)", type: "mc", 
+            graphic: `
+                <div style="background: #fff; padding: 15px; border: 1px solid #e5e7eb; border-radius: 12px; display: inline-block;">
+                    <svg viewBox="0 0 100 100" width="120" height="120">
+                        <polygon points="50,5 95,50 50,95 5,50" fill="#facc15" stroke="black" stroke-width="3" stroke-linejoin="round"/>
+                        <path d="M 22 55 L 22 45 L 28 35 L 48 35 L 53 45 L 53 55 Z" fill="black" />
+                        <path d="M 25 55 L 25 65 L 30 65 L 30 55 Z" fill="black" />
+                        <path d="M 45 55 L 45 65 L 50 65 L 50 55 Z" fill="black" />
+                        <path d="M 27 45 L 30 38 L 45 38 L 48 45 Z" fill="white" />
+                        <circle cx="34" cy="42" r="2.5" fill="black" /> <circle cx="70" cy="36" r="4" fill="black" /> <path d="M 70 41 L 70 56" stroke="black" stroke-width="2.5" stroke-linecap="round" /> <path d="M 63 46 L 77 46" stroke="black" stroke-width="2.5" stroke-linecap="round" /> <circle cx="70" cy="65" r="8" fill="none" stroke="black" stroke-width="2.5" /> <path d="M 70 56 L 70 65" stroke="black" stroke-width="2.5" /> <path d="M 65 65 L 75 65" stroke="black" stroke-width="1.5" /> <path d="M 15 68 L 85 68" stroke="black" stroke-width="1.5" /> 
+                    </svg>
+                </div>
+            `,
+            q: "15. What does the sign say?", 
+            opts: ["A. Share the interest.", "B. Share the land.", "C. Share the road.", "D. Share the feelings."], ans: 2,
+            exp: "<b>C. Share the road.</b> Biển báo giao thông có hình ô tô và xe đạp chạy chung trên một đoạn đường mang ý nghĩa 'Dùng chung đường / Cùng chia sẻ đường bộ' để cảnh báo các phương tiện chú ý an toàn cho nhau."
+        },
+        { 
+            id: "q16", sec: "II. Look at each sign or notice. Choose the best answer (A, B, C or D) that matches its meaning. (0.5 pt)", type: "mc", 
+            graphic: `
+                <div style="background: #fff; padding: 20px; border: 2px solid #000; display: inline-block; max-width: 320px;">
+                    <div style="font-weight: 900; font-size: 18px; text-align: center; margin-bottom: 12px; color: #000;">SPECIAL OFFER!</div>
+                    <div style="font-size: 15px; line-height: 1.6; font-weight: 600; text-align: center; color: #000;">
+                        If you use the swimming pool ten times in one month, you can attend one Water Fitness Class free of charge!
+                    </div>
+                </div>
+            `,
+            q: "16. What does the notice say?", 
+            opts: ["A. The water fitness classes are free to people who swim ten times in a month.", "B. This month, you can go to Water Fitness Classes and use the swimming pool ten times without paying.", "C. The swimming pool is free to people who go to the Water Fitness Classes.", "D. You can attend as many water fitness classes as you want if you use the pool ten times."], ans: 0,
+            exp: "<b>A. The water fitness classes are free to people who swim ten times in a month.</b> Bản thông báo viết: 'Nếu bạn sử dụng hồ bơi 10 lần trong 1 tháng, bạn có thể tham gia 1 Lớp Thể Dục Dưới Nước miễn phí!'. Ý A diễn đạt lại chính xác thông điệp này."
+        },
+
+        // ---------- III. CLOZE TEST (17-22) ----------
+        { 
+            id: "q17", sec: "III. Choose the word (A, B, C or D) that best fits each blank space in the following passage. (1.5 pts)", type: "mc", 
+            passage: "Volunteering is a great way (17) ________ your CV, learn new skills and help other people in the community. It's an act of service, where you give your skills and time for free for the benefits of others. If you're considering volunteering, learning about the different forms can help you find organizations and groups you may wish to (18) ________ for.\n\nIn this article, we will (19) ________ some volunteering ideas to consider in your search, provide some tips on finding volunteering work and explain some of the benefits of volunteering. With the wide range of issues (20) ________ by the projects (such as environment, health, inclusion, digital technologies, culture, sport), you're sure to find something to match your interests and background.\n\nYou have the choice between volunteering individually and in teams. While helping others, you may make new friends, learn new skills, and add (21) ________ experiences to your life. You may think that you're not qualified or are too busy to help others. Remember this quote by Elizabeth Andrew: \"Volunteers don't necessarily (22) ________ the time; they have the heart.\"",
+            q: "17. Chọn đáp án cho vị trí (17)", 
+            opts: ["A. boosting", "B. boost", "C. boosted", "D. to boost"], ans: 3,
+            exp: "<b>D. to boost.</b> Cấu trúc chỉ mục đích: 'a great way to + V' (một cách tuyệt vời để làm việc gì đó). Tình nguyện là một cách tuyệt vời để làm nổi bật (boost) bản CV của bạn."
+        },
+        { id: "q18", sec: "III. Choose the word (A, B, C or D) that best fits each blank space in the following passage. (1.5 pts)", type: "mc", q: "18. Chọn đáp án cho vị trí (18)", opts: ["A. work", "B. study", "C. look", "D. care"], ans: 0, exp: "<b>A. work.</b> Cụm 'work for' mang nghĩa là làm việc cho ai/tổ chức nào. Việc tìm hiểu sẽ giúp bạn tìm được các tổ chức mà bạn muốn làm việc cho (work for)." },
+        { id: "q19", sec: "III. Choose the word (A, B, C or D) that best fits each blank space in the following passage. (1.5 pts)", type: "mc", q: "19. Chọn đáp án cho vị trí (19)", opts: ["A. go on", "B. look at", "C. carry out", "D. keep up"], ans: 1, exp: "<b>B. look at.</b> Trong ngữ cảnh bài báo này, tác giả sẽ xem xét/thảo luận (look at) một số ý tưởng tình nguyện để bạn cân nhắc." },
+        { id: "q20", sec: "III. Choose the word (A, B, C or D) that best fits each blank space in the following passage. (1.5 pts)", type: "mc", q: "20. Chọn đáp án cho vị trí (20)", opts: ["A. is covered", "B. covered", "C. covering", "D. having covered"], ans: 1, exp: "<b>B. covered.</b> Đây là dạng rút gọn mệnh đề quan hệ ở thể bị động: 'issues (which are) covered by the projects' (những vấn đề ĐƯỢC bao hàm/đề cập bởi các dự án)." },
+        { id: "q21", sec: "III. Choose the word (A, B, C or D) that best fits each blank space in the following passage. (1.5 pts)", type: "mc", q: "21. Chọn đáp án cho vị trí (21)", opts: ["A. uncomfortable", "B. unbelievable", "C. unforgettable", "D. unreliable"], ans: 2, exp: "<b>C. unforgettable.</b> Tính từ bổ nghĩa cho 'experiences' mang ý nghĩa tích cực: 'unforgettable experiences' (những trải nghiệm không thể nào quên)." },
+        { id: "q22", sec: "III. Choose the word (A, B, C or D) that best fits each blank space in the following passage. (1.5 pts)", type: "mc", q: "22. Chọn đáp án cho vị trí (22)", opts: ["A. have", "B. spend", "C. take", "D. make"], ans: 0, exp: "<b>A. have.</b> Thành ngữ/Cụm từ cố định: 'have the time' (có thời gian). Câu nói nổi tiếng có nghĩa là: Tình nguyện viên không nhất thiết phải CÓ thời gian, họ chỉ cần CÓ trái tim." },
+
+        // ---------- IV. READING COMPREHENSION (23-28) ----------
+        { 
+            id: "q23", sec: "IV. Read the following and do as directed. (1.5 pts)", type: "mc", 
+            ins: "Decide whether the following sentences are True or False.", 
+            passage: "The Sea Turtle Conservancy (STC) is the world's oldest sea turtle research and conservation group. Founded in 1959, its mission is to ensure the survival of sea turtles through research, education, training, advocacy and protection of the natural habitats upon which they depend. Based in Florida, the organization carries out worldwide programs to conserve and recover sea turtle populations.\n\nWorld Sea Turtle Day is celebrated every June 16th to raise awareness about the plight of these fascinating reptiles. Turtles are among the most threatened groups of animals on the planet and are in desperate need of conservation help. More than half of their 300 species are threatened with extinction according to IUCN Red List criteria. Primary threats to turtles and tortoises include habitat loss and degradation, high-volume unsustainable consumptive exploitation for food and medicinal products, and illegal international pet trade.\n\nThe Sea Turtle Conservancy envisions a world where all species of turtles and tortoises ultimately thrive in the wild. The Sea Turtle Conservancy focuses its work on the following strategic program areas:\n1. Conserving species in their natural habitat, including land acquisition.\n2. Maintaining captive breeding programs to help restore natural populations.\n3. Monitoring and helping to prevent trade that threatens species.\n4. Outreach and spreading global awareness.", 
+            q: "23. The Sea Turtle Conservancy has the oldest research about sea turtles.", 
+            opts: ["True", "False"], ans: 1,
+            exp: "<b>False.</b> Câu này sai thông tin. Đoạn văn chỉ nói STC là 'oldest sea turtle research and conservation group' (NHÓM nghiên cứu và bảo tồn lâu đời nhất), chứ không phải là nơi CÓ những nghiên cứu lâu đời nhất (has the oldest research)."
+        },
+        { id: "q24", sec: "IV. Read the following and do as directed. (1.5 pts)", type: "mc", ins: "Decide whether the following sentences are True or False.", passage: "The Sea Turtle Conservancy (STC) is the world's oldest sea turtle research and conservation group. Founded in 1959, its mission is to ensure the survival of sea turtles through research, education, training, advocacy and protection of the natural habitats upon which they depend. Based in Florida, the organization carries out worldwide programs to conserve and recover sea turtle populations.\n\nWorld Sea Turtle Day is celebrated every June 16th to raise awareness about the plight of these fascinating reptiles. Turtles are among the most threatened groups of animals on the planet and are in desperate need of conservation help. More than half of their 300 species are threatened with extinction according to IUCN Red List criteria. Primary threats to turtles and tortoises include habitat loss and degradation, high-volume unsustainable consumptive exploitation for food and medicinal products, and illegal international pet trade.\n\nThe Sea Turtle Conservancy envisions a world where all species of turtles and tortoises ultimately thrive in the wild. The Sea Turtle Conservancy focuses its work on the following strategic program areas:\n1. Conserving species in their natural habitat, including land acquisition.\n2. Maintaining captive breeding programs to help restore natural populations.\n3. Monitoring and helping to prevent trade that threatens species.\n4. Outreach and spreading global awareness.", q: "24. The Sea Turtle Conservancy, which was established in 1959, is based in Florida.", opts: ["True", "False"], ans: 0, exp: "<b>True.</b> Bài đọc đề cập rõ: 'Founded in 1959' và 'Based in Florida'." },
+        { id: "q25", sec: "IV. Read the following and do as directed. (1.5 pts)", type: "mc", ins: "Decide whether the following sentences are True or False.", passage: "The Sea Turtle Conservancy (STC) is the world's oldest sea turtle research and conservation group. Founded in 1959, its mission is to ensure the survival of sea turtles through research, education, training, advocacy and protection of the natural habitats upon which they depend. Based in Florida, the organization carries out worldwide programs to conserve and recover sea turtle populations.\n\nWorld Sea Turtle Day is celebrated every June 16th to raise awareness about the plight of these fascinating reptiles. Turtles are among the most threatened groups of animals on the planet and are in desperate need of conservation help. More than half of their 300 species are threatened with extinction according to IUCN Red List criteria. Primary threats to turtles and tortoises include habitat loss and degradation, high-volume unsustainable consumptive exploitation for food and medicinal products, and illegal international pet trade.\n\nThe Sea Turtle Conservancy envisions a world where all species of turtles and tortoises ultimately thrive in the wild. The Sea Turtle Conservancy focuses its work on the following strategic program areas:\n1. Conserving species in their natural habitat, including land acquisition.\n2. Maintaining captive breeding programs to help restore natural populations.\n3. Monitoring and helping to prevent trade that threatens species.\n4. Outreach and spreading global awareness.", q: "25. The conservation and recovery of sea turtles are conducted nationally by the organization.", opts: ["True", "False"], ans: 1, exp: "<b>False.</b> Trong bài viết là 'carries out worldwide programs' (các chương trình trên toàn thế giới), không phải chỉ 'nationally' (trong nước)." },
+        { id: "q26", sec: "IV. Read the following and do as directed. (1.5 pts)", type: "mc", ins: "Decide whether the following sentences are True or False.", passage: "The Sea Turtle Conservancy (STC) is the world's oldest sea turtle research and conservation group. Founded in 1959, its mission is to ensure the survival of sea turtles through research, education, training, advocacy and protection of the natural habitats upon which they depend. Based in Florida, the organization carries out worldwide programs to conserve and recover sea turtle populations.\n\nWorld Sea Turtle Day is celebrated every June 16th to raise awareness about the plight of these fascinating reptiles. Turtles are among the most threatened groups of animals on the planet and are in desperate need of conservation help. More than half of their 300 species are threatened with extinction according to IUCN Red List criteria. Primary threats to turtles and tortoises include habitat loss and degradation, high-volume unsustainable consumptive exploitation for food and medicinal products, and illegal international pet trade.\n\nThe Sea Turtle Conservancy envisions a world where all species of turtles and tortoises ultimately thrive in the wild. The Sea Turtle Conservancy focuses its work on the following strategic program areas:\n1. Conserving species in their natural habitat, including land acquisition.\n2. Maintaining captive breeding programs to help restore natural populations.\n3. Monitoring and helping to prevent trade that threatens species.\n4. Outreach and spreading global awareness.", q: "26. People celebrate the World Sea Turtle Day annually in mid-June.", opts: ["True", "False"], ans: 0, exp: "<b>True.</b> Ngày rùa biển thế giới được tổ chức vào ngày 16 tháng 6 (June 16th), chính là vào khoảng giữa tháng 6 (mid-June)." },
+        { 
+            id: "q27", sec: "IV. Read the following and do as directed. (1.5 pts)", type: "mc", 
+            ins: "Choose the correct answer to each question.",
+            passage: "The Sea Turtle Conservancy (STC) is the world's oldest sea turtle research and conservation group. Founded in 1959, its mission is to ensure the survival of sea turtles through research, education, training, advocacy and protection of the natural habitats upon which they depend. Based in Florida, the organization carries out worldwide programs to conserve and recover sea turtle populations.\n\nWorld Sea Turtle Day is celebrated every June 16th to raise awareness about the plight of these fascinating reptiles. Turtles are among the most threatened groups of animals on the planet and are in desperate need of conservation help. More than half of their 300 species are threatened with extinction according to IUCN Red List criteria. Primary threats to turtles and tortoises include habitat loss and degradation, high-volume unsustainable consumptive exploitation for food and medicinal products, and illegal international pet trade.\n\nThe Sea Turtle Conservancy envisions a world where all species of turtles and tortoises ultimately thrive in the wild. The Sea Turtle Conservancy focuses its work on the following strategic program areas:\n1. Conserving species in their natural habitat, including land acquisition.\n2. Maintaining captive breeding programs to help restore natural populations.\n3. Monitoring and helping to prevent trade that threatens species.\n4. Outreach and spreading global awareness.",
+            q: "27. Which one below is not a primary threat to sea turtles?", 
+            opts: ["A. Lack of training", "B. Exploitation for food", "C. Habitat loss", "D. Illegal trade"], ans: 0,
+            exp: "<b>A. Lack of training.</b> Các mối đe dọa chính (Primary threats) được liệt kê trong bài là mất môi trường sống (habitat loss), khai thác làm thực phẩm (exploitation for food), và buôn bán trái phép (illegal trade). 'Lack of training' không được nhắc đến như là mối đe dọa."
+        },
+        { id: "q28", sec: "IV. Read the following and do as directed. (1.5 pts)", type: "mc", ins: "Choose the correct answer to each question.", passage: "The Sea Turtle Conservancy (STC) is the world's oldest sea turtle research and conservation group. Founded in 1959, its mission is to ensure the survival of sea turtles through research, education, training, advocacy and protection of the natural habitats upon which they depend. Based in Florida, the organization carries out worldwide programs to conserve and recover sea turtle populations.\n\nWorld Sea Turtle Day is celebrated every June 16th to raise awareness about the plight of these fascinating reptiles. Turtles are among the most threatened groups of animals on the planet and are in desperate need of conservation help. More than half of their 300 species are threatened with extinction according to IUCN Red List criteria. Primary threats to turtles and tortoises include habitat loss and degradation, high-volume unsustainable consumptive exploitation for food and medicinal products, and illegal international pet trade.\n\nThe Sea Turtle Conservancy envisions a world where all species of turtles and tortoises ultimately thrive in the wild. The Sea Turtle Conservancy focuses its work on the following strategic program areas:\n1. Conserving species in their natural habitat, including land acquisition.\n2. Maintaining captive breeding programs to help restore natural populations.\n3. Monitoring and helping to prevent trade that threatens species.\n4. Outreach and spreading global awareness.", q: "28. The word \"plight\" in line 5 is closest in meaning to ________", opts: ["A. survival", "B. population", "C. loss", "D. difficulty"], ans: 3, exp: "<b>D. difficulty.</b> Từ 'plight' mang ý nghĩa là hoàn cảnh khó khăn, cảnh ngộ khốn khổ. Nó gần nghĩa nhất với từ 'difficulty'." },
+
+        // ---------- V. WORD FORMS (29-34) ----------
+        { 
+            id: "q29", sec: "V. Supply the correct form of the word given in each sentence. (1.5 pts)", type: "text", 
+            q: "29. The characters and events described in the book are ________. They are not real. (IMAGINE)", ans: "imaginary",
+            exp: "<b>imaginary (adj):</b> hư cấu, tưởng tượng, không có thật. Sau to-be 'are' ta cần một tính từ để miêu tả các nhân vật và sự kiện."
+        },
+        { id: "q30", sec: "V. Supply the correct form of the word given in each sentence. (1.5 pts)", type: "text", q: "30. She's working on a screen ________ of her latest novel. (ADAPT)", ans: "adaptation", exp: "<b>adaptation (n):</b> bản chuyển thể. Cụm từ 'a screen adaptation' nghĩa là một bản chuyển thể điện ảnh/màn ảnh từ tiểu thuyết." },
+        { id: "q31", sec: "V. Supply the correct form of the word given in each sentence. (1.5 pts)", type: "text", q: "31. My father is a lawyer, and he ________ me from entering the field. (COURAGE)", ans: "discourages", exp: "<b>discourages (v):</b> ngăn cản, làm nhụt chí. Động từ chia theo ngôi 'he' ở hiện tại đơn thêm 's'. Cấu trúc 'discourage sb from V-ing' (ngăn cản ai làm việc gì)." },
+        { id: "q32", sec: "V. Supply the correct form of the word given in each sentence. (1.5 pts)", type: "text", q: "32. You must have a good education, but practical training is ________ important. (EQUAL)", ans: "equally", exp: "<b>equally (adv):</b> bằng nhau, tương đương. Trạng từ 'equally' đứng trước tính từ 'important' để bổ nghĩa (quan trọng không kém/quan trọng tương đương)." },
+        { id: "q33", sec: "V. Supply the correct form of the word given in each sentence. (1.5 pts)", type: "text", q: "33. This election should be about issues and policies, not about the ________ of the candidates. (PERSON)", ans: "personalities", exp: "<b>personalities (n):</b> tính cách, phẩm chất cá nhân (số nhiều). Cuộc bầu cử nên hướng tới chính sách chứ không phải là tính cách của các ứng cử viên." },
+        { id: "q34", sec: "V. Supply the correct form of the word given in each sentence. (1.5 pts)", type: "text", q: "34. The literature course has been hard work, but very ________. (REWARD)", ans: "rewarding", exp: "<b>rewarding (adj):</b> đáng giá, bổ ích, mang lại cảm giác thỏa mãn. Tính từ bổ nghĩa cho khóa học." },
+
+        // ---------- VI. DICTIONARY ENTRY (35-36) ----------
+        { 
+            id: "q35", sec: "VI. Look at the entry of the word \"knowledge\" in a dictionary. Use what you can get from the entry to complete the sentences with two or three words. (0.5 pt)", type: "text", 
+            passage: "knowledge noun\n1. uncountable, singular the information, understanding and skills that you gain through education or experience\n• scientific/technical knowledge and skills\n• intimate/first-hand/basic knowledge\n• a thirst for knowledge\n• It will be an opportunity to gain knowledge and experience.\n\nknowledge of something\n• She has acquired a detailed knowledge of the subject.\n• They enjoy sharing their knowledge of the business.\n• He had no prior knowledge of the language before visiting the country.\n• He has a wide knowledge of painting and music.\n\nknowledge about something\n• There is a lack of knowledge about the tax system.", 
+            q: "35. Activating ________ helps students see the connections between previous lessons and new information.", 
+            ans: "prior knowledge", exp: "<b>prior knowledge (2 từ).</b> (Kiến thức nền / kiến thức có sẵn). Kích hoạt kiến thức nền tảng giúp học sinh liên kết bài cũ và bài mới. Dựa vào ví dụ trong từ điển: 'prior knowledge'."
+        },
+        { id: "q36", sec: "VI. Look at the entry of the word \"knowledge\" in a dictionary. Use what you can get from the entry to complete the sentences with two or three words. (0.5 pt)", type: "text", passage: "knowledge noun\n1. uncountable, singular the information, understanding and skills that you gain through education or experience\n• scientific/technical knowledge and skills\n• intimate/first-hand/basic knowledge\n• a thirst for knowledge\n• It will be an opportunity to gain knowledge and experience.\n\nknowledge of something\n• She has acquired a detailed knowledge of the subject.\n• They enjoy sharing their knowledge of the business.\n• He had no prior knowledge of the language before visiting the country.\n• He has a wide knowledge of painting and music.\n\nknowledge about something\n• There is a lack of knowledge about the tax system.", q: "36. Overall, there is a lack of ________ the Industrial Revolution. You'd better add details and information about it.", ans: "knowledge about", exp: "<b>knowledge about (2 từ).</b> (Sự hiểu biết về...). Căn cứ vào cụm 'lack of knowledge about...' trong mục từ điển." },
+
+        // ---------- VII. SENTENCE TRANSFORMATION (37-40) ----------
+        { id: "q37", sec: "VII. Rewrite each of the following sentences in another way so that it means almost the same as the sentence printed before it. (1.0 pt)", type: "text", q: "37. I went to the exhibition, but it was boring.\n→ I wish ________", ans: "I hadn't gone to the exhibition", exp: "<b>I hadn't gone to the exhibition.</b> Câu ước trái với quá khứ dùng quá khứ hoàn thành (S + wish + S + had/hadn't + V3/ed)." },
+        { id: "q38", sec: "VII. Rewrite each of the following sentences in another way so that it means almost the same as the sentence printed before it. (1.0 pt)", type: "text", q: "38. It snows, and the ground gets icy.\n→ If ________", ans: "it snows, the ground gets icy", exp: "<b>it snows, the ground gets icy.</b> Câu điều kiện loại 0, diễn tả sự thật hiển nhiên (If + Hiện tại đơn, Hiện tại đơn)." },
+        { id: "q39", sec: "VII. Rewrite each of the following sentences in another way so that it means almost the same as the sentence printed before it. (1.0 pt)", type: "text", q: "39. Win the scholarship or else your dad will be very sad.\n→ Unless ________", ans: "you win the scholarship, your dad will be very sad", exp: "<b>you win the scholarship, your dad will be very sad.</b> 'Unless' mang nghĩa 'Nếu không'. Mệnh đề theo sau Unless luôn ở thể khẳng định." },
+        { id: "q40", sec: "VII. Rewrite each of the following sentences in another way so that it means almost the same as the sentence printed before it. (1.0 pt)", type: "text", q: "40. She was complaining to the man. His dog had bitten her leg. (Use relative clause)\n→ She ________", ans: "was complaining to the man whose dog had bitten her leg", exp: "<b>was complaining to the man whose dog had bitten her leg.</b> Dùng đại từ quan hệ sở hữu 'whose' thay thế cho 'His' để nối hai câu." }
+    ];
+
+    // Cấu hình Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tienganh_hcm_minhhoa_2026_final_fix100'); 
+
+    let deviceId = localStorage.getItem('deviceId') || ('dev_' + Date.now());
+    localStorage.setItem('deviceId', deviceId);
+    
+    let allScores = [], currentStudent = {}, userAnswers = {}, timerInterval;
+    let quizStartTime, quizEndTime, isReviewMode = false;
+
+    scoresRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allScores = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+        renderScores();
+    });
+
+    document.getElementById('login-form').onsubmit = (e) => {
+        e.preventDefault();
+        currentStudent = { hoTen: document.getElementById('hoTen').value.trim(), lop: document.getElementById('lop').value.trim() };
+        startQuiz();
+    };
+
+    function startQuiz() {
+        quizStartTime = new Date();
+        isReviewMode = false;
+        userAnswers = {};
+        showSection('quiz');
+        document.getElementById('quiz-section').classList.add('is-taking-test');
+        renderQuestions();
+        startTimer(90 * 60);
+    }
+
+    window.selectAnswer = function(qId, val) {
+        if(isReviewMode) return;
+        userAnswers[qId] = val;
+        let answered = Object.keys(userAnswers).filter(k => userAnswers[k].toString().trim() !== '').length;
+        document.getElementById('progress-text').innerText = `${answered}/${rawQuestions.length}`;
+    };
+
+    function renderQuestions() {
+        const container = document.getElementById('question-render-area');
+        let html = '';
+        let currentSec = '';
+        let currentIns = '';
+        let currentPassage = '';
+
+        rawQuestions.forEach((q, idx) => {
+            // Render Header Section (GIỮ NGUYÊN BẢN CHỮ HOA / CHỮ THƯỜNG)
+            if (q.sec && q.sec !== currentSec) {
+                html += `<div class="mt-10 mb-2"><h2 class="text-[20px] font-black section-header pb-2 inline-block">${q.sec}</h2></div>`;
+                currentSec = q.sec;
+            }
+            
+            // Render Instruction
+            if (q.ins && q.ins !== currentIns) {
+                html += `<div class="bg-red-50 p-4 rounded-xl border border-red-200 instruction-text mb-6 shadow-sm">${q.ins}</div>`;
+                currentIns = q.ins;
+            }
+
+            // Render Passage
+            if (q.passage && q.passage !== currentPassage) {
+                html += `<div class="passage-box whitespace-pre-line">${q.passage}</div>`;
+                currentPassage = q.passage;
+            }
+
+            let uAns = userAnswers[q.id] !== undefined ? String(userAnswers[q.id]) : '';
+
+            html += `<div class="mb-10">`;
+            
+            if (q.graphic) {
+                html += `<div class="mb-4 text-center sm:text-left">${q.graphic}</div>`;
+            }
+
+            html += `<h3 class="text-question font-bold mb-4 whitespace-pre-line">${q.q}</h3>`;
+
+            if (q.type === 'mc') {
+                html += `<div class="space-y-3">`;
+                q.opts.forEach((opt, i) => {
+                    let isChecked = (uAns !== '' && uAns === String(i)) ? 'checked' : '';
+                    let char = q.opts.length === 2 ? (i === 0 ? "True" : "False") : String.fromCharCode(65 + i);
+                    let textOnly = q.opts.length === 2 ? opt : opt.replace(/^[A-D]\.\s*/, ''); 
+                    
+                    let labelClass = "opt-label";
+                    let checkIcon = "";
+                    let textClass = ""; // Dùng để gạch ngang chữ khi sai
+
+                    if (isReviewMode) {
+                        if (q.ans == i) { 
+                            labelClass += " review-correct-highlight"; 
+                            checkIcon = `<div class="check-icon text-green-600 font-black ml-auto">✔</div>`; 
+                        } 
+                        else if (uAns === String(i)) { 
+                            labelClass += " review-wrong-strike"; 
+                            checkIcon = `<div class="check-icon text-red-500 font-black ml-auto">✘</div>`; 
+                            textClass += " text-strike"; 
+                        } 
+                    }
+
+                    html += `
+                        <div class="relative">
+                            <input type="radio" id="rad_${q.id}_${i}" name="q_${q.id}" value="${i}" class="opt-radio" ${isChecked} onchange="selectAnswer('${q.id}', '${i}')" ${isReviewMode ? 'disabled' : ''}>
+                            <label for="rad_${q.id}_${i}" class="${labelClass}">
+                                <div class="opt-badge">${char}</div>
+                                <div class="flex-1 ${textClass}">${textOnly}</div>
+                                ${checkIcon}
+                            </label>
+                        </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'text') {
+                if (isReviewMode) {
+                    let isCorrect = false;
+                    let uVal = String(uAns).toLowerCase().trim().replace(/[.,!?]$/g, "");
+                    let cVal = String(q.ans).toLowerCase().trim().replace(/[.,!?]$/g, "");
+                    if(uVal === cVal) isCorrect = true;
+
+                    html += `<div class="flex flex-col gap-2">
+                                <input type="text" disabled value="${uAns}" class="w-full px-5 py-4 border-2 rounded-xl font-bold text-base ${isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-400 text-red-700'}">`;
+                    if (isCorrect) {
+                        html += `<div class="p-3 bg-green-100 border border-green-300 rounded-xl text-green-800 font-bold text-sm">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>`;
+                    } else {
+                        html += `<div class="p-3 bg-red-50 border border-red-300 rounded-xl font-bold text-sm">
+                                    <div class="text-red-600">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-green-600 mt-1">👉 Đáp án chuẩn phải là: <span class="text-lg">${q.ans}</span></div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `<input type="text" value="${uAns}" placeholder="Nhập câu trả lời..." oninput="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#16a34a] font-bold outline-none text-[#000000] bg-gray-50 shadow-inner text-base transition-all">`;
+                }
+            } 
+
+            if (isReviewMode && q.exp) {
+                html += `
+                    <div class="explanation-box">
+                        <div class="text-[13px] font-black text-yellow-700 mb-1 flex items-center gap-1 uppercase tracking-wider">💡 Giải thích chi tiết:</div>
+                        <div class="leading-relaxed text-gray-800">${q.exp}</div>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function submitQuiz() {
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function processSubmission() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        quizEndTime = new Date();
+        
+        let correctCount = 0;
+        let autoGradeCount = 0;
+
+        rawQuestions.forEach(q => {
+            if (q.type === 'mc' || q.type === 'text') {
+                autoGradeCount++;
+                let uAns = String(userAnswers[q.id] || '').toLowerCase().trim().replace(/[.,!?]$/g, "");
+                let cAns = String(q.ans).toLowerCase().trim().replace(/[.,!?]$/g, "");
+                if (uAns === cAns) correctCount++;
+            }
+        });
+        
+        const score = autoGradeCount > 0 ? ((correctCount / autoGradeCount) * 10).toFixed(2) : 0;
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        scoresRef.push({
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop,
+            diem: parseFloat(score), soCauDung: correctCount, tongCau: autoGradeCount,
+            duration: `${Math.floor(durationSeconds/60)}p ${durationSeconds%60}s`,
+            thoiGian: new Date().toISOString(), deviceId: deviceId 
+        }).then(() => {
+            document.getElementById('result-student-name').innerText = `${currentStudent.hoTen} - ${currentStudent.lop}`;
+            document.getElementById('result-score').innerText = score;
+            document.getElementById('result-detail').innerText = `Đúng ${correctCount} / ${autoGradeCount} ý (Hệ thống chấm)`;
+            document.getElementById('result-modal').classList.remove('hidden');
+        });
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        isReviewMode = true;
+        
+        document.getElementById('quiz-header-status').innerText = "XEM LẠI BÀI LÀM (KÈM GIẢI THÍCH)";
+        document.getElementById('quiz-header-status').classList.replace("text-blue-800", "text-purple-700");
+        document.getElementById('quiz-section').classList.remove('is-taking-test'); 
+        document.getElementById('action-bar').classList.add('hidden');
+        
+        document.getElementById('review-action-bar').classList.remove('hidden');
+        
+        renderQuestions();
+        window.scrollTo(0,0);
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        const sorted = [...allScores].sort((a, b) => b.diem - a.diem);
+        tbody.innerHTML = sorted.map((s, idx) => `
+            <tr class="${s.deviceId === deviceId ? 'font-bold border-l-4 border-blue-600 bg-blue-50' : 'hover:bg-gray-50 transition-colors'}">
+                <td class="px-5 py-4 text-center">${idx + 1}</td>
+                <td class="px-5 py-4 text-center">${s.lop}</td>
+                <td class="px-5 py-4">
+                    ${s.hoTen}
+                    ${s.deviceId === deviceId ? '<span class="text-[10px] ml-2 bg-red-500 text-white px-2 py-0.5 rounded-full">Bạn</span>' : ''}
+                </td>
+                <td class="px-5 py-4 text-center">${s.soCauDung}/${s.tongCau}</td>
+                <td class="px-5 py-4 text-center text-lg">${s.diem}</td>
+                <td class="px-5 py-4 text-center">${s.duration}</td>
+                <td class="px-5 py-4 text-right text-xs text-gray-600">${new Date(s.thoiGian).toLocaleString('vi-VN')}</td>
+            </tr>
+        `).join('');
+    }
+
+    function startTimer(seconds) {
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            document.getElementById('timer').innerText = `${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
+            if (remaining <= 0) processSubmission(); 
+        }, 1000);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+        document.getElementById('review-action-bar').classList.add('hidden');
+    }
+
+    function goHome() { location.reload(); }
+</script>
+</body>
+</html>
