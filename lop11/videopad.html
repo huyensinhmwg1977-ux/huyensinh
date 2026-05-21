@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Trắc Nghiệm - Tin học 11</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 50px; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+  </style>
+
+ </head>
+ <body oncopy="return false" oncut="return false" onpaste="return false">
+  <div id="app" class="p-0 sm:p-4 md:p-8 flex flex-col sm:block transition-all">
+   
+   <div id="login-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-md mx-auto fade-in flex-grow flex flex-col sm:justify-center">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start flex-grow sm:flex-grow-0">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1">ÔN TẬP TIN HỌC 11</h1>
+      <p class="text-gray-600 font-bold">Phần mềm làm phim Videopad</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all" placeholder="11A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">Đề 1 : PM LÀM PHIM 1</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">Đề 2: PM LÀM PHIM 2</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      <div>
+       <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+       <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+      </div>
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center my-auto pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tingk11_4');
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== NGÂN HÀNG CÂU HỎI ĐỀ 1 ====================
+    const de1_data = [
+        { id: "1_1", type: "single", question: "Trong phần mềm làm phim, khu vực nào dùng để chứa các tệp ảnh, video và âm thanh làm tư liệu đầu vào?", options: ["Ngăn tư liệu.", "Ngăn xem trước.", "Ngăn tiến trình.", "Thanh công cụ."], correct: 0 },
+        { id: "1_2", type: "single", question: "Chế độ nào trong ngăn tiến trình cho phép người dùng quan sát tổng thể các phân cảnh theo trình tự hình ảnh?", options: ["Dòng thời gian (Timeline).", "Bảng phân cảnh (Storyboard).", "Màn hình xem trước.", "Cửa sổ hiệu ứng."], correct: 1 },
+        { id: "1_3", type: "single", question: "Chức năng chính yếu của phần mềm làm phim là gì?", options: ["Soạn thảo văn bản và lập bảng tính.", "Ghép nối hình ảnh, video và âm thanh.", "Lập trình và gỡ lỗi mã nguồn ứng dụng.", "Thiết kế đồ họa và vẽ mô hình 3D."], correct: 1 },
+        { id: "1_4", type: "single", question: "Hiệu ứng \"Fade out\" trong công cụ chỉnh sửa âm thanh mang lại kết quả gì cho đoạn phim?", options: ["Tăng âm lượng lên mức tối đa.", "Lặp lại đoạn âm thanh liên tục.", "Âm lượng nhỏ dần về cuối đoạn.", "Âm lượng to dần ở đầu đoạn."], correct: 2 },
+        { id: "1_5", type: "single", question: "Để thêm chữ hoặc lời thoại hiển thị trên màn hình video, ta sử dụng công cụ nào?", options: ["Công cụ tạo hiệu ứng chuyển cảnh.", "Công cụ thiết lập phụ đề (Text).", "Công cụ điều chỉnh âm thanh.", "Công cụ căn chỉnh khung hình."], correct: 1 },
+        { id: "1_6", type: "single", question: "Quá trình \"biên tập phim\" chủ yếu bao gồm những thao tác nào dưới đây?", options: ["Chụp ảnh, quay video và thu âm giọng nói.", "Thêm hiệu ứng, phụ đề và chỉnh âm thanh.", "Viết kịch bản và chuẩn bị các đạo cụ.", "Xuất bản tệp văn bản hoặc tạo trang web."], correct: 1 },
+        { id: "1_7", type: "single", question: "Thanh công cụ trong giao diện phần mềm làm phim thường chứa thành phần nào?", options: ["Các nút lệnh để thiết lập tính năng chỉnh sửa.", "Danh sách tất cả các tệp tư liệu đa phương tiện.", "Màn hình phát thử đoạn video đang thiết kế.", "Chuỗi các phân cảnh của dự án theo hàng ngang."], correct: 0 },
+        { id: "1_8", type: "single", question: "Ở chế độ Dòng thời gian (Timeline), các đối tượng thường được sắp xếp theo yếu tố nào?", options: ["Dung lượng tệp tin.", "Bảng chữ cái.", "Thời gian xuất hiện.", "Kích thước hình ảnh."], correct: 2 },
+        { id: "1_9", type: "single", question: "Đâu là bước cuối cùng trong quá trình tạo một đoạn phim hoàn chỉnh?", options: ["Chọn hình ảnh và video từ máy tính.", "Xuất dự án ra tệp định dạng video.", "Thêm các hiệu ứng chuyển cảnh.", "Chèn tệp âm thanh và nhập phụ đề."], correct: 1 },
+        { id: "1_10", type: "single", question: "Lớp (track) nào trên dòng thời gian được sử dụng để ghép nhạc nền hoặc lời thuyết minh?", options: ["Lớp Video (Video track).", "Lớp Phụ đề (Text track).", "Lớp Hình ảnh (Image track).", "Lớp Âm thanh (Audio track)."], correct: 3 },
+        { id: "1_11", type: "single", question: "Việc sử dụng chế độ Storyboard sẽ mang lại ưu điểm gì nổi bật so với chế độ Timeline khi mới bắt đầu ghép phim?", options: ["Dễ dàng quan sát và sắp xếp thứ tự các phân cảnh.", "Chỉnh sửa âm thanh chính xác đến từng mili giây.", "Quản lý chi tiết việc lồng ghép nhiều lớp video.", "Cung cấp công cụ thêm hiệu ứng động phức tạp."], correct: 0 },
+        { id: "1_12", type: "single", question: "Tại sao cần tạo hiệu ứng chuyển cảnh giữa hai phân cảnh hình ảnh hoặc video khác nhau?", options: ["Để làm giảm bớt dung lượng của tệp tin video.", "Để giúp đoạn phim chuyển tiếp tự nhiên, mượt mà.", "Để tăng chất lượng và độ phân giải của hình ảnh.", "Để làm cho mức độ âm lượng của video to hơn."], correct: 1 },
+        { id: "1_13", type: "single", question: "Nếu một đoạn phim có thời lượng nhạc nền dài hơn phần hình ảnh, cách xử lý nào là hợp lý nhất?", options: ["Xóa toàn bộ hình ảnh đang có trong video.", "Tăng độ phân giải cho video đang hiển thị.", "Cắt và xóa bớt phần nhạc nền bị thừa ra.", "Thay đổi định dạng mở rộng của tệp video."], correct: 2 },
+        { id: "1_14", type: "single", question: "Việc thêm phụ đề vào đoạn phim thường mang lại giá trị thiết thực nào nhất cho người xem?", options: ["Tăng tính bảo mật cho tệp tin video được xuất.", "Giúp người xem nắm bắt rõ ràng lời thoại, nội dung.", "Làm giảm kích thước tệp tin video xuất ra sau cùng.", "Cải thiện chất lượng và độ tương phản của màu sắc."], correct: 1 },
+        { id: "1_15", type: "single", question: "Khi một hình ảnh đưa vào bị ngược hoặc sai hướng, ta cần sử dụng công cụ nào để khắc phục?", options: ["Sử dụng công cụ cắt xén (Crop).", "Sử dụng công cụ xoay/lật (Rotate/Flip).", "Áp dụng hiệu ứng mờ dần (Fade in).", "Chèn thêm một tệp âm thanh đệm."], correct: 1 },
+        { id: "1_16", type: "single", question: "Việc thay thế một hình ảnh trong ngăn tư liệu sẽ dẫn đến sự thay đổi nào trên đoạn phim đang dựng?", options: ["Phân cảnh chứa ảnh đó trên Timeline tự động cập nhật.", "Toàn bộ các hiệu ứng chuyển cảnh bị xóa bỏ hoàn toàn.", "Tổng thời lượng của đoạn phim sẽ tự động tăng lên.", "Mọi tệp âm thanh trong đoạn phim sẽ bị tắt hoặc mất đi."], correct: 0 },
+        { id: "1_17", type: "single", question: "Trong quá trình thiết kế phim hoạt hình tĩnh, thao tác nào quyết định trực tiếp đến tốc độ chuyển động của nhân vật?", options: ["Kích thước (độ phân giải) của từng bức ảnh tĩnh.", "Thời lượng hiển thị trên màn hình của mỗi bức ảnh.", "Số lượng tệp nhạc nền và hiệu ứng âm thanh.", "Định dạng lưu trữ cuối cùng của tệp dự án phim."], correct: 1 },
+        { id: "1_18", type: "single", question: "Vì sao người biên tập nên xem trước (Preview) đoạn phim nhiều lần trong quá trình làm phim?", options: ["Để tăng tốc độ xuất tệp video cuối cùng ra máy tính.", "Để phần mềm tự động sửa lỗi chính tả của các phụ đề.", "Để kịp thời phát hiện sự cố và điều chỉnh sự thiếu đồng bộ.", "Để giảm bớt bộ nhớ lưu trữ mà phần mềm đang chiếm dụng."], correct: 2 },
+        { id: "1_19", type: "single", question: "Chức năng căn chỉnh thời gian cho các phân cảnh và phụ đề chủ yếu giúp giải quyết vấn đề gì?", options: ["Đảm bảo hình ảnh và lời thoại khớp với nhịp điệu âm thanh.", "Chuyển đổi hệ màu sắc của toàn bộ đoạn phim tự động.", "Khôi phục các tệp đa phương tiện đã bị xóa nhầm trong máy.", "Đổi hàng loạt tên các tệp tư liệu đang lưu trong ổ cứng."], correct: 0 },
+        { id: "1_20", type: "single", question: "Điều kiện tiên quyết để ghép nối các bức ảnh tĩnh thành một đoạn phim hoạt hình là gì?", options: ["Các ảnh phải có cùng định dạng với tệp âm thanh.", "Các ảnh phải minh họa chuỗi chuyển động liên tiếp.", "Các ảnh phải có dung lượng cực lớn để sắc nét.", "Các ảnh bắt buộc phải chứa các văn bản phụ đề dài."], correct: 1 },
+        { id: '1_c1', type: 'tf_cluster', question: "Khi bắt đầu sử dụng phần mềm làm phim để tạo một video từ các bức ảnh kỉ niệm, người dùng cần làm quen với giao diện và các khu vực chức năng chính.", subQuestions: [
+            { id: 'd1_1a', text: "Ngăn tư liệu là nơi chứa các tệp ảnh, video và âm thanh trước khi được đưa vào biên tập.", correct: "Đúng" },
+            { id: 'd1_1b', text: "Chế độ Dòng thời gian (Timeline) chỉ cho phép hiển thị hình ảnh mà không thể hiển thị lớp âm thanh.", correct: "Sai" },
+            { id: 'd1_1c', text: "Để kiểm tra xem các bức ảnh xuất hiện đã đúng thứ tự mong muốn hay chưa, em cần phát thử đoạn phim trong ngăn xem trước.", correct: "Đúng" },
+            { id: 'd1_1d', text: "Nếu muốn tăng thời gian hiển thị của một bức ảnh từ 3 giây lên 5 giây, em cần kéo dài phân cảnh đó trực tiếp trên lớp âm thanh (Audio track).", correct: "Sai" }
+        ]},
+        { id: '1_c2', type: 'tf_cluster', question: "Quá trình biên tập phim bao gồm việc sắp xếp các phân cảnh và bổ sung các hiệu ứng chuyển cảnh để video sinh động và liền mạch.", subQuestions: [
+            { id: 'd1_2a', text: "Hiệu ứng chuyển cảnh (Transitions) thường được áp dụng tại vị trí giao nhau giữa hai phân cảnh hình ảnh hoặc video.", correct: "Đúng" },
+            { id: 'd1_2b', text: "Hiệu ứng chuyển cảnh bắt buộc phải có thời lượng kéo dài bằng đúng thời lượng của các phân cảnh video chính.", correct: "Sai" },
+            { id: 'd1_2c', text: "Nếu hiệu ứng chuyển cảnh kéo dài làm trôi qua hoặc che khuất mất một phần nội dung quan trọng ở đầu video tiếp theo, em nên thao tác rút ngắn thời lượng của hiệu ứng đó lại.", correct: "Đúng" },
+            { id: 'd1_2d', text: "Để đoạn phim không bị ngắt quãng đột ngột khi chuyển từ cảnh ban ngày sang ban đêm, em có thể chèn một lớp phụ đề vào giữa thay cho hiệu ứng chuyển cảnh.", correct: "Sai" }
+        ]},
+        { id: '1_c3', type: 'tf_cluster', question: "Âm thanh đóng vai trò quan trọng trong việc truyền tải cảm xúc của đoạn phim. Nam đang tiến hành ghép nhạc nền vào đoạn phim hoạt hình tự làm.", subQuestions: [
+            { id: 'd1_3a', text: "Phần mềm làm phim cho phép chèn các tệp âm thanh có sẵn từ máy tính vào ngăn tiến trình.", correct: "Đúng" },
+            { id: 'd1_3b', text: "Lệnh Fade out giúp âm lượng của tệp nhạc nhỏ dần, thường được sử dụng một cách hợp lý ở cuối đoạn phim.", correct: "Đúng" },
+            { id: 'd1_3c', text: "Nhạc nền tải vào có thời lượng 5 phút, trong khi phần hình ảnh chỉ dài 2 phút, em cần sử dụng công cụ cắt âm thanh để loại bỏ 3 phút nhạc thừa ở phần đuôi.", correct: "Đúng" },
+            { id: 'd1_3d', text: "Để nhân vật hoạt hình phát ra tiếng nói trùng khớp với cử động miệng, em cần sử dụng công cụ tạo hiệu ứng hình ảnh thay vì điều chỉnh trên lớp âm thanh.", correct: "Sai" }
+        ]},
+        { id: '1_c4', type: 'tf_cluster', question: "Phụ đề giúp giải thích nội dung hoặc ghi lại lời thoại trong đoạn phim. Quá trình tạo phụ đề yêu cầu người biên tập phải chú ý đến nội dung và thời gian hiển thị.", subQuestions: [
+            { id: 'd1_4a', text: "Công cụ tạo phụ đề (Text/Title) cho phép người dùng gõ và thêm văn bản trực tiếp lên màn hình video.", correct: "Đúng" },
+            { id: 'd1_4b', text: "Văn bản phụ đề chỉ có thể được đặt cố định ở góc dưới cùng của màn hình mà không thể thay đổi vị trí tự do.", correct: "Sai" },
+            { id: 'd1_4c', text: "Để phụ đề có thể đọc rõ ràng trên một đoạn video có cảnh quay nền trời màu trắng sáng, em cần điều chỉnh màu chữ của phụ đề sang tông màu tối.", correct: "Đúng" },
+            { id: 'd1_4d', text: "Khi lời thoại của nhân vật đã kết thúc nhưng phụ đề vẫn còn hiển thị thừa 5 giây, em cần kéo dài thanh thời lượng của lớp phụ đề trên Timeline để khắc phục.", correct: "Sai" }
+        ]},
+        { id: '1_c5', type: 'tf_cluster', question: "Trong khi thực hành biên tập, người dùng có thể phát hiện ra một số bức ảnh đưa vào dự án bị sai hướng hoặc có chi tiết thừa.", subQuestions: [
+            { id: 'd1_5a', text: "Hầu hết các phần mềm làm phim đều cung cấp công cụ xoay ảnh (Rotate) để thay đổi hướng của hình ảnh.", correct: "Đúng" },
+            { id: 'd1_5b', text: "Khi thực hiện lệnh thay thế một ảnh cũ bằng ảnh mới trong ngăn tư liệu, phân cảnh dùng ảnh đó trên ngăn tiến trình cũng tự động thay đổi theo.", correct: "Đúng" },
+            { id: 'd1_5c', text: "Bức ảnh chụp phong cảnh bị dính một góc hình ngón tay người chụp, em có thể sử dụng công cụ cắt xén khung hình (Crop) để loại bỏ chi tiết thừa đó.", correct: "Đúng" },
+            { id: 'd1_5d', text: "Để một ảnh chân dung cụ thể hiển thị lâu hơn so với các ảnh phong cảnh khác, em phải sử dụng công cụ chỉnh sửa âm thanh để thay đổi thuộc tính của nó.", correct: "Sai" }
+        ]},
+        { id: '1_c6', type: 'tf_cluster', question: "Khi thiết kế phim hoạt hình từ các bức ảnh tĩnh (Stop-motion), sự kết hợp giữa các khung hình liên tiếp với thời lượng hợp lý tạo ra cảm giác chuyển động.", subQuestions: [
+            { id: 'd1_6a', text: "Phim hoạt hình tĩnh được tạo ra dựa trên nguyên lí ghép một chuỗi các hình ảnh tĩnh nối tiếp nhau.", correct: "Đúng" },
+            { id: 'd1_6b', text: "Nếu thiết lập thời gian hiển thị cho mỗi bức ảnh tĩnh quá dài, chuyển động của nhân vật trong phim sẽ trông rời rạc và bị giật.", correct: "Đúng" },
+            { id: 'd1_6c', text: "Để nhân vật hoạt hình thực hiện hành động chạy nhanh hơn trên màn hình, em cần tăng thời gian hiển thị của mỗi bức ảnh tĩnh lên mức tối đa.", correct: "Sai" },
+            { id: 'd1_6d', text: "Khi nhân vật đi bộ, em muốn lồng tiếng bước chân khớp với mỗi bước đi, em cần cắt và dịch chuyển đoạn âm thanh đồng bộ với các điểm chuyển ảnh trên dòng thời gian.", correct: "Đúng" }
+        ]},
+        { id: '1_c7', type: 'tf_cluster', question: "Việc quản lý các lớp (track) trên chế độ Dòng thời gian đòi hỏi người biên tập phải nắm rõ sự phân loại giữa hình ảnh, video, phụ đề và âm thanh.", subQuestions: [
+            { id: 'd1_7a', text: "Ở chế độ Timeline, các lớp âm thanh, lớp video và lớp phụ đề thường được bố trí thành các thanh nằm ngang riêng biệt.", correct: "Đúng" },
+            { id: 'd1_7b', text: "Trình tự sắp xếp trước sau của các đoạn video trên lớp Video sẽ quyết định trình tự xuất hiện của chúng khi phát đoạn phim.", correct: "Đúng" },
+            { id: 'd1_7c', text: "Để chèn một biểu tượng logo cố định ở góc màn hình xuyên suốt cả đoạn phim, em đặt tệp logo đó ở lớp Video phía trên cùng và kéo dài thời lượng bằng với tổng thời gian của phim.", correct: "Đúng" },
+            { id: 'd1_7d', text: "Nếu muốn tiếng nhạc nền tự động nhỏ đi khi có nhân vật nói chuyện, em kéo thả tệp âm thanh hội thoại vào lớp phụ đề (Text track) để phần mềm xử lý.", correct: "Sai" }
+        ]},
+        { id: '1_c8', type: 'tf_cluster', question: "Giai đoạn xuất bản đoạn phim (Export/Save as Video) là thao tác cuối cùng sau khi hoàn tất mọi bước biên tập và chỉnh sửa.", subQuestions: [
+            { id: 'd1_8a', text: "Xuất phim là quá trình phần mềm kết xuất dự án đang làm việc thành một tệp video hoàn chỉnh.", correct: "Đúng" },
+            { id: 'd1_8b', text: "Lưu tệp dưới dạng tệp dự án (Project file) là đủ để có thể mở và xem video hoàn chỉnh trên bất kỳ thiết bị điện thoại nào.", correct: "Sai" },
+            { id: 'd1_8c', text: "Để gửi tệp video nộp bài tập qua nền tảng email có giới hạn dung lượng 25MB, em nên thiết lập xuất video ở độ phân giải trung bình thay vì độ phân giải cao nhất (4K).", correct: "Đúng" },
+            { id: 'd1_8d', text: "Nếu phát hiện một lỗi chính tả trong phụ đề ngay sau khi đã xuất thành tệp video MP4, em chỉ cần mở tệp MP4 đó lên để gõ sửa lại chữ bị sai một cách trực tiếp.", correct: "Sai" }
+        ]}
+    ];
+
+    // ==================== NGÂN HÀNG CÂU HỎI ĐỀ 2 ====================
+    const de2_data = [
+        { id: "2_1", type: "single", question: "Trong giao diện của phần mềm làm phim, khu vực hiển thị trước hình ảnh video đang được biên tập gọi là gì?", options: ["Ngăn tư liệu.", "Cửa sổ xem trước (Preview).", "Cửa sổ xuất bản.", "Dòng thời gian (Timeline)."], correct: 1 },
+        { id: "2_2", type: "single", question: "Tệp dự án (Project file) của phần mềm làm phim có đuôi định dạng đặc trưng riêng của phần mềm và chức năng chính là gì?", options: ["Chứa thông tin mã nguồn để lập trình lại phần mềm.", "Chứa toàn bộ lịch sử thao tác và cấu trúc của đoạn phim đang ghép.", "Gộp toàn bộ hình ảnh và âm thanh thành một tệp MP4 duy nhất.", "Là tệp tin dùng để gửi lên YouTube hoặc mạng xã hội."], correct: 1 },
+        { id: "2_3", type: "single", question: "Khi biên tập phim, lệnh Split (Cắt/Chia đôi) có tác dụng gì?", options: ["Phóng to một đoạn video lên gấp đôi.", "Xóa một phần của video bị mờ.", "Chia một phân cảnh thành hai đoạn tách biệt.", "Sao chép một đoạn video thành hai bản."], correct: 2 },
+        { id: "2_4", type: "single", question: "Để điều chỉnh cho hình ảnh bị quay ngang thành thẳng đứng, người dùng sử dụng công cụ nào?", options: ["Crop (Cắt xén).", "Rotate (Xoay).", "Transition (Chuyển cảnh).", "Fade in (Rõ dần)."], correct: 1 },
+        { id: "2_5", type: "single", question: "Lớp (Track) nào trên khu vực dòng thời gian dùng để hiển thị các tệp văn bản chữ?", options: ["Audio track (Lớp âm thanh).", "Video track (Lớp hình ảnh/video).", "Text/Subtitle track (Lớp phụ đề).", "Transition track (Lớp chuyển cảnh)."], correct: 2 },
+        { id: "2_6", type: "single", question: "Định dạng nào dưới đây là định dạng của tệp video sau khi xuất bản (Export)?", options: ["MP4.", "DOCX.", "MP3.", "JPG."], correct: 0 },
+        { id: "2_7", type: "single", question: "Thao tác \"Export Video\" (hoặc Save Movie) dùng để làm gì?", options: ["Lưu trạng thái đang chỉnh sửa để hôm sau làm tiếp.", "Kết xuất toàn bộ quá trình biên tập thành tệp video hoàn chỉnh.", "Tải thêm tệp âm thanh và hình ảnh từ máy tính vào phần mềm.", "Nén toàn bộ kho tư liệu vào một tệp tin duy nhất."], correct: 1 },
+        { id: "2_8", type: "single", question: "Trong làm phim hoạt hình tĩnh (stop-motion), yếu tố nào quyết định một bức ảnh sẽ hiện trên màn hình bao lâu?", options: ["Độ phân giải của bức ảnh (Resolution).", "Thời lượng của bức ảnh (Duration).", "Kích thước dung lượng của tệp ảnh (Size).", "Định dạng của bức ảnh (JPG hoặc PNG)."], correct: 1 },
+        { id: "2_9", type: "single", question: "Để thay đổi mức độ to nhỏ của tiếng nhạc trong phần mềm làm phim, ta tác động vào:", options: ["Các thông số của thanh âm lượng (Volume).", "Các hiệu ứng chuyển cảnh của hình ảnh.", "Màu sắc của văn bản phụ đề.", "Tốc độ (Speed) của lớp Video."], correct: 0 },
+        { id: "2_10", type: "single", question: "Hiệu ứng nào đặt ở điểm giao giữa hai phân cảnh hình ảnh để tạo sự mượt mà khi nối tiếp nhau?", options: ["Hiệu ứng làm mờ nền (Blur).", "Hiệu ứng âm thanh nổi.", "Hiệu ứng chuyển cảnh (Transition).", "Hiệu ứng hình trong hình (PiP)."], correct: 2 },
+        { id: "2_11", type: "single", question: "Nếu không lưu lại tệp dự án (Project file) mà chỉ xuất tệp video MP4, điều gì sẽ xảy ra khi em muốn thay đổi một dòng chữ bị sai chính tả vào ngày hôm sau?", options: ["Em chỉ cần mở tệp MP4 bằng phần mềm làm phim và gõ lại chữ.", "Phần mềm sẽ tự động phát hiện lỗi và sửa lại trong tệp MP4.", "Em phải làm lại video từ đầu vì tệp MP4 không thể can thiệp chỉnh sửa các lớp (track) gốc.", "Em dùng lệnh Split cắt tệp MP4 ra là có thể gỡ dòng chữ cũ đi."], correct: 2 },
+        { id: "2_12", type: "single", question: "Khi hai đoạn video được đặt chồng lên nhau ở hai lớp Video (Video track) khác nhau trên Timeline, kết quả hiển thị trên màn hình xem trước sẽ như thế nào?", options: ["Video ở track phía trên sẽ che khuất video ở track phía dưới.", "Cửa sổ xem trước sẽ tự động chia đôi màn hình để hiển thị cả hai.", "Phần mềm báo lỗi vì không được đặt hai video cùng một thời điểm.", "Video ở track phía dưới sẽ hiển thị, còn video phía trên bị ẩn đi."], correct: 0 },
+        { id: "2_13", type: "single", question: "Trong quá trình ghép phim, tại sao không nên xóa hay di chuyển vị trí các tệp hình ảnh, âm thanh gốc trong ổ cứng máy tính?", options: ["Vì sẽ làm máy tính bị nhiễm virus máy tính.", "Vì tệp dự án (Project) chỉ lưu đường dẫn, nếu di chuyển sẽ gây ra lỗi thiếu tệp (Missing file).", "Vì điều đó làm cho tốc độ xuất video chậm đi một nửa.", "Vì các tệp đó đã được tích hợp chặt chẽ vào hệ điều hành."], correct: 1 },
+        { id: "2_14", type: "single", question: "Khi áp dụng hiệu ứng âm thanh \"Fade in\", kết quả sẽ ra sao?", options: ["Âm thanh nhỏ dần về cuối đoạn video.", "Âm thanh bị chuyển sang chế độ tắt tiếng (Mute).", "Âm thanh lặp đi lặp lại nhiều lần.", "Âm thanh to dần từ mức 0 lên mức bình thường ở đầu đoạn."], correct: 3 },
+        { id: "2_15", type: "single", question: "Chế độ hiển thị Storyboard (Bảng phân cảnh) không cho phép người dùng thực hiện thao tác nào dưới đây?", options: ["Xếp thứ tự các bức ảnh trước sau.", "Xem tổng quát các phân cảnh trong video.", "Chỉnh sửa chi tiết nhiều lớp âm thanh xếp chồng lên nhau.", "Xóa bớt một phân cảnh không mong muốn."], correct: 2 },
+        { id: "2_16", type: "single", question: "Lệnh Crop (cắt xén) hình ảnh/video thường được sử dụng trong trường hợp nào?", options: ["Muốn video tua nhanh gấp đôi.", "Muốn loại bỏ các chi tiết thừa ở rìa của khung hình.", "Muốn ghép thêm nhạc đệm cho hình ảnh.", "Muốn tăng giảm thời lượng phát của đoạn video."], correct: 1 },
+        { id: "2_17", type: "single", question: "Nhược điểm của việc đặt thời gian hiển thị (duration) của mỗi bức ảnh tĩnh quá dài khi làm phim hoạt hình stop-motion là gì?", options: ["Chuyển động của nhân vật sẽ rời rạc, chậm chạp và không thực tế.", "Video xuất ra sẽ bị mất đi âm thanh.", "Chuyển động của nhân vật sẽ trở nên quá nhanh không nhìn rõ.", "Phần mềm sẽ bị treo và không xuất được video."], correct: 0 },
+        { id: "2_18", type: "single", question: "Khi đoạn video gốc có tạp âm quá ồn, người biên tập phim nên xử lý như thế nào trước khi lồng nhạc nền?", options: ["Xóa hoàn toàn lớp Video đó đi và thay bằng video khác.", "Giảm âm lượng (Mute/Volume down) của âm thanh gốc của video.", "Dùng lệnh Rotate để đảo ngược đoạn video.", "Kéo giãn thanh thời lượng của video ra gấp đôi."], correct: 1 },
+        { id: "2_19", type: "single", question: "Tác dụng chính của lớp phủ (Overlay / Picture in Picture) là gì?", options: ["Đặt văn bản vào cuối đoạn video.", "Giúp một video/hình ảnh nhỏ hiển thị đè lên một video nền lớn khác.", "Tách riêng phần tiếng và phần hình của một video.", "Chỉnh lại ánh sáng cho video mượt mà hơn."], correct: 1 },
+        { id: "2_20", type: "single", question: "Khi xuất bản video (Export), nếu chọn số khung hình trên giây (FPS) càng cao thì video sẽ như thế nào?", options: ["Video chuyển động càng mượt mà nhưng dung lượng tệp sẽ lớn hơn.", "Tốc độ video sẽ phát chậm lại một nửa.", "Dung lượng tệp video sẽ nhỏ đi đáng kể.", "Chất lượng âm thanh sẽ trở nên sống động hơn."], correct: 0 },
+        { id: '2_c1', type: 'tf_cluster', question: "Khi thực hiện biên tập một video kỉ niệm lớp, thao tác với tệp dự án (Project) là thao tác thường xuyên và rất quan trọng.", subQuestions: [
+            { id: 'd2_1a', text: "Tệp dự án dùng để lưu trữ trạng thái chỉnh sửa của các phân cảnh trên phần mềm.", correct: "Đúng" },
+            { id: 'd2_1b', text: "Có thể đăng trực tiếp tệp dự án (.vpj, .osp,...) lên YouTube để mọi người cùng xem video.", correct: "Sai" },
+            { id: 'd2_1c', text: "Khi chuyển sang máy tính khác để dựng phim tiếp, em chỉ cần chép duy nhất tệp dự án qua USB là có thể mở ra làm việc bình thường.", correct: "Sai" },
+            { id: 'd2_1d', text: "Trước khi tắt máy tính đi ngủ, em cần chọn \"Save Project\" để hôm sau mở phần mềm ra có thể tiếp tục chỉnh sửa các lỗi phụ đề.", correct: "Đúng" }
+        ]},
+        { id: '2_c2', type: 'tf_cluster', question: "Việc thiết kế phim hoạt hình tĩnh (Stop-motion) yêu cầu tính kiên nhẫn khi xử lý chuỗi các hình ảnh.", subQuestions: [
+            { id: 'd2_2a', text: "Kĩ thuật Stop-motion tạo ra video bằng cách trình chiếu liên tiếp một loạt hình ảnh tĩnh.", correct: "Đúng" },
+            { id: 'd2_2b', text: "Trong kĩ thuật Stop-motion, mọi bức ảnh bắt buộc phải cài đặt một khoảng thời gian hiển thị dài ít nhất 5 giây.", correct: "Sai" },
+            { id: 'd2_2c', text: "Khi nhân vật đang thực hiện hành động nhảy cẫng lên một cách dứt khoát, em nên thiết lập thời lượng hiển thị các bức ảnh đó rất ngắn (dưới 0.5 giây).", correct: "Đúng" },
+            { id: 'd2_2d', text: "Để nhân vật có vẻ đang đứng suy nghĩ thật lâu, em chỉ cần đặt một bức ảnh duy nhất mô tả tư thế đó và kéo dài thời lượng của nó lên 4-5 giây.", correct: "Đúng" }
+        ]},
+        { id: '2_c3', type: 'tf_cluster', question: "Âm thanh là yếu tố không thể thiếu giúp đoạn phim trở nên sinh động và truyền cảm hơn.", subQuestions: [
+            { id: 'd2_3a', text: "Lớp âm thanh (Audio track) nằm song song với lớp Video trên giao diện Dòng thời gian.", correct: "Đúng" },
+            { id: 'd2_3b', text: "Nếu có hai tệp âm thanh được đặt chồng lên nhau cùng một thời điểm ở các track khác nhau, phần mềm sẽ chỉ phát âm thanh của track nằm dưới cùng.", correct: "Sai" },
+            { id: 'd2_3c', text: "Khi kết thúc video, em sử dụng tính năng Fade out cho phần nhạc nền để âm lượng nhỏ dần, giúp kết thúc không bị đột ngột.", correct: "Đúng" },
+            { id: 'd2_3d', text: "Đoạn nhạc nền tải về quá ngắn so với video, em giải quyết bằng cách copy đoạn nhạc đó và dán nối tiếp (paste) nhiều lần trên track âm thanh cho đến khi khớp thời lượng.", correct: "Đúng" }
+        ]},
+        { id: '2_c4', type: 'tf_cluster', question: "Thêm phụ đề (Text/Title) là thao tác hỗ trợ người xem dễ dàng nắm bắt thông điệp của thước phim.", subQuestions: [
+            { id: 'd2_4a', text: "Chức năng Text cung cấp công cụ gõ chữ hiển thị lên trên các đoạn video.", correct: "Đúng" },
+            { id: 'd2_4b', text: "Thời lượng một khối phụ đề nằm trên Timeline càng dài thì chữ hiển thị trên màn hình càng lớn.", correct: "Sai" },
+            { id: 'd2_4c', text: "Phụ đề màu vàng bị chìm vào nền video quay cảnh cánh đồng lúa chín, em cần đổi màu chữ sang màu tối hoặc thêm đường viền đen (outline) cho chữ.", correct: "Đúng" },
+            { id: 'd2_4d', text: "Em thấy lời thuyết minh nhân vật đã dứt nhưng chữ phụ đề vẫn hiện thêm 3 giây nữa, em khắc phục bằng cách kéo thu ngắn thanh phụ đề trên Timeline lại.", correct: "Đúng" }
+        ]},
+        { id: '2_c5', type: 'tf_cluster', question: "Giao diện Timeline (Dòng thời gian) cho phép tùy biến chuyên sâu đối với các đoạn video và hình ảnh.", subQuestions: [
+            { id: 'd2_5a', text: "Thanh trượt thời gian (Playhead) trên Timeline dùng để chọn vị trí thời điểm cần xem trước hoặc cắt ghép.", correct: "Đúng" },
+            { id: 'd2_5b', text: "Nếu xóa một hiệu ứng chuyển cảnh nằm giữa hai đoạn video thì hai đoạn video đó sẽ tự động dính liền lại với nhau mà không bị mất đi.", correct: "Đúng" },
+            { id: 'd2_5c', text: "Để đóng logo của lớp vào góc phải video, em đưa ảnh logo vào lớp Video thấp nhất (dưới cùng) trên Timeline.", correct: "Sai" },
+            { id: 'd2_5d', text: "Cảnh quay bằng điện thoại lọt những phần viền đen hai bên, em sẽ dùng công cụ Crop trên phần mềm làm phim để cắt gọn lại tỷ lệ khung hình.", correct: "Đúng" }
+        ]},
+        { id: '2_c6', type: 'tf_cluster', question: "Thao tác sử dụng công cụ Split (Cắt/Chia) và Rotate (Xoay) thường dùng cho các nguồn video thô.", subQuestions: [
+            { id: 'd2_6a', text: "Lệnh Rotate dùng để xoay hình ảnh hoặc video theo các góc 90 độ, 180 độ.", correct: "Đúng" },
+            { id: 'd2_6b', text: "Dùng lệnh Split trên một video 10 phút sẽ làm video đó tự động bị xóa đi 5 phút.", correct: "Sai" },
+            { id: 'd2_6c', text: "Đoạn video quay cảnh hội trại có khúc giữa bị rung lắc mạnh do va chạm, em sẽ dùng lệnh Split cắt lấy phần rung lắc đó ra và nhấn nút Delete để xóa đi.", correct: "Đúng" },
+            { id: 'd2_6d', text: "Video em quay vô tình cầm ngược điện thoại nên bị lộn đầu xuống đất, em dùng hiệu ứng chuyển cảnh (Transition) để đảo chiều video lại.", correct: "Sai" }
+        ]},
+        { id: '2_c7', type: 'tf_cluster', question: "Quản lý tệp đa phương tiện trong Ngăn tư liệu (Project Bin) rất quan trọng để không bị lỗi dự án.", subQuestions: [
+            { id: 'd2_7a', text: "Ngăn tư liệu là danh sách chứa các nguồn âm thanh, hình ảnh được nạp vào để chuẩn bị đưa xuống Timeline.", correct: "Đúng" },
+            { id: 'd2_7b', text: "Nếu em đổi tên các tệp ảnh gốc trên ổ cứng máy tính thì các tệp trong phần mềm làm phim vẫn tự động cập nhật tên mới mà không bị lỗi.", correct: "Sai" },
+            { id: 'd2_7c', text: "Đang làm phim thì máy báo lỗi \"Missing file\" với một tệp nhạc nền do em vừa lỡ tay chuyển tệp nhạc đó sang thư mục khác, em cần khôi phục lại vị trí của nó để sửa lỗi.", correct: "Đúng" },
+            { id: 'd2_7d', text: "Để giảm dung lượng của tệp video xuất ra sau cùng, em phải xóa sạch các ảnh nháp không dùng đến đang nằm chờ ở ngăn tư liệu.", correct: "Sai" }
+        ]},
+        { id: '2_c8', type: 'tf_cluster', question: "Công đoạn xuất bản (Export/Save as Video) biến công sức thiết kế thành sản phẩm chia sẻ được.", subQuestions: [
+            { id: 'd2_8a', text: "Khi kết xuất video, phần mềm sẽ gộp tất cả các lớp hình, tiếng, chữ lại với nhau thành định dạng MP4 hoặc AVI.", correct: "Đúng" },
+            { id: 'd2_8b', text: "Tùy chọn Độ phân giải (Resolution) không ảnh hưởng gì đến kích thước dung lượng của tệp video xuất ra.", correct: "Sai" },
+            { id: 'd2_8c', text: "Nhóm em cần chia sẻ video lên nhóm Zalo của lớp nhưng mạng yếu, em nên chọn xuất video ở độ phân giải vừa phải (như 720p hoặc 480p) thay vì 4K.", correct: "Đúng" },
+            { id: 'd2_8d', text: "Nếu xuất video xong phát hiện âm thanh bị lệch nhịp, em vẫn có thể sửa lại bằng cách mở tệp dự án gốc (Project), căn chỉnh lại track âm thanh rồi thực hiện Export đè lên tệp cũ.", correct: "Đúng" }
+        ]}
+    ];
+
+    const testBanks = {
+        de1: de1_data,
+        de2: de2_data
+    };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Thầy/Cô vui lòng nhắc học sinh nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // Xử lý hiển thị phần 1 (Không đảo câu, không đảo đáp án)
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+            });
+            
+            // Xử lý hiển thị phần 2 (Không đảo câu, thêm prefix a,b,c,d)
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${part1.length + idx + 1}: ${q.question}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${sub.text}`;
+                });
+            });
+            
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); // Fallback
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.subQuestions.length;
+            else count++;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => { if (userAnswers[sub.id]) count++; });
+            } else {
+                if (userAnswers[q.id] !== undefined) count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-700 text-base md:text-lg font-extrabold leading-relaxed shadow-inner">${q.displayQuestion.replace(/\n/g, '<br/>')}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide">Sai</label></div></div>`).join('')}</div></div>`;
+        } else {
+            container.innerHTML = `<div class="fade-in">${currentIdx === 0 ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-xl font-extrabold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        let correct = 0;
+        let totalItems = getTotalItems();
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => { if (userAnswers[sub.id] === sub.correct) correct++; });
+            } else {
+                if (userAnswers[q.id] === q.correct) correct++;
+            }
+        });
+        const score = (correct * 10 / totalItems).toFixed(2);
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correct, tongCau: totalItems,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correct, totalItems, record.duration); });
+        }
+    };
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-green-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border-2 border-gray-100 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<p class="font-extrabold text-lg text-gray-800 mb-4">${q.displayQuestion}</p>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-gray-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 border border-green-200">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            } else {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<p class="font-extrabold text-lg text-gray-800 mb-4">${q.displayQuestion}</p>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-green-200 text-green-800 font-bold border-green-400 border-2'; 
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-200 text-red-800 font-bold line-through border-red-400 border-2'; 
+                    } else {
+                        optBg = 'bg-white text-gray-600 border border-gray-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-bold' : ''}">${opt}</span>
+                             </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-gray-50'} transition-colors border-b border-gray-100"><td class="px-3 sm:px-4 py-4 text-center font-black text-gray-400 text-sm">#${idx + 1}</td><td class="px-3 sm:px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-3 sm:px-4 py-4 font-extrabold text-gray-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-3 sm:px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-3 sm:px-4 py-4 text-center text-gray-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-3 sm:px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-green-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-3 sm:px-4 py-4 text-center text-gray-500 text-xs">${s.startTime}</td><td class="px-3 sm:px-4 py-4 text-center text-gray-500 text-xs">${s.endTime}</td><td class="px-3 sm:px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-3 sm:px-5 py-4 text-right text-xs text-gray-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
