@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Đề Thi Chuyên Anh Thái Bình 2025-2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: 'Be Vietnam Pro', sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); background-attachment: fixed; }
+        
+        .glass-card { background: #ffffff; border-radius: 16px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* ================= HIỆU ỨNG ĐÁP ÁN TRẮC NGHIỆM ================= */
+        .opt-radio { display: none; }
+        .opt-label {
+            display: flex; align-items: center; padding: 14px 16px; 
+            border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; 
+            transition: all 0.2s ease; background: #fff; 
+            font-weight: 700; color: #000000;
+            margin-bottom: 12px;
+        }
+        .opt-badge {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; background: #e2e8f0; color: #000000; font-weight: 900; font-size: 14px; margin-right: 14px; transition: all 0.2s;
+        }
+        .opt-label:active { transform: scale(0.98); }
+        
+        /* ĐỔ MÀU XANH KHI BẤM CHỌN ĐÁP ÁN TRONG LÚC LÀM BÀI */
+        .is-taking-test .opt-radio:checked + .opt-label {
+            background-color: #2563eb !important; 
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+            transform: translateY(-2px);
+        }
+        .is-taking-test .opt-radio:checked + .opt-label .opt-badge {
+            background-color: rgba(255,255,255,0.25) !important; color: #ffffff !important;
+        }
+
+        /* ================= REVIEW MODE (SAU KHI NỘP BÀI) ================= */
+        .review-correct-highlight { 
+            border-color: #22c55e !important; 
+            background-color: #f0fdf4 !important; 
+            color: #15803d !important; 
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.15); 
+        }
+        .review-correct-highlight .opt-badge { background-color: #22c55e !important; color: white !important; }
+        
+        .review-wrong-strike { 
+            border-color: #ef4444 !important; 
+            background-color: #fef2f2 !important; 
+            color: #ef4444 !important; 
+        }
+        .review-wrong-strike .opt-badge { background-color: #ef4444 !important; color: white !important; }
+        
+        .text-strike { text-decoration: line-through; text-decoration-color: #ef4444; text-decoration-thickness: 2px;}
+
+        .section-header { color: #dc2626 !important; border-bottom: 3px solid #fecaca !important; }
+        .instruction-text { color: #dc2626 !important; font-weight: 700; font-size: 15px; white-space: pre-line; }
+        .text-question { color: #dc2626 !important; font-size: 16px; line-height: 1.6; }
+        
+        .passage-box { background: #f8fafc; border-left: 5px solid #3b82f6; padding: 16px; border-radius: 8px; max-height: 350px; overflow-y: auto; font-size: 15px; line-height: 1.7; color: #000000; font-weight: 600; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 24px;}
+        .explanation-box { background-color: #fefce8; border-left: 4px solid #eab308; padding: 16px; border-radius: 0 12px 12px 0; margin-top: 12px; font-size: 14.5px; color: #422006; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        u { text-decoration: underline !important; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+
+        #scores-tbody tr:hover { background-color: #f8fafc; }
+        #scores-tbody tr td { color: #000000 !important; font-weight: 900 !important; border-bottom: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body oncopy="return false" oncut="return false" onpaste="return false">
+
+<div id="app" class="w-full flex flex-col items-center justify-center min-h-screen p-2 sm:p-6">
+
+     <div id="login-section" class="w-full max-w-md fade-in">
+        <div class="glass-card p-6 sm:p-8 text-center relative overflow-hidden">
+               <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+            <h1 class="text-[22px] font-bold text-[#dc2626] mb-1">ĐỀ THI CHUYÊN ANH</h1>
+            <p class="text-gray-500 font-semibold text-sm mb-6">(TRƯỜNG THPT CHUYÊN THÁI BÌNH 2025-2026)</p>
+
+            <form id="login-form" class="space-y-4 text-left">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Nhập họ tên...">
+                    </div>
+                    <div class="w-1/3">
+                        <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-center text-gray-700" placeholder="Lớp 9A">
+                    </div>
+                </div>
+
+                <div class="flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-xl">
+                    <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-black text-xl mr-4 shadow-sm">150</div>
+                    <div>
+                        <div class="font-bold text-gray-800 text-[15px]">ĐỀ CHUYÊN THÁI BÌNH 25-26</div>
+                        <div class="text-[12px] text-gray-500 font-semibold mt-0.5">Thời gian làm bài: 150 phút</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-lg tracking-wide">
+                    BẮT ĐẦU LÀM BÀI
+                </button>
+            </form>
+            <div class="mt-6">
+                <button onclick="showSection('scores')" class="text-white bg-black/20 px-4 py-2 rounded-lg font-bold text-sm hover:bg-black/30 transition-all backdrop-blur-sm">🏆 Xem bảng xếp hạng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-section" class="w-full max-w-4xl hidden fade-in pb-10">
+        
+        <div class="glass-card w-full overflow-hidden flex flex-col relative" id="quiz-container-box">
+            
+            <div class="sticky top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200 p-3 sm:p-4 flex justify-between items-center w-full transition-all">
+                <div class="flex items-center gap-2">
+                    <button onclick="goHome()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm">
+                        🏠 <span class="hidden sm:inline">Trang chủ</span>
+                    </button>
+                    <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm">
+                        🏆 <span class="hidden sm:inline">Bảng Xếp Hạng</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="hidden md:flex items-center text-right mr-2 gap-2">
+                        <div class="w-8 h-8 bg-[#ea580c] rounded-full text-white flex items-center justify-center font-black text-[10px] shadow-sm border border-white">HS</div>
+                        <div>
+                            <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wide" id="student-name-header">Tên - Lớp</div>
+                            <div class="text-[13px] font-black text-blue-800 tracking-tight" id="quiz-header-status">ĐỀ CHUYÊN THÁI BÌNH 25-26</div>
+                        </div>
+                    </div>
+                    <div class="bg-red-50 text-red-600 font-black px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm sm:text-base border border-red-100 shadow-inner">
+                        ⏰ <span id="timer" class="font-mono tracking-widest">150:00</span>
+                    </div>
+                    <div class="bg-blue-50 text-blue-700 font-black px-3 py-1.5 rounded-lg border border-blue-100 shadow-inner text-sm sm:text-base min-w-[55px] text-center">
+                        <span id="progress-text">0/81</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-8 w-full">
+                <div id="question-render-area"></div>
+                <div id="action-bar" class="mt-10 text-center border-t-2 border-gray-100 pt-8">
+                    <button onclick="submitQuiz()" class="px-12 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-xl rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all tracking-wider w-full sm:w-auto">NỘP BÀI NGAY</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="review-action-bar" class="hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t-2 border-gray-200 p-4 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex justify-center gap-4">
+        <button onclick="goHome()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition-colors text-sm sm:text-base flex items-center gap-2">
+            🏠 Về Trang chủ
+        </button>
+        <button onclick="showSection('scores')" class="px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold shadow-md hover:bg-blue-800 transition-colors text-sm sm:text-base flex items-center gap-2">
+            🏆 Xem Bảng điểm
+        </button>
+    </div>
+
+    <div id="scores-section" class="w-full max-w-6xl hidden fade-in">
+        <div class="glass-card p-4 sm:p-8">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-red-100">
+                <button onclick="goHome()" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-bold text-sm transition flex items-center gap-2 shadow-sm">
+                    🏠 Trang chủ
+                </button>
+                <h2 class="text-lg sm:text-xl font-black text-red-600 uppercase tracking-tight m-0">BẢNG XẾP HẠNG</h2>
+                <div class="w-24 hidden sm:block"></div> 
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border-2 border-blue-600">
+                <table class="w-full text-sm text-left font-semibold whitespace-nowrap">
+                    <thead class="bg-blue-600 text-white">
+                        <tr>
+                            <th class="px-4 py-4 text-center font-bold">#</th>
+                            <th class="px-4 py-4 text-center font-bold">Lớp</th>
+                            <th class="px-4 py-4 font-bold">Họ tên</th>
+                           
+                            <th class="px-4 py-4 text-center font-bold">Điểm trắc nghiệm</th>
+                            <th class="px-4 py-4 text-center font-bold">Thời gian</th>
+                            <th class="px-4 py-4 text-right font-bold">Ngày nộp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scores-tbody" class="bg-white divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl p-6 sm:p-8 max-w-sm w-full text-center fade-in border-t-[6px] border-yellow-400">
+        <div class="text-6xl mb-3 animate-pulse">🤔</div>
+        <h3 class="text-xl font-black text-gray-800 mb-2">Xác nhận nộp bài?</h3>
+        <p class="text-sm font-semibold text-gray-500 mb-6">Bạn có chắc chắn muốn nộp bài và kết thúc bài thi ngay bây giờ không?</p>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition shadow-sm">Chưa, xem lại</button>
+            <button onclick="processSubmission()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-md">Nộp luôn</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-sm overflow-hidden fade-in text-center flex flex-col">
+        <div class="bg-gradient-to-br from-blue-600 to-purple-600 p-8 text-white relative">
+            <div class="text-7xl mb-3 animate-bounce">🎉</div>
+            <h3 class="text-2xl font-black mb-1 tracking-wide">NỘP BÀI THÀNH CÔNG!</h3>
+            <p class="font-bold text-white/90 text-sm" id="result-student-name"></p>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 mb-5 relative">
+                <div class="text-[10px] text-blue-500 font-black mb-1 uppercase tracking-widest">ĐIỂM TRẮC NGHIỆM TỰ ĐỘNG</div>
+                <div class="text-6xl font-black text-blue-700 drop-shadow-sm" id="result-score"></div>
+                <div class="text-sm font-bold text-gray-600 mt-2" id="result-detail"></div>
+                <div class="text-[10px] font-bold text-orange-600 mt-3 bg-orange-100 px-3 py-1.5 rounded-lg inline-block">Chú ý: Điểm này chưa bao gồm bài viết luận!</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="reviewQuiz()" class="py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition text-[15px] shadow-sm border border-gray-200">🔎 Học & Xem giải</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="py-3.5 bg-[#1e3a8a] text-white rounded-xl font-bold hover:bg-blue-800 transition shadow-md text-[15px]">🏆 Bảng Xếp Hạng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const readHeadings = [
+        "i. Educational applications of subject-specific games",
+        "ii. How gaming reduces the importance of academic competition",
+        "iii. Teachers rejecting gaming due to skill deficiency",
+        "iv. Difficulties in using games in school",
+        "v. Gaming completely replaces traditional learning methods",
+        "vi. Shifting perceptions of gaming in the classroom",
+        "vii. Simulation games for educational development and classroom discussion",
+        "viii. The future of education technology",
+        "ix. Motivational benefits and challenges of games in education",
+        "x. The educational value and challenges of game-based learning"
+    ];
+
+    const rawQuestions = [
+        // ---------- SECTION A. LISTENING ----------
+        { id: "L1_1", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", ins: "Part 1. For questions 1 - 5, listen to two people talking about accommodation options at Sunnyside Holiday Park and fill in each blank with ONE WORD.\n\nAccommodation at Sunnyside Holiday Park\nMotel rooms: $205; sleep 2 people", q: "1. All rooms have a view of the ________", ans: "mountains", expl: "💡 Băng nghe: 'Do they look out over the lake? In fact, they look out in the other direction. So they're directly facing the mountains out that way.'" },
+        { id: "L1_2", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", ins: "Studios: $155; sleep 4 people", q: "2. No kitchen but a kettle and a ________ for making drinks and snacks", ans: "microwave", expl: "💡 Băng nghe: 'there's no kitchen as such... but there's a kettle, so you can make hot drinks and also a microwave...'" },
+        { id: "L1_3", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", ins: "Budget units: $222; sleep 4 people", q: "3. Kitchen with a fridge and a ________", ans: "dishwasher", expl: "💡 Băng nghe: 'They have a full kitchen with a fridge and everything. And a dishwasher? Yes absolutely.'" },
+        { id: "L1_4", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", q: "4. Need to bring your own ________", ans: "towels", expl: "💡 Băng nghe: 'all the bedding and electric blankets are provided, but the towels, guests are required to supply their own.'" },
+        { id: "L1_5", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", ins: "Other facilities:\n- laundry\n- games room for all ages", q: "5. A ________ for guests under 12", ans: "playground", expl: "💡 Băng nghe: 'The trampolines being repaired I'm afraid... but there is a playground for children under 12.'" },
+
+        { id: "L2_6", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", ins: "Part 2. For questions 6-10, listen to a piece of news about cancer and fill in each blank with NO MORE THAN TWO WORDS.", q: "6. Cancer is responsible for one in every seven deaths globally and begins when a genetic change ________ regulation of the growth and division of cells, making them grow uncontrollably.", ans: "disrupts the", expl: "💡 Băng nghe: 'But when a genetic change disrupts this process, cells begin to grow and divide uncontrollably...'. Bạn có thể điền 'disrupts' hoặc 'disrupts the'." },
+        { id: "L2_7", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", q: "7. When these genes malfunction, abnormal cell growth forms tumors, which can be ________ or malignant. Malignant tumors can spread to other parts of the body through metastasis, becoming particularly dangerous.", ans: "benign", expl: "💡 Băng nghe: 'Tumors may be benign, meaning that they remain in one area, or malignant, which means that they are capable of spreading.'" },
+        { id: "L2_8", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", q: "8. The exact cause of cancer is unknown, but ________ and environmental factors like radiation and smoking may contribute.", ans: "inherited traits", expl: "💡 Băng nghe: 'Inherited traits may be behind some of the genetic changes that lead to the formation of cancerous cells...'" },
+        { id: "L2_9", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", q: "9. In the U.S., about one-third of people will develop cancer, with ________ cancer being the most common and lung cancer the deadliest.", ans: "breast", expl: "💡 Băng nghe: 'Breast cancer is currently the most prevalent type, and lung cancer causes the most deaths.'" },
+        { id: "L2_10", sec: "SECTION A. LISTENING (2.0 pts)", type: "text", audio: "Listening chuyên Anh Thái Bình.mp3", q: "10. Advances in treatment and early detection have led to a 26% drop in cancer ________ since the 1990s, offering hope in the fight against the disease.", ans: "mortality rates", expl: "💡 Băng nghe: 'Since just the 1990s, cancer mortality rates have dropped more than 26% in the US...'" },
+
+        { id: "L3_11", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", ins: "Part 3. For questions 11-15, listen to a report on frogs and choose the answer A, B, or C which fits best according to what you hear.", q: "11. What is the report mainly about?", opts: ["A. The importance of fungus to frog life", "B. Common habitats of frogs in the wild", "C. A decrease in worldwide frog populations"], ans: 2, expl: "💡 Băng nghe đề cập đến sự sụt giảm số lượng ếch do biến đổi khí hậu, mất môi trường sống và dịch nấm chytrid trên toàn thế giới ('dramatic decline in frog populations around the world')." },
+        { id: "L3_12", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", q: "12. How does chytrid fungus affect frogs?", opts: ["A. It poisons their food supply.", "B. It harms their skin.", "C. It causes them to avoid water."], ans: 1, expl: "💡 Băng nghe: 'It's a skin disease called chytrid fungus, which coats a frog's skin...' (Đó là một căn bệnh ngoài da bao bọc lấy làn da của ếch)." },
+        { id: "L3_13", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", q: "13. Why does the biologist mention zoos?", opts: ["A. to indicate the source of chytrid fungus.", "B. to compare the frog habitats in captivity to those in the wild.", "C. to explain where some frogs are being treated."], ans: 2, expl: "💡 Băng nghe: 'Many zoos are helping to combat the problem by starting captive breeding programs... cleaning its frogs with an anti-fungal wash...' Sở thú là nơi đang tham gia điều trị và bảo tồn ếch." },
+        { id: "L3_14", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", q: "14. What does the biologist say about shipping frogs internationally?", opts: ["A. Governments should ban the shipping of frogs.", "B. Frogs should not be delivered until proven healthy.", "C. Healthy frogs should not be transported."], ans: 1, expl: "💡 Băng nghe: 'holding frog shipments between different countries until they know the frogs are healthy...' (Phải giữ lại các chuyến hàng chuyển ếch cho đến khi chắc chắn chúng khỏe mạnh)." },
+        { id: "L3_15", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", q: "15. According to the reporter, how can listeners address the problem?", opts: ["A. by contributing to an animal organization.", "B. by contacting their government officials.", "C. by visiting their local zoos."], ans: 0, expl: "💡 Băng nghe: '...so please consider making a donation to an animal conservation group...' (Quyên góp = contribute)." },
+
+        { id: "L4_16", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", ins: "Part 4. For questions 16-20, listen to two ecologists, called Jack Benson and Trisha Roberts, talking about sand and decide whether the following statements are True (T) or False (F) according to what you hear.", q: "16. Jack thinks the main reason people are attracted to beaches is because the sound of the waves is hypnotic.", opts: ["A. True (T)", "B. False (F)"], ans: 1, expl: "💡 Băng nghe Jack nói anh ấy thích âm thanh của sóng, nhưng lý do chính (main reason) khiến mọi người bị thu hút là sự bất biến của bờ biển: 'I think it's mainly the unchanging quality of the coast that means people keep going back to it'. Do đó thông tin này là Sai (False)." },
+        { id: "L4_17", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", q: "17. When Trisha read an article about 'pop-up' beaches, she was ashamed of having visited one.", opts: ["A. True (T)", "B. False (F)"], ans: 0, expl: "💡 Băng nghe Trisha thừa nhận: 'I'm embarrassed that I went to one in London last year...' (Embarrassed đồng nghĩa với ashamed - cảm thấy xấu hổ/ngại ngùng). -> Đúng (True)." },
+        { id: "L4_18", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", q: "18. Jack and Trisha agree that the practice of adding fresh sand to beaches must be harmful to the wildlife there.", opts: ["A. True (T)", "B. False (F)"], ans: 0, expl: "💡 Trisha: 'surely the crabs, sandworms and so on... can't survive huge amounts of new sand...'. Jack đồng tình: 'Yeah... it can create an unnatural sort of barrier...' -> Đúng (True)." },
+        { id: "L4_19", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", q: "19. Jack mentions the fact that more people live in cities nowadays to criticise people's lack of awareness of environmental issues.", opts: ["A. True (T)", "B. False (F)"], ans: 1, expl: "💡 Jack không hề chỉ trích (criticise), anh ấy chỉ giải thích về mặt kinh tế và còn bênh vực: 'You can't blame people for moving to cities...' (Bạn không thể trách mọi người vì đã chuyển đến thành phố). -> Sai (False)." },
+        { id: "L4_20", sec: "SECTION A. LISTENING (2.0 pts)", type: "mc", audio: "Listening chuyên Anh Thái Bình.mp3", q: "20. Trisha is particularly concerned that removing sand from beaches may result in a change in the lifestyle of coastal communities.", opts: ["A. True (T)", "B. False (F)"], ans: 0, expl: "💡 Trisha lo ngại: 'they can't carry on being fishermen and have to move or try to find another job.' (Ngư dân phải chuyển đi hoặc tìm nghề khác). -> Điều này chính là sự thay đổi lối sống (lifestyle). -> Đúng (True)." },
+
+        // ---------- SECTION B. VOCABULARY & GRAMMAR ----------
+        { id: "G1_21", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", ins: "Part 1. For questions 21-35, choose the best answer to complete each of the following sentences.", q: "21. ________ she went back to her room.", opts: ["A. There was no cause for alarm", "B. Without having cause for alarm", "C. There being no cause for alarm", "D. Being no cause for alarm"], ans: 2, expl: "💡 Ngữ pháp: Rút gọn hai mệnh đề khác chủ ngữ (Absolute Phrase) dùng cấu trúc 'There being + Noun' (Vì không có nguyên nhân nào đáng lo ngại...)." },
+        { id: "G1_22", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "22. It is an ________ that the most talented artists often go completely unrecognized in their lifetime.", opts: ["A. irregularity", "B. eccentricity", "C. anomaly", "D. abnormality"], ans: 2, expl: "💡 Từ vựng: 'anomaly' = sự dị thường, sự bất thường (một nghịch lý, sự việc kỳ lạ). Nghịch lý ở đây là những nghệ sĩ tài năng nhất lại thường không được công nhận khi còn sống." },
+        { id: "G1_23", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "23. My father supposes, ________ that he will be retiring at sixty.", opts: ["A. like most people did", "B. like most people will", "C. as are most people", "D. as do most people"], ans: 3, expl: "💡 Ngữ pháp: Đảo ngữ thay thế 'as + trợ động từ + S' để chỉ sự đồng tình tương tự với hành động. Vì động từ chính là 'supposes' (hiện tại đơn) nên mượn trợ động từ là 'do' -> 'as do most people' (như hầu hết mọi người thường nghĩ)." },
+        { id: "G1_24", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "24. The committee was insistent that the decision ________ to avoid potential consequences.", opts: ["A. be reversed", "B. was reversed", "C. will be reversed", "D. should reverse"], ans: 0, expl: "💡 Thể giả định (Subjunctive): 'S + was insistent that + S2 + (should) + V-bare'. Do 'the decision' nhận tác động (được đảo ngược) nên dùng bị động dạng nguyên mẫu: 'be reversed'." },
+        { id: "G1_25", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "25. ________ results that differed from previous experiments, the researchers were shocked at the most recent data.", opts: ["A. Since the expectation of", "B. While they expected", "C. Although the expected", "D. Expected though they were"], ans: 1, expl: "💡 Mệnh đề chỉ sự nhượng bộ / đối lập: 'While they expected...' (Mặc dù họ mong đợi kết quả có sự khác biệt, nhưng họ vẫn bị sốc trước dữ liệu gần đây nhất)." },
+        { id: "G1_26", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "26. Rebecca Crittenden wrote several successful novels, ________ her beautifully illustrated children's books that she is most famous for.", opts: ["A. yet they are", "B. and is it", "C. so these are", "D. but it is"], ans: 3, expl: "💡 Cấu trúc chẻ nhấn mạnh (Cleft sentence): 'but it is... that...' (Nhưng chính những cuốn sách minh họa của cô ấy mới là thứ cô ấy nổi tiếng nhất)." },
+        { id: "G1_27", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "27. He must have taken a wrong turn; otherwise, he ________ here an hour ago.", opts: ["A. would be arriving", "B. should arrive", "C. would have arrived", "D. arrived"], ans: 2, expl: "💡 Câu điều kiện giả định trong quá khứ với 'otherwise' (nếu không thì). Sự việc đáng lẽ đã diễn ra ở quá khứ (an hour ago) nên dùng câu điều kiện Loại 3: 'would have + V-p2'." },
+        { id: "G1_28", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "28. Duke Ellington's orchestra, ________ his own often complex compositions, made many innovations in jazz.", opts: ["A. he played", "B. playing", "C. that it played", "D. was playing"], ans: 1, expl: "💡 Rút gọn mệnh đề quan hệ dạng chủ động (Dàn nhạc chơi những bản hòa tấu...) -> Dùng V-ing: 'playing...'." },
+        { id: "G1_29", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "29. Until a ________ agreement has been reached, I am not committed to accepting the offer.", opts: ["A. hard", "B. stable", "C. firm", "D. fickle"], ans: 2, expl: "💡 Collocation: 'a firm agreement' = một thỏa thuận chắc chắn, chính thức và không thể thay đổi dễ dàng." },
+        { id: "G1_30", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "30. Their solution was both innovative and ________ allowing for long-term sustainability.", opts: ["A. profound", "B. viable", "C. ambitious", "D. illegible"], ans: 1, expl: "💡 Từ vựng: 'viable' = khả thi, có thể tồn tại và phát triển thành công trong thực tế (đặc biệt là đi kèm với 'sustainability' - sự bền vững)." },
+        { id: "G1_31", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "31. In Europe, ________ most cities are still designed for the old modes of transport; adaptation to ________ motor car has involved adding ring roads...", opts: ["A. the/a", "B. the/ no article", "C. no article/the", "D. no article/a"], ans: 2, expl: "💡 Mạo từ: 'most cities' (hầu hết các thành phố nói chung -> không dùng mạo từ). 'the motor car' (chỉ chung cho phát minh xe hơi / loại phương tiện xe hơi nói chung -> dùng 'the')." },
+        { id: "G1_32", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "32. The cyberattack that caused a lot of damage is believed ________ by a group of hackers targeting financial institutions.", opts: ["A. to be launched", "B. to have launched", "C. to have been launched", "D. to be launching"], ans: 2, expl: "💡 Cấu trúc bị động đặc biệt: Cuộc tấn công đã xảy ra trong quá khứ và ở thể bị động (bị phát động bởi hacker) -> Dùng 'be believed to have been + V-p2'." },
+        { id: "G1_33", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "33. Instead of taking responsibility for the failure of the project, the manager tried to ________ to his subordinates, which only worsened the team's morale.", opts: ["A. call it a day", "B. pass the buck", "C. read between the lines", "D. sit on the fence"], ans: 1, expl: "💡 Thành ngữ (Idiom): 'pass the buck (to someone)' = đùn đẩy trách nhiệm cho người khác. (Thay vì nhận lỗi, người quản lý lại đổ lỗi cho cấp dưới)." },
+        { id: "G1_34", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "34. The Red Cross is ________ an international aid organization.", opts: ["A. intriguingly", "B. intrusively", "C. intrinsically", "D. intrepidly"], ans: 2, expl: "💡 Từ vựng: 'intrinsically' = về bản chất, thực chất. (Hội Chữ thập đỏ về bản chất là một tổ chức viện trợ quốc tế)." },
+        { id: "G1_35", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "mc", q: "35. Crops are often completely destroyed by ________ of locusts.", opts: ["A. bands", "B. troupes", "C. swarms", "D. flocks"], ans: 2, expl: "💡 Collocation chỉ bầy đàn: Dùng 'a swarm of locusts' (một bầy châu chấu) hoặc a swarm of bees (bầy ong). Flocks thường dùng cho chim/cừu. Troupes dùng cho diễn viên/nghệ sĩ." },
+
+        { id: "G2_36", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", ins: "Part 2. For questions 36-40, provide the correct form of the words in the brackets.", q: "36. Pablo Picasso is generally considered to be the (MOST) ________ figure of the 20th century art.", ans: "foremost", expl: "💡 Từ MOST chuyển thành FOREMOST (Quan trọng nhất, xuất sắc nhất, lỗi lạc nhất)." },
+        { id: "G2_37", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", q: "37. It is (CUSTOM) ________ to discuss Picasso's works in terms of a series of periods.", ans: "customary", expl: "💡 Đứng sau động từ to be 'is' cần một Tính từ. CUSTOM (phong tục) -> CUSTOMARY (thông thường, theo lệ thường)." },
+        { id: "G2_38", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", q: "38. In his Blue Period, Picasso's paintings depicted social (CAST) ________ such as beggars and prostitutes...", ans: "outcasts", expl: "💡 Cần danh từ chỉ người mang nghĩa 'bị xã hội ruồng bỏ', đếm được số nhiều. CAST -> OUTCASTS (những kẻ bị bỏ rơi)." },
+        { id: "G2_39", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", q: "39. In the Rose Periods, beginning around 1904, Picassos' palette (BRIGHT) ________ to include pinks and beige...", ans: "brightened", expl: "💡 Ở đây đóng vai trò là động từ chia ở quá khứ đơn (miêu tả sự việc trong quá khứ). BRIGHT -> BRIGHTENED (trở nên tươi sáng hơn)." },
+        { id: "G2_40", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", q: "40. His early cubist pictures show the (INSPIRE) ________ of primitive African statues...", ans: "inspiration", expl: "💡 Đứng sau mạo từ 'the' cần một Danh từ. INSPIRE (truyền cảm hứng) -> INSPIRATION (sự ảnh hưởng, nguồn cảm hứng)." },
+
+        { id: "G3_41", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", ins: "Part 3. Identify the 5 mistakes in the following passage and write the corrections.\nType ONLY the corrected word. Do not type the wrong word.\n\n(1) To guarantee that opponents can be overcome, speed, stamina, and agility are essential, not to mention outstanding natural talent.\n(2) Both a rigorous and comprehensive fitness regime and a highly nutritional diet are vital for top-level performance.", q: "41. Mistake in Sentence 2: Both a rigorous... fitness regime and a highly nutritional diet are vital...", ans: "nutritious", expl: "💡 'Nutritional' (thuộc về dinh dưỡng). Phải sửa thành 'nutritious' (bổ dưỡng, chứa nhiều dưỡng chất tốt cho cơ thể) khi nói về chế độ ăn uống (diet)." },
+        { id: "G3_42", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", ins: "(3) It is carbohydrates, rather than proteins, that provide athletes with the endurance they need to compete.\n(4) This means that pasta is more beneficial than eggs or meat.\n(5) Such a diet enables them to move very energetically when requiring.", q: "42. Mistake in Sentence 5: ...to move very energetically when requiring.", ans: "required", expl: "💡 Rút gọn mệnh đề mang nghĩa bị động: 'when they are required' -> 'when required' (khi được yêu cầu, khi cần thiết)." },
+        { id: "G3_43", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", ins: "(6) Failure to follow a sensible diet can result in the ability to maintain stamina.", q: "43. Mistake in Sentence 6: Failure to follow a sensible diet can result in the ability to maintain stamina.", ans: "inability", expl: "💡 Sai về ngữ nghĩa. Việc thất bại (không tuân theo) một chế độ ăn uống hợp lý phải dẫn đến việc 'Mất khả năng / Không có khả năng' duy trì sức bền. Sửa 'ability' thành 'inability'." },
+        { id: "G3_44", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", ins: "(7) Regular training to increase muscular strength is also a vital part of a professional's regime, and this is typical done by exercising with weights.", q: "44. Mistake in Sentence 7: ...and this is typical done by exercising with weights.", ans: "typically", expl: "💡 Đứng trước động từ (done/V-p2) bổ nghĩa cho nó phải là một Trạng từ. Sửa 'typical' thành 'typically'." },
+        { id: "G3_45", sec: "SECTION B. VOCABULARY & GRAMMAR (2.5 pts)", type: "text", ins: "(8) Sports people are prone for injuries but a quality training regime can ensure that the severity of these can be minimised.", q: "45. Mistake in Sentence 8: Sports people are prone for injuries...", ans: "to", expl: "💡 Giới từ cố định: 'be prone TO something' = dễ bị mắc phải, dễ bị (chấn thương). Không dùng giới từ 'for'." },
+
+        // ---------- SECTION C. READING ----------
+        { id: "R1_46", sec: "SECTION C. READING (3.0 pts)", type: "mc", 
+          passage: `The media has a big (46) ________ on what people think and how they behave. That's why it is important to think carefully about the information we read, watch, or listen to. (47) ________ the media can give us news, entertain us, and try to change our opinions.\n\nOne of the main purposes of the media is to provide people with important information about what is happening around them. (48) ________ The media also has the power to influence people's opinions and behaviors. For example, news stories can change the way people think about social or political issues. By reporting on current events, the media keeps the public informed and helps to hold those in power accountable.\n\nIn addition to informing, the media also entertains. (49) ________ Whether it's through movies, music or video games, the media offers a variety of forms of entertainment that can help people relax, escape and connect with others.\n\nHowever, the media also has the potential to be misused. By reporting on current events, the media can shape public opinion. The media can be used to entertain and inspire. By evaluating the credibility of sources, identifying biases and seeking diverse perspectives, individuals can make (50) ________ decisions and avoid being manipulated.`,
+          ins: "Part 1. For questions 46-50, read the passage and choose the best answer to fill in each blank.", 
+          q: "Question 46.", opts: ["A. reaction", "B. consequence", "C. impact", "D. intention"], ans: 2, expl: "💡 Cấu trúc: 'have a big impact on something' = có ảnh hưởng / tác động lớn đối với điều gì đó." },
+        { id: "R1_47", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "Question 47.", opts: ["A. Whether it is newspapers, television, or online platforms", "B. That it is newspapers, television, or online platforms", "C. Which includes newspapers, television, or online platforms", "D. Whatever platform it uses, which includes newspapers, television, and the internet"], ans: 0, expl: "💡 Cấu trúc nhượng bộ / liệt kê đa sự lựa chọn: 'Whether A, B, or C...' = Cho dù đó là A, B hay C (thì truyền thông vẫn có thể cung cấp tin tức...)." },
+        { id: "R1_48", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "Question 48.", opts: ["A. This helps people understand the world and make better decisions in their daily lives.", "B. That helps people understand the world and make better decisions in their daily lives.", "C. While it helps people understand the world and make better decisions in their daily lives.", "D. What helps people understand the world and make better decisions in their daily lives."], ans: 0, expl: "💡 Đại từ chỉ định 'This' đứng đầu câu được dùng để chỉ vế câu đằng trước (việc cung cấp thông tin quan trọng) -> Điều này giúp con người hiểu về thế giới và đưa ra quyết định..." },
+        { id: "R1_49", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "Question 49.", opts: ["A. Entertainment content is a powerful aspect of modern media.", "B. A powerful aspect is an entertainment content of modern media.", "C. Modern media has an entertainment content of powerful aspect.", "D. Modern media consists of entertainment content and a powerful aspect."], ans: 0, expl: "💡 Ý nghĩa câu hợp lý nhất và đúng trật tự từ: 'Entertainment content is a powerful aspect of modern media.' (Nội dung giải trí là một khía cạnh mạnh mẽ của truyền thông hiện đại)." },
+        { id: "R1_50", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "Question 50.", opts: ["A. aware", "B. informed", "C. confident", "D. active"], ans: 1, expl: "💡 Cụm từ cố định: 'make informed decisions' = đưa ra những quyết định sáng suốt (dựa trên việc đã có đủ thông tin và sự hiểu biết)." },
+
+        { id: "R2_51", sec: "SECTION C. READING (3.0 pts)", type: "text", 
+          passage: `The Power of Saying Sorry\n\nSaying sorry is not something (51) ________ comes easily to many people. I know I couldn't for a very long time. I was too self-righteous and arrogant to be able to apologize. I learned how to behave like this from my father, and then I met my match - a boyfriend who made me look at my own actions. Now I've learned that not only do we all make mistakes but what a magnificent gift it is to be able to admit them, and then apologize as well.\n\nOf course, not all apologizing is powerful. The British tend to say sorry too often, as a way of pleasing other people. It's glib and without any real feeling, but it's a polite formula in certain (52) ________ situations. Powerful saying sorry is about real (53) ________ - it's honest and heartfelt.\n\nTraditionally, in Britain, saying sorry has been taken to mean backing (54) ________ losing the argument or being weak - I've certainly been guilty of thinking this in the past.\n\nBut there are real signs that times are changing. "As a society, we know more about psychology", says counsellor Paula Hall. "We are learning that saying sorry is about allowing yourself to be vulnerable, which is actually a sign of strength, not (55) ________. You learn from experience that saying sorry increases people's respect for you, rather than diminishing it."`,
+          ins: "Part 2. For questions 51-55, read the passage and fill in each blank with ONE word.", 
+          q: "51. Fill in blank (51):", ans: "that", expl: "💡 Mệnh đề quan hệ: Dùng đại từ quan hệ 'that' (hoặc 'which') để thay thế cho đại từ bất định 'something'." },
+        { id: "R2_52", sec: "SECTION C. READING (3.0 pts)", type: "text", q: "52. Fill in blank (52):", ans: "social", expl: "💡 Collocation: 'social situations' = những tình huống giao tiếp xã hội (nơi mà mọi người thường xuyên dùng phép lịch sự xã giao)." },
+        { id: "R2_53", sec: "SECTION C. READING (3.0 pts)", type: "text", q: "53. Fill in blank (53):", ans: "feeling", expl: "💡 Căn cứ vào vế đằng trước: 'without any real feeling' (không mang cảm xúc thật), thì ở đây một lời xin lỗi có sức mạnh phải chứa đựng 'real feeling' (cảm xúc thật sự, chân thành)." },
+        { id: "R2_54", sec: "SECTION C. READING (3.0 pts)", type: "text", q: "54. Fill in blank (54):", ans: "down", expl: "💡 Phrasal verb: 'back down' = nhượng bộ, chịu thua (trong một cuộc cãi vã hay tranh luận)." },
+        { id: "R2_55", sec: "SECTION C. READING (3.0 pts)", type: "text", q: "55. Fill in blank (55):", ans: "weakness", expl: "💡 Cặp từ trái nghĩa: Dấu hiệu của sức mạnh (strength) chứ không phải là sự yếu đuối (weakness)." },
+
+        { id: "R3_56", sec: "SECTION C. READING (3.0 pts)", type: "mc", 
+          passage: `No longer is asthma considered a condition with isolated, acute episodes of bronchospasm. Rather, asthma is now understood to be a chronic inflammatory disorder of the airways - that is, inflammation makes the airways chronically sensitive. This shift in understanding has changed how asthma is diagnosed and treated. When these hyperresponsive airways are irritated, airflow is limited, and attacks of coughing, wheezing, chest tightness and breathing difficulty occur.\n\nAsthma involves complex interactions among inflammatory cells, mediators, and the cells and tissues in the airways. The interactions result in airflow limitation from acute bronchoconstriction, swelling of the airway wall, increased mucus secretion, and airway remodeling. The inflammation also causes an increase in airway responsiveness. During an asthma attack, the patient attempts to compensate by breathing at a higher lung volume in order to keep the air flowing through the constricted airways, and the greater the airway limitation, the higher the lung volume must be to keep airways open. The morphologic changes that occur in asthma include bronchial infiltration by inflammatory cells. Key effector cells in the inflammatory response are the mast cells, T lymphocytes, and eosinophils. Mast cells and eosinophils are also significant participants in allergic responses, hence the similarities between allergic reactions and asthma attacks. Other changes include mucus plugging of the airways, interstitial edema, and microvascular leakage. Destruction of bronchial epithelium and thickening of the subbasement membrane are also characteristic. In addition, there may be hypertrophy and hyperplasia of airway smooth muscle, increase in goblet cell number, and enlargement of submucous glands.\n\nAlthough causes of the initial tendency toward inflammation in the airways of patients with asthma are not yet certain to date, the strongest identified risk factor is atopy. [I] This inherited familial tendency to have allergic reactions includes increased sensitivity to allergens that are risk factors for developing asthma. [II] Some of these allergens include domestic dust mites, animals with fur, cockroaches, pollens, and molds. [III] By avoiding these allergens and triggers, a person with asthma lowers his or her risk of irritating sensitive airways. [IV] A few avoidance techniques include: keeping the home clean and well ventilated, using an air conditioner in the summer months when pollen and mold counts are high, and getting an annual influenza vaccination.\n\nOf course, asthma sufferers should avoid tobacco smoke altogether. Cigar, cigarette, or pipe smoke is a trigger whether the patient smokes or inhales the smoke from others. Smoke increases the risk of allergic sensitization in children, increases the severity of symptoms, and may be fatal in children who already have asthma. Many of the risk factors for developing asthma may also provoke asthma attacks, and people with asthma may have one or more triggers, which vary from individual to individual. The risk can be further reduced by taking medications that decrease airway inflammation. Most exacerbations can be prevented by the combination of avoiding triggers and taking anti-inflammatory medications. An exception is physical activity, which is a common trigger of exacerbations in asthma patients. However, asthma patients should not necessarily avoid all physical exertion, because some types of activity have been proven to reduce symptoms. Rather, they should work in conjunction with a doctor to design a proper training regimen, which includes the use of medication.\n\nIn order to diagnose asthma, a healthcare professional must appreciate the underlying disorder that leads to asthma symptoms and understand how to recognize the condition through information gathered from the patient's history, physical examination, measurements of lung function, and allergic status. Because asthma symptoms vary throughout the day, the respiratory system may appear normal during physical examination. Clinical signs are more likely to be present when a patient is experiencing symptoms; however, the absence of symptoms upon examination does not exclude the diagnosis of asthma.`,
+          ins: "Part 3. For questions 56-65, read the following passage and choose the letter A, B, C, D to indicate the best answer to each question.", 
+          q: "56. What is the main idea of the passage?", opts: ["A. Asthma is a mild condition best treated through physical exercise and does not require long-term medication from doctors' management.", "B. Asthma is a chronic disease with inflammatory, genetic, and environmental causes, requiring personalized diagnosis and management.", "C. Asthma mainly results from viral infections and should be confirmed through continuous physical monitoring.", "D. Asthma patients should avoid exercise entirely and rely mainly on environmental control to reduce attacks."], ans: 1, expl: "💡 Bài đọc đề cập đến việc hen suyễn (Asthma) là một rối loạn viêm mãn tính (chronic inflammatory disorder), có nhiều nguyên nhân như di truyền (genetic) hoặc môi trường, và cần quá trình chẩn đoán (diagnosis) cá nhân hóa từ bác sĩ." },
+        { id: "R3_57", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "57. What physiological response occurs in asthma patients to compensate for restricted airways during an attack?", opts: ["A. They reduce their breathing rate to stabilize oxygen levels.", "B. They breathe at a higher lung volume to maintain airflow.", "C. Their airways begin to dilate naturally without medical intervention.", "D. Their immune system produces antibodies to restore airflow."], ans: 1, expl: "💡 Lấy từ đoạn 2: '...the patient attempts to compensate by breathing at a higher lung volume in order to keep the air flowing through the constricted airways...'" },
+        { id: "R3_58", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "58. Which of the following is OPPOSITE in meaning to the word constricted in bold in paragraph 2?", opts: ["A. narrow", "B. restricted", "C. dilated", "D. hollow"], ans: 2, expl: "💡 'Constricted' nghĩa là bị thắt lại, co hẹp lại. Trái nghĩa với nó là 'dilated' (giãn nở ra)." },
+        { id: "R3_59", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "59. Why is atopy considered a major concern in asthma development?", opts: ["A. It leads to increased lung capacity in asthma patients.", "B. It suppresses the immune system and allows allergens to accumulate.", "C. It causes heightened sensitivity to allergens that are asthma triggers.", "D. It protects children from developing respiratory infections."], ans: 2, expl: "💡 Lấy từ đoạn 3: 'This inherited familial tendency to have allergic reactions includes increased sensitivity to allergens that are risk factors for developing asthma.'" },
+        { id: "R3_60", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "60. Where in paragraph 3 does the following sentence best fit?\n\"Additionally, asthma may be triggered by viral respiratory infections, especially in children.\"", opts: ["A. [I]", "B. [II]", "C. [III]", "D. [IV]"], ans: 2, expl: "💡 Câu này bổ sung thêm một nguyên nhân gây hen suyễn (nhiễm trùng đường hô hấp). Đặt ở vị trí [III] là hợp lý nhất vì ngay sau đó tác giả đã tổng kết: 'By avoiding these allergens and triggers...' (Từ 'triggers' ở đây chính là tóm tắt lại cho các 'viral infections' vừa được thêm vào)." },
+        { id: "R3_61", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "61. According to paragraph 3, which of the following is NOT recommended for people with asthma?", opts: ["A. Keeping homes well-ventilated", "B. Using air conditioners in summer", "C. Getting vaccinated for influenza", "D. Engaging in any kind of physical activity"], ans: 3, expl: "💡 Bệnh nhân được khuyến cáo nên làm A, B, C (đoạn 3). Còn đối với hoạt động thể chất (D), bệnh nhân KHÔNG NÊN tham gia vào 'bất kỳ loại hình nào' (any kind) một cách vô tội vạ mà phải theo phác đồ tập luyện bài bản cùng bác sĩ." },
+        { id: "R3_62", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "62. Which of the following would be the best replacement for the word exacerbations in bold in paragraph 4?", opts: ["A. allergies", "B. attacks", "C. medications", "D. allergens"], ans: 1, expl: "💡 'Exacerbations' = sự bùng phát, sự làm trầm trọng thêm căn bệnh (trong ngữ cảnh hen suyễn có nghĩa là các cơn hen - attacks)." },
+        { id: "R3_63", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "63. The word they in bold in paragraph 4 refers to", opts: ["A. patients", "B. triggers", "C. medications", "D. symptoms"], ans: 0, expl: "💡 Lấy từ đoạn 4: 'Rather, they should work in conjunction with a doctor...' (Thay vào đó, họ nên làm việc cùng với bác sĩ...). 'Họ' ở đây chính là các bệnh nhân hen suyễn (asthma patients)." },
+        { id: "R3_64", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "64. Which of the following can be inferred from the passage?", opts: ["A. All people with asthma share the same triggers when they try to compensate for the air.", "B. Asthma symptoms always appear during physical examinations.", "C. Asthma is best diagnosed based solely on physical signs such as coughing and breathing difficulty.", "D. Diagnosis of asthma can be difficult because symptoms vary throughout the day."], ans: 3, expl: "💡 Lấy từ đoạn cuối: 'Because asthma symptoms vary throughout the day, the respiratory system may appear normal during physical examination... however, the absence of symptoms upon examination does not exclude the diagnosis of asthma.' (Triệu chứng thay đổi trong ngày nên việc chẩn đoán có thể gặp khó khăn)." },
+        { id: "R3_65", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "65. According to the passage, which of the following is TRUE about physical activity in asthma patients?", opts: ["A. Asthma patients should avoid all forms of physical activity to prevent severe exacerbations.", "B. Physical activity never triggers asthma attacks if the patient is taking medication.", "C. Physical activity can trigger asthma but may also help reduce symptoms when managed properly.", "D. Doctors generally recommend that asthma patients stop exercising altogether to avoid health risks."], ans: 2, expl: "💡 Lấy từ đoạn 4: '...asthma patients should not necessarily avoid all physical exertion, because some types of activity have been proven to reduce symptoms. Rather, they should work in conjunction with a doctor to design a proper training regimen...' (Thể thao có thể kích hoạt cơn hen nhưng nếu tập hợp lý thì lại giúp giảm triệu chứng)." },
+
+        { id: "R4_66", sec: "SECTION C. READING (3.0 pts)", type: "dropdown", 
+          passage: `Why computer games are good for your child?\n\nA. The idea of bringing computer games in the classroom seems likely to provoke detentions rather than learning. But that's slowly changing. To some, they may be playing Sim City, to others, they are learning geography. To some, they are playing fantasy football; to others they are learning maths and strategy skills. Gaming whether online, on a console or on a computer is thought by many teachers and parents to be the classic signs of a modern wasted youth. Where once it was snooker halls, now it's Lara Croft and her legions of imitators as the classic signs of a life frittered away.\n\nB. But some educationalists beg to differ, saying that gaming extends and improves a whole range of skills and aptitudes and can benefit learning. Indeed, in a survey for the technology and investment company Nesta Futurelab, earlier this year, a third of teachers are already using computer games and believe they improved skills. Out of the survey of 1000 teachers, 91% thought they developed motor and cognitive skills, and 60% believed they would develop thinking skills and acquire specific knowledge. We are faced with a gaming generation of children who spend their time and money on online and computer games. At the very least, this makes them technically literate - often more so than their teachers, who can feel embarrassed on occasion by a perceived lack of skills compared to the kids in front of them. A report last year by the University of Bristol found that teachers were happy using computers at home, but would not take the risk of getting it wrong in front of a class of pupils and, partly as a result, some 30% of teachers surveyed failed to make good use of computers in the classroom. But there is a growing feeling that games can be useful learning tools and do, in fact, help children develop and can even build social skills (children prefer gaming in small groups). For one thing, as any adult who has tried them will tell you, the games themselves are actually hard, requiring a significant number of skills hand-eye coordination, multi-tasking, strategy and the management of complex variables, communication, literacy and problem-solving, on top of the necessary computer skills.\n\nC. Specific games can be used for specific subjects schools do use Sim City (the simulation planning and strategy game), either as special education versions or as the commercial product, to help teaching geography. Others prefer to use games developed specifically for learning purposes. Researchers at the technology developers Nesta Futurelab have, for example, developed Astroversity, a space rescue mission that gets children to collaborate in order to rescue victims after a disaster in a space station. Even a football management game requires the ability to interrogate huge databases of information and make complex decisions, and usually without the child noticing.\n\nD. And that can be the beauty of games in the classroom - the problem of motivating students can disappear when they are confronted with familiar and enjoyable tasks. It becomes far less difficult to persuade them to work on their own and even in their own time. Pride and satisfaction become drivers in motivating children to perform well against each other and provides a way for children to interact with each other (off-screen) with gaming leagues and the like. Of course, assessment of game-based coursework can be difficult (not least if you insist that it isn't the winning that matters) and the application of games to the national curriculum can be tenuous.\n\nE. Of course, trying to co-opt games into the classroom is not without problems. For one, the games are built to obsess users getting them so absorbed that turning away is a real problem. Engagement can be great - up to a point. Getting them to turn back to mainstream educational methods can be a problem and introducing such a youth culture into the classroom can be an issue - pupils may take it less seriously and parents could be horrified. The selection of games too can be an issue. Teaching citizenship via Grand Theft Auto may be a winner with some of the pupils but is likely to provoke a rather unhappy reaction elsewhere. Violence generally is a problem of the selection process and needs policing in the same way as allowing children access to the web. Issues of the role of women in such games need to be addressed before large-bosomed heroines with machine guns become teaching aids.`,
+          ins: "Part 4. For questions 66-70, read the following passage and choose the correct headings for sections A-E from the list of headings below.\n\nWhy computer games are good for your child?", 
+          q: "66. Paragraph A", opts: readHeadings, ans: "vi. Shifting perceptions of gaming in the classroom", expl: "💡 Đoạn A nói về việc góc nhìn đối với game đang dần thay đổi: 'The idea... seems likely to provoke detentions... But that's slowly changing.' (Góc nhìn về việc mang game vào lớp đang dần tích cực hơn)." },
+        { id: "R4_67", sec: "SECTION C. READING (3.0 pts)", type: "dropdown", q: "67. Paragraph B", opts: readHeadings, ans: "x. The educational value and challenges of game-based learning", expl: "💡 Đoạn B bàn luận về giá trị giáo dục (cải thiện kỹ năng nhận thức, giải quyết vấn đề...) nhưng cũng đề cập đến thách thức (giáo viên cảm thấy lúng túng khi sử dụng máy tính trước lớp học)." },
+        { id: "R4_68", sec: "SECTION C. READING (3.0 pts)", type: "dropdown", q: "68. Paragraph C", opts: readHeadings, ans: "i. Educational applications of subject-specific games", expl: "💡 Đoạn C đưa ra các ví dụ về việc áp dụng các tựa game cụ thể vào từng môn học cụ thể (ví dụ: Sim City cho môn địa lý, trò cứu hộ không gian Astroversity)." },
+        { id: "R4_69", sec: "SECTION C. READING (3.0 pts)", type: "dropdown", q: "69. Paragraph D", opts: readHeadings, ans: "ix. Motivational benefits and challenges of games in education", expl: "💡 Đoạn D phân tích lợi ích về mặt thúc đẩy tinh thần học sinh (Pride and satisfaction become drivers in motivating children) và những khó khăn trong việc đánh giá điểm số (assessment of game-based coursework can be difficult)." },
+        { id: "R4_70", sec: "SECTION C. READING (3.0 pts)", type: "dropdown", q: "70. Paragraph E", opts: readHeadings, ans: "iv. Difficulties in using games in school", expl: "💡 Đoạn E tập trung vào những mặt tiêu cực, khó khăn khi dùng game ở trường (gây nghiện, bạo lực, vấn đề lựa chọn tựa game phù hợp, phụ huynh có thể lo lắng...)." },
+
+        { id: "R5_71", sec: "SECTION C. READING (3.0 pts)", type: "mc", 
+          passage: `MODERN AND POST-MODERN SCULPTURE\n\nModern sculpture has its origins in the work of Frenchman Auguste Rodin. Born into a modest family in 1840, Rodin began his creative journey in the 1860s, a journey that would lead to him being remembered as the 'bridge' between traditional and modern sculpture. Before Rodin, sculpture told stories about the past: religion, history, myth and literature. Sculptures typically left little to the imagination. Figures tended to be idealised in some way to avoid any imperfections of the model.\n\nRodin can be considered a realist in that he refused to improve on what he saw in front of him. He considered all of nature beautiful and if a model was old and wrinkled, he would be portrayed as such. Moreover, like much of the art that he helped inspire for later generations, his work spoke to the emotions and imagination: both his and his viewers'. The stories he told were internal and conceptual and there was no right or wrong way to interpret them.\n\nRodin was inspired by the fragments of Greek and Roman sculpture that were being discovered by archaeologists during his time. He was one of the first sculptors to treat fragments or parts of figures as complete works of art. One of his most famous works is Large hand of a pianist. In this piece he demonstrated one of the characteristics of Modern Art to make visible things that are not, such as energy, sound and rhythm. He sculpted elongated fingers to make visible music being played effortlessly. Groundbreaking for its time, this concept has been taken forward by sculptors right up to the present day.\n\nRodin worked mainly in bronze and was fascinated by the effect of light on irregular surfaces. In particular, he realised that light bouncing off textured bronze surfaces could create the illusion of movement. He pioneered two new techniques: marcottage and assemblage. Marcottage means creating a new work by putting together pieces from different existing works. Assemblage, which was further developed later by artists like Picasso, began with Rodin's technique of repeatedly casting the same figure and using multiple casts to create a new piece.`,
+          ins: "Part 5. For questions 71 - 75, read the passage and decide whether the following statements are True (T) or False (F).", 
+          q: "71. Before Rodin, sculpture was very realistic.", opts: ["A. True (T)", "B. False (F)"], ans: 1, expl: "💡 Lấy từ bài đọc: 'Before Rodin... Figures tended to be idealised in some way to avoid any imperfections of the model.' (Điêu khắc trước thời Rodin thường được lý tưởng hóa, không chân thực, nhằm che giấu khuyết điểm) -> Sai (False)." },
+        { id: "R5_72", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "72. Rodin expected people to interpret his sculptures in their own way.", opts: ["A. True (T)", "B. False (F)"], ans: 0, expl: "💡 Lấy từ bài đọc: '...there was no right or wrong way to interpret them.' (Không có cách giải thích nào là đúng hay sai hoàn toàn, người xem tự do cảm nhận) -> Đúng (True)." },
+        { id: "R5_73", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "73. Rodin felt that incomplete figures were still artistic works.", opts: ["A. True (T)", "B. False (F)"], ans: 0, expl: "💡 Lấy từ bài đọc: 'He was one of the first sculptors to treat fragments or parts of figures as complete works of art.' (Ông coi các mảnh ghép/bộ phận cơ thể là những tác phẩm nghệ thuật hoàn chỉnh) -> Đúng (True)." },
+        { id: "R5_74", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "74. The techniques called Marcottage and assemblage had been devised before Rodin developed them.", opts: ["A. True (T)", "B. False (F)"], ans: 1, expl: "💡 Lấy từ bài đọc: 'He pioneered two new techniques: marcottage and assemblage.' (Rodin là người tiên phong sáng tạo ra hai kỹ thuật này, chứ nó chưa hề tồn tại trước đó) -> Sai (False)." },
+        { id: "R5_75", sec: "SECTION C. READING (3.0 pts)", type: "mc", q: "75. Rodin believed the surfaces of sculptures should be smooth.", opts: ["A. True (T)", "B. False (F)"], ans: 1, expl: "💡 Lấy từ bài đọc: '...was fascinated by the effect of light on irregular surfaces... textured bronze surfaces could create the illusion of movement.' (Ông thích các bề mặt không đều, có kết cấu xù xì để tạo chuyển động chứ không phải mịn màng) -> Sai (False)." },
+
+        // ---------- SECTION D. WRITING ----------
+        { id: "W1_76", sec: "SECTION D. WRITING (2.5 pts)", type: "text", ins: "Part 1. For questions 76-78, rewrite each of the following sentences so that it has a similar meaning to the original one.", q: "76. They believed that Oliver failed his exam because he was nervous.\n→ Oliver's failure in his exam was put _________________", ans: "down to his nervousness", expl: "💡 Cấu trúc: 'put something down to something' = quy cho cái gì, đổ lỗi / giải thích nguyên nhân là do đâu. Đáp án: 'down to his nervousness' hoặc 'down to his being nervous'." },
+        { id: "W1_77", sec: "SECTION D. WRITING (2.5 pts)", type: "text", q: "77. Without her colleagues' assistance, she could not have finished her work.\n→ Had _________________", ans: "it not been for her colleagues' assistance, she could not have finished her work", expl: "💡 Đảo ngữ câu điều kiện loại 3 với 'Without + N': Chuyển thành 'Had it not been for + N, S + would/could + have V-p2' (Nếu không có sự trợ giúp của đồng nghiệp...)." },
+        { id: "W1_78", sec: "SECTION D. WRITING (2.5 pts)", type: "text", q: "78. Tim can't believe that his brother passed the exam.\n→ Tim finds _________________", ans: "it hard to believe that his brother passed the exam", expl: "💡 Cấu trúc: 'find it hard / difficult to V' = cảm thấy khó khăn khi làm gì đó (Tim cảm thấy thật khó tin khi em trai thi đậu)." },
+        
+        { id: "W2_79", sec: "SECTION D. WRITING (2.5 pts)", type: "text", ins: "Part 2. For questions 79-80, rewrite each of the following sentences so that it has a similar meaning to the original one, using the word given.\nYou MUST NOT change the word given.", q: "79. It is recommended that you take water with you as wells and springs are few and far between in this area. (LEST)\n→ Travelers to this area are _________________ unable to find a well or spring.", ans: "advised to take water with them lest they should be", expl: "💡 Cấu trúc: 'lest + S + (should) + V' = e rằng, sợ rằng, phòng khi (bản thân từ lest đã mang nghĩa phủ định 'để không'). Bạn có thể dùng 'advised' hoặc 'recommended'. Viết lại đầy đủ: '...advised to take water with them lest they (should) be unable...'" },
+        { id: "W2_80", sec: "SECTION D. WRITING (2.5 pts)", type: "text", q: "80. Sally became known throughout the country as a result of her popular TV series. (HOUSEHOLD)\n→ Sally _________________ a result of her popular TV series.", ans: "became a household name as", expl: "💡 Idiom: 'become a household name' = trở nên cực kỳ nổi tiếng, được mọi gia đình, mọi người biết đến rộng rãi." },
+        
+        { id: "W3_81", sec: "SECTION D. WRITING (2.5 pts)", type: "essay", ins: "Part 3. In about 150 words, write a paragraph about the following topic:\nIn a number of families, children are given the freedom to pursue their own passions. What are the advantages of this?", q: "Write your paragraph below:", ans: "", expl: "Allowing children to pursue their own passions offers significant advantages for their personal and professional development.\n\nFirstly, it fosters intrinsic motivation. When children engage in activities they genuinely love, such as arts, sports, or coding, they are more likely to dedicate time and effort, leading to higher levels of competence and resilience. They learn to overcome challenges independently because the desire to succeed comes from within, rather than external parental pressure.\n\nSecondly, this freedom significantly enhances their mental well-being. Following personal interests reduces academic stress, making children happier and more confident in their unique abilities.\n\nFinally, pursuing passions can pave the way for fulfilling future careers. In today's diverse world, specialized skills born from genuine interest often translate into innovative and successful professional paths.\n\nIn conclusion, granting children the autonomy to follow their hearts not only ensures a joyful upbringing but also builds a strong foundation for lifelong success." }
+    ];
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tienganh_chuyen_thaibinh_2526'); 
+
+    let deviceId = localStorage.getItem('deviceId') || ('dev_' + Date.now());
+    localStorage.setItem('deviceId', deviceId);
+    
+    let allScores = [], currentStudent = {}, userAnswers = {}, timerInterval;
+    let quizStartTime, quizEndTime, isReviewMode = false;
+
+    scoresRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allScores = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+        renderScores();
+    });
+
+    document.getElementById('login-form').onsubmit = (e) => {
+        e.preventDefault();
+        currentStudent = { hoTen: document.getElementById('hoTen').value.trim(), lop: document.getElementById('lop').value.trim() };
+        startQuiz();
+    };
+
+    function startQuiz() {
+        quizStartTime = new Date();
+        isReviewMode = false;
+        userAnswers = {};
+        
+        document.getElementById('student-name-header').innerText = `${currentStudent.hoTen} - ${currentStudent.lop}`;
+        document.getElementById('quiz-section').classList.add('is-taking-test');
+        
+        showSection('quiz');
+        renderQuestions();
+        startTimer(150 * 60);
+    }
+
+    window.selectAnswer = function(qId, val) {
+        if(isReviewMode) return;
+        userAnswers[qId] = val;
+        let answered = Object.keys(userAnswers).filter(k => userAnswers[k].toString().trim() !== '').length;
+        document.getElementById('progress-text').innerText = `${answered}/${rawQuestions.length}`;
+    };
+
+    function renderQuestions() {
+        const container = document.getElementById('question-render-area');
+        let html = '';
+
+        rawQuestions.forEach((q, idx) => {
+            let prevQ = idx > 0 ? rawQuestions[idx - 1] : null;
+            
+            if (!prevQ || prevQ.sec !== q.sec || prevQ.ins !== q.ins) {
+                html += `<div class="mt-10 mb-6">`;
+                if (!prevQ || prevQ.sec !== q.sec) {
+                    html += `<h2 class="text-[20px] font-black text-blue-800 uppercase border-b-[3px] border-blue-200 pb-2 inline-block">${q.sec}</h2>`;
+                }
+                if (q.ins) {
+                    html += `<div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 text-gray-700 font-bold text-[15px] mt-4 shadow-sm whitespace-pre-line">${q.ins}</div>`;
+                }
+                html += `</div>`;
+            }
+
+            if (q.audio && (!prevQ || prevQ.audio !== q.audio)) {
+                html += `
+                    <div class="sticky-audio bg-red-50 p-4 border border-red-100 mb-4 rounded-xl">
+                        <div class="font-black text-red-600 mb-2 text-[14px]">🎧 BĂNG NGHE ÂM THANH:</div>
+                        <audio controls class="w-full h-10 outline-none"><source src="${q.audio}" type="audio/mpeg">Trình duyệt không hỗ trợ Audio.</audio>
+                    </div>`;
+            }
+
+            if (q.passage && (!prevQ || prevQ.passage !== q.passage)) {
+                html += `<div class="passage-box whitespace-pre-line">${q.passage}</div>`;
+            }
+
+            let uAns = userAnswers[q.id] !== undefined ? String(userAnswers[q.id]) : '';
+
+            html += `<div class="mb-8">`;
+            html += `<h3 class="text-question font-bold mb-4 whitespace-pre-line">${q.q}</h3>`;
+
+            if (q.type === 'mc') {
+                html += `<div class="space-y-3">`;
+                q.opts.forEach((opt, i) => {
+                    let isChecked = (uAns !== '' && uAns === String(i)) ? 'checked' : '';
+                    let char = String.fromCharCode(65 + i);
+                    let textOnly = opt.replace(/^[A-D]\.\s*/, ''); 
+                    
+                    let labelClass = "opt-label";
+                    let checkIcon = "";
+
+                    if (isReviewMode) {
+                        if (q.ans == i) { 
+                            labelClass += " review-correct-highlight"; 
+                            checkIcon = `<div class="check-icon text-green-600">✔</div>`; 
+                        } 
+                        else if (uAns === String(i)) { 
+                            labelClass += " review-wrong-strike"; 
+                            checkIcon = `<div class="check-icon text-red-600">✘</div>`; 
+                        } 
+                    }
+
+                    html += `
+                        <div class="relative">
+                            <input type="radio" id="rad_${q.id}_${i}" name="q_${q.id}" value="${i}" class="opt-radio" ${isChecked} onchange="selectAnswer('${q.id}', '${i}')" ${isReviewMode ? 'disabled' : ''}>
+                            <label for="rad_${q.id}_${i}" class="${labelClass}">
+                                <div class="opt-badge">${char}</div>
+                                <div class="flex-1">${textOnly}</div>
+                                ${checkIcon}
+                            </label>
+                        </div>`;
+                });
+                html += `</div>`;
+                
+                if (isReviewMode) {
+                    let isCorrect = String(uAns) === String(q.ans);
+                    if (isCorrect) {
+                        html += `<div class="mt-4 p-4 bg-green-50 border-2 border-green-200 rounded-xl text-green-800 font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-green-600 mb-1">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>
+                                    <span class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</span>
+                                 </div>`;
+                    } else {
+                        html += `<div class="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-red-600 mb-1">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</div>
+                                 </div>`;
+                    }
+                }
+            } 
+            else if (q.type === 'dropdown') {
+                if (isReviewMode) {
+                    let isCorrect = String(uAns) === String(q.ans);
+                    html += `<div class="flex flex-col gap-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <span class="font-bold text-gray-700 text-[15px]">Lựa chọn của bạn:</span>
+                                <div class="px-4 py-3 border-2 rounded-xl font-bold ${isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-500 text-red-700'}">${uAns || 'Chưa chọn đáp án'}</div>
+                             `;
+                    if (isCorrect) {
+                        html += `<div class="mt-2 p-4 bg-green-50 border-2 border-green-200 rounded-xl text-green-800 font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-green-600 mb-1">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>
+                                    <span class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</span>
+                                 </div>`;
+                    } else {
+                        html += `<div class="mt-2 p-4 bg-red-50 border-2 border-red-200 rounded-xl font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-red-600 mb-1">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-green-700 font-bold mb-2">👉 Đáp án chuẩn phải là: <span>${q.ans}</span></div>
+                                    <div class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `
+                        <select onchange="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl font-bold text-gray-700 outline-none focus:border-[#2563eb] bg-gray-50 shadow-inner transition-colors appearance-none">
+                            <option value="">-- Chọn đáp án --</option>
+                            ${q.opts.map(o => `<option value="${o}" ${uAns===o?'selected':''}>${o}</option>`).join('')}
+                        </select>
+                    `;
+                }
+            }
+            else if (q.type === 'text') {
+                if (isReviewMode) {
+                    let isCorrect = String(uAns).toLowerCase().trim() === String(q.ans).toLowerCase().trim();
+                    html += `<div class="flex flex-col gap-2">
+                                <input type="text" disabled value="${uAns}" class="w-full px-5 py-4 border-2 rounded-xl font-bold text-base ${isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-400 text-red-700'}">`;
+                    if (isCorrect) {
+                        html += `<div class="mt-2 p-4 bg-green-50 border-2 border-green-200 rounded-xl text-green-800 font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-green-600 mb-1">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>
+                                    <span class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</span>
+                                 </div>`;
+                    } else {
+                        html += `<div class="mt-2 p-4 bg-red-50 border-2 border-red-200 rounded-xl font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-red-600 mb-1">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-green-700 font-bold mb-2">👉 Đáp án gợi ý: <span class="text-lg">${q.ans}</span></div>
+                                    <div class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `<input type="text" value="${uAns}" placeholder="Nhập câu trả lời..." oninput="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#2563eb] font-bold outline-none text-[#1e3a8a] bg-gray-50 shadow-inner text-base transition-all">`;
+                }
+            }
+            else if (q.type === 'essay') {
+                if (isReviewMode) {
+                    html += `<div class="flex flex-col gap-2">
+                                <span class="font-bold text-gray-700 text-[15px]">Bài làm của bạn:</span>
+                                <div class="px-5 py-4 border-2 border-gray-300 rounded-xl text-gray-800 bg-gray-50 min-h-[100px] whitespace-pre-wrap">${uAns || '(Bạn chưa viết gì cả)'}</div>
+                                <div class="mt-4 p-5 bg-blue-50 border-2 border-blue-200 rounded-xl text-blue-900 shadow-sm">
+                                    <div class="font-black text-blue-700 mb-2 text-lg">📝 Gợi ý bài luận tham khảo</div>
+                                    <div class="text-gray-800 text-[15px] leading-relaxed whitespace-pre-line">${q.expl}</div>
+                                </div>
+                             </div>`;
+                } else {
+                    html += `<textarea rows="8" placeholder="Viết bài luận của bạn vào đây..." oninput="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#2563eb] font-semibold outline-none text-[#1e3a8a] bg-gray-50 shadow-inner text-base transition-all resize-y">${uAns}</textarea>`;
+                }
+            }
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function submitQuiz() {
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function processSubmission() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        quizEndTime = new Date();
+        
+        let correctCount = 0;
+        let autoGradeCount = 0;
+
+        rawQuestions.forEach(q => {
+            if (q.type === 'mc' || q.type === 'text' || q.type === 'dropdown') {
+                autoGradeCount++;
+                let uAns = String(userAnswers[q.id] || '').toLowerCase().trim();
+                let cAns = String(q.ans).toLowerCase().trim();
+                if (uAns === cAns) correctCount++;
+            }
+        });
+        
+        const score = autoGradeCount > 0 ? ((correctCount / autoGradeCount) * 10).toFixed(2) : 0;
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        scoresRef.push({
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop,
+            diem: parseFloat(score), soCauDung: correctCount, tongCau: autoGradeCount,
+            duration: `${Math.floor(durationSeconds/60)}p ${durationSeconds%60}s`,
+            thoiGian: new Date().toISOString(), deviceId: deviceId 
+        }).then(() => {
+            document.getElementById('result-student-name').innerText = `${currentStudent.hoTen}`;
+            document.getElementById('result-score').innerText = score;
+            document.getElementById('result-detail').innerText = `Đúng ${correctCount} / ${autoGradeCount} ý (Hệ thống chấm)`;
+            document.getElementById('result-modal').classList.remove('hidden');
+        });
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        isReviewMode = true;
+        
+        document.getElementById('quiz-header-status').innerText = "XEM LẠI BÀI LÀM";
+        document.getElementById('quiz-header-status').classList.replace("text-blue-800", "text-purple-700");
+        document.getElementById('quiz-section').classList.remove('is-taking-test'); 
+        document.getElementById('action-bar').classList.add('hidden');
+        
+        renderQuestions();
+        window.scrollTo(0,0);
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        const sorted = [...allScores].sort((a, b) => b.diem - a.diem);
+        tbody.innerHTML = sorted.map((s, idx) => `
+            <tr class="border-b hover:bg-blue-50 transition-colors ${s.deviceId === deviceId ? 'bg-blue-50 font-bold' : ''}">
+                <td class="px-5 py-4 text-center text-gray-500 font-bold">${idx + 1}</td>
+                <td class="px-5 py-4 text-center text-gray-500 font-bold">${s.lop}</td>
+                <td class="px-5 py-4 text-gray-800 font-bold">${s.hoTen} ${s.deviceId === deviceId ? '<span class="text-[10px] ml-2 bg-red-500 text-white px-2 py-0.5 rounded-full">Bạn</span>' : ''}</td>
+                <td class="px-5 py-4 text-center font-black text-lg ${s.diem >= 5 ? 'text-green-600' : 'text-red-600'}">${s.diem}</td>
+                <td class="px-5 py-4 text-center text-blue-600 font-bold">${s.duration}</td>
+                <td class="px-5 py-4 text-right text-xs text-gray-500 font-bold">${new Date(s.thoiGian).toLocaleString('vi-VN')}</td>
+            </tr>
+        `).join('');
+    }
+
+    function startTimer(seconds) {
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            document.getElementById('timer').innerText = `${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
+            if (remaining <= 0) processSubmission(); 
+        }, 1000);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function goHome() { location.reload(); }
+</script>
+</body>
+</html>
