@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Thì Hiện Tại Đơn - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+    
+    textarea.essay-box {
+        width: 100%; min-height: 200px;
+        border: 2px solid #cbd5e1; border-radius: 1rem;
+        padding: 1rem; font-size: 1rem; color: #334155;
+        transition: all 0.3s; resize: vertical;
+    }
+    textarea.essay-box:focus {
+        border-color: #3b82f6; outline: none; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all relative">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1">TIẾNG ANH LỚP 8</h1>
+      <p class="text-gray-600 font-bold">Chuyên đề: Present Simple</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="8A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ĐỀ 1: Thói Quen</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ĐỀ 2: Sự Thật Hiển Nhiên</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col relative">
+    <div class="absolute top-4 left-4 z-50">
+        <button onclick="window.goHome()" class="px-4 py-2 bg-white text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-md border border-gray-200 flex items-center gap-2"><span class="text-xl">🏠</span> Trang chủ</button>
+    </div>
+    <div class="glass-card mt-16 rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 câu</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8 relative">
+    <div class="absolute top-0 left-0 z-50">
+        <button onclick="window.goHome()" class="px-4 py-2 bg-white text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-md border border-gray-200"><span class="text-xl mr-1">🏠</span> Trang chủ</button>
+    </div>
+    <div class="glass-card mt-14 rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col relative">
+    <div class="absolute top-4 left-4 z-50 flex gap-2">
+        <button onclick="window.goHome()" class="px-4 py-2 bg-white text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-md border border-gray-200"><span class="text-xl mr-1">🏠</span> Trang chủ</button>
+        <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-md border border-indigo-200">🔙 Quay lại</button>
+    </div>
+    <div class="glass-card mt-16 rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div></div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mt-4 sm:mt-0">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col relative">
+    <div class="absolute top-4 left-4 z-50">
+        <button onclick="window.goHome()" class="px-4 py-2 bg-white text-gray-700 rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-md border border-gray-200"><span class="text-xl mr-1">🏠</span> Trang chủ</button>
+    </div>
+    <div class="glass-card mt-16 rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <div></div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mt-4 sm:mt-0">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Trắc nghiệm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Tự luận</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Tổng Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </p>
+   </footer>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_english_8_v2');
+        }
+    } catch(err) { console.error("Firebase error:", err); }
+
+    let isQuizStarted = false, isSubmitting = false;
+
+    // DATA ĐỀ 1 - ĐÃ CẬP NHẬT GIẢI THÍCH CHI TIẾT
+    const de1_data = [
+        { id: "1_1", type: "single", question: "I _______ always ready for the computer class.", options: ["A. am", "B. is", "C. are", "D. do"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Tôi luôn sẵn sàng cho tiết học máy tính.<br>📌 <b>Giải thích chi tiết:</b> Trong câu có tính từ 'ready' (sẵn sàng) nên ta cần dùng động từ to be. Chủ ngữ là 'I' nên đi kèm với 'am'." },
+        { id: "1_2", type: "single", question: "My brother _______ usually at home on Sunday mornings.", options: ["A. isn't", "B. aren't", "C. doesn't", "D. don't"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Anh trai tôi thường không ở nhà vào các sáng Chủ nhật.<br>📌 <b>Giải thích chi tiết:</b> Trong câu có giới từ 'at home' chỉ nơi chốn nên dùng động từ to be. Chủ ngữ 'My brother' (anh trai tôi) là ngôi thứ ba số ít nên dùng 'is', dạng phủ định thêm 'not' thành 'isn't'." },
+        { id: "1_3", type: "single", question: "_______ you often late for school?", options: ["A. Do", "B. Are", "C. Is", "D. Does"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Bạn có thường xuyên đi học muộn không?<br>📌 <b>Giải thích chi tiết:</b> Đi với tính từ 'late' (muộn) cần dùng động từ to be. Chủ ngữ 'you' dùng 'Are', vì là câu hỏi nên đảo 'Are' lên trước chủ ngữ." },
+        { id: "1_4", type: "single", question: "Mr. Son _______ always friendly and helpful to his students.", options: ["A. are", "B. is", "C. do", "D. does"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Thầy Sơn luôn thân thiện và hay giúp đỡ học sinh của mình.<br>📌 <b>Giải thích chi tiết:</b> Trong câu có các tính từ 'friendly' (thân thiện) và 'helpful' (hay giúp đỡ). Chủ ngữ 'Mr. Son' là danh từ số ít nên dùng to be 'is'." },
+        { id: "1_5", type: "single", question: "The students _______ usually noisy in the library.", options: ["A. isn't", "B. aren't", "C. don't", "D. doesn't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Các học sinh thường không ồn ào trong thư viện.<br>📌 <b>Giải thích chi tiết:</b> 'noisy' (ồn ào) là tính từ nên cần to be. Chủ ngữ 'The students' (các học sinh - số nhiều) đi với 'are', dạng phủ định là 'aren't'." },
+        { id: "1_6", type: "single", question: "_______ Ms. Ha and Ms. Hong often busy on weekends?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 3, explain: "👉 <b>Dịch nghĩa:</b> Cô Hà và cô Hồng có thường bận rộn vào cuối tuần không?<br>📌 <b>Giải thích chi tiết:</b> 'busy' (bận rộn) là tính từ. Chủ ngữ gồm 2 người 'Ms. Ha and Ms. Hong' là số nhiều, nên đảo to be 'Are' lên đầu câu." },
+        { id: "1_7", type: "single", question: "We _______ sometimes very tired after the IT lesson.", options: ["A. are", "B. is", "C. do", "D. am"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Đôi khi chúng tôi rất mệt sau tiết học Tin học.<br>📌 <b>Giải thích chi tiết:</b> Đi kèm tính từ 'tired' (mệt mỏi) cần dùng to be. Chủ ngữ 'We' (chúng tôi - số nhiều) đi với to be 'are'." },
+        { id: "1_8", type: "single", question: "The internet connection _______ always fast in my room.", options: ["A. is", "B. are", "C. does", "D. do"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Kết nối mạng trong phòng tôi luôn luôn nhanh.<br>📌 <b>Giải thích chi tiết:</b> Đi kèm tính từ 'fast'. 'The internet connection' (sự kết nối mạng) là danh từ trừu tượng không đếm được (số ít) nên dùng to be 'is'." },
+        { id: "1_9", type: "single", question: "It _______ usually cold in the winter.", options: ["A. is", "B. am", "C. are", "D. does"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Trời thường lạnh vào mùa đông.<br>📌 <b>Giải thích chi tiết:</b> Đi kèm tính từ 'cold'. Chủ ngữ giả 'It' dùng để chỉ thời tiết luôn đi kèm với to be 'is'." },
+        { id: "1_10", type: "single", question: "Where _______ they usually on Saturday evenings?", options: ["A. do", "B. are", "C. is", "D. does"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Họ thường ở đâu vào các buổi tối thứ Bảy?<br>📌 <b>Giải thích chi tiết:</b> Động từ to be mang nghĩa là 'thì, là, ở'. Hỏi về vị trí (ở đâu) cần dùng to be. Chủ ngữ 'they' đi với 'are'." },
+        { id: "1_11", type: "single", question: "She _______ to school by bus every day.", options: ["A. go", "B. goes", "C. going", "D. is go"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Cô ấy đi học bằng xe buýt mỗi ngày.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'She' (cô ấy) là ngôi thứ ba số ít, nên động từ 'go' kết thúc bằng chữ 'o' phải được thêm đuôi '-es' thành 'goes'." },
+        { id: "1_12", type: "single", question: "They often _______ soccer after school.", options: ["A. plays", "B. play", "C. playing", "D. are play"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Họ thường chơi bóng đá sau giờ học.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'They' (Họ) là danh từ số nhiều, do đó động từ thường 'play' được giữ nguyên không chia." },
+        { id: "1_13", type: "single", question: "He always _______ his teeth before going to bed.", options: ["A. brush", "B. brushs", "C. brushes", "D. brushing"], correct: 2, explain: "👉 <b>Dịch nghĩa:</b> Anh ấy luôn đánh răng trước khi đi ngủ.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'He' là ngôi thứ ba số ít. Động từ 'brush' tận cùng là '-sh' nên theo quy tắc phải thêm đuôi '-es' thành 'brushes'." },
+        { id: "1_14", type: "single", question: "My mother sometimes _______ dinner for the family.", options: ["A. cook", "B. cooks", "C. is cook", "D. cooking"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Mẹ tôi thỉnh thoảng nấu bữa tối cho gia đình.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'My mother' (Mẹ tôi) tương đương với 'She' (số ít), nên động từ 'cook' phải thêm 's' thành 'cooks'." },
+        { id: "1_15", type: "single", question: "We _______ English three times a week.", options: ["A. study", "B. studies", "C. studying", "D. to study"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Chúng tôi học tiếng Anh 3 lần một tuần.<br>📌 <b>Giải thích chi tiết:</b> Dấu hiệu 'three times a week'. Chủ ngữ 'We' (chúng tôi) là danh từ số nhiều, động từ 'study' giữ nguyên thể." },
+        { id: "1_16", type: "single", question: "The train usually _______ at 7:00 AM.", options: ["A. leave", "B. leaves", "C. leaving", "D. to leave"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Chuyến tàu thường khởi hành lúc 7 giờ sáng.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'The train' (chuyến tàu) là vật số ít (tương đương với It). Nên động từ 'leave' phải thêm 's' thành 'leaves'." },
+        { id: "1_17", type: "single", question: "My friend always _______ his homework in the evening.", options: ["A. do", "B. does", "C. doing", "D. to do"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Bạn tôi luôn làm bài tập về nhà vào buổi tối.<br>📌 <b>Giải thích chi tiết:</b> 'My friend' là một người bạn (số ít). Động từ 'do' kết thúc bằng chữ 'o' nên phải thêm '-es' thành 'does'." },
+        { id: "1_18", type: "single", question: "It often _______ a lot in the summer.", options: ["A. rain", "B. rains", "C. raining", "D. is rain"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Trời thường mưa nhiều vào mùa hè.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ giả 'It' (chỉ thời tiết) là ngôi thứ ba số ít. Động từ 'rain' phải thêm 's' thành 'rains'." },
+        { id: "1_19", type: "single", question: "The children always _______ TV after dinner.", options: ["A. watch", "B. watches", "C. watching", "D. watchs"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Bọn trẻ luôn xem tivi sau bữa tối.<br>📌 <b>Giải thích chi tiết:</b> 'The children' (những đứa trẻ) là dạng số nhiều của 'child'. Với chủ ngữ số nhiều, động từ 'watch' giữ nguyên không chia." },
+        { id: "1_20", type: "single", question: "She sometimes _______ when she reads a sad story.", options: ["A. cry", "B. cries", "C. crys", "D. crying"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Đôi khi cô ấy khóc khi đọc một câu chuyện buồn.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'She' (số ít). Động từ 'cry' kết thúc bằng phụ âm (r) + 'y', ta phải đổi 'y' thành 'i' rồi thêm 'es' tạo thành 'cries'." },
+        { id: "1_21", type: "single", question: "He usually _______ the computers for his friends.", options: ["A. fix", "B. fixs", "C. fixes", "D. fixing"], correct: 2, explain: "👉 <b>Dịch nghĩa:</b> Anh ấy thường sửa máy tính cho bạn bè.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'He' (số ít). Động từ 'fix' kết thúc bằng chữ 'x' (nằm trong nhóm o, s, x, z, ch, sh) nên phải thêm 'es' thành 'fixes'." },
+        { id: "1_22", type: "single", question: "I always _______ up early in the morning.", options: ["A. gets", "B. get", "C. getting", "D. to get"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Tôi luôn thức dậy sớm vào buổi sáng.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ là ngôi thứ nhất 'I' nên động từ thường 'get' được giữ nguyên thể." },
+        { id: "1_23", type: "single", question: "The school bell often _______ at 7:15.", options: ["A. ring", "B. rings", "C. ringing", "D. is ring"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Chuông trường thường reo lúc 7:15.<br>📌 <b>Giải thích chi tiết:</b> 'The school bell' (tiếng chuông trường) là danh từ sự vật số ít. Động từ 'ring' phải thêm 's' thành 'rings'." },
+        { id: "1_24", type: "single", question: "My father usually _______ his car on Sundays.", options: ["A. wash", "B. washes", "C. washs", "D. washing"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Bố tôi thường rửa xe ô tô vào Chủ nhật.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'My father' (số ít). Động từ 'wash' tận cùng là '-sh' nên phải thêm '-es' thành 'washes'." },
+        { id: "1_25", type: "single", question: "She often _______ a heavy backpack to school.", options: ["A. carry", "B. carries", "C. carrys", "D. carrying"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Cô ấy thường mang một chiếc ba lô nặng đến trường.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'She' (số ít). Động từ 'carry' kết thúc bằng phụ âm (r) + 'y', ta đổi 'y' thành 'i' rồi thêm 'es' tạo thành 'carries'." },
+        { id: "1_26", type: "single", question: "I _______ usually play tennis on weekdays.", options: ["A. don't", "B. doesn't", "C. am not", "D. isn't"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Tôi thường không chơi quần vợt vào các ngày trong tuần.<br>📌 <b>Giải thích chi tiết:</b> Đây là câu phủ định của động từ thường ('play'). Với chủ ngữ 'I', ta phải mượn trợ động từ 'do not' (viết tắt là don't)." },
+        { id: "1_27", type: "single", question: "He _______ often read comic books.", options: ["A. don't", "B. doesn't", "C. isn't", "D. aren't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Anh ấy không thường xuyên đọc truyện tranh.<br>📌 <b>Giải thích chi tiết:</b> Câu phủ định của động từ thường ('read'). Chủ ngữ 'He' (ngôi thứ ba số ít) phải mượn trợ động từ 'does not' (doesn't)." },
+        { id: "1_28", type: "single", question: "They _______ always go to the cinema on Fridays.", options: ["A. don't", "B. doesn't", "C. not", "D. aren't"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Họ không luôn luôn đi xem phim vào các ngày thứ Sáu.<br>📌 <b>Giải thích chi tiết:</b> Câu phủ định của động từ thường ('go'). Chủ ngữ 'They' (số nhiều) mượn trợ động từ 'don't'." },
+        { id: "1_29", type: "single", question: "She _______ usually drink coffee in the morning.", options: ["A. don't", "B. doesn't", "C. isn't", "D. am not"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Cô ấy thường không uống cà phê vào buổi sáng.<br>📌 <b>Giải thích chi tiết:</b> Câu phủ định của động từ thường ('drink'). Chủ ngữ 'She' (số ít) mượn trợ động từ 'doesn't'." },
+        { id: "1_30", type: "single", question: "We _______ often visit our grandparents in the city.", options: ["A. doesn't", "B. don't", "C. aren't", "D. isn't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Chúng tôi không thường xuyên về thăm ông bà ở thành phố.<br>📌 <b>Giải thích chi tiết:</b> Câu phủ định của động từ thường ('visit'). Chủ ngữ 'We' (số nhiều) mượn trợ động từ 'don't'." },
+        { id: "1_31", type: "single", question: "The bus _______ always arrive on time.", options: ["A. don't", "B. doesn't", "C. isn't", "D. aren't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Xe buýt không phải lúc nào cũng đến đúng giờ.<br>📌 <b>Giải thích chi tiết:</b> 'The bus' (chiếc xe buýt) là chủ ngữ số ít. Câu phủ định động từ thường 'arrive' cần mượn trợ động từ 'doesn't'." },
+        { id: "1_32", type: "single", question: "My cat _______ usually sleep in the kitchen.", options: ["A. don't", "B. doesn't", "C. isn't", "D. am not"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Con mèo của tôi thường không ngủ trong bếp.<br>📌 <b>Giải thích chi tiết:</b> 'My cat' (số ít). Câu phủ định động từ thường 'sleep' cần mượn trợ động từ 'doesn't'." },
+        { id: "1_33", type: "single", question: "You _______ often write emails to your friends.", options: ["A. doesn't", "B. don't", "C. aren't", "D. isn't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Bạn không thường xuyên viết email cho bạn bè.<br>📌 <b>Giải thích chi tiết:</b> Với chủ ngữ 'You', câu phủ định động từ thường 'write' mượn trợ động từ 'don't'." },
+        { id: "1_34", type: "single", question: "Mr. Son _______ always teach on Friday afternoons.", options: ["A. don't", "B. doesn't", "C. isn't", "D. aren't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Thầy Sơn không phải lúc nào cũng dạy vào các buổi chiều thứ Sáu.<br>📌 <b>Giải thích chi tiết:</b> 'Mr. Son' là danh từ số ít. Câu phủ định động từ thường 'teach' mượn trợ động từ 'doesn't'." },
+        { id: "1_35", type: "single", question: "The students _______ usually forget their passwords.", options: ["A. don't", "B. doesn't", "C. aren't", "D. isn't"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Học sinh thường không quên mật khẩu của mình.<br>📌 <b>Giải thích chi tiết:</b> 'The students' (số nhiều). Câu phủ định động từ thường 'forget' mượn trợ động từ 'don't'." },
+        { id: "1_36", type: "single", question: "It _______ often snow in Vietnam.", options: ["A. don't", "B. doesn't", "C. isn't", "D. aren't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Ở Việt Nam không thường xuyên có tuyết rơi.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ giả 'It' chỉ thời tiết là số ít. Câu phủ định động từ thường 'snow' (tuyết rơi) mượn trợ động từ 'doesn't'." },
+        { id: "1_37", type: "single", question: "She _______ always wear a jacket to school.", options: ["A. don't", "B. doesn't", "C. isn't", "D. aren't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Cô ấy không phải lúc nào cũng mặc áo khoác đến trường.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'She' (số ít). Câu phủ định động từ thường 'wear' mượn trợ động từ 'doesn't'." },
+        { id: "1_38", type: "single", question: "They _______ usually design websites on their phones.", options: ["A. don't", "B. doesn't", "C. aren't", "D. isn't"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Họ thường không thiết kế trang web trên điện thoại di động.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'They' (số nhiều). Câu phủ định động từ thường 'design' mượn trợ động từ 'don't'." },
+        { id: "1_39", type: "single", question: "_______ you usually listen to music before bed?", options: ["A. Do", "B. Does", "C. Are", "D. Is"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Bạn có thường nghe nhạc trước khi đi ngủ không?<br>📌 <b>Giải thích chi tiết:</b> Đây là câu hỏi với động từ thường 'listen'. Chủ ngữ 'you' nên phải mượn trợ động từ 'Do' đảo lên đầu câu." },
+        { id: "1_40", type: "single", question: "_______ she often play the piano?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Cô ấy có thường chơi đàn piano không?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi động từ thường 'play'. Chủ ngữ 'she' (số ít) nên mượn trợ động từ 'Does' đảo lên đầu câu." },
+        { id: "1_41", type: "single", question: "_______ they always eat lunch at the school canteen?", options: ["A. Does", "B. Do", "C. Are", "D. Is"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Họ có luôn ăn trưa ở căng tin trường không?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi động từ thường 'eat'. Chủ ngữ 'they' (số nhiều) nên mượn trợ động từ 'Do'." },
+        { id: "1_42", type: "single", question: "_______ he usually watch educational videos on YouTube?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Anh ấy có thường xem các video giáo dục trên YouTube không?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi động từ thường 'watch'. Chủ ngữ 'he' (số ít) nên mượn trợ động từ 'Does'." },
+        { id: "1_43", type: "single", question: "What time _______ you usually get up?", options: ["A. do", "B. does", "C. are", "D. is"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Bạn thường thức dậy lúc mấy giờ?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi có từ để hỏi (What time) với động từ thường 'get up'. Chủ ngữ 'you' nên dùng trợ động từ 'do' đặt sau từ để hỏi." },
+        { id: "1_44", type: "single", question: "_______ your mother often go shopping?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Mẹ của bạn có thường đi mua sắm không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'your mother' (mẹ của bạn) là ngôi thứ 3 số ít. Động từ thường 'go' nên cần mượn trợ động từ 'Does'." },
+        { id: "1_45", type: "single", question: "How often _______ they practice coding?", options: ["A. do", "B. does", "C. are", "D. is"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Họ thực hành viết code với tần suất như thế nào?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi có từ để hỏi (How often). Chủ ngữ 'they' đi với động từ thường 'practice' nên mượn trợ động từ 'do'." },
+        { id: "1_46", type: "single", question: "_______ it usually rain heavily in July?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Trời có thường mưa to vào tháng 7 không?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi với động từ thường 'rain' (mưa). Chủ ngữ giả 'it' số ít nên mượn trợ động từ 'Does'." },
+        { id: "1_47", type: "single", question: "Where _______ she often spend her summer holidays?", options: ["A. do", "B. does", "C. are", "D. is"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Cô ấy thường dành kỳ nghỉ hè ở đâu?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi với từ để hỏi (Where). Chủ ngữ 'she' (số ít) đi với động từ thường 'spend' (tiêu tốn/dành) nên dùng trợ động từ 'does'." },
+        { id: "1_48", type: "single", question: "_______ the students always finish their exercises?", options: ["A. Does", "B. Do", "C. Are", "D. Is"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Học sinh có luôn hoàn thành bài tập của họ không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'the students' là danh từ số nhiều. Câu hỏi động từ thường 'finish' mượn trợ động từ 'Do'." },
+        { id: "1_49", type: "single", question: "Why _______ he often come to class late?", options: ["A. do", "B. does", "C. are", "D. is"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Tại sao cậu ấy thường đến lớp muộn?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi (Why) với động từ thường 'come'. Chủ ngữ 'he' (số ít) mượn trợ động từ 'does'." },
+        { id: "1_50", type: "single", question: "_______ Ms. Ha usually give a lot of homework?", options: ["A. Do", "B. Does", "C. Are", "D. Is"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Cô Hà có thường cho nhiều bài tập về nhà không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'Ms. Ha' là danh từ số ít. Câu hỏi động từ thường 'give' mượn trợ động từ 'Does'." },
+        { id: "1_essay", type: "essay", question: "📝 WRITING: Write a paragraph (about 100-150 words) about your daily routine.", suggested: "My daily routine is quite busy but organized. I usually wake up at 6:00 AM every morning. First, I brush my teeth, wash my face, and do some light exercises. Then, I have a healthy breakfast with my family at 6:30 AM. After that, I ride my bike to school. My classes start at 7:15 AM and finish at 11:30 AM. In the afternoon, I often do my homework and review the lessons. Sometimes, I play badminton with my friends in the park. In the evening, I help my mom cook dinner, and we eat together at 7:00 PM. After dinner, I watch TV or read a book for an hour. Finally, I go to bed at 10:30 PM to get ready for the next day." }
+    ];
+
+    // DATA ĐỀ 2 - ĐÃ CẬP NHẬT GIẢI THÍCH CHI TIẾT
+    const de2_data = [
+        { id: "2_1", type: "single", question: "The Earth _______ round.", options: ["A. is", "B. are", "C. am", "D. be"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Trái Đất hình tròn.<br>📌 <b>Giải thích chi tiết:</b> Câu này diễn tả một sự thật hiển nhiên. 'The Earth' là danh từ số ít duy nhất nên dùng động từ to be 'is'." },
+        { id: "2_2", type: "single", question: "Water _______ essential for all living things.", options: ["A. am", "B. is", "C. are", "D. do"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Nước rất cần thiết cho mọi sinh vật sống.<br>📌 <b>Giải thích chi tiết:</b> 'Water' (nước) là danh từ không đếm được, trong ngữ pháp tiếng Anh luôn được coi là số ít nên dùng to be 'is'." },
+        { id: "2_3", type: "single", question: "Dogs _______ mammals.", options: ["A. is", "B. are", "C. be", "D. am"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Chó là động vật có vú.<br>📌 <b>Giải thích chi tiết:</b> 'Dogs' (loài chó nói chung) là danh từ số nhiều, đi kèm danh từ 'mammals', do đó ta dùng động từ to be 'are'." },
+        { id: "2_4", type: "single", question: "Light _______ faster than sound.", options: ["A. are", "B. is", "C. am", "D. do"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Ánh sáng truyền đi nhanh hơn âm thanh.<br>📌 <b>Giải thích chi tiết:</b> 'Light' (ánh sáng) là danh từ không đếm được. Đi với tính từ 'faster' cần dùng to be 'is'." },
+        { id: "2_5", type: "single", question: "The Sun _______ a star, not a planet.", options: ["A. are", "B. am", "C. is", "D. be"], correct: 2, explain: "👉 <b>Dịch nghĩa:</b> Mặt trời là một ngôi sao, không phải một hành tinh.<br>📌 <b>Giải thích chi tiết:</b> 'The Sun' là chủ ngữ số ít duy nhất, dùng động từ to be 'is'." },
+        { id: "2_6", type: "single", question: "The Moon _______ a planet.", options: ["A. isn't", "B. aren't", "C. doesn't", "D. don't"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Mặt trăng không phải là một hành tinh.<br>📌 <b>Giải thích chi tiết:</b> Sự thật khoa học phủ định. 'The Moon' (số ít) dùng to be 'is', thêm 'not' thành 'isn't'." },
+        { id: "2_7", type: "single", question: "Penguins _______ able to fly in the sky.", options: ["A. isn't", "B. aren't", "C. doesn't", "D. don't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Chim cánh cụt không có khả năng bay trên bầu trời.<br>📌 <b>Giải thích chi tiết:</b> 'Penguins' (những con chim cánh cụt) là số nhiều, dùng to be 'are', phủ định thành 'aren't'." },
+        { id: "2_8", type: "single", question: "A tomato _______ a vegetable botanically; it is a fruit.", options: ["A. aren't", "B. doesn't", "C. isn't", "D. don't"], correct: 2, explain: "👉 <b>Dịch nghĩa:</b> Về mặt thực vật học, cà chua không phải là một loại rau; nó là một loại quả.<br>📌 <b>Giải thích chi tiết:</b> 'A tomato' (một quả cà chua) là danh từ số ít, phủ định dùng to be 'isn't'." },
+        { id: "2_9", type: "single", question: "Humans _______ cold-blooded animals.", options: ["A. isn't", "B. aren't", "C. don't", "D. doesn't"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Con người không phải là động vật máu lạnh.<br>📌 <b>Giải thích chi tiết:</b> 'Humans' (con người) là danh từ số nhiều, phủ định dùng to be 'aren't'." },
+        { id: "2_10", type: "single", question: "The Sahara Desert _______ a cold place.", options: ["A. don't", "B. doesn't", "C. aren't", "D. isn't"], correct: 3, explain: "👉 <b>Dịch nghĩa:</b> Sa mạc Sahara không phải là một nơi lạnh giá.<br>📌 <b>Giải thích chi tiết:</b> 'The Sahara Desert' (Sa mạc Sahara) là địa danh số ít, phủ định dùng to be 'isn't'." },
+        { id: "2_11", type: "single", question: "_______ the Earth the third planet from the Sun?", options: ["A. Is", "B. Are", "C. Do", "D. Does"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Trái Đất có phải là hành tinh thứ 3 tính từ Mặt trời không?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi để xác nhận định nghĩa (với danh từ 'the third planet'). Chủ ngữ 'the Earth' số ít dùng to be 'Is'." },
+        { id: "2_12", type: "single", question: "_______ dolphins mammals?", options: ["A. Is", "B. Are", "C. Do", "D. Does"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Cá heo có phải là động vật có vú không?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi xác nhận. Chủ ngữ số nhiều 'dolphins', đảo to be 'Are' lên trước." },
+        { id: "2_13", type: "single", question: "_______ Mount Everest the highest mountain in the world?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 2, explain: "👉 <b>Dịch nghĩa:</b> Đỉnh Everest có phải là ngọn núi cao nhất thế giới không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ 'Mount Everest' (số ít) dùng to be 'Is'." },
+        { id: "2_14", type: "single", question: "_______ computers machines that process data?", options: ["A. Is", "B. Are", "C. Do", "D. Does"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Máy tính có phải là cỗ máy xử lý dữ liệu không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ số nhiều 'computers' dùng to be 'Are'." },
+        { id: "2_15", type: "single", question: "_______ oxygen a gas?", options: ["A. Is", "B. Are", "C. Do", "D. Does"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Oxy có phải là một chất khí không?<br>📌 <b>Giải thích chi tiết:</b> Danh từ không đếm được 'oxygen' được tính là số ít, dùng to be 'Is'." },
+        { id: "2_16", type: "single", question: "The Sun _______ in the east and sets in the west.", options: ["A. rise", "B. rises", "C. rising", "D. is rise"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Mặt trời mọc ở đằng Đông và lặn ở đằng Tây.<br>📌 <b>Giải thích chi tiết:</b> Chân lý hiển nhiên. Chủ ngữ 'The Sun' (số ít) nên động từ 'rise' phải thêm 's' thành 'rises'." },
+        { id: "2_17", type: "single", question: "Water _______ at 100 degrees Celsius.", options: ["A. boil", "B. boils", "C. boiling", "D. is boil"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Nước sôi ở 100 độ C.<br>📌 <b>Giải thích chi tiết:</b> Sự thật khoa học. 'Water' (nước - không đếm được) nên động từ 'boil' thêm 's' thành 'boils'." },
+        { id: "2_18", type: "single", question: "The Earth _______ around the Sun.", options: ["A. go", "B. goes", "C. going", "D. is go"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Trái Đất quay quanh Mặt trời.<br>📌 <b>Giải thích chi tiết:</b> Sự thật hiển nhiên. 'The Earth' (số ít) nên động từ 'go' tận cùng là 'o' phải thêm 'es' thành 'goes'." },
+        { id: "2_19", type: "single", question: "Plants _______ carbon dioxide to survive.", options: ["A. need", "B. needs", "C. needing", "D. are need"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Thực vật cần khí cacbonic để sinh tồn.<br>📌 <b>Giải thích chi tiết:</b> 'Plants' (cây cối - số nhiều) nên động từ 'need' được giữ nguyên." },
+        { id: "2_20", type: "single", question: "A magnet _______ iron and steel.", options: ["A. attract", "B. attracts", "C. attracting", "D. is attract"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Nam châm hút sắt và thép.<br>📌 <b>Giải thích chi tiết:</b> 'A magnet' (một khối nam châm - số ít) nên động từ 'attract' thêm 's' thành 'attracts'." },
+        { id: "2_21", type: "single", question: "Gravity _______ objects toward the center of the Earth.", options: ["A. pull", "B. pulls", "C. pulling", "D. is pull"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Trọng lực kéo các vật thể về phía tâm Trái đất.<br>📌 <b>Giải thích chi tiết:</b> 'Gravity' (trọng lực - không đếm được) tính là số ít, động từ 'pull' thêm 's' thành 'pulls'." },
+        { id: "2_22", type: "single", question: "Ice _______ when it is heated.", options: ["A. melt", "B. melts", "C. melting", "D. is melt"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Nước đá tan chảy khi bị đun nóng.<br>📌 <b>Giải thích chi tiết:</b> 'Ice' (băng, nước đá - không đếm được) động từ 'melt' thêm 's' thành 'melts'." },
+        { id: "2_23", type: "single", question: "Wood _______ on water.", options: ["A. float", "B. floats", "C. floating", "D. is float"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Gỗ nổi trên mặt nước.<br>📌 <b>Giải thích chi tiết:</b> 'Wood' (gỗ - không đếm được) động từ 'float' (nổi) thêm 's' thành 'floats'." },
+        { id: "2_24", type: "single", question: "A CPU (Central Processing Unit) _______ instructions in a computer.", options: ["A. process", "B. processes", "C. processs", "D. processing"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> CPU xử lý các lệnh trong máy tính.<br>📌 <b>Giải thích chi tiết:</b> 'A CPU' (số ít), động từ 'process' tận cùng là '-ss' phải thêm đuôi '-es' thành 'processes'." },
+        { id: "2_25", type: "single", question: "The human heart _______ blood through the body.", options: ["A. pump", "B. pumps", "C. pumping", "D. is pump"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Trái tim con người bơm máu đi khắp cơ thể.<br>📌 <b>Giải thích chi tiết:</b> 'The human heart' (trái tim - số ít), động từ 'pump' thêm 's' thành 'pumps'." },
+        { id: "2_26", type: "single", question: "Bees _______ honey from flower nectar.", options: ["A. make", "B. makes", "C. making", "D. are make"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Loài ong làm ra mật từ mật hoa.<br>📌 <b>Giải thích chi tiết:</b> 'Bees' (những con ong - số nhiều), do đó động từ 'make' giữ nguyên." },
+        { id: "2_27", type: "single", question: "Humans _______ oxygen to live.", options: ["A. breathe", "B. breathes", "C. breathing", "D. is breathe"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Con người hít thở oxy để sống.<br>📌 <b>Giải thích chi tiết:</b> 'Humans' (loài người - số nhiều), động từ 'breathe' giữ nguyên." },
+        { id: "2_28", type: "single", question: "Software _______ the computer hardware what to do.", options: ["A. tell", "B. tells", "C. telling", "D. is tell"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Phần mềm bảo phần cứng máy tính phải làm gì.<br>📌 <b>Giải thích chi tiết:</b> 'Software' (phần mềm máy tính) là danh từ không đếm được (tính là số ít), động từ 'tell' thêm 's' thành 'tells'." },
+        { id: "2_29", type: "single", question: "The moon _______ around the Earth.", options: ["A. orbit", "B. orbits", "C. orbiting", "D. is orbit"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Mặt trăng quay quanh Trái đất.<br>📌 <b>Giải thích chi tiết:</b> 'The moon' (mặt trăng - số ít duy nhất), động từ 'orbit' (quay quanh quỹ đạo) thêm 's' thành 'orbits'." },
+        { id: "2_30", type: "single", question: "Birds _______ feathers to keep them warm.", options: ["A. use", "B. uses", "C. using", "D. is use"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Các loài chim sử dụng lông để giữ ấm.<br>📌 <b>Giải thích chi tiết:</b> 'Birds' (loài chim - số nhiều), động từ 'use' giữ nguyên." },
+        { id: "2_31", type: "single", question: "Water _______ at 50 degrees Celsius.", options: ["A. don't boil", "B. doesn't boil", "C. isn't boil", "D. aren't boil"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Nước không sôi ở 50 độ C.<br>📌 <b>Giải thích chi tiết:</b> Câu phủ định động từ thường 'boil'. Chủ ngữ không đếm được 'Water' (coi như số ít) phải mượn trợ động từ 'doesn't'." },
+        { id: "2_32", type: "single", question: "The Sun _______ around the Earth.", options: ["A. don't revolve", "B. doesn't revolve", "C. isn't revolve", "D. aren't revolve"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Mặt trời không quay quanh Trái đất.<br>📌 <b>Giải thích chi tiết:</b> Phủ định động từ thường. Chủ ngữ số ít 'The Sun' mượn trợ động từ 'doesn't'." },
+        { id: "2_33", type: "single", question: "Cats _______ vegetables naturally.", options: ["A. don't eat", "B. doesn't eat", "C. isn't eat", "D. aren't eat"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Loài mèo theo bản năng tự nhiên không ăn rau củ.<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ số nhiều 'Cats' mượn trợ động từ phủ định 'don't'." },
+        { id: "2_34", type: "single", question: "Oil and water _______ together.", options: ["A. don't mix", "B. doesn't mix", "C. isn't mix", "D. aren't mix"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Dầu và nước không hòa tan vào nhau.<br>📌 <b>Giải thích chi tiết:</b> 'Oil and water' (gồm 2 thứ -> danh từ số nhiều). Phải mượn trợ động từ 'don't'." },
+        { id: "2_35", type: "single", question: "A triangle _______ four sides.", options: ["A. don't have", "B. doesn't have", "C. isn't have", "D. aren't have"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Hình tam giác không có 4 cạnh.<br>📌 <b>Giải thích chi tiết:</b> 'A triangle' (một hình tam giác - số ít). Mượn trợ động từ 'doesn't'." },
+        { id: "2_36", type: "single", question: "Sound _______ through a vacuum (môi trường chân không).", options: ["A. don't travel", "B. doesn't travel", "C. isn't travel", "D. aren't travel"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Âm thanh không truyền qua môi trường chân không.<br>📌 <b>Giải thích chi tiết:</b> 'Sound' (âm thanh - không đếm được) tính là số ít. Mượn trợ động từ 'doesn't'." },
+        { id: "2_37", type: "single", question: "Plants _______ in the dark without any light.", options: ["A. don't grow", "B. doesn't grow", "C. isn't grow", "D. aren't grow"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Cây cối không phát triển trong bóng tối nếu không có ánh sáng.<br>📌 <b>Giải thích chi tiết:</b> 'Plants' (cây cối - số nhiều) mượn trợ động từ 'don't'." },
+        { id: "2_38", type: "single", question: "A computer _______ without an operating system.", options: ["A. don't work", "B. doesn't work", "C. isn't work", "D. aren't work"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Máy tính không hoạt động nếu không có hệ điều hành.<br>📌 <b>Giải thích chi tiết:</b> 'A computer' (một chiếc máy tính - số ít) mượn trợ động từ 'doesn't'." },
+        { id: "2_39", type: "single", question: "Ostriches (đà điểu) _______ high in the sky.", options: ["A. don't fly", "B. doesn't fly", "C. isn't fly", "D. aren't fly"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Đà điểu không bay cao trên bầu trời.<br>📌 <b>Giải thích chi tiết:</b> 'Ostriches' (những con đà điểu - số nhiều) mượn trợ động từ 'don't'." },
+        { id: "2_40", type: "single", question: "Magnets _______ plastic objects.", options: ["A. don't attract", "B. doesn't attract", "C. isn't attract", "D. aren't attract"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Nam châm không hút các vật bằng nhựa.<br>📌 <b>Giải thích chi tiết:</b> 'Magnets' (những cục nam châm - số nhiều) mượn trợ động từ 'don't'." },
+        { id: "2_41", type: "single", question: "_______ water freeze at 0 degrees Celsius?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Có phải nước đóng băng ở 0 độ C không?<br>📌 <b>Giải thích chi tiết:</b> Câu hỏi động từ thường 'freeze' (đóng băng). Chủ ngữ không đếm được 'water' mượn trợ động từ 'Does'." },
+        { id: "2_42", type: "single", question: "_______ the moon produce its own light?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Mặt trăng có tự phát ra ánh sáng không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ số ít 'the moon' đi với động từ thường 'produce' mượn trợ động từ 'Does'." },
+        { id: "2_43", type: "single", question: "_______ plants absorb sunlight to make food?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Có phải thực vật hấp thụ ánh sáng mặt trời để tạo thức ăn?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ số nhiều 'plants' đi với động từ 'absorb' mượn trợ động từ 'Do'." },
+        { id: "2_44", type: "single", question: "_______ sound travel faster in water than in air?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Có phải âm thanh truyền trong nước nhanh hơn trong không khí không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ không đếm được 'sound' mượn trợ động từ 'Does'." },
+        { id: "2_45", type: "single", question: "_______ a spider have eight legs?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Có phải nhện có 8 chân không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ số ít 'a spider' mượn trợ động từ 'Does'." },
+        { id: "2_46", type: "single", question: "_______ the Earth rotate on its axis?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Trái đất có tự quay quanh trục của nó không?<br>📌 <b>Giải thích chi tiết:</b> Chủ ngữ số ít 'the Earth' mượn trợ động từ 'Does'." },
+        { id: "2_47", type: "single", question: "_______ fish breathe through gills?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Có phải loài cá thở bằng mang không?<br>📌 <b>Giải thích chi tiết:</b> Từ 'fish' ở đây mang nghĩa là loài cá nói chung (tập hợp số nhiều), nên mượn trợ động từ 'Do'." },
+        { id: "2_48", type: "single", question: "_______ a web browser connect you to the Internet?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 1, explain: "👉 <b>Dịch nghĩa:</b> Có phải trình duyệt web kết nối bạn với Internet không?<br>📌 <b>Giải thích chi tiết:</b> Trình duyệt web ('a web browser' - số ít) mượn trợ động từ 'Does'." },
+        { id: "2_49", type: "single", question: "_______ birds lay eggs?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Các loài chim có đẻ trứng không?<br>📌 <b>Giải thích chi tiết:</b> Loài chim ('birds' - số nhiều) mượn trợ động từ 'Do'." },
+        { id: "2_50", type: "single", question: "_______ herbivores eat meat?", options: ["A. Do", "B. Does", "C. Is", "D. Are"], correct: 0, explain: "👉 <b>Dịch nghĩa:</b> Động vật ăn cỏ có ăn thịt không?<br>📌 <b>Giải thích chi tiết:</b> Động vật ăn cỏ ('herbivores' - số nhiều) mượn trợ động từ 'Do'." },
+        { id: "2_essay", type: "essay", question: "📝 WRITING: Write a paragraph (about 100-150 words) about a scientific fact or natural phenomenon you know.", suggested: "One of the most interesting scientific facts is the water cycle. The water cycle is a continuous process that connects all the water on Earth. First, the heat from the Sun causes water in oceans, lakes, and rivers to evaporate into the air as water vapor. This is called evaporation. Then, as the vapor rises into the sky, it cools down and forms clouds. This process is called condensation. When the clouds become too heavy, the water falls back to the Earth as rain or snow. This is known as precipitation. The rainwater then flows back into rivers and oceans, and the cycle starts again. This amazing natural phenomenon is essential for all living things because it provides fresh water for plants, animals, and humans to survive." }
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Vui lòng nhập đầy đủ Họ tên và Lớp!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            rawQuestions.forEach((q, idx) => { 
+                if(q.type === 'single') q.displayQuestion = `Câu ${idx + 1}: ${q.question}`;
+                else q.displayQuestion = q.question;
+            });
+
+            currentQuestions = rawQuestions;
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button');
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        document.getElementById('hoTen').value = ''; 
+        document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() { return currentQuestions.length; }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0);
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM (8 ĐIỂM)</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i})"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        } else if (q.type === 'essay') {
+            let val = userAnswers[q.id] || '';
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TỰ LUẬN (2 ĐIỂM)</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 rounded-2xl mb-4 text-red-600 font-bold shadow-inner">${q.displayQuestion}</div><textarea id="essay_${q.id}" class="essay-box" placeholder="Start writing your paragraph here..." oninput="window.selectAnswer('${q.id}', this.value)">${val}</textarea><p class="text-sm text-gray-500 mt-2 italic">*Hệ thống tự động chấm: Viết >50 từ được 2 điểm, >20 từ được 1 điểm.</p></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} câu`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctMC = 0;
+        let totalMC = 50; 
+        let essayScore = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) correctMC++;
+            } else if (q.type === 'essay') {
+                let ans = (userAnswers[q.id] || '').trim();
+                let wordCount = ans ? ans.split(/\s+/).length : 0;
+                if (wordCount >= 50) essayScore = 2;
+                else if (wordCount >= 20) essayScore = 1;
+                else if (wordCount > 0) essayScore = 0.5;
+            }
+        });
+
+        let mcScore = (correctMC / totalMC) * 8; 
+        let totalScore = mcScore + essayScore;
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diemTrắcNghiệm: mcScore.toFixed(2), diemTuLuan: essayScore.toFixed(2), diemTong: totalScore.toFixed(2),
+            soCauDung: correctMC, tongCau: totalMC,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(totalScore.toFixed(2), mcScore.toFixed(2), essayScore.toFixed(2), record.duration); });
+        }
+    };
+
+    window.showModalResult = function(totalScore, mcScore, essayScore, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">TỔNG ĐIỂM CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${totalScore} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="flex justify-center gap-4 mt-4">
+                <span class="bg-white px-4 py-2 rounded-xl shadow-sm font-bold text-indigo-600 text-sm">Trắc nghiệm: ${mcScore}/8</span>
+                <span class="bg-white px-4 py-2 rounded-xl shadow-sm font-bold text-orange-600 text-sm">Tự luận: ${essayScore}/2</span>
+            </div>
+            <div class="text-sm font-bold text-gray-500 mt-4">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2 mb-4">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">❌</span>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                html += `</div>`;
+                // ĐÃ CẬP NHẬT CÁCH HIỂN THỊ HTML TRONG PHẦN GIẢI THÍCH
+                html += `<div class="bg-blue-50 p-4 rounded-xl border border-blue-200 mt-2">
+                            <div class="text-blue-900 font-medium leading-relaxed">${q.explain}</div>
+                         </div>`;
+                html += `</div>`;
+            } else if (q.type === 'essay') {
+                html += `<div class="p-4 sm:p-6 border-2 border-orange-300 bg-orange-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4">${q.displayQuestion}</div>`;
+                html += `<div class="bg-white p-4 rounded-xl border border-gray-200 mb-4 min-h-[100px]"><span class="font-bold text-gray-500 block mb-2">Bài làm của bạn:</span>${userAnswers[q.id] || '<span class="text-gray-400 italic">Không có nội dung</span>'}</div>`;
+                html += `<div class="bg-emerald-100 p-4 rounded-xl border border-emerald-200"><span class="font-bold text-emerald-800 block mb-2">📝 Bài luận tham khảo:</span> <span class="text-emerald-900 font-medium whitespace-pre-wrap">${q.suggested}</span></div>`;
+                html += `</div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (b.diemTong - a.diemTong) || (a.lop.localeCompare(b.lop)));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau} (${s.diemTrắcNghiệm}đ)</td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.diemTuLuan}đ</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${parseFloat(s.diemTong) >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diemTong}</span></td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
