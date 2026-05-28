@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Đề Thi Chuyên Anh Vũng Tàu 2025-2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: 'Be Vietnam Pro', sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); background-attachment: fixed; }
+        
+        .glass-card { background: #ffffff; border-radius: 16px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* ================= HIỆU ỨNG ĐÁP ÁN TRẮC NGHIỆM ================= */
+        .opt-radio { display: none; }
+        .opt-label {
+            display: flex; align-items: center; padding: 14px 16px; 
+            border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; 
+            transition: all 0.2s ease; background: #fff; 
+            font-weight: 700; color: #000000;
+            margin-bottom: 12px;
+        }
+        .opt-badge {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; background: #e2e8f0; color: #000000; font-weight: 900; font-size: 14px; margin-right: 14px; transition: all 0.2s;
+        }
+        .opt-label:active { transform: scale(0.98); }
+        
+        /* ĐỔ MÀU XANH KHI BẤM CHỌN ĐÁP ÁN TRONG LÚC LÀM BÀI */
+        .is-taking-test .opt-radio:checked + .opt-label {
+            background-color: #2563eb !important; 
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+            transform: translateY(-2px);
+        }
+        .is-taking-test .opt-radio:checked + .opt-label .opt-badge {
+            background-color: rgba(255,255,255,0.25) !important; color: #ffffff !important;
+        }
+
+        /* ================= REVIEW MODE (SAU KHI NỘP BÀI) ================= */
+        .review-correct-highlight { 
+            border-color: #22c55e !important; 
+            background-color: #f0fdf4 !important; 
+            color: #15803d !important; 
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.15); 
+        }
+        .review-correct-highlight .opt-badge { background-color: #22c55e !important; color: white !important; }
+        
+        .review-wrong-strike { 
+            border-color: #ef4444 !important; 
+            background-color: #fef2f2 !important; 
+            color: #ef4444 !important; 
+        }
+        .review-wrong-strike .opt-badge { background-color: #ef4444 !important; color: white !important; }
+
+        .section-header { color: #dc2626 !important; border-bottom: 3px solid #fecaca !important; }
+        .instruction-text { color: #dc2626 !important; font-weight: 700; font-size: 15px; white-space: pre-line; }
+        .text-question { color: #dc2626 !important; font-size: 16px; line-height: 1.6; }
+        
+        .passage-box { background: #f8fafc; border-left: 5px solid #3b82f6; padding: 16px; border-radius: 8px; max-height: 350px; overflow-y: auto; font-size: 15px; line-height: 1.7; color: #000000; font-weight: 600; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 24px;}
+        
+        /* Ép trình duyệt hiển thị gạch chân đậm rõ nét chống lại CSS reset */
+        u.force-underline { text-decoration: underline !important; text-underline-offset: 4px; text-decoration-thickness: 2.5px; }
+
+        #scores-tbody tr:hover { background-color: #f8fafc; }
+        #scores-tbody tr td { color: #000000 !important; font-weight: 900 !important; border-bottom: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body oncopy="return false" oncut="return false" onpaste="return false">
+
+<div id="app" class="w-full flex flex-col items-center justify-center min-h-screen p-2 sm:p-6">
+
+     <div id="login-section" class="w-full max-w-md fade-in">
+        <div class="glass-card p-6 sm:p-8 text-center relative overflow-hidden">
+               <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+            <h1 class="text-[22px] font-bold text-[#dc2626] mb-1">ĐỀ THI CHUYÊN ANH</h1>
+            <p class="text-gray-500 font-semibold text-sm mb-6">(TỈNH BÀ RỊA - VŨNG TÀU 2025-2026)</p>
+
+            <form id="login-form" class="space-y-4 text-left">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <input type="text" id="hoTen" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Nhập họ tên...">
+                    </div>
+                    <div class="w-1/3">
+                        <input type="text" id="lop" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-bold text-center text-gray-700" placeholder="Lớp 9A">
+                    </div>
+                </div>
+
+                <div class="flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-xl">
+                    <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center font-black text-xl mr-4 shadow-sm">120</div>
+                    <div>
+                        <div class="font-bold text-gray-800 text-[15px]">ĐỀ CHUYÊN VŨNG TÀU 25-26</div>
+                        <div class="text-[12px] text-gray-500 font-semibold mt-0.5">Thời gian làm bài: 120 phút</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-lg tracking-wide">
+                    BẮT ĐẦU LÀM BÀI
+                </button>
+            </form>
+            <div class="mt-6">
+                <button onclick="showSection('scores')" class="text-white bg-black/20 px-4 py-2 rounded-lg font-bold text-sm hover:bg-black/30 transition-all backdrop-blur-sm">🏆 Xem bảng xếp hạng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-section" class="w-full max-w-4xl hidden fade-in pb-10">
+        
+        <div class="glass-card w-full overflow-hidden flex flex-col relative" id="quiz-container-box">
+            
+            <div class="sticky top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200 p-3 sm:p-4 flex justify-between items-center w-full transition-all">
+                
+                <!-- Khối nút Trang chủ và Bảng xếp hạng gộp chung góc trái theo yêu cầu -->
+                <div class="flex items-center gap-2">
+                    <button onclick="goHome()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm border border-gray-200">
+                        🏠 <span class="hidden sm:inline">Trang chủ</span>
+                    </button>
+                    <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-bold text-xs sm:text-sm transition flex items-center gap-1 shadow-sm border border-blue-200">
+                        🏆 <span class="hidden sm:inline">Bảng Xếp Hạng</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="hidden md:flex items-center text-right mr-2 gap-2">
+                        <div class="w-8 h-8 bg-[#ea580c] rounded-full text-white flex items-center justify-center font-black text-[10px] shadow-sm border border-white">HS</div>
+                        <div>
+                            <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wide" id="student-name-header">Tên - Lớp</div>
+                            <div class="text-[13px] font-black text-blue-800 tracking-tight" id="quiz-header-status">ĐỀ CHUYÊN VŨNG TÀU 25-26</div>
+                        </div>
+                    </div>
+                    <div class="bg-red-50 text-red-600 font-black px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm sm:text-base border border-red-100 shadow-inner">
+                        ⏰ <span id="timer" class="font-mono tracking-widest">120:00</span>
+                    </div>
+                    <div class="bg-blue-50 text-blue-700 font-black px-3 py-1.5 rounded-lg border border-blue-100 shadow-inner text-sm sm:text-base min-w-[55px] text-center">
+                        <span id="progress-text">0/56</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-8 w-full">
+                <div id="question-render-area"></div>
+                <div id="action-bar" class="mt-10 text-center border-t-2 border-gray-100 pt-8">
+                    <button onclick="submitQuiz()" class="px-12 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-xl rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all tracking-wider w-full sm:w-auto">NỘP BÀI NGAY</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="review-action-bar" class="hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t-2 border-gray-200 p-4 z-[60] shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex justify-center gap-4">
+        <button onclick="goHome()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold shadow-sm hover:bg-gray-200 transition-colors text-sm sm:text-base flex items-center gap-2">
+            🏠 Về Trang chủ
+        </button>
+        <button onclick="showSection('scores')" class="px-6 py-3 bg-[#1e3a8a] text-white rounded-xl font-bold shadow-md hover:bg-blue-800 transition-colors text-sm sm:text-base flex items-center gap-2">
+            🏆 Xem Bảng điểm
+        </button>
+    </div>
+
+    <div id="scores-section" class="w-full max-w-6xl hidden fade-in pl-2 sm:pl-12">
+        <div class="glass-card p-4 sm:p-8">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-red-100">
+                <button onclick="goHome()" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-bold text-sm transition flex items-center gap-2 shadow-sm border border-gray-200">
+                    🏠 Trang chủ
+                </button>
+                <h2 class="text-lg sm:text-xl font-black text-red-600 uppercase tracking-tight m-0">BẢNG XẾP HẠNG</h2>
+                <div class="w-24 hidden sm:block"></div> 
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border-2 border-blue-600">
+                <table class="w-full text-sm text-left font-semibold whitespace-nowrap">
+                    <thead class="bg-blue-600 text-white">
+                        <tr>
+                            <th class="px-4 py-4 text-center font-bold">#</th>
+                            <th class="px-4 py-4 text-center font-bold">Lớp</th>
+                            <th class="px-4 py-4 font-bold">Họ tên</th>
+                           
+                            <th class="px-4 py-4 text-center font-bold">Điểm số</th>
+                            <th class="px-4 py-4 text-center font-bold">Thời gian</th>
+                            <th class="px-4 py-4 text-right font-bold">Ngày nộp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scores-tbody" class="bg-white divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl p-6 sm:p-8 max-w-sm w-full text-center fade-in border-t-[6px] border-yellow-400">
+        <div class="text-6xl mb-3 animate-pulse">🤔</div>
+        <h3 class="text-xl font-black text-gray-800 mb-2">Xác nhận nộp bài?</h3>
+        <p class="text-sm font-semibold text-gray-500 mb-6">Bạn có chắc chắn muốn nộp bài và kết thúc bài thi ngay bây giờ không?</p>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition shadow-sm">Chưa, xem lại</button>
+            <button onclick="processSubmission()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-md">Nộp luôn</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[100]">
+    <div class="bg-white rounded-[24px] shadow-2xl w-full max-w-sm overflow-hidden fade-in text-center flex flex-col">
+        <div class="bg-gradient-to-br from-blue-600 to-purple-600 p-8 text-white relative">
+            <div class="text-7xl mb-3 animate-bounce">🎉</div>
+            <h3 class="text-2xl font-black mb-1 tracking-wide">NỘP BÀI THÀNH CÔNG!</h3>
+            <p class="font-bold text-white/90 text-sm" id="result-student-name"></p>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 mb-5 relative">
+                <div class="text-[10px] text-blue-500 font-black mb-1 uppercase tracking-widest">ĐIỂM TRẮC NGHIỆM TỰ ĐỘNG</div>
+                <div class="text-6xl font-black text-blue-700 drop-shadow-sm" id="result-score"></div>
+                <div class="text-sm font-bold text-gray-600 mt-2" id="result-detail"></div>
+                <div class="text-[10px] font-bold text-orange-600 mt-3 bg-orange-100 px-3 py-1.5 rounded-lg inline-block">Chú ý: Đọc kỹ phần giải thích khi xem lại!</div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="reviewQuiz()" class="py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition text-[15px] shadow-sm border border-gray-200">🔎 Học & Xem giải</button>
+                <button onclick="document.getElementById('result-modal').classList.add('hidden'); showSection('scores');" class="py-3.5 bg-[#1e3a8a] text-white rounded-xl font-bold hover:bg-blue-800 transition shadow-md text-[15px]">🏆 Bảng Xếp Hạng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const rawQuestions = [
+        // ---------- I. LISTENING ----------
+        { id: "L1_1", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "mc", ins: "PART 1. You will hear a radio discussion between an interviewer and two journalists.\nListen and CIRCLE the correct answer (A, B, C or D).", q: "Question 1: What is the main point of the anecdote that Jeff tells?", opts: ["A. The young seem to lack social skills.", "B. It's an all too familiar sight these days.", "C. It's the same thing as using your phone in the theater.", "D. They are no better than internet trolls."], ans: 0, expl: "💡 Đoạn băng nói về việc 3-4 người trẻ ngồi chung bàn tại quán cafe nhưng không nói với nhau câu nào mà chỉ dán mắt vào điện thoại. Jeff muốn nhấn mạnh việc những người trẻ đang thiếu hụt kỹ năng giao tiếp xã hội." },
+        { id: "L1_2", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "mc", q: "Question 2: What does Jeff say about the \"death of deference\"?", opts: ["A. People no longer care what others think of them.", "B. Teenagers didn't want their behaviour to be disapproved of.", "C. For the most part it had positive effects on society.", "D. It made people disrespect those in authority."], ans: 2, expl: "💡 Trong băng nghe, Jeff cho rằng sự chấm dứt của việc tôn kính tự động ('death of deference') đã phá vỡ rào cản trong xã hội và mang lại sự bình đẳng lớn hơn, tức là mang lại nhiều ảnh hưởng tích cực ('positive effects') cho xã hội." },
+        { id: "L1_3", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "mc", q: "Question 3: What does Laura imply about teenage behaviour?", opts: ["A. There's nothing that can be done about it.", "B. That it's not entirely their fault.", "C. It's worse nowadays than previously.", "D. They are not taught how to behave."], ans: 1, expl: "💡 Laura ngụ ý rằng sự thiếu hụt giao tiếp và thiếu tự tin không hoàn toàn là lỗi của người trẻ, mà một phần do xã hội công nghệ ('wired-up society') mà chúng ta đang sống tác động lên họ." },
+        { id: "L1_4", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "mc", q: "Question 4: How does Jeff respond to Laura's opinion of teenagers?", opts: ["A. He believes it is all their fault.", "B. He thinks they are not properly brought up.", "C. Those in charge of children should take responsibility.", "D. He thinks she is just making excuses for bad behaviour."], ans: 2, expl: "💡 Jeff phản hồi lại rằng các thế hệ trước không gặp phải vấn đề này, và cha mẹ cũng như nhà trường ('parents and schools') đóng vai trò rất lớn, tức là những người chịu trách nhiệm nuôi dạy trẻ cần phải nhận trách nhiệm." },
+        { id: "L1_5", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "mc", q: "Question 5: Both Jeff and Laura seem to agree that", opts: ["A. a little bit of rudeness is a good thing.", "B. parents don't teach their children how to converse.", "C. the young don't understand adult conversation.", "D. the art of conversation has declined."], ans: 3, expl: "💡 Cả Laura và Jeff đều đề cập đến việc những bài học về giao tiếp xã hội đang dần biến mất và sự tinh tế trong trò chuyện, hiểu biết về sự châm biếm bị mai một đi. Nghệ thuật giao tiếp thực sự đã đi xuống." },
+
+        { id: "L2_1", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "text", ins: "PART 2. You will hear part of an interview with a man called Ewan Richardson, who is trying to persuade people to use less paper.\nListen and fill in the blanks with the missing words.", q: "Every year, the average UK citizen uses about (1) ________ of paper.", ans: "250 kilos", expl: "💡 Từ băng nghe có nhắc đến số liệu '250 kilos per person'." },
+        { id: "L2_2", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "text", q: "Most of the world's paper comes from very (2) ________ forests.", ans: "old", expl: "💡 Trong đoạn hội thoại có nhắc: 'those that produce nearly all the paper we use are really old'." },
+        { id: "L2_3", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "text", q: "The production of paper causes terrible (3) ________ in some places.", ans: "pollution", expl: "💡 Hóa chất dùng trong sản xuất giấy thường bị thải ra sông hồ gây ra sự ô nhiễm ('pollution')." },
+        { id: "L2_4", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "text", q: "The destruction of the forests is a much bigger cause of global warming than (4) ________.", ans: "air travel", expl: "💡 Mất đi số lượng lớn rừng rậm là nguyên nhân đứng hàng thứ hai gây ra nóng lên toàn cầu, cao hơn nhiều so với ngành hàng không ('air travel')." },
+        { id: "L2_5", sec: "I. LISTENING (2.0 pts.)", audio: "Listening.mp3", type: "text", q: "Ewan says that there are already paper recycling bins in many (5) ________.", ans: "schools", expl: "💡 Ewan nhắc đến việc ngày nay bạn rất thường xuyên thấy những thùng tái chế giấy tại các trường học ('schools')." },
+
+        // ---------- II. LEXICO-GRAMMAR ----------
+        { id: "G_1", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", ins: "Choose the word whose underlined part differs from the other three in pronunciation.", q: "Question 1:", opts: ["A. e<u class=\"force-underline text-red-600 font-bold\">x</u>acerbate", "B. e<u class=\"force-underline text-red-600 font-bold\">x</u>asperate", "C. e<u class=\"force-underline text-red-600 font-bold\">x</u>postulate", "D. e<u class=\"force-underline text-red-600 font-bold\">x</u>onerate"], ans: 2, expl: "💡 'expostulate' phát âm là /ks/, các từ còn lại được phát âm là /gz/." },
+        { id: "G_2", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", ins: "Choose the word which differs from the other three in the position of primary stress.", q: "Question 2:", opts: ["A. benevolent", "B. commensurate", "C. meritorious", "D. obsequious"], ans: 2, expl: "💡 'meritorious' trọng âm nhấn âm số 3, các từ còn lại trọng âm nhấn âm số 2." },
+        { id: "G_3", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", ins: "Choose letter A, B, C or D to indicate the underlined word(s) that needs correcting.", q: "Question 3: In today's <u class=\"force-underline text-blue-700 font-bold\">competitive</u> job market, one needs to acquire <u class=\"force-underline text-blue-700 font-bold\">enhanced</u> IT skills to remain <u class=\"force-underline text-blue-700 font-bold\">relevant</u> and improve their <u class=\"force-underline text-blue-700 font-bold\">employment</u>.", opts: ["A. competitive", "B. enhanced", "C. relevant", "D. employment"], ans: 3, expl: "💡 Chữ 'employment' (việc làm) phải sửa thành 'employability' (khả năng được tuyển dụng, khả năng tìm được việc làm)." },
+        { id: "G_4", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", ins: "Choose letter A, B, C or D to indicate the correct answer to each of the following questions.", q: "Question 4: ________ a huge crowd at the Soobin Hoang Son concert whenever he puts on a show.", opts: ["A. There is bound to be", "B. There is bound being", "C. It is bound to be", "D. It is bound being"], ans: 0, expl: "💡 Cấu trúc 'There is bound to be + Noun' = Chắc chắn sẽ có (cái gì/ai đó). Ý câu: Chắc chắn sẽ có một đám đông khổng lồ tại show của ca sĩ này." },
+        { id: "G_5", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", q: "Question 5: John is talking to Jenny about countries:\n- John: \"I think China is the largest country in the world.\"\n- Jenny: \"________ Mr. Rohn told us it is Russia, not China.\"", opts: ["A. That's absolutely correct!", "B. I can see your point there.", "C. Nothing is more reasonable than that.", "D. Well, I do not think so."], ans: 3, expl: "💡 Jenny đang đưa ra ý kiến phản bác lại John, dựa trên thông tin mà thầy Rohn đã dạy (Nga mới là lớn nhất). Do đó, đáp án lịch sự thể hiện sự bất đồng quan điểm là 'Well, I do not think so'." },
+        { id: "G_6", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", q: "Question 6: Professor Hawkings is an extremely intelligent and ________ scientist that has made many break-through discoveries.", opts: ["A. inconsiderate", "B. inconsiderable", "C. ingenious", "D. ingenuous"], ans: 2, expl: "💡 Cần một tính từ mang nghĩa tích cực đi cặp với 'intelligent'. 'Ingenious' (thông minh, khéo léo, tài tình). Phân biệt với 'ingenuous' (ngây thơ, chân thật)." },
+        { id: "G_7", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", q: "Question 7: People who often take part in charity activities are definitely ________", opts: ["A. movers and shakers", "B. sour grapes", "C. an old flame", "D. the salt of the earth"], ans: 3, expl: "💡 Idiom: 'the salt of the earth' = những người rất tốt bụng, lương thiện và đáng quý trọng trong xã hội." },
+        { id: "G_8", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", q: "Question 8: Despite being very kind-hearted, the way she talks often ________ people off.", opts: ["A. puts", "B. lays", "C. writes", "D. kicks"], ans: 0, expl: "💡 Phrasal verb: 'put somebody off' = làm cho ai đó mất cảm tình, hoặc làm họ cảm thấy không thích." },
+        { id: "G_9", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", q: "Question 9: The new tax ________ on beers and liquors will deter people from drinking.", opts: ["A. pressed", "B. imposed", "C. thrown", "D. levelled"], ans: 1, expl: "💡 Collocation: 'impose a tax on something' = áp thuế lên mặt hàng nào đó. Dạng rút gọn mệnh đề quan hệ: 'The tax (which is) imposed on...'." },
+        { id: "G_10", sec: "II. LEXICO-GRAMMAR (1.0 pt.)", type: "mc", q: "Question 10: ________, Open AI can generate an animated video with realistic effects and audio.", opts: ["A. The prompt fed to the machine", "B. The prompt is fed to the machine", "C. The prompt feeding to the machine", "D. Once the prompt is fed to the machine"], ans: 3, expl: "💡 Mệnh đề trạng ngữ chỉ thời gian/điều kiện với 'Once' (Một khi...). (Lưu ý: Có sự điều chỉnh từ 'was fed' thành 'is fed' để đúng sự hòa hợp thì với mệnh đề chính 'can generate')." },
+
+        // ---------- III. CLOZE TEXT ----------
+        { id: "C_1", sec: "III. CLOZE TEXT (1.0 pt.)", type: "text", ins: "Fill in each blank with ONE word to complete the passage.\n\nTHE IMPORTANCE OF KRILL\nKrill are small, shrimp-like animals that only grow to around 5cm in length, yet are one of the most important species on the planet. They may appear to be a relatively insignificant sea creature.", q: "However, their position at the (1) ________ of the food chain of hundreds of larger organisms has led to them being described as the fuel that runs the engine of marine ecosystems worldwide.", ans: "bottom", expl: "💡 Collocation: 'at the bottom of the food chain' / 'at the base of the food chain' = nằm ở dưới đáy chuỗi thức ăn." },
+        { id: "C_2", sec: "III. CLOZE TEXT (1.0 pt.)", type: "text", q: "There are 85 known species of krill, amongst the most important of (2) ________ are Antarctic krill.", ans: "which", expl: "💡 Đại từ quan hệ chỉ vật đứng sau giới từ: 'amongst the most important of WHICH' (trong đó loài quan trọng nhất là...)." },
+        { id: "C_3", sec: "III. CLOZE TEXT (1.0 pt.)", type: "text", q: "Intriguingly, they congregate in such large numbers at certain times of year that they are clearly visible (3) ________ space.", ans: "from", expl: "💡 Có thể nhìn thấy được 'TỪ' không gian: 'visible from space'." },
+        { id: "C_4", sec: "III. CLOZE TEXT (1.0 pt.)", type: "text", q: "Krill form a critical part of the diets of many birds, fish and whales, but are themselves mainly (4) ________. They feed on microscopic plants called algae that float near the surface of the ocean.", ans: "herbivores", expl: "💡 Phía sau giải thích là chúng ăn thực vật siêu nhỏ (microscopic plants), do đó chúng là động vật ăn cỏ ('herbivores' hoặc 'vegetarians')." },
+        { id: "C_5", sec: "III. CLOZE TEXT (1.0 pt.)", type: "text", q: "Recent scientific studies suggests that krill numbers have fallen dramatically (5) ________ the 1970s, perhaps by as much as 80 percent. Should krill populations fall further, then all the animals that are dependent on them will also be in serious trouble.  (Adapted from Formula C1 Exam Trainer)", ans: "since", expl: "💡 Dấu hiệu của thì Hiện tại hoàn thành ('have fallen'), đi kèm một mốc thời gian trong quá khứ thì ta dùng giới từ 'since'." },
+
+        // ---------- IV. WORD FORM ----------
+        { id: "WF_1", sec: "IV. WORD FORM (0.4 pts.)", type: "text", ins: "Write the correct form of each bracketed word.\n\nThe Higher They Climb, the Harder They Fall\nLance Armstrong was the embodiment of ambition and fierce determination in the face of incredible odds. He fought and beat cancer, then went on to win the Tour de France an incredible seven times straight. But was he really such a magnificent athlete or was there something murky behind his spectacular success?", q: "(1. initiate) ________, many Armstrong supporters pointed out that during his seven Tour de France victories, he was the most drug-tested athlete in the world, and that he never tested positive.", ans: "Initially", expl: "💡 Cần một trạng từ đứng đầu câu, ngăn cách với mệnh đề chính bằng dấu phẩy: Initiate -> Initially (Lúc đầu, ban đầu)." },
+        { id: "WF_2", sec: "IV. WORD FORM (0.4 pts.)", type: "text", q: " But cycling is rife with banned performance-enhancing drugs, and many cyclists who never failed a drug test have gone on to admit their guilt later. Some people believe Armstrong did, in fact, return positive results, but was protected by various cycling(2. body) ________ so as not to ruin the image of the sport.", ans: "bodies", expl: "💡 Từ 'various' yêu cầu một danh từ đếm được số nhiều: Body -> Bodies (Ở đây mang nghĩa là các tổ chức, liên đoàn thể thao)." },
+        { id: "WF_3", sec: "IV. WORD FORM (0.4 pts.)", type: "text", q: " It cannot be forgotten that Armstrong's amazing journey from near death to sporting triumph had created a whole new generation of cycling enthusiasts. Although he was never caught  (3. hand) ________, the World Anti-Doping Agency had no choice but to strip him of all his titles.", ans: "red-handed", expl: "💡 Idiom: 'be caught red-handed' = bị bắt quả tang ngay tại trận." },
+        { id: "WF_4", sec: "IV. WORD FORM (0.4 pts.)", type: "text", q: "Forced to publicly apologize to his cancer support organization, he then confessed to doping in an interview with Oprah Winfrey, though he refrained from revealing his methods. From the height of fame, Armstrong is now in the depths of (4. famous) ________.", ans: "infamy", expl: "💡 'in the depths of + Noun'. Famous (tính từ) -> Infamy (danh từ, sự tai tiếng, vết nhơ)." },
+
+        // ---------- V. READING ----------
+        { id: "R1_1", sec: "V. READING (2.6 pts.)", type: "mc", ins: "PART 1. Read the following advertisement and announcement and CIRCLE the correct option that best fits each of the numbered blanks.", passage: "NEW WINDSCREEN COMING!!\nWe, as car manufacturers, have been constantly coming up with new and innovative ways to meet your expectations of being digitally connected at all times. Our old car windscreen, which has traditionally been used for observation only, can now be transformed into a source of information. We are excited to announce that the holograms appearing on our new windscreen WS0531 will give you details of restaurants, shops or historic (1) ________ or it can be used as an alternative to GPS systems that already exist. This revolutionary feature can be accessed simply with a wave of your hand. Undeniably, we know you may be concerned about safety issues. Using an interactive windscreen while the car is stationary is fine but at speed, it's another story. However, we can assure you that our holograms are completely non-intrusive, so such risks are minimized. Our products could indeed be used to alert drivers to (2) ________ in the road ahead. \nThe new windscreen WS0531 is available at our brick-and-mortar store on 46 John Lenon street, Orange district at a reduced price, 50% off, (3) ________ for the first 100 customers. Come and buy now!", q: "Question 1:", opts: ["A. landscapes", "B. landfalls", "C. landmarks", "D. landslides"], ans: 2, expl: "💡 Collocation: 'historic landmarks' = những di tích, địa danh có tính lịch sử." },
+        { id: "R1_2", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 2:", opts: ["A. hurdles", "B. obstructions", "C. impediments", "D. deterrents"], ans: 1, expl: "💡 'alert drivers to obstructions in the road ahead' = cảnh báo tài xế về các vật cản, sự tắc nghẽn trên đường đi." },
+        { id: "R1_3", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 3:", opts: ["A. merely", "B. mainly", "C. conservatively", "D. exclusively"], ans: 3, expl: "💡 'exclusively for the first 100 customers' = ưu đãi độc quyền, dành riêng cho 100 khách hàng đầu tiên." },
+        { id: "R1_4", sec: "V. READING (2.6 pts.)", type: "mc", passage: "Dear new recruits,\nOn behalf of the board of creative directors, I would like to make this important announcement concerning looking at art from different perspectives. We need you to consider this carefully when you search for ideas for the project in August.\nArt is defined as any expression of creativity that can be viewed, heard or otherwise experienced. In recent years, artists have started investigating new methods of expression and have brought about new and innovative art forms. This experiment trend is not limited to the visual arts. Different types of music have (4) ________ the scene in recent years as well. One example is \"Sound Art\", which made its first appearance in the early 90s. This discipline utilizes sounds to encourage listeners to become more conscious of what they are listening to. For some art lovers, however, \"sand animation\" is without a doubt the most interesting new art form. It involves a live performance where the artist (5) ________ sand on a surface and uses his or her fingers to create ever changing shapes and images. (6) ________ the form, art provides individuals with the possibility for personal growth. No matter how it is expressed, its objective is to touch the heart of the viewer.\nIf you have any questions, I am willing to discuss them with you in my office.\nBest regards,\nTim.", q: "Question 4:", opts: ["A. come onto", "B. come up with", "C. come down with", "D. come into"], ans: 0, expl: "💡 Idiom: 'come onto the scene' = xuất hiện, ra mắt, trở nên được biết đến (ám chỉ các thể loại nhạc mới đã bắt đầu xuất hiện trong những năm gần đây)." },
+        { id: "R1_5", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 5:", opts: ["A. adds", "B. organizes", "C. arranges", "D. applies"], ans: 2, expl: "💡 Trong nghệ thuật vẽ tranh cát, nghệ sĩ sắp xếp ('arranges') cát trên một bề mặt và dùng ngón tay tạo hình." },
+        { id: "R1_6", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 6:", opts: ["A. Nonetheless", "B. Inasmuch as", "C. Irrespective of", "D. Regarding"], ans: 2, expl: "💡 'Irrespective of the form' = Bất kể nó dưới hình thức nào (âm nhạc hay nghệ thuật thị giác), thì nghệ thuật đều mang lại sự phát triển cho cá nhân." },
+
+        { id: "R2_1", sec: "V. READING (2.6 pts.)", type: "mc", ins: "PART 2. CIRCLE the letter A, B, C, or D to indicate the correct option that best fits each of the following numbered blanks from 1 to 5.", passage: "Sleep is often seen as time when the body is inactive. In fact, the opposite is true. Sleep is an active, involuntary though complex process during (1) ________. It involves low awareness of the outside world, relaxed muscles, and a raised anabolic state which helps us to build and repair our bodies. Primarily, sleep is for the brain, (2) ________. During our sleep, the brain can process information, consolidate memory, and enable us to learn and function effectively during daytime. (3) ________. Whilst we sleep, our brain is not only strengthening memories but is also reorganizing them, (4) ________. Sleep affects our ability to use the language and sustain attention. If we compromise on our sleep pattern, we compromise on our performance, our mood, and our interpersonal relationships. Sleep has also been shown to protect the immune system. Sleep is an inconvenient, time-consuming process, (5) ________.", q: "Question 1:", opts: ["A. which our body undertakes a number of activities", "B. this time a range of activities take place in our body", "C. the body is recovering from activities of the previous day", "D. this period the body is active in a number of ways"], ans: 0, expl: "💡 Mệnh đề quan hệ: 'during which' = 'trong suốt quá trình (giấc ngủ) đó', cơ thể chúng ta thực hiện ('undertakes') một loạt các hoạt động." },
+        { id: "R2_2", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 2:", opts: ["A. helps it recover and regenerate", "B. of which is crucial to the brain", "C. allowing it to recover and regenerate", "D. recovered and regenerated the brain"], ans: 2, expl: "💡 Rút gọn mệnh đề phân từ hiện tại chỉ kết quả: 'allowing it to recover and regenerate' = 'cho phép nó (bộ não) được phục hồi và tái tạo'." },
+        { id: "R2_3", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 3:", opts: ["A. This is why we are encouraged to get a good night's sleep in the run-up to a job interview rather than staying awake all night to prepare.", "B. Contrary to popular belief, there are no significant distinctions between getting a good night's sleep and staying awake all night to prepare for a job interview.", "C. Being well-prepared is crucial to be successful in a job's interview because getting enough sleep is necessary.", "D. For example, we are encouraged to wear comfortable clothes when sleeping to get better sleep."], ans: 0, expl: "💡 Câu liền trước giải thích giấc ngủ giúp não xử lý thông tin và củng cố trí nhớ -> Câu này đưa ra một ví dụ ứng dụng thực tiễn: Đó là lý do tại sao ta nên ngủ ngon giấc trước buổi phỏng vấn thay vì thức trắng đêm." },
+        { id: "R2_4", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 4:", opts: ["A. sorting out emotional input notwithstanding becoming more creative and insightful.", "B. regulates our emotional states, yet improves our creativity and insights.", "C. generates creative ideas and insights without losing our tempers.", "D. picking out the emotional details and helping us produce new insights and create ideas."], ans: 3, expl: "💡 Cấu trúc song song dạng V-ing: 'is not only strengthening... but is also reorganizing..., picking out... and helping us...'." },
+        { id: "R2_5", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 5:", opts: ["A. but it is such a prerequisite for life that we have simply evolved to fit it in.", "B. or it is such a prerequisite for life that we have simply evolved to fit it in.", "C. and it is such a prerequisite for life that we have simply evolved to fit it in.", "D. although it is such a prerequisite for life that we have simply evolved to fit it in."], ans: 0, expl: "💡 Sự tương phản: Giấc ngủ là một quá trình tốn thời gian (tiêu cực) NHƯNG (but) nó lại là một tiền đề sống còn (tích cực) đến mức con người đã tiến hóa để thích nghi với nó." },
+
+        { id: "R3_1", sec: "V. READING (2.6 pts.)", type: "mc", ins: "PART 3. Read the following passages and CIRCLE A, B, C or D to indicate the best answer to each question.", passage: "[PASSAGE A]\nLife in ancient times was difficult; there were constant wars, much famine and few cures for diseases which ravaged the society. Therefore, the treatment of illness and injury greatly concerned the ancients. What methods did ancient cultures use to fight disease and injury? All ancient cultures had a mythological divine healer. For the ancient Greeks it was Asklepius, the god of medicine. Sanctuaries dedicated to him, called Asklepeions, attracted the ill and injured, who would often travel from far and wide to seek relief from whatever ailed them at these healing centers. They were often in settings of spectacular natural beauty. The main Asklepeion in ancient Greece was in Epidaurus. It was similar to a modern spa in that the patients were offered special purifying baths, followed by a diet what we would call a detox diet today that lasted for several days. Once patients were cleansed, they entered a sleep chamber for one or two nights. They would then receive a visit from the god in the form of a dream, and he would heal the patients directly or tell them how to cure their illness.\nAncient healing, however, involved more than just healthy food and dream analysis. From the writings of Hippocrates, the best-known ancient physician, we learn that ancient doctors knew how to heal infected wounds by lancing, draining and cleaning them. They also knew how to use herbs to treat a spectrum of illnesses. Ginger was effective in treating nausea and is still used today for the same reason; a special clay was useful in fighting problems in the digestive system. Scientific analysis has revealed that the clay was similar to kaolin, which is used in modern medicines to treat diarrhoea. Surgery was also part of the ancient physician's vast repertoire. The famous Greek physician, Galen, successfully removed cataracts from the eyes with the use of a needle. He was also aware of the importance of hygiene and so kept his 'operating theatre' spotlessly clean. He did, however, have a misconception regarding his notion that the stomach lining played no role in the process of digestion.\nArchaeologists have revealed other medical practices in the ancient world. Skeletal remains show evidence of quite surprising surgical procedures. Skulls have been excavated that show signs of trepanation a procedure still used today in which a hole is drilled into the skull to relieve pressure caused by head trauma. Skulls treated in this way from ancient societies around the world indicate that the practice goes back as far as 10,000 BC. By studying the regrowth of the bone around the hole in the skull, it is possible to determine how long the patient survived after the surgery. Some did not survive, some lived a little longer, but others healed completely. Excavations in Israel have also revealed evidence of ancient dental procedures. In a desert grave, a 2,200-year-old skull was found that had a dental filling, which was a very short bronze wire placed into the tooth. Elsewhere, in the catacombs of Rome, which were used from the 1st to the 5th centuries AD, skulls were found with gold fillings. Not surprisingly, further information about ancient health care can be found in the graves of ancient doctors. Depicted in stone tablets are the instruments they used. These objects are almost identical to the cutting-edge instruments used by doctors and surgeons today.", q: "Question 1: According to the passage, which of the following medical practices was only used in ancient times?", opts: ["A. dental filling", "B. trepanation", "C. use of herbs", "D. dream analysis"], ans: 3, expl: "💡 Trám răng (A), phẫu thuật khoan sọ trepanation (B), và thảo dược (C) đều được nhắc đến là 'still used today' (vẫn được dùng ở thời hiện đại). Riêng chữa bệnh bằng cách nằm mơ chờ thần linh ('dream analysis') là phương pháp đặc hữu của người xưa." },
+        { id: "R3_2", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 2: Which of the following is poorly understood by ancient medical practioners according to the passage?", opts: ["A. detoxification", "B. hygienic practices", "C. digestive organs", "D. infection treatments"], ans: 2, expl: "💡 Trong bài có câu: 'He did, however, have a misconception regarding his notion that the stomach lining played no role in the process of digestion' (Ông ấy đã có quan niệm sai lầm về vai trò của dạ dày). Tức là y học cổ đại chưa hiểu rõ cơ quan tiêu hóa." },
+        { id: "R3_3", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 3: The word \"repertoire\" is CLOSEST in meaning to:", opts: ["A. general knowledge", "B. medical treatments", "C. surgery implements", "D. ancient writings"], ans: 1, expl: "💡 Trong ngữ cảnh 'Surgery was also part of the ancient physician's vast repertoire', từ 'repertoire' chỉ một loạt các kỹ thuật, phương pháp chữa trị (medical treatments) mà bác sĩ đó có thể thực hiện." },
+        { id: "R3_4", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 4: According to the passage, which of the following statements is TRUE?", opts: ["A. Ancient treatments are inferior to modern ones in terms of effectiveness.", "B. Trepanation in ancient times has a significantly high success rate.", "C. Some medical tools in the past bear a resemblance to modern ones.", "D. No precious metals were used by ancient doctors due to its scarcity."], ans: 2, expl: "💡 Câu cuối của bài viết có nói: 'These objects are almost identical to the cutting-edge instruments used by doctors and surgeons today' -> C là đáp án đúng (một số dụng cụ y tế cổ đại rất giống với dụng cụ hiện đại)." },
+        { id: "R3_5", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 5: What is the main idea of the passage?", opts: ["A. There were certain similarities between modern medical practices and ancient ones.", "B. Ancient doctors and physicians were respected by people thanks to their competence.", "C. Archaeological evidence reveals important information about ancient practices.", "D. Surgery has been a crucial part of medical treatments for thousands of years."], ans: 0, expl: "💡 Xuyên suốt đoạn văn, tác giả luôn đem các phương pháp cổ đại ra so sánh và chỉ ra những nét tương đồng với y học hiện đại (chế độ ăn detox, dùng thảo mộc gừng, kaolin, dụng cụ phẫu thuật, khoan sọ...)." },
+        
+        { id: "R3_6", sec: "V. READING (2.6 pts.)", type: "mc", passage: "[PASSAGE B]\nThere are many different types of places to eat. One important question is who uses different places and how often they go. As sociologists, we are very interested in social and cultural characteristics of people who behave differently. Such characteristics indicate the financial, social, practical and cultural forces systematically distributed across the population, which constrain or encourage people to engage in particular ways of eating out. We asked respondents how often they ate out under different circumstances. Excluding holidays and eating at the workplace, on average the respondents to the survey ate a main meal out on commercial premises about once every three weeks. Twenty-one per cent ate out once a week, a further forty-four per cent at least monthly and only seven per cent claimed never to eat out. Mean frequency of eating at someone else's home was about the same, but a much larger proportion (twenty per cent) never did so. Twenty per cent of respondents claimed never to eat in the home of other family members, and about one third never at the home of friends. Very regular eating out with either kin or friends was not very <u class=\"force-underline text-blue-700 font-bold bg-yellow-50\">prevalent</u>, but being a guest at a main meal in someone else's home is part of the life experience of a large majority of population. There is a strong positive association between being a guest of friends, guest of family and commercial eating out. Opportunities to eat out are cumulative, particularly eating out commercially and with friends.\n<u class=\"force-underline text-blue-700 font-bold bg-yellow-50\">To be seen in the right places and in attractive company, or at least to let others know that we are familiar with the most exciting or rewarding of experiences, is part of a process of display and performance which contributes to reputation.</u> Early sociologist examining consumption were particularly interested in the claiming and attributing of status through exhibitions of a prestigious style of life. They were particularly concerned with the ways in which individuals established reputations for refinement, superiority and distinction. Consumption patterns reflected social standing, and particularly class position. Eating out is a potential means for such display through the use and avoidance of different venues.", q: "Question 6: Which of the following are sociologists interested in about the topic of eating out?", opts: ["A. the traits of people who choose to eat out.", "B. the types of places that people choose to eat out in.", "C. the changes over time in patterns of eating out.", "D. the frequency with which people eat out with friends."], ans: 0, expl: "💡 Ngay câu đầu: 'As sociologists, we are very interested in social and cultural characteristics of people who behave differently' (đặc điểm/traits của những người có cách hành xử, thói quen ăn uống khác nhau)." },
+        { id: "R3_7", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 7: Which of the sentences below best paraphrases the underlined sentence in the passage?", opts: ["A. In order to look good, diners exhibit that they hang out with certain people at certain places and are acquainted with glamorous dining experiences.", "B. Eating out with co-workers at their companies is a rewarding experience to many people.", "C. People will receive more rewards from their companies if they eat out at fancy restaurants with good-looking people.", "D. Eating out is a common practice for many people to polish their names because it is exorbitant."], ans: 0, expl: "💡 Câu gốc chỉ ra rằng việc để người khác thấy mình dùng bữa ở những nơi sang trọng, với bạn đồng hành cuốn hút nhằm mục đích phô diễn và nâng cao danh tiếng. Đáp án A là câu paraphrase sát nghĩa nhất." },
+        { id: "R3_8", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 8: According to the passage, which of these statements is TRUE ?", opts: ["A. People eat out more frequently at someone else's home than in a restaurant.", "B. People eat out less frequently at someone else's home than in a restaurant.", "C. People are more likely to eat out at a friend's house than at the home of another family member.", "D. People are more likely to eat out at the home of another family member than at a friend's house."], ans: 3, expl: "💡 Trong bài có số liệu: 20% chưa từng dùng bữa tại nhà người thân trong gia đình, trong khi có tới 1/3 (khoảng 33%) chưa từng dùng bữa tại nhà bạn bè. Vậy khả năng dùng bữa tại nhà người thân sẽ cao hơn tại nhà bạn bè." },
+        { id: "R3_9", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 9: The next paragraph will most likely discuss", opts: ["A. the reasons why some restaurants are more favorable than others.", "B. the changes in the tastes of dishes in restaurants in the future.", "C. the association between class and type of restaurant preferred.", "D. the relationship between dining expenses and restaurant popularity."], ans: 2, expl: "💡 Câu chốt của đoạn cuối có nhắc tới: 'Consumption patterns reflected social standing, and particularly class position. Eating out is a potential means for such display through the use and avoidance of different venues.' Do đó đoạn tiếp theo khả năng cao nhất sẽ thảo luận về mối liên hệ giữa tầng lớp xã hội (class) và loại hình hình nhà hàng ưa thích." },
+        { id: "R3_10", sec: "V. READING (2.6 pts.)", type: "mc", q: "Question 10: The word \"prevalent\" in paragraph 3 is CLOSEST in meaning to:", opts: ["A. perfunctory", "B. conspicuous", "C. empirical", "D. fortuitous"], ans: 1, expl: "💡 Mặc dù 'prevalent' thông thường mang nghĩa là thịnh hành, phổ biến (widespread/common). Tuy nhiên trong bối cảnh các phương án đưa ra, 'conspicuous' (rõ ràng, dễ thấy) là sự lựa chọn khả dĩ nhất về mặt thể hiện một hiện tượng dễ dàng nhận diện." },
+
+        // ---------- VI. WRITING ----------
+        { id: "W_1", sec: "VI. WRITING (2.0 pts.)", type: "text", ins: "PART 1. Complete the sentences without changing the original meaning, using the words in brackets. Do not change the words given.", q: "1. People believe that this gigantic cave was accidentally discovered by a local lumberjack. (believed)\nThis _________________", ans: "gigantic cave is believed to have been accidentally discovered by a local lumberjack", expl: "💡 Cấu trúc bị động của các động từ chỉ quan điểm (say/think/believe...). Do việc 'được phát hiện' (discovered) xảy ra trước sự việc 'tin rằng' (believe) ở hiện tại, nên ta lùi về dùng dạng To-Infinitive hoàn thành: 'to have been + V3/ed'." },
+        { id: "W_2", sec: "VI. WRITING (2.0 pts.)", type: "text", q: "2. As soon as he was found infected with the disease, he was isolated from the others.\nNo sooner _________________", ans: "had he been found infected with the disease than he was isolated from the others", expl: "💡 Đảo ngữ cấu trúc 'Vừa mới... thì...': No sooner + had + S + V3/ed + than + S + V(quá khứ đơn)." },
+        { id: "W_3", sec: "VI. WRITING (2.0 pts.)", type: "text", q: "3. He did not lose his job because the manager made an allowance for him.\nHad the _________________", ans: "manager not made an allowance for him, he would have lost his job", expl: "💡 Đảo ngữ của câu điều kiện loại 3 (giả định trái ngược với quá khứ): 'Had + S + (not) + V3/ed, S + would/could + have + V3/ed'." },
+        { id: "W_4", sec: "VI. WRITING (2.0 pts.)", type: "text", q: "4. His boss put the blame on him when a production error forced the whole factory to close down. (standstill)\nHe was made to carry _________________", ans: "the can when a production error brought the whole factory to a standstill", expl: "💡 Kết hợp hai Idiom: \n1. 'carry the can' = chịu trách nhiệm, hứng mũi chịu sào, lãnh tội (cho lỗi lầm của người khác).\n2. 'bring something to a standstill' = buộc cái gì đó ngừng hoạt động / đóng băng." },
+        { id: "W_5", sec: "VI. WRITING (2.0 pts.)", type: "text", q: "5. I suggest we should consider all the possible expenses of our trip to Japan before we reach a final decision. (took)\nI would _________________", ans: "rather we took all the possible expenses of our trip to Japan into consideration before we reach a final decision", expl: "💡 1. Cấu trúc 'I would rather + S + V(quá khứ giả định)' để diễn tả một mong muốn, lời đề nghị ở hiện tại.\n2. Cụm từ 'take something into consideration' = cân nhắc (consider) cái gì đó." },
+        
+        { id: "W_6", sec: "VI. WRITING (2.0 pts.)", type: "textarea", ins: "PART 2. Paragraph writing (1.0 pt.)\nIn 100-120 words, express your opinion on this topic:\nSome believe exams are one of the effective ways to evaluate students’ performance.\nTo what extent do you agree or disagree?", q: "Your paragraph:", ans: "", expl: "💡 <b>Gợi ý bài mẫu tiêu chuẩn (115 từ):</b><br><br>In my opinion, formal examinations remain a highly effective method for evaluating student performance. Firstly, exams offer a standardized and objective framework to assess academic achievement. Since all students encounter identical questions under the exact same testing conditions, educators can fairly measure individual proficiency without any personal bias. Furthermore, the preparation process for an examination encourages students to comprehensively review their materials. This consolidates their core knowledge while cultivating essential self-discipline and time-management skills. Although continuous classroom assessments provide helpful insights into a student's daily efforts, examinations offer a clear, structured, and definitive summary of academic capability. Therefore, I strongly believe that exams play an indispensable and vital role in modern educational assessment." }
+    ];
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+        authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+        databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hanhtrinhso-e3368",
+        storageBucket: "hanhtrinhso-e3368.firebasestorage.app"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const scoresRef = database.ref('bxh_tienganh_chuyen_vungtau_2526'); 
+
+    let deviceId = localStorage.getItem('deviceId') || ('dev_' + Date.now());
+    localStorage.setItem('deviceId', deviceId);
+    
+    let allScores = [], currentStudent = {}, userAnswers = {}, timerInterval;
+    let quizStartTime, quizEndTime, isReviewMode = false;
+
+    scoresRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        allScores = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+        renderScores();
+    });
+
+    document.getElementById('login-form').onsubmit = (e) => {
+        e.preventDefault();
+        currentStudent = { hoTen: document.getElementById('hoTen').value.trim(), lop: document.getElementById('lop').value.trim() };
+        startQuiz();
+    };
+
+    function startQuiz() {
+        quizStartTime = new Date();
+        isReviewMode = false;
+        userAnswers = {};
+        
+        document.getElementById('student-name-header').innerText = `${currentStudent.hoTen} - ${currentStudent.lop}`;
+        document.getElementById('quiz-section').classList.add('is-taking-test');
+        
+        showSection('quiz');
+        renderQuestions();
+        startTimer(120 * 60);
+    }
+
+    window.selectAnswer = function(qId, val) {
+        if(isReviewMode) return;
+        userAnswers[qId] = val;
+        let answered = Object.keys(userAnswers).filter(k => userAnswers[k].toString().trim() !== '').length;
+        document.getElementById('progress-text').innerText = `${answered}/${rawQuestions.length}`;
+    };
+
+    function renderQuestions() {
+        const container = document.getElementById('question-render-area');
+        let html = '';
+
+        rawQuestions.forEach((q, idx) => {
+            let prevQ = idx > 0 ? rawQuestions[idx - 1] : null;
+            
+            if (!prevQ || prevQ.sec !== q.sec || prevQ.ins !== q.ins) {
+                html += `<div class="mt-10 mb-6">`;
+                if (!prevQ || prevQ.sec !== q.sec) {
+                    html += `<h2 class="text-[20px] font-black text-blue-800 uppercase border-b-[3px] border-blue-200 pb-2 inline-block">${q.sec}</h2>`;
+                }
+                if (q.ins) {
+                    html += `<div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 text-gray-700 font-bold text-[15px] mt-4 shadow-sm whitespace-pre-line">${q.ins}</div>`;
+                }
+                html += `</div>`;
+            }
+
+            if (q.audio && (!prevQ || prevQ.audio !== q.audio)) {
+                html += `
+                    <div class="sticky-audio bg-red-50 p-4 border border-red-100 mb-6">
+                        <div class="font-black text-red-600 mb-2 text-[14px]">🎧 BĂNG NGHE ÂM THANH:</div>
+                        <audio controls class="w-full h-10 outline-none"><source src="${q.audio}" type="audio/mpeg">Trình duyệt không hỗ trợ Audio.</audio>
+                    </div>`;
+            }
+
+            if (q.passage && (!prevQ || prevQ.passage !== q.passage)) {
+                html += `<div class="passage-box whitespace-pre-line">${q.passage}</div>`;
+            }
+
+            let uAns = userAnswers[q.id] !== undefined ? String(userAnswers[q.id]) : '';
+
+            html += `<div class="mb-8">`;
+            html += `<h3 class="text-question font-bold mb-4 whitespace-pre-line">${q.q}</h3>`;
+
+            if (q.type === 'mc') {
+                html += `<div class="space-y-3">`;
+                q.opts.forEach((opt, i) => {
+                    let isChecked = (uAns !== '' && uAns === String(i)) ? 'checked' : '';
+                    let char = String.fromCharCode(65 + i);
+                    let textOnly = opt.replace(/^[A-D]\.\s*/, ''); 
+                    
+                    let labelClass = "opt-label";
+                    let checkIcon = "";
+
+                    if (isReviewMode) {
+                        if (q.ans == i) { 
+                            labelClass += " review-correct-highlight"; 
+                            checkIcon = `<div class="check-icon text-green-600">✔</div>`; 
+                        } 
+                        else if (uAns === String(i)) { 
+                            labelClass += " review-wrong-strike"; 
+                            checkIcon = `<div class="check-icon text-red-600">✘</div>`; 
+                        } 
+                    }
+
+                    html += `
+                        <div class="relative">
+                            <input type="radio" id="rad_${q.id}_${i}" name="q_${q.id}" value="${i}" class="opt-radio" ${isChecked} onchange="selectAnswer('${q.id}', '${i}')" ${isReviewMode ? 'disabled' : ''}>
+                            <label for="rad_${q.id}_${i}" class="${labelClass}">
+                                <div class="opt-badge">${char}</div>
+                                <div class="flex-1">${textOnly}</div>
+                                ${checkIcon}
+                            </label>
+                        </div>`;
+                });
+                html += `</div>`;
+                
+                if (isReviewMode) {
+                    let isCorrect = String(uAns) === String(q.ans);
+                    if (isCorrect) {
+                        html += `<div class="mt-4 p-4 bg-green-50 border-2 border-green-200 rounded-xl text-green-800 font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-green-600 mb-1">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>
+                                    <span class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</span>
+                                 </div>`;
+                    } else {
+                        html += `<div class="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-red-600 mb-1">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</div>
+                                 </div>`;
+                    }
+                }
+            } 
+            else if (q.type === 'text') {
+                if (isReviewMode) {
+                    let isCorrect = String(uAns).replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').toLowerCase().trim() === String(q.ans).replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').toLowerCase().trim();
+                    html += `<div class="flex flex-col gap-2">
+                                <input type="text" disabled value="${uAns}" class="w-full px-5 py-4 border-2 rounded-xl font-bold text-base ${isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-400 text-red-700'}">`;
+                    if (isCorrect) {
+                        html += `<div class="mt-2 p-4 bg-green-50 border-2 border-green-200 rounded-xl text-green-800 font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-green-600 mb-1">🎉 Tuyệt vời! Bạn làm đúng rồi.</div>
+                                    <span class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</span>
+                                 </div>`;
+                    } else {
+                        html += `<div class="mt-2 p-4 bg-red-50 border-2 border-red-200 rounded-xl font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-red-600 mb-1">❌ Bạn làm sai rồi (hoặc chưa làm).</div>
+                                    <div class="text-green-700 font-bold mb-2">👉 Đáp án chuẩn: <span class="text-lg">${q.ans}</span></div>
+                                    <div class="text-gray-700">💡 <b>Giải thích:</b> ${q.expl}</div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `<input type="text" value="${uAns}" placeholder="Nhập câu trả lời..." oninput="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#2563eb] font-bold outline-none text-[#1e3a8a] bg-gray-50 shadow-inner text-base transition-all">`;
+                }
+            } 
+            else if (q.type === 'textarea') {
+                if (isReviewMode) {
+                    html += `<div class="flex flex-col gap-2">
+                                <textarea disabled class="w-full px-5 py-4 border-2 rounded-xl font-bold text-base bg-gray-100 text-gray-700 h-40 resize-y leading-relaxed">${uAns}</textarea>
+                                <div class="mt-2 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl font-medium text-[15px] shadow-sm">
+                                    <div class="font-black text-yellow-700 mb-1">✍️ Gợi ý làm bài</div>
+                                    <div class="text-gray-700 leading-relaxed">${q.expl}</div>
+                                 </div>
+                             </div>`;
+                } else {
+                    html += `<textarea placeholder="Write your paragraph here (100-120 words)..." oninput="selectAnswer('${q.id}', this.value)" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-[#2563eb] font-medium outline-none text-[#1e3a8a] bg-gray-50 shadow-inner text-base transition-all h-40 resize-y leading-relaxed">${uAns}</textarea>`;
+                }
+            }
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function submitQuiz() {
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function processSubmission() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        clearInterval(timerInterval);
+        quizEndTime = new Date();
+        
+        let correctCount = 0;
+        let autoGradeCount = 0;
+
+        rawQuestions.forEach(q => {
+            if (q.type === 'mc' || q.type === 'text') {
+                autoGradeCount++;
+                let uAns = String(userAnswers[q.id] || '').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').toLowerCase().trim();
+                let cAns = String(q.ans).replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').toLowerCase().trim();
+                if (uAns === cAns) correctCount++;
+            }
+        });
+        
+        const score = autoGradeCount > 0 ? ((correctCount / autoGradeCount) * 10).toFixed(2) : 0;
+        const durationSeconds = Math.floor((quizEndTime - quizStartTime) / 1000);
+        
+        scoresRef.push({
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop,
+            diem: parseFloat(score), soCauDung: correctCount, tongCau: autoGradeCount,
+            duration: `${Math.floor(durationSeconds/60)}p ${durationSeconds%60}s`,
+            thoiGian: new Date().toISOString(), deviceId: deviceId 
+        }).then(() => {
+            document.getElementById('result-student-name').innerText = `${currentStudent.hoTen}`;
+            document.getElementById('result-score').innerText = score;
+            document.getElementById('result-detail').innerText = `Đúng ${correctCount} / ${autoGradeCount} ý (Hệ thống tự động chấm trắc nghiệm)`;
+            document.getElementById('result-modal').classList.remove('hidden');
+        });
+    }
+
+    function reviewQuiz() {
+        document.getElementById('result-modal').classList.add('hidden');
+        isReviewMode = true;
+        
+        document.getElementById('quiz-header-status').innerText = "XEM LẠI BÀI LÀM";
+        document.getElementById('quiz-header-status').classList.replace("text-blue-800", "text-purple-700");
+        document.getElementById('quiz-section').classList.remove('is-taking-test'); 
+        document.getElementById('action-bar').classList.add('hidden');
+        document.getElementById('review-action-bar').classList.remove('hidden');
+        
+        renderQuestions();
+        window.scrollTo(0,0);
+    }
+
+    function renderScores() {
+        const tbody = document.getElementById('scores-tbody');
+        const sorted = [...allScores].sort((a, b) => b.diem - a.diem);
+        tbody.innerHTML = sorted.map((s, idx) => `
+            <tr class="border-b hover:bg-blue-50 transition-colors ${s.deviceId === deviceId ? 'bg-blue-50 font-bold' : ''}">
+                <td class="px-5 py-4 text-center text-gray-500 font-bold">${idx + 1}</td>
+                <td class="px-5 py-4 text-center text-gray-500 font-bold">${s.lop}</td>
+                <td class="px-5 py-4 text-gray-800 font-bold">${s.hoTen} ${s.deviceId === deviceId ? '<span class="text-[10px] ml-2 bg-red-500 text-white px-2 py-0.5 rounded-full">Bạn</span>' : ''}</td>
+                <td class="px-5 py-4 text-center font-black text-lg ${s.diem >= 5 ? 'text-green-600' : 'text-red-600'}">${s.diem}</td>
+                <td class="px-5 py-4 text-center text-blue-600 font-bold">${s.duration}</td>
+                <td class="px-5 py-4 text-right text-xs text-gray-500 font-bold">${new Date(s.thoiGian).toLocaleString('vi-VN')}</td>
+            </tr>
+        `).join('');
+    }
+
+    function startTimer(seconds) {
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            document.getElementById('timer').innerText = `${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
+            if (remaining <= 0) processSubmission(); 
+        }, 1000);
+    }
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function goHome() { location.reload(); }
+</script>
+</body>
+</html>
