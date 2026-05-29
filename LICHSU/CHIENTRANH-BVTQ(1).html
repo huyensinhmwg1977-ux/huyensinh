@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Lịch Sử 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all relative">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white relative">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1 uppercase">Kiểm Tra Lịch Sử 12</h1>
+      <p class="text-gray-600 font-bold">Chủ đề 2: Chiến tranh bảo vệ Tổ quốc và giải phóng dân tộc</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn nội dung:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 1: NỘI DUNG ÔN TẬP</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 2: BÀI TẬP TRẮC NGHIỆM</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 VÀO HỌC </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100 relative">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 ý</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl relative" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10 flex gap-2">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+         <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+     </div>
+     <div class="mb-6 pb-4 border-b-2 border-gray-100 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+     </div>
+     <div class="mb-6 border-b-2 border-gray-100 pb-4 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </p>
+   </footer>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-[90%] shadow-2xl transform transition-transform duration-300 scale-95" id="confirm-card">
+            <div class="text-5xl mb-4 text-center animate-bounce">⚠️</div>
+            <h3 class="text-2xl font-black text-red-600 mb-2 text-center uppercase">Khoan đã!</h3>
+            <p class="text-gray-600 mb-8 text-center font-medium leading-relaxed" id="confirm-msg"></p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="btn-cancel-submit" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200">Tiếp tục làm bài</button>
+                <button id="btn-confirm-submit" class="flex-1 py-3 px-4 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold rounded-xl transition-all shadow-md shadow-red-500/30 transform hover:-translate-y-0.5">Vẫn Nộp Luôn</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_lichsu12_chude2'); 
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== HTML LÝ THUYẾT (DÀNH CHO PHẦN 1) ====================
+    const theoryHTML = `
+ <div class="theory-content">
+ <h2 style="color: #dc2626;">PHẦN MỘT: NỘI DUNG ÔN TẬP</h2>
+    <div style="text-align: center; font-weight: bold; margin-bottom: 30px;">CHỦ ĐỀ 2. CHIẾN TRANH BẢO VỆ TỔ QUỐC VÀ CHIẾN TRANH GIẢI PHÓNG DÂN TỘC TRONG LỊCH SỬ VIỆT NAM (TRƯỚC NĂM 1945)</div>
+    
+    <h3 style="color: #dc2626; font-size: 18px;">1. Chiến tranh bảo vệ Tổ quốc trong lịch sử Việt Nam (trước năm 1945)</h3>
+    <p><strong>a) Khái quát về chiến tranh bảo vệ Tổ quốc trong lịch sử Việt Nam</strong></p>
+    <ul>
+        <li><strong>Vị trí địa chiến lược của Việt Nam:</strong> Việt Nam có vị trí địa chiến lược quan trọng cả trên đất liền và trên biển, nằm trên các trục giao thông quốc tế ở khu vực Đông Nam Á, từ Đông Bắc Á xuống Đông Nam Á và Nam Á, từ Thái Bình Dương sang Ấn Độ Dương. Với vị trí chiến lược nổi bật đó, Việt Nam là địa bàn cạnh tranh ảnh hưởng của các cường quốc trên thế giới và khu vực.</li>
+        <li><strong>Vai trò, ý nghĩa của chiến tranh bảo vệ Tổ quốc:</strong> Chiến tranh bảo vệ Tổ quốc có vai trò đặc biệt trong bảo vệ độc lập, chủ quyền, thống nhất, toàn vẹn lãnh thổ của Tổ quốc, quyết định sự tồn vong của dân tộc Việt Nam trước các cuộc chiến tranh xâm lược và can thiệp từ bên ngoài. Chiến tranh bảo vệ Tổ quốc trong lịch sử đã viết nên những trang sử vẻ vang của dân tộc Việt Nam, nêu cao chủ nghĩa yêu nước, tinh thần độc lập, tự chủ, mưu trí, sáng tạo của con người Việt Nam, góp phần khơi dậy và củng cố tinh thần đoàn kết, lòng tự hào dân tộc.</li>
+    </ul>
+
+    <p><strong>b) Một số cuộc kháng chiến thắng lợi tiêu biểu</strong></p>
+    <ul>
+        <li>Cuộc kháng chiến chống quân Nam Hán và chiến thắng Bạch Đằng năm 938.</li>
+        <li>Cuộc kháng chiến chống quân xâm lược Tống năm 981 và năm 1075 – 1077.</li>
+        <li>Ba lần kháng chiến chống quân xâm lược Mông – Nguyên: năm 1258, năm 1285 và năm 1287 – 1288.</li>
+        <li>Cuộc kháng chiến chống quân Xiêm năm 1785.</li>
+        <li>Cuộc kháng chiến chống quân Thanh năm 1789.</li>
+    </ul>
+    <p><strong>Nguyên nhân thắng lợi:</strong> Các cuộc kháng chiến đều mang tính chính nghĩa, chống kẻ thù xâm lược, huy động được sức mạnh toàn dân. Truyền thống yêu nước và ý chí kiên cường là nhân tố quyết định thắng lợi. Đồng thời, sự lãnh đạo mưu lược, tài giỏi của các vị vua và tướng lĩnh cũng đóng vai trò cốt lõi. Nguyên nhân khách quan là quân xâm lược từ xa tới không quen khí hậu, khó khăn về hậu cần.</p>
+
+    <p><strong>c) Một số cuộc kháng chiến không thành công</strong></p>
+    <ul>
+        <li>Kháng chiến chống quân Triệu (179 TCN).</li>
+        <li>Kháng chiến chống quân Minh (1406 – 1407).</li>
+        <li>Kháng chiến chống thực dân Pháp xâm lược nửa sau thế kỉ XIX.</li>
+    </ul>
+    <p><strong>Nguyên nhân không thành công:</strong> Do phải đương đầu với các thế lực ngoại xâm có thực lực hùng hậu. Trong kháng chiến chống quân Triệu, triều đình Âu Lạc chủ quan, mất cảnh giác. Kháng chiến chống Minh và Pháp thất bại một phần lớn do sai lầm trong đường lối kháng chiến của các triều đình phong kiến (Triều Hồ và Triều Nguyễn).</p>
+
+    <h3 style="color: #dc2626; font-size: 18px;">2. Một số cuộc khởi nghĩa và chiến tranh giải phóng trong lịch sử Việt Nam (từ thế kỉ III TCN đến cuối thế kỉ XIX)</h3>
+    <p><strong>a) Một số cuộc khởi nghĩa tiêu biểu thời kì Bắc thuộc</strong></p>
+    <ul>
+        <li><strong>Khởi nghĩa Hai Bà Trưng (40 - 43):</strong> Đánh chiếm Mê Linh, Cổ Loa, Luy Lâu. Tô Định bỏ chạy, Trưng Trắc xưng vương đóng đô Mê Linh.<br> Tháng 4 năm 42, quân Hán do Mã Viện chỉ huy tập trung lực lượng đàn áp cuộc khởi nghĩa. Cuộc khởi nghĩa thất bại.</li>
+        <li><strong>Khởi nghĩa Bà Triệu (248):</strong>Năm 248, dưới ách cai trị của nhà Ngô, Triệu Thị Trinh (Bà Triệu) nổi dậy khởi nghĩa ở vùng Cửu Chân (Thanh Hoá). Nhiều thành ấp của quân Ngô ở Cửu Chân lần lượt bị hạ. Sau đó, quân Ngô tiếp viện, tăng cường đàn áp cuộc khởi nghĩa. Cuộc khởi nghĩa thất bại, Bà Triệu anh dũng hi sinh.</li>
+        <li><strong>Khởi nghĩa Lý Bí (542 - 602):</strong> Năm 542 – 543, Lý Bí lãnh đạo nhân dân nổi dậy chống chính quyền đô hộ nhà Lương. <br>Năm 544, cuộc khởi nghĩa thắng lợi, thành lập Nhà nước Vạn Xuân. Sau khi Lý Bí qua đời, Triệu Quang Phục lên nắm quyền lãnh đạo tiếp tục cuộc khởi nghĩa.<br>
+Năm 545, quân nhà Lương xâm lược, Triệu Quang Phục chỉ huy nghĩa quân chiến đấu dũng cảm và giành thắng lợi.<br>
+Năm 602, quân nhà Tuỳ xâm lược, cuộc khởi nghĩa thất bại.
+</li>
+        <li><strong>Khởi nghĩa Phùng Hưng (766 - 791):</strong> Năm 766, Phùng Hưng phát động khởi nghĩa ở Đường Lâm (Hà Nội). <br>Năm 782, nghĩa quân đánh chiếm thành Tống Bình (Hà Nội), Phùng Hưng làm chủ được một thời gian.
+<br>Năm 791, sau khi Phùng Hưng mất, con trai là Phùng An lên nối nghiệp. Nhà Đường đem quân đàn áp, cuộc khởi nghĩa thất bại.
+</li>
+    </ul>
+
+    <p><strong>b) Khởi nghĩa Lam Sơn (1418 – 1427)</strong></p>
+    <p>Bối cảnh: Năm 1407, sau khi nhà Hồ thất bại trong cuộc kháng chiến chống quân Minh xâm lược, Đại Việt rơi vào ách đô hộ của nhà Minh. Chính quyền đô hộ nhà Minh đã thẳng tay đàn áp, khủng bố tàn bạo đối với dân chúng, thiết lập nền thống trị hà khắc, thực thi chính sách triệt để vơ vét của cải và phá hoại, thủ tiêu nền văn hoá Đại Việt.</p>
+    <p>Diễn biến chính:Giai đoạn 1418 – 1423, Lê Lợi dựng cờ khởi nghĩa, xây dựng và bảo vệ căn cứ ở vùng rừng núi Lam Sơn (Thanh Hoá). Quân Minh liên tục tấn công, bao vây căn cứ Lam Sơn. Nghĩa quân sau đó thực hiện kế sách tạm hoà hoãn với quân Minh.
+<br>Giai đoạn 1424 – 1425, nghĩa quân tiến quân vào Nghệ An, giành thắng lợi trong hai trận Trà Lân, Khả Lưu – Bồ Ải; sau đó, mở rộng vùng giải phóng Tân Bình – Thuận Hoá.
+<br>Giai đoạn 1426 – 1427, nghĩa quân tổng tiến công ra Bắc, giải phóng Thanh Hoá, tiến tới giải phóng hoàn toàn đất nước; vây hãm thành Đông Quan, kết hợp ngoại giao “tâm công”, buộc Vương Thông và 10 vạn quân phải cố thủ chờ viện binh; giành thắng lợi ở Chi Lăng – Xương Giang, tiêu diệt viện binh do Liễu Thăng chỉ huy. Cuối năm 1427, không có viện binh, Vương Thông phải xin hàng.
+</p>
+     <p>Ý nghĩa: Khởi nghĩa Lam Sơn thắng lợi đã quét sạch quân Minh ra khỏi bờ cõi Đại Việt, chấm dứt 20 năm thống trị của nhà Minh, khôi phục hoàn toàn nền độc lập, tự chủ của Đại Việt.
+<br>Khởi nghĩa Lam Sơn: là cuộc khởi nghĩa tiêu biểu cho ý chí và tinh thần độc lập của nhân dân Đại Việt đầu thế kỉ XV. Thắng lợi của cuộc khởi nghĩa Lam Sơn đưa đến sự thành lập nhà Lê sơ – một triều đại phong kiến phát triển hùng mạnh trong lịch sử dân tộc.
+</p>
+
+
+    <p><strong>c) Phong trào Tây Sơn</strong></p>
+    <p>Từ giữa thế kỉ XVIII, tình trạng kinh tế suy thoái, thuế khoá nặng nề, quan lại sống hưởng lạc, xa xỉ; đời sống nhân dân gặp nhiều khó khăn; mâu thuẫn xã hội ngày càng sâu sắc. Bất bình trước sự thối nát của triều đình, thấu hiểu nỗi thống khổ của nhân dân, ba anh em Tây Sơn (Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ) đã liên kết với các hào kiệt cùng chí hướng phát động cuộc khởi nghĩa.</p>
+    <p>Diễn biến chính:Giai đoạn 1771 – 1773: cuộc khởi nghĩa bùng nổ, nghĩa quân nhanh chóng làm chủ miền Tây Sơn thượng đạo, phủ Quy Nhơn, Quảng Ngãi, Quảng Nam, chia cắt kinh thành Phú Xuân với Gia Định.
+<br>Giai đoạn 1774 – 1786: nghĩa quân tập trung lực lượng tiêu diệt các tập đoàn phong kiến Trịnh, Nguyễn, tiêu biểu là tổ chức đánh bại cuộc xâm lược của Xiêm, làm nên chiến thắng Rạch Gầm – Xoài Mút vang dội (năm 1785).
+<br>Tết Kỷ Dậu (năm 1789), quân đội Tây Sơn dưới sự lãnh đạo của vua Quang Trung đã quét sạch 29 vạn quân Thanh xâm lược, giải phóng Thăng Long, khôi phục nền độc lập cho đất nước.
+
+</p>
+ <p><strong>Ý nghĩa lịch sử: </strong> Phong trào Tây Sơn là sự hội tụ và phát triển đến đỉnh cao của phong trào nông dân khởi nghĩa chống áp bức phong kiến cuối thế kỉ XVIII. Phong trào đã lật đổ các chính quyền chúa Nguyễn, chúa Trịnh, xoá bỏ ranh giới Đàng Trong và Đàng Ngoài, đặt nền móng cho việc khôi phục nền thống nhất đất nước.
+<br>Với chiến thắng chống quân xâm lược Xiêm, Thanh, phong trào Tây Sơn đã giải quyết đồng thời hai nhiệm vụ đấu tranh giai cấp và đấu tranh giải phóng dân tộc. Để lại những bài học quý báu về tư tưởng và nghệ thuật quân sự chống ngoại xâm.
+</p>
+<p><strong>d) Một số bài học lịch sử: </strong> – Bài học về quá trình tập hợp lực lượng quần chúng nhân dân.
+<br>– Bài học về vai trò của khối đại đoàn kết dân tộc.
+<br>– Bài học về nghệ thuật quân sự.
+<br>– Bài học đối với sự nghiệp xây dựng và bảo vệ Tổ quốc hiện nay.
+</p>
+</div>
+    `;
+
+    // ==================== NGÂN HÀNG CÂU HỎI LỊCH SỬ ĐỀ 2 ====================
+    const de2_data = [
+        { id: "2_1", type: "single", question: "Việt Nam nằm ở khu vực nào của châu Á?", options: ["A. Đông Nam Á.", "B. Đông Bắc Á.", "C. Tây Á.", "D. Nam Á."], correct: 0, giaiThich: "Việt Nam có vị trí địa chiến lược quan trọng nằm ở khu vực Đông Nam Á." },
+        { id: "2_2", type: "single", question: "Ý nào sau đây không thể hiện đúng vị trí chiến lược của Việt Nam?", options: ["A. Kết nối Đông Nam Á lục địa và Đông Nam Á hải đảo.", "B. Kết nối hai đại dương Ấn Độ Dương và Thái Bình Dương.", "C. Kết nối châu Á với châu Nam Cực và châu Đại Dương.", "D. Cầu nối giữa Trung Quốc với khu vực Đông Nam Á."], correct: 2, giaiThich: "Việt Nam không nằm ở vị trí kết nối trực tiếp với châu Nam Cực." },
+        { id: "2_3", type: "single", question: "Trong suốt tiến trình của lịch sử, Việt Nam luôn trở thành đối tượng nhòm ngó của các thế lực xâm lược bên ngoài không phải vì lí do nào sau đây?", options: ["A. Là quốc gia lạc hậu, phát triển chậm.", "B. Nằm ở vị trí địa chiến lược quan trọng.", "C. Có nguồn tài nguyên thiên nhiên phong phú.", "D. Cư dân sinh sống đông đúc, thuận lợi cho sự phát triển."], correct: 0, giaiThich: "Lí do chính là do vị trí chiến lược và tài nguyên phong phú, không phải vì sự lạc hậu." },
+        { id: "2_4", type: "single", question: "Trong suốt tiến trình của lịch sử, sự sinh tồn và phát triển của dân tộc Việt Nam luôn gắn liền với", options: ["A. các cuộc chiến tranh để bảo vệ Tổ quốc.", "B. quá trình mở rộng lãnh thổ để liên kết với các nước.", "C. việc củng cố và xây dựng các căn cứ quân sự để phòng thủ.", "D. xây dựng lực lượng đấu tranh chính trị để bảo vệ nền độc lập."], correct: 0, giaiThich: "Do đặc thù lịch sử luôn phải đối mặt với ngoại xâm nên sự sinh tồn của dân tộc luôn gắn liền với các cuộc chiến tranh giữ nước." },
+        { id: "2_5", type: "single", question: "Trong suốt tiến trình của lịch sử, những cuộc kháng chiến thắng lợi của dân tộc Việt Nam không thể hiện ý nghĩa nào sau đây?", options: ["A. Xây dựng tư tưởng tự tôn của dân tộc bách chiến bách thắng.", "B. Hình thành và nâng cao lòng tự hào, ý thức tự cường dân tộc.", "C. Tô đậm thêm những truyền thống tốt đẹp của dân tộc.", "D. Để lại những bài học kinh nghiệm sâu sắc và quý báu cho dân tộc."], correct: 0, giaiThich: "Lịch sử Việt Nam có cả những cuộc kháng chiến không thành công, nên không thể xây dựng tư tưởng tuyệt đối 'bách chiến bách thắng'." },
+        { id: "2_6", type: "single", question: "Triều đại nào sau đây đã ba lần tiến hành kháng chiến đánh bại quân xâm lược Mông – Nguyên ở thế kỉ XIII?", options: ["A. Triều Hồ.", "B. Triều Trần.", "C. Triều Lý.", "D. Triều Lê."], correct: 1, giaiThich: "Nhà Trần với hào khí Đông A đã ba lần đại phá quân Mông - Nguyên (1258, 1285, 1287-1288)." },
+        { id: "2_7", type: "single", question: "Trong lịch sử dân tộc Việt Nam, tư tưởng “Tiên phát chế nhân” là nét nổi bật của cuộc kháng chiến nào sau đây?", options: ["A. Kháng chiến chống quân Tống thời Lý (1075 – 1077).", "B. Kháng chiến chống quân Minh thời Hồ (1407).", "C. Kháng chiến chống quân Tống thời Tiền Lê (981).", "D. Kháng chiến chống quân Thanh thời Tây Sơn (1789)."], correct: 0, giaiThich: "Năm 1075, Thái úy Lý Thường Kiệt đã sử dụng chiến lược 'tiên phát chế nhân' (đánh trước để giành thế chủ động) tấn công sang đất Tống." },
+        { id: "2_8", type: "single", question: "Trong lịch sử Việt Nam, dòng sông nào đã ghi dấu ấn trong các cuộc kháng chiến chống quân Nam Hán (938), chống quân Tống (981) và chống quân Mông – Nguyên (thế kỉ XIII)?", options: ["A. Sông Lục Nam.", "B. Sông Cửu Long.", "C. Sông Bạch Đằng.", "D. Sông Vàm Cỏ."], correct: 2, giaiThich: "Sông Bạch Đằng là dòng sông lịch sử gắn liền với 3 trận đại thắng lẫy lừng của dân tộc." },
+        { id: "2_9", type: "single", question: "Lời dụ “Đánh cho để dài tóc / Đánh cho để đen răng / ...” được phát ra từ cuộc kháng chiến nào?", options: ["A. Kháng chiến chống quân Nguyên thời Trần lần thứ ba (1287 – 1288).", "B. Kháng chiến chống thực dân Pháp thời Nguyễn (nửa sau thế kỉ XIX).", "C. Kháng chiến chống quân Thanh thời Tây Sơn (1789).", "D. Kháng chiến chống quân Tống thời Lý (1075 – 1077)."], correct: 2, giaiThich: "Đây là lời dụ của vua Quang Trung trước khi tiến quân ra Bắc Hà tiêu diệt 29 vạn quân Thanh." },
+        { id: "2_10", type: "single", question: "Kế sách dùng cọc nhọn đóng xuống sông để chế ngự thuyền chiến của địch đã được sử dụng lần đầu tiên trong cuộc kháng chiến", options: ["A. chống quân Nam Hán thế kỉ X.", "B. chống quân Nguyên thế kỉ XIII.", "C. chống quân Minh đầu thế kỉ XV.", "D. chống quân Thanh thế kỉ XVIII."], correct: 0, giaiThich: "Ngô Quyền là người đầu tiên sáng tạo và áp dụng trận địa cọc ngầm trên sông Bạch Đằng năm 938." },
+        { id: "2_11", type: "single", question: "Thời kì Bắc thuộc ở Việt Nam bắt đầu sau thất bại của", options: ["A. An Dương Vương (năm 179 TCN).", "B. khởi nghĩa Hai Bà Trưng (40 – 43).", "C. khởi nghĩa Bà Triệu (248).", "D. khởi nghĩa Lý Bí (542 – 544)."], correct: 0, giaiThich: "Sự kiện An Dương Vương thất bại trước quân Triệu Đà (179 TCN) mở đầu cho kỉ nguyên Bắc thuộc kéo dài hơn 1000 năm." },
+        { id: "2_12", type: "single", question: "Cuộc khởi nghĩa Hai Bà Trưng (40 – 43) nhằm lật đổ ách thống trị của Triều", options: ["A. Đường.", "B. Đông Hán.", "C. Tống.", "D. Nguyên."], correct: 1, giaiThich: "Khởi nghĩa Hai Bà Trưng nổ ra chống lại ách cai trị hà khắc của nhà Đông Hán (Tô Định làm Thái thú)." },
+        { id: "2_13", type: "single", question: "Cuộc khởi nghĩa Bà Triệu (năm 248) nhằm lật đổ ách thống trị của Triều", options: ["A. Thanh.", "B. Minh.", "C. Tống.", "D. Ngô."], correct: 3, giaiThich: "Bà Triệu phất cờ khởi nghĩa chống lại ách đô hộ của nhà Ngô (thời Tam Quốc trong lịch sử Trung Quốc)." },
+        { id: "2_14", type: "single", question: "Nước Vạn Xuân được thành lập (năm 544) là kết quả của cuộc khởi nghĩa nào?", options: ["A. Lý Bí.", "B. Ngô Quyền.", "C. Phùng Hưng.", "D. Quang Trung."], correct: 0, giaiThich: "Mùa xuân năm 544, Lý Bí lên ngôi Hoàng đế (Lý Nam Đế), đặt tên nước là Vạn Xuân." },
+        { id: "2_15", type: "single", question: "Dạ Trạch Vương là danh hiệu của vị vua nào trong lịch sử Việt Nam?", options: ["A. Lý Phật Tử.", "B. Đinh Bộ Lĩnh.", "C. Lê Thánh Tông.", "D. Triệu Quang Phục."], correct: 3, giaiThich: "Triệu Quang Phục xây dựng căn cứ ở đầm Dạ Trạch, sử dụng chiến thuật du kích hiệu quả nên được xưng tụng là Dạ Trạch Vương." },
+        { id: "2_16", type: "single", question: "Cuộc khởi nghĩa Lam Sơn (1418 – 1427) nổ ra trong bối cảnh", options: ["A. đất nước bị quân Minh đô hộ.", "B. đất nước ổn định và phát triển.", "C. nhà Trần rơi vào khủng hoảng.", "D. khởi nghĩa nông dân bùng nổ."], correct: 0, giaiThich: "Khởi nghĩa nổ ra khi nhà Minh đã tiêu diệt nhà Hồ và đặt ách đô hộ vô cùng tàn bạo lên nước ta." },
+        { id: "2_17", type: "single", question: "Phong trào Tây Sơn (1771 – 1802) nổ ra trong bối cảnh", options: ["A. đất nước bị quân Minh đô hộ.", "B. đất nước ổn định và phát triển.", "C. đất nước đã rơi vào khủng hoảng.", "D. triều đình thực hiện cải cách."], correct: 2, giaiThich: "Nửa sau thế kỷ 18, Đàng Trong lâm vào tình trạng khủng hoảng, đời sống nhân dân cực khổ." },
+        { id: "2_18", type: "single", question: "Khẩu hiệu của phong trào Tây Sơn đề ra nhằm tranh thủ sự ủng hộ của nhân dân là", options: ["A. “Lấy của người giàu chia cho người nghèo”.", "B. “Ruộng đất cho người nông dân mất ruộng”.", "C. “Phá kho thóc của chúa, chia cho nông dân”.", "D. “Tất cả ruộng đất là của nhân dân lao động”."], correct: 0, giaiThich: "Khẩu hiệu thiết thực này đã nhanh chóng tập hợp được đông đảo nông dân nghèo tham gia khởi nghĩa." },
+        { id: "2_19", type: "single", question: "Phong trào Tây Sơn (1771 – 1802) đã đánh bại những kẻ thù xâm lược nào?", options: ["A. Xiêm và Thanh.", "B. Hán và Thanh.", "C. Tống và Minh.", "D. Minh và Thanh."], correct: 0, giaiThich: "Đánh bại 5 vạn quân Xiêm (1785) và 29 vạn quân Thanh (1789)." },
+        { id: "2_20", type: "single", question: "Sự thất bại của cuộc khởi nghĩa trong thời kì Bắc thuộc (năm 179 TCN đến năm 938) là do", options: ["A. chênh lệch về tương quan lực lượng.", "B. không được sự ủng hộ của nhân dân.", "C. quý tộc người Việt chống đối, đàn áp.", "D. điều kiện thời tiết quá khắc nghiệt."], correct: 0, giaiThich: "Các triều đại phương Bắc thường có ưu thế áp đảo về quy mô quân đội và vũ khí so với các lực lượng khởi nghĩa." },
+        { id: "2_21", type: "single", question: "Trong thời kì Bắc thuộc, mâu thuẫn bao trùm xã hội Việt Nam là mâu thuẫn giữa", options: ["A. toàn thể nhân dân và chính quyền đô hộ.", "B. nhân dân và những quý tộc người Việt.", "C. quý tộc người Việt và chính quyền đô hộ.", "D. toàn thể nông dân và chính quyền đô hộ."], correct: 0, giaiThich: "Mâu thuẫn dân tộc luôn là mâu thuẫn gay gắt và bao trùm nhất trong thời kỳ bị nước ngoài đô hộ." },
+        { id: "2_22", type: "single", question: "Trong thời kì Bắc thuộc, yếu tố quan trọng nhất để nhân dân Việt Nam đánh bại âm mưu đồng hoá của phong kiến phương Bắc là gì?", options: ["A. Liên tục diễn ra khởi nghĩa.", "B. Có truyền thống yêu nước.", "C. Giữ được phong tục tập quán.", "D. Tiếp thu văn hoá Trung Hoa."], correct: 1, giaiThich: "Truyền thống yêu nước là động lực cốt lõi giúp dân ta gìn giữ bản sắc và liên tục nổi dậy giành độc lập." },
+        { id: "2_23", type: "single", question: "Bài học kinh nghiệm nào sau đây được rút ra trong sự nghiệp xây dựng và bảo vệ Tổ quốc từ các cuộc kháng chiến, khởi nghĩa trong lịch sử Việt Nam?", options: ["A. Duy trì khối đại đoàn kết toàn dân tộc.", "B. Kiên trì sự lãnh đạo duy nhất của Đảng.", "C. Thực hiện tinh thần đoàn kết quốc tế.", "D. Nhờ sự giúp đỡ của nhân dân thế giới."], correct: 0, giaiThich: "Đại đoàn kết toàn dân tộc ('cả nước đánh giặc') luôn là cội nguồn sức mạnh chiến thắng mọi kẻ thù." },
+
+        { id: '2_c1', type: 'tf_cluster', question: "Cho tư liệu sau:\n“... Chị em [Trưng Trắc, Trưng Nhị] đều có tiếng dũng lược, căm giận Tô Định chính lệnh hà khắc tàn ngược, tụ họp người các bộ, hăng hái dấy đội quân hùng mạnh, lừng lẫy uy danh, quận huyện hưởng ứng, cho nên lấy được 65 thành ở Lĩnh Ngoại, thu lại hết đất cũ Nam Việt, cũng là bậc hào kiệt trong nữ lưu.”\n(Đại Việt sử kí toàn thư)\n\nTrong mỗi ý a), b), c), d) chọn đúng hoặc sai.", subQuestions: [
+            { id: 'd2_24a', text: "a) Đoạn tư liệu đề cập đến cuộc khởi nghĩa Hai Bà Trưng năm 40 – 43.", correct: "Đúng", giaiThich: "Sự kiện diễn ra vào mùa xuân năm 40 dưới thời Bắc thuộc." },
+            { id: 'd2_24b', text: "b) Hai Bà Trưng tập hợp được nhiều phụ nữ, trở thành chỉ huy cuộc khởi nghĩa.", correct: "Đúng", giaiThich: "Hai bà là nữ thủ lĩnh xuất sắc, tập hợp được nhiều nữ tướng cùng tham gia khởi nghĩa." },
+            { id: 'd2_24c', text: "c) Sau khi giành thắng lợi, Hai Bà Trưng lên ngôi Hoàng đế, đóng đô ở Mê Linh.", correct: "Sai", giaiThich: "Hai Bà Trưng xưng Vương (Trưng Vương), không xưng Hoàng đế." },
+            { id: 'd2_24d', text: "d) Hai Bà Trưng đã trực tiếp chỉ huy cuộc khởi nghĩa và giành thắng lợi ở 65 thành.", correct: "Sai", giaiThich: "Tư liệu ghi 'quận huyện hưởng ứng, cho nên lấy được 65 thành', nghĩa là các cánh quân địa phương cùng tham gia giành thành trì." }
+        ]},
+        { id: '2_c2', type: 'tf_cluster', question: "Cho tư liệu sau:\n“Vua có tài văn võ, trước làm quan với nhà Lương, gặp loạn, trở về Thái Bình. Bấy giờ bọn thủ lệnh tàn bạo hà khắc, Lâm Ấp cướp phá ngoài biên, vua dấy binh đánh đuổi được, xưng là Nam Đế, đặt quốc hiệu là Vạn Xuân, đóng đô ở Long Biên.”\n(Đại Việt sử kí toàn thư)\n\nTrong mỗi ý a), b), c), d) chọn đúng hoặc sai.", subQuestions: [
+            { id: 'd2_25a', text: "a) Lý Bí là quan lại người Việt đầu tiên nổi dậy chống lại chính quyền đô hộ.", correct: "Sai", giaiThich: "Trước Lý Bí đã có nhiều thủ lĩnh nổi dậy như Thi Sách, Hai Bà Trưng, Bà Triệu..." },
+            { id: 'd2_25b', text: "b) Cuộc khởi nghĩa Lý Bí là cuộc khởi nghĩa duy nhất giành thắng lợi trong thời kì Bắc thuộc.", correct: "Sai", giaiThich: "Trong thời kỳ Bắc thuộc còn có nhiều khởi nghĩa khác thắng lợi giành quyền tự chủ (như Khúc Thừa Dụ)." },
+            { id: 'd2_25c', text: "c) Đoạn tư liệu trên đề cập đến cuộc khởi nghĩa Lý Bí năm 542 – 544.", correct: "Đúng", giaiThich: "Thông tin hoàn toàn chính xác với sự kiện Lý Bí dựng nước Vạn Xuân." },
+            { id: 'd2_25d', text: "d) Cuộc khởi nghĩa Lý Bí bùng nổ do ách cai trị tàn bạo của nhà Lương.", correct: "Đúng", giaiThich: "Chính sách bóc lột và phân biệt đối xử của nhà Lương là nguyên nhân trực tiếp dẫn đến khởi nghĩa." }
+        ]},
+        { id: '2_c3', type: 'tf_cluster', question: "Cho tư liệu sau:\n“Vị thế của người anh hùng Phùng Hưng không chỉ ở chỗ là người khởi xướng và lãnh đạo một cuộc khởi nghĩa chống chế độ đô hộ nhà Đường, mà còn ở chỗ là người mở đầu cho xu thế Việt trong lãnh đạo đất nước, là một vị 'vua cha mẹ'.”\n(Trương Hữu Quýnh)\n\nTrong mỗi ý a), b), c), d) chọn đúng hoặc sai.", subQuestions: [
+            { id: 'd2_26a', text: "a) Đoạn tư liệu trên đề cập đến cuộc khởi nghĩa Phùng Hưng năm 766 – 791.", correct: "Đúng", giaiThich: "Cuộc khởi nghĩa diễn ra ở Đường Lâm đánh đuổi quân đô hộ nhà Đường." },
+            { id: 'd2_26b', text: "b) Cuộc khởi nghĩa Phùng Hưng đã lật đổ hoàn toàn ách thống trị của nhà Đường.", correct: "Sai", giaiThich: "Sau khi Phùng Hưng qua đời, quân nhà Đường đã đem quân sang đàn áp và khởi nghĩa thất bại." },
+            { id: 'd2_26c', text: "c) Tiết độ sứ được xác định là chức quan của người Việt sau khởi nghĩa Phùng Hưng.", correct: "Sai", giaiThich: "Tiết độ sứ là chức quan cai trị của nhà Đường đặt ra tại An Nam." },
+            { id: 'd2_26d', text: "d) Sau khi khởi nghĩa giành một số thắng lợi, Phùng Hưng được suy tôn là Bố Cái Đại vương.", correct: "Đúng", giaiThich: "Bố Cái Đại vương mang ý nghĩa là vị 'vua cha mẹ', được nhân dân suy tôn do công đức của ngài." }
+        ]},
+        { id: '2_c4', type: 'tf_cluster', question: "Cho tư liệu sau về Trần Quốc Tuấn:\n“Đại khái, nó cậy trường trận, ta dựa vào đoản binh. Dùng đoản chế trường là sự thường của binh pháp. [...] tuỳ thời tạo thế, có được đội quân một lòng như cha con thì mới dùng được. Vả lại, khoan thư sức dân để làm kế sâu rễ bền gốc, đó là thượng sách giữ nước vậy.”\n(Đại Việt sử kí toàn thư)\n\nTrong mỗi ý a), b), c), d) chọn đúng hoặc sai.", subQuestions: [
+            { id: 'd2_27a', text: "a) Chỉ lựa chọn xây dựng phòng tuyến chế ngự giặc.", correct: "Sai", giaiThich: "Nghệ thuật quân sự nhà Trần rất đa dạng, 'tuỳ thời tạo thế', kết hợp tấn công và rút lui chiến lược." },
+            { id: 'd2_27b', text: "b) Chuẩn bị chiến lược, chiến thuật mềm dẻo.", correct: "Đúng", giaiThich: "Chiến thuật được miêu tả 'như đánh cờ vậy', rất linh hoạt và mềm dẻo." },
+            { id: 'd2_27c', text: "c) Lựa chọn người có tài trong dòng họ, chỉ huy sáng tạo.", correct: "Sai", giaiThich: "Nhà Trần trọng dụng tướng tài không phân biệt xuất thân (Yết Kiêu, Dã Tượng, Phạm Ngũ Lão...)." },
+            { id: 'd2_27d', text: "d) Đoàn kết nhân dân, dựa vào dân, lấy dân làm gốc.", correct: "Đúng", giaiThich: "Thể hiện rõ qua phương châm 'khoan thư sức dân để làm kế sâu rễ bền gốc'." }
+        ]},
+        { id: '2_c5', type: 'tf_cluster', question: "Cho tư liệu sau:\n“Vào lúc canh tư sáng ngày mồng 5 Tết, tiếng súng nổ liên hồi ở mạn tây nam làm Tôn Sỹ Nghị tỉnh giấc. Đồn Ngọc Hồi đã bị tấn công. Đang lo lắng hướng về phía đó đợi tin, Tôn Sỹ Nghị bỗng thấy lửa rực cháy ở phía Đống Đa [...] Y hốt hoảng, nhảy lên ngựa không kịp đóng yên, cùng tuỳ tùng chạy qua cầu phao, vượt sông Hồng lên mạn bắc.”\n\nTrong mỗi ý a), b), c), d) chọn đúng hoặc sai.", subQuestions: [
+            { id: 'd2_28a', text: "a) Đoạn tư liệu trên đề cập đến cuộc chiến thắng Ngọc Hồi – Đống Đa năm 1789.", correct: "Đúng", giaiThich: "Trận đại thắng mùa xuân Kỷ Dậu đánh tan 29 vạn quân Thanh." },
+            { id: 'd2_28b', text: "b) Bằng cách đánh chính diện và vu hồi, chiến thắng đã làm cho quân Thanh khiếp sợ phải rút chạy.", correct: "Đúng", giaiThich: "Tấn công trực diện ở Ngọc Hồi kết hợp với cánh quân thọc sâu ở Đống Đa tạo thế gọng kìm bất ngờ." },
+            { id: 'd2_28c', text: "c) Sau chiến thắng Tết Kỷ Dậu (1789), vua Quang Trung chủ động đàm phán tạo điều kiện cho quân Thanh rút về nước.", correct: "Sai", giaiThich: "Quân Thanh bị đánh tan tác, Tôn Sỹ Nghị vội bỏ chạy tháo thân chứ không hề có đàm phán để rút lui lúc đó." },
+            { id: 'd2_28d', text: "d) Phong trào Tây Sơn đã đánh tan quân xâm lược đến từ phương Bắc và phương Tây.", correct: "Sai", giaiThich: "Tây Sơn đánh tan quân Xiêm (Tây Nam/Nam) và quân Thanh (phương Bắc), chưa có sự can thiệp trực tiếp quy mô từ quân đội phương Tây thời điểm này." }
+        ]}
+    ];
+
+    const testBanks = { de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // HIỂN THỊ NÚT ĐIỀU HƯỚNG TÙY THEO PHẦN 1 HAY 2
+    function buildNavButtons(isTheory) {
+        if (isTheory) {
+            return `<button onclick="window.goHome()" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">🏠 ĐÃ HIỂU - QUAY LẠI TRANG CHỦ</button>`;
+        } else {
+            return `
+                <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+                <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+                <button id="submit-btn" onclick="window.confirmSubmit()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+            `;
+        }
+    }
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Các em vui lòng nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 1 (LÝ THUYẾT)
+            if (maDe === 'de1') {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('timer-banner').style.display = 'none';
+                document.getElementById('nav-buttons').innerHTML = buildNavButtons(true);
+                document.getElementById('question-container').innerHTML = theoryHTML;
+                showSection('quiz');
+                return;
+            }
+
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 2 (TRẮC NGHIỆM)
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('timer-banner').style.display = 'flex';
+            document.getElementById('nav-buttons').innerHTML = buildNavButtons(false);
+
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // ĐÁNH SỐ TỪ 1 CHO CÂU TRẮC NGHIỆM ĐƠN
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+            });
+            
+            // ĐÁNH SỐ TIẾP TỤC CHO CÂU ĐÚNG SAI
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                let startIdx = part1.length + idx + 1;
+                q.displayQuestion = `Câu ${startIdx}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    sub.text = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${sub.text}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        let total = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') total += q.subQuestions.length; 
+            else total += 1; 
+        });
+        return total; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] !== undefined) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl font-bold leading-relaxed shadow-inner">${q.displayQuestion.replace(/\n/g, '<br/>')}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // LOGIC NỘP BÀI MỚI VỚI CUSTOM MODAL
+    window.confirmSubmit = function() {
+        if (!isQuizStarted) return; 
+        
+        let ansCount = getAnsweredCount();
+        let totItems = getTotalItems();
+        
+        if(ansCount < totItems) {
+            const modal = document.getElementById('custom-confirm-modal');
+            const card = document.getElementById('confirm-card');
+            document.getElementById('confirm-msg').innerText = `Các em mới làm ${ansCount}/${totItems} thao tác. Có chắc chắn muốn nộp bài không?`;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            }, 10);
+
+            document.getElementById('btn-cancel-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            };
+
+            document.getElementById('btn-confirm-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    executeSubmitLogic(); 
+                }, 300);
+            };
+            return; 
+        }
+
+        executeSubmitLogic();
+    };
+
+    function executeSubmitLogic() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+        const score = scoreP1P2.toFixed(2);
+        
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctP1P2, tongCau: totalP1P2,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctP1P2, totalP1P2, record.duration); });
+        } else {
+            window.showModalResult(score, correctP1P2, totalP1P2, record.duration);
+        }
+    }
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="absolute top-4 left-4 z-10">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center pt-8">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-slate-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="text-2xl mr-2 drop-shadow-sm">${statusIcon}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'} shadow-sm">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                    
+                    if(sub.giaiThich) {
+                        html += `<div class="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${sub.giaiThich}</div>`;
+                    }
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                
+                if(q.giaiThich) {
+                    html += `<div class="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${q.giaiThich}</div>`;
+                }
+                
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.executeSubmitLogic(); 
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
