@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Lịch Sử 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all relative">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white relative">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1 uppercase">Kiểm Tra Lịch Sử 12</h1>
+      <p class="text-gray-600 font-bold">Chủ đề: Hoạt động đối ngoại của Việt Nam từ sau CMT8 (1945) đến nay</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn nội dung:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 1: NỘI DUNG ÔN TẬP</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 2: BÀI TẬP TRẮC NGHIỆM</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 VÀO HỌC </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100 relative">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 ý</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl relative" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10 flex gap-2">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+         <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+     </div>
+     <div class="mb-6 pb-4 border-b-2 border-gray-100 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+     </div>
+     <div class="mb-6 border-b-2 border-gray-100 pb-4 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </p>
+   </footer>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-[90%] shadow-2xl transform transition-transform duration-300 scale-95" id="confirm-card">
+            <div class="text-5xl mb-4 text-center animate-bounce">⚠️</div>
+            <h3 class="text-2xl font-black text-red-600 mb-2 text-center uppercase">Khoan đã!</h3>
+            <p class="text-gray-600 mb-8 text-center font-medium leading-relaxed" id="confirm-msg"></p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="btn-cancel-submit" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200">Tiếp tục làm bài</button>
+                <button id="btn-confirm-submit" class="flex-1 py-3 px-4 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold rounded-xl transition-all shadow-md shadow-red-500/30 transform hover:-translate-y-0.5">Vẫn Nộp Luôn</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_lichsu12_chude3_p3_sau_ctl'); 
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== HTML LÝ THUYẾT (DÀNH CHO PHẦN 1) ====================
+    const theoryHTML = `
+ <div class="theory-content text-gray-800 leading-relaxed">
+    <h2 style="color: #dc2626;" class="text-2xl font-black mb-4">I. NỘI DUNG ÔN TẬP</h2>
+    <div style="text-align: center; font-weight: bold; margin-bottom: 30px; font-size: 1.1rem; color: #1e40af;">
+        B. HOẠT ĐỘNG ĐỐI NGOẠI CỦA VIỆT NAM TỪ SAU CÁCH MẠNG THÁNG TÁM NĂM 1945 ĐẾN NAY
+    </div>
+    
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 15px;">1. Hoạt động đối ngoại của Việt Nam trong kháng chiến chống Pháp (1945-1954)</h3>
+    <p>Hoạt động đối ngoại Việt Nam trong giai đoạn này có nhiệm vụ trọng tâm là phục vụ cho kháng chiến chống Pháp (1945 - 1954).</p>
+    
+    <p><strong>Từ tháng 9-1945 đến tháng 12-1946</strong>, hoạt động đối ngoại khẳng định tính hợp pháp của Chính phủ Việt Nam Dân chủ Cộng hoà:</p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Chủ động triển khai hoà hoãn với Trung Hoa Dân quốc.</li>
+        <li>Thực hiện chủ trương "Hoà để tiến".</li>
+        <li>Kí Hiệp định Sơ bộ ngày 06-3-1946, bản Tạm ước ngày 14-9-1946 với Pháp để tranh thủ thời gian hoà hoãn chuẩn bị lực lượng cho cuộc kháng chiến.</li>
+        <li>Thường xuyên giữ quan hệ với Chính phủ Mỹ.</li>
+    </ul>
+
+    <p><strong>Sau ngày toàn quốc kháng chiến</strong>, hoạt động ngoại giao của Chính phủ Việt Nam Dân chủ Cộng hoà thể hiện thiện chí hoà bình:</p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Tranh thủ sự đồng tình, ủng hộ của nhân dân thế giới.</li>
+        <li>Tham gia đại hội sáng lập Hội đồng Hoà bình thế giới (năm 1949).</li>
+    </ul>
+
+    <p><strong>Từ năm 1950 đến năm 1954:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Thiết lập quan hệ ngoại giao với các nước xã hội chủ nghĩa.</li>
+        <li>Đẩy mạnh liên minh đoàn kết chiến đấu giữa ba nước Đông Dương qua vai trò của Liên minh nhân dân Việt - Miên - Lào.</li>
+        <li>Tranh thủ sự ủng hộ của quốc tế.</li>
+    </ul>
+
+    <p><strong>Năm 1954:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Phái đoàn ngoại giao Việt Nam do Phó Thủ tướng kiêm Bộ trưởng Bộ Ngoại giao Phạm Văn Đồng dẫn đầu đã tham dự Hội nghị Quốc tế về Đông Dương.</li>
+        <li>Kí Hiệp định Giơ-ne-vơ (ngày 21-7-1954), buộc Pháp rút quân, công nhận độc lập, chủ quyền, thống nhất và toàn vẹn lãnh thổ của Việt Nam.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">2. Hoạt động đối ngoại của Việt Nam trong kháng chiến chống Mỹ, cứu nước (1954-1975)</h3>
+    <p>Từ năm 1954 đến năm 1975, nhân dân Việt Nam phải tiến hành cuộc kháng chiến chống Mỹ, cứu nước.</p>
+    
+    <p><strong>Giai đoạn 1954-1964:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Đấu tranh chống lại các chính sách và hành động phá hoại Hiệp định Giơ-ne-vơ của Mỹ-Diệm.</li>
+        <li>Tăng cường đoàn kết ba nước Đông Dương, mở rộng quan hệ với các nước xã hội chủ nghĩa và các nước vừa giành được độc lập.</li>
+        <li>Thúc đẩy hình thành mặt trận thế giới đoàn kết với Việt Nam.</li>
+    </ul>
+
+    <p><strong>Giai đoạn 1965-1975:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Tuyên truyền tính chính nghĩa của cuộc kháng chiến, tố cáo cuộc chiến tranh xâm lược và tội ác của Mỹ và chính quyền Sài Gòn tay sai.</li>
+        <li>Tiếp tục củng cố mặt trận đoàn kết ba nước Đông Dương, tăng cường đoàn kết và tranh thủ sự ủng hộ, giúp đỡ của các nước xã hội chủ nghĩa.</li>
+        <li>Thúc đẩy hình thành phong trào nhân dân Mỹ và nhân dân thế giới chống chiến tranh, ủng hộ cuộc kháng chiến của nhân dân Việt Nam.</li>
+        <li>Từ năm 1969 - 1973, sự phối hợp hoạt động giữa ngoại giao Việt Nam Dân chủ Cộng hoà với Chính phủ Cách mạng lâm thời Cộng hoà miền Nam Việt Nam đã góp phần buộc Mỹ phải kí Hiệp định Pa-ri về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam (27-01-1973).</li>
+        <li>Từ năm 1973 đến năm 1975, hoạt động ngoại giao của Chính phủ Việt Nam Dân chủ Cộng hoà và Chính phủ Cách mạng lâm thời Cộng hoà miền Nam Việt Nam góp phần đưa cuộc kháng chiến chống Mỹ, cứu nước của dân tộc Việt Nam đến thắng lợi hoàn toàn.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">3. Hoạt động đối ngoại của Việt Nam trong giai đoạn 1975-1985</h3>
+    <p>Nhiệm vụ của hoạt động đối ngoại Việt Nam giai đoạn 1975 - 1985 là phải ra sức tranh thủ những điều kiện quốc tế thuận lợi để phục vụ công cuộc xây dựng và bảo vệ Tổ quốc.</p>
+    
+    <p><strong>Với các nước xã hội chủ nghĩa:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Ngày 29-6-1978, tham gia Hội đồng tương trợ kinh tế (SEV).</li>
+        <li>Ngày 03-11-1978, kí Hiệp ước hữu nghị và hợp tác với Liên Xô.</li>
+        <li>Chủ động giải quyết bất đồng, xung đột biên giới, kiên quyết bảo vệ toàn vẹn chủ quyền, khôi phục quan hệ với Trung Quốc.</li>
+        <li>Năm 1977, kí Hiệp ước hữu nghị và hợp tác với Lào.</li>
+    </ul>
+
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Với các nước Đông Nam Á:</strong> Năm 1976, Việt Nam đưa ra Chính sách bốn điểm làm cơ sở thiết lập và phát triển quan hệ đối thoại với các nước Đông Nam Á.</li>
+        <li><strong>Với các nước trong phong trào Không liên kết:</strong> Việt Nam thiết lập được quan hệ với hơn 30 nước, phát triển quan hệ với Ấn Độ và một số nước Ả Rập.</li>
+    </ul>
+
+    <p><strong>Với các nước tư bản chủ nghĩa:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Kiên quyết đấu tranh chống lại chính sách bao vây, cấm vận, mềm dẻo trong triển khai các chính sách ngoại giao nhân đạo với Mỹ.</li>
+        <li>Thiết lập các cơ quan đại diện ngoại giao với Nhật Bản, Ca-na-đa, Cộng hoà Liên bang Đức, Ô-xtrây-li-a.</li>
+        <li>Mở rộng quan hệ kinh tế, thương mại, văn hoá, khoa học với các nước Tây Âu và Bắc Âu.</li>
+    </ul>
+
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Với các tổ chức quốc tế:</strong> Việt Nam tham gia 33 tổ chức và 19 điều ước quốc tế, gia nhập Liên hợp quốc năm 1977.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">4. Hoạt động đối ngoại của Việt Nam từ năm 1986 đến nay</h3>
+    <p>Từ năm 1986, hoạt động đối ngoại của Việt Nam đã tích cực đóng góp vào công cuộc đổi mới, công nghiệp hoá, hiện đại hoá đất nước và đẩy mạnh hội nhập quốc tế.</p>
+    
+    <p><strong>Với khu vực Đông Nam Á:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Tích cực tham gia tìm giải pháp chính trị cho vấn đề Cam-pu-chia.</li>
+        <li>Quan hệ song phương và đa phương giữa ba nước Đông Dương ngày càng củng cố và mở rộng.</li>
+        <li>Việt Nam kí nhiều hiệp ước hợp tác với các thành viên ASEAN và chính thức gia nhập ASEAN vào tháng 7-1995.</li>
+    </ul>
+
+    <p><strong>Với Trung Quốc:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Bình thường hoá quan hệ (tháng 11-1991), kí kết các hiệp ước về biên giới và phân định biên giới.</li>
+        <li>Năm 2008, quan hệ giữa hai nước nâng lên tầm đối tác chiến lược toàn diện.</li>
+    </ul>
+
+    <p><strong>Với Hoa Kỳ:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Hoa Kỳ dỡ bỏ cấm vận (1994), thiết lập ngoại giao với Việt Nam (1995), kí Hiệp định thương mại Việt Nam-Hoa Kỳ (2000).</li>
+        <li>Cải thiện và nâng cấp quan hệ giữa hai nước lên đối tác chiến lược toàn diện (2023).</li>
+    </ul>
+
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Với Liên bang Nga:</strong> Việt Nam đã tăng cường hợp tác nhiều mặt.</li>
+        <li><strong>Với khu vực Trung - Đông Âu:</strong> Đổi mới và củng cố các mối quan hệ truyền thống.</li>
+        <li><strong>Với các nước tư bản chủ nghĩa:</strong> Cải thiện và tăng cường quan hệ với các nước có nền công nghiệp phát triển.</li>
+        <li><strong>Với các tổ chức quốc tế:</strong> Việt Nam là thành viên của 63 tổ chức và diễn đàn khu vực quốc tế; chủ động hợp tác giải quyết các vấn đề toàn cầu.</li>
+    </ul>
+
+    <div class="my-6 border-b-2 border-gray-200"></div>
+</div>
+    `;
+
+    // ==================== NGÂN HÀNG CÂU HỎI LỊCH SỬ ====================
+    const de2_data = [
+        // TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN (12 CÂU)
+        { id: "s45_1", type: "single", question: "Hoạt động đối ngoại Việt Nam trong giai đoạn từ tháng 9-1945 đến tháng 7-1954 có nhiệm vụ trọng tâm là", options: ["phục vụ cho kháng chiến chống thực dân Pháp.", "thiết lập quan hệ ngoại giao với các nước xã hội chủ nghĩa.", "tuyên truyền tính chính nghĩa của cuộc kháng chiến.", "đẩy mạnh liên minh đoàn kết chiến đấu giữa ba nước Đông Dương."], correct: 0, giaiThich: "Nhiệm vụ bao trùm và thiêng liêng nhất của cả dân tộc trong giai đoạn 1945-1954 là tiến hành cuộc kháng chiến chống Pháp để bảo vệ nền độc lập mới giành được. Mọi mặt trận, bao gồm cả ngoại giao, đều phải phục vụ cho nhiệm vụ trọng tâm này." },
+        { id: "s45_2", type: "single", question: "Từ tháng 9-1945 đến tháng 12-1946, hoạt động đối ngoại của Chính phủ Việt Nam Dân chủ Cộng hoà là", options: ["chủ động triển khai hoà hoãn với Trung Hoa Dân quốc.", "tranh thủ sự đồng tình, ủng hộ của nhân dân thế giới.", "tham gia đại hội sáng lập Hội đồng Hoà bình thế giới (năm 1949).", "tiếp tục củng cố mặt trận đoàn kết ba nước Đông Dương."], correct: 0, giaiThich: "Trong thời kỳ 1945-1946, với sách lược 'Hoà để tiến', ta đã chủ động hoà hoãn với quân Tưởng (Trung Hoa Dân quốc) ở miền Bắc để tập trung đánh Pháp ở miền Nam, đây là bước đi ngoại giao chiến lược xuất sắc của Đảng và Bác Hồ." },
+        { id: "s45_3", type: "single", question: "Ý nào sau đây thể hiện quyền dân tộc cơ bản nhất của nhân dân Việt Nam được ghi nhận trong “Hiệp định Sơ bộ” (06-3-1946)?", options: ["Pháp công nhận Việt Nam là một quốc gia độc lập nằm trong khối Liên hiệp Pháp.", "Hai bên ngừng xung đột vũ trang giữ nguyên quân đội tại vị trí cũ.", "Chính phủ Pháp công nhận Việt Nam là một quốc gia tự do, có chính phủ riêng, nghị viện riêng.", "Chính phủ Việt Nam cho Pháp đem 15 000 quân ra miền Bắc thay quân Tưởng."], correct: 2, giaiThich: "Theo Hiệp định Sơ bộ, Pháp phải lùi một bước khi chính thức công nhận Việt Nam là một 'quốc gia tự do', có chính phủ, nghị viện, quân đội và tài chính riêng nằm trong khối Liên hiệp Pháp. Đây là cơ sở pháp lý quan trọng đầu tiên mà Pháp phải công nhận với ta." },
+        { id: "s45_4", type: "single", question: "Từ sau ngày 06-3-1946 đến trước ngày 19-12-1946, đối với thực dân Pháp, Chính phủ Việt Nam Dân chủ Cộng hoà thực hiện chủ trương gì?", options: ["\"Hoà để tiến\".", "Hoà hoãn, tránh xung đột.", "Vừa đánh, vừa đàm phán.", "Kiên quyết kháng chiến."], correct: 0, giaiThich: "Sau Hiệp ước Hoa - Pháp (28/2/1946), ta thay đổi chiến lược từ đánh Pháp sang hoà hoãn với Pháp (kí Hiệp định Sơ bộ 6/3 và Tạm ước 14/9). Chủ trương này được Bác Hồ gọi là 'Hoà để tiến', nghĩa là mượn hoà bình để tranh thủ thời gian xây dựng lực lượng, chuẩn bị cho kháng chiến lâu dài." },
+        { id: "s45_5", type: "single", question: "Sau khi \"Hiệp định Giơ-ne-vơ\" về chấm dứt chiến tranh, lập lại hoà bình ở Đông Dương được kí kết (1954), trọng tâm hoạt động đối ngoại của Việt Nam là gì?", options: ["Bảo vệ vững chắc chính quyền cách mạng.", "Đấu tranh đòi thi hành Hiệp định Giơ-ne-vơ.", "Đánh bại các chiến lược của Mỹ ở Đông Dương.", "Mở một cánh cửa ra với thế giới."], correct: 1, giaiThich: "Sau năm 1954, Mỹ thay chân Pháp phá hoại Hiệp định Giơ-ne-vơ, biến miền Nam thành thuộc địa kiểu mới. Vì thế, trọng tâm ngoại giao của ta ở giai đoạn 1954-1964 là đấu tranh vạch trần âm mưu của Mỹ-Diệm và đòi chúng phải thi hành nghiêm chỉnh Hiệp định Giơ-ne-vơ." },
+        { id: "s45_6", type: "single", question: "Hoạt động đối ngoại của Chính phủ Việt Nam Dân chủ Cộng hoà thời kì 1954-1975 có nhiệm vụ trọng tâm là", options: ["phục vụ cho cuộc kháng chiến chống Mỹ, cứu nước của dân tộc ta.", "phục vụ công cuộc xây dựng và bảo vệ Tổ quốc.", "tích cực mở rộng quan hệ với các nước tư bản chủ nghĩa phát triển.", "tích cực đóng góp vào công cuộc đổi mới, công nghiệp hoá."], correct: 0, giaiThich: "Tương tự như thời kì chống Pháp, thời kì 1954-1975, mũi nhọn ngoại giao phải song hành cùng quân sự và chính trị, phục vụ cho nhiệm vụ thiêng liêng nhất là đánh đuổi đế quốc Mỹ, giải phóng miền Nam, thống nhất đất nước." },
+        { id: "s45_7", type: "single", question: "Chính phủ Việt Nam Dân chủ Cộng hoà đã sử dụng sách lược gì trong đàm phán tại Hội nghị Pa-ri?", options: ["Chủ động tấn công ngoại giao.", "Chủ yếu đấu tranh về chính trị.", "Kết hợp \"vừa đánh, vừa đàm\".", "Tập trung đàm phán bí mật."], correct: 2, giaiThich: "Hội nghị Paris là cuộc đấu trí cam go, kéo dài từ 1968 đến 1973. Sách lược nhất quán của ta là 'vừa đánh, vừa đàm' - dùng thắng lợi quân sự trên chiến trường để ép địch phải nhượng bộ trên bàn đàm phán ngoại giao." },
+        { id: "s45_8", type: "single", question: "Tại Hội nghị Pa-ri, Chính phủ Việt Nam Dân chủ Cộng hoà đã đưa ra yêu cầu gì?", options: ["Tổ chức bầu cử tự do trên cả nước.", "Để Mặt trận Dân tộc giải phóng miền Nam tham gia đàm phán.", "Mỹ phải chấm dứt chiến tranh.", "Thành lập Chính phủ liên hiệp gồm hai lực lượng chính trị."], correct: 2, giaiThich: "Tại diễn đàn này, phía Việt Nam Dân chủ Cộng hòa đã chủ động đưa ra lập trường, yêu cầu Mỹ phải chấm dứt hoàn toàn và không điều kiện việc ném bom cùng mọi hành động chiến tranh khác chống nước Việt Nam Dân chủ Cộng hòa, sau đó mới bàn đến các vấn đề khác liên quan đến hai bên." },
+        { id: "s45_9", type: "single", question: "\"Hiệp định Pa-ri\" về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam năm 1973 đã đem lại thuận lợi gì cho cách mạng Việt Nam?", options: ["Cuộc kháng chiến của nhân dân ta nhận được sự ủng hộ to lớn của các nước xã hội chủ nghĩa.", "Quân Mỹ và quân đồng minh phải rút về nước, làm thay đổi so sánh lực lượng có lợi cho cách mạng.", "Tạo điều kiện cho nhân dân ta hoàn thành công cuộc khôi phục kinh tế, hàn gắn vết thương chiến tranh.", "Tạo điều kiện để nhân dân ta thống nhất đất nước."], correct: 1, giaiThich: "Hiệp định Paris buộc Mỹ rút toàn bộ quân viễn chinh và chư hầu (đánh cho Mỹ cút), làm chỗ dựa của chính quyền Sài Gòn sụp đổ, khiến so sánh lực lượng trên chiến trường thay đổi căn bản theo hướng hoàn toàn có lợi cho ta." },
+        { id: "s45_10", type: "single", question: "Quyền dân tộc cơ bản được khẳng định trong \"Hiệp định Pa-ri\" về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam năm 1973 là gì?", options: ["Thống nhất.", "Độc lập, chủ quyền.", "Chủ quyền, toàn vẹn lãnh thổ.", "Độc lập, chủ quyền, thống nhất và toàn vẹn lãnh thổ."], correct: 3, giaiThich: "Khác với Hiệp định Sơ bộ (chỉ công nhận là quốc gia tự do), Hiệp định Paris (1973) buộc Mỹ và các nước tham dự phải cam kết tôn trọng trọn vẹn 4 quyền dân tộc cơ bản của Việt Nam: Độc lập, Chủ quyền, Thống nhất và Toàn vẹn lãnh thổ." },
+        { id: "s45_11", type: "single", question: "Nội dung cơ bản nhất trong \"Hiệp định Pa-ri\" về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam năm 1973 là", options: ["Mỹ cam kết chấm dứt mọi hoạt động chống phá miền Bắc Việt Nam.", "Mỹ và các nước cam kết tôn trọng độc lập, chủ quyền thống nhất và toàn vẹn lãnh thổ của Việt Nam.", "Mỹ rút hết quân đội của mình và quân các nước đồng minh, huỷ bỏ các căn cứ quân sự.", "Mỹ cam kết góp phần vào hàn gắn vết thương chiến tranh ở Việt Nam và Đông Dương, thiết lập quan hệ bình thường cùng có lợi với Việt Nam."], correct: 1, giaiThich: "Mọi điều khoản về rút quân hay bồi thường đều bắt nguồn từ một cơ sở pháp lý cao nhất, đó là Mỹ phải chính thức thừa nhận và tôn trọng các quyền dân tộc cơ bản (độc lập, chủ quyền, thống nhất, toàn vẹn lãnh thổ) của dân tộc Việt Nam." },
+        { id: "s45_12", type: "single", question: "Nhiệm vụ của hoạt động đối ngoại Việt Nam giai đoạn 1975 - 1985 là", options: ["ra sức tranh thủ những điều kiện quốc tế thuận lợi để phục vụ công cuộc xây dựng và bảo vệ Tổ quốc.", "đã tích cực đóng góp vào công cuộc Đổi mới, công nghiệp hoá.", "cùng các nước tích cực tham gia tìm giải pháp chính trị cho vấn đề Cam-pu-chia.", "tăng cường quan hệ với các nước tư bản chủ nghĩa có nền công nghiệp phát triển."], correct: 0, giaiThich: "Sau năm 1975, đất nước hòa bình thống nhất nhưng lại phải đối mặt với hai cuộc chiến tranh biên giới và bị bao vây cấm vận. Do đó, nhiệm vụ đối ngoại lúc này là cố gắng phá vỡ thế bao vây, tranh thủ mọi nguồn lực quốc tế để tái thiết đất nước và bảo vệ Tổ quốc." },
+
+        // TRẮC NGHIỆM ĐÚNG/SAI 
+        { id: 's45_c1', type: 'tf_cluster', question: "Hãy xác định ý đúng hoặc sai về hoạt động đối ngoại của Việt Nam trong kháng chiến chống Pháp (1945-1954) và kháng chiến chống Mỹ, cứu nước (1954-1975).", subQuestions: [
+            { id: 'tf_c1a', text: "Sau ngày toàn quốc kháng chiến, hoạt động ngoại giao của Chính phủ Việt Nam Dân chủ Cộng hoà thể hiện thiện chí hoà bình, tranh thủ sự đồng tình, ủng hộ của nhân dân thế giới.", correct: "Đúng", giaiThich: "Dù bị buộc phải cầm súng, nhưng ta luôn giương cao ngọn cờ chính nghĩa, liên tục cử phái đoàn tham gia các diễn đàn quốc tế (như Hội đồng Hoà bình thế giới) để tranh thủ sự ủng hộ của thế giới." },
+            { id: 'tf_c1b', text: "Với Pháp, Việt Nam kí Hiệp định Sơ bộ (06-3-1946) đồng ý để quân Pháp thay quân Anh làm nhiệm vụ giải giáp quân Nhật Bản ở miền Nam.", correct: "Sai", giaiThich: "Hiệp định Sơ bộ (1946) quy định ta đồng ý cho 15.000 quân Pháp tiến ra 'miền Bắc' để thay thế quân Tưởng Giới Thạch (Trung Hoa Dân quốc) giải giáp quân Nhật, chứ không phải thay quân Anh ở miền Nam." },
+            { id: 'tf_c1c', text: "Việt Nam Dân chủ Cộng hoà yêu cầu chính quyền Sài Gòn mở hội nghị hiệp thương về việc tổ chức tổng tuyển cử thống nhất đất nước theo những điều khoản của Hiệp định Giơ-ne-vơ.", correct: "Đúng", giaiThich: "Từ năm 1954-1956, ta liên tục yêu cầu chính quyền Ngô Đình Diệm tổ chức hiệp thương tổng tuyển cử như quy định của Hiệp định, tuy nhiên chính quyền Sài Gòn dưới sự giật dây của Mỹ đã cự tuyệt." },
+            { id: 'tf_c1d', text: "Giai đoạn 1965-1975, hoạt động đối ngoại Việt Nam đã triển khai nhiệm vụ phải ra sức tranh thủ những điều kiện quốc tế thuận lợi để phục vụ công cuộc xây dựng và bảo vệ Tổ quốc.", correct: "Sai", giaiThich: "Nhiệm vụ 'phục vụ công cuộc xây dựng và bảo vệ Tổ quốc' là trọng tâm của giai đoạn 1975-1985 (sau khi đất nước thống nhất). Còn giai đoạn 1965-1975 là thời kì kháng chiến chống Mỹ cứu nước, nhiệm vụ là phục vụ giải phóng dân tộc." }
+        ]},
+        { id: 's45_c2', type: 'tf_cluster', question: "Hãy xác định ý đúng hoặc sai về hoạt động đối ngoại của Việt Nam trong giai đoạn 1975-1985 và từ năm 1986 đến nay.", subQuestions: [
+            { id: 'tf_c2a', text: "Giai đoạn 1975-1985, Việt Nam đã thiết lập quan hệ ngoại giao với hơn 30 nước thuộc nhóm các nước trong phong trào Không liên kết; phát triển quan hệ với Ấn Độ và một số nước A-rập.", correct: "Đúng", giaiThich: "Đây là những bước đi ngoại giao quan trọng giúp Việt Nam phá vỡ phần nào thế bao vây cô lập của phương Tây trong giai đoạn này." },
+            { id: 'tf_c2b', text: "Từ năm 1986, hoạt động đối ngoại của Việt Nam đã tích cực đóng góp vào công cuộc Đổi mới đất nước.", correct: "Đúng", giaiThich: "Đổi mới tư duy đối ngoại (bình thường hóa quan hệ với Trung Quốc, Mỹ, gia nhập ASEAN...) đã góp phần quyết định vào việc mở cửa, hội nhập và phát triển kinh tế đất nước." },
+            { id: 'tf_c2c', text: "Từ 1986 đến nay, Việt Nam đã tăng cường hợp tác nhiều mặt với Liên bang Nga, đổi mới quan hệ với các nước khu vực Trung - Đông Âu và bạn bè truyền thống.", correct: "Đúng", giaiThich: "Đường lối đối ngoại thời kỳ Đổi mới đã chỉ rõ: Việt Nam tăng cường hợp tác nhiều mặt với Liên bang Nga, đồng thời đổi mới và củng cố các mối quan hệ với các nước bạn bè truyền thống ở khu vực Trung - Đông Âu." },
+            { id: 'tf_c2d', text: "Việt Nam mở các cơ quan đại diện ngoại giao tại một số nước châu Âu và lập các cơ quan thông tin ở một số nước trên thế giới.", correct: "Sai", giaiThich: "Giai đoạn 1975-1985, ta thiết lập cơ quan đại diện ngoại giao với Nhật Bản, Canada, CHLB Đức, Australia... Nhận định trên đưa ra thông tin không chính xác so với đường lối ngoại giao thực tế thời kỳ này." }
+        ]}
+    ];
+
+    const testBanks = { de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // HIỂN THỊ NÚT ĐIỀU HƯỚNG TÙY THEO PHẦN 1 HAY 2
+    function buildNavButtons(isTheory) {
+        if (isTheory) {
+            return `<button onclick="window.goHome()" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">🏠 ĐÃ HIỂU - QUAY LẠI TRANG CHỦ</button>`;
+        } else {
+            return `
+                <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+                <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+                <button id="submit-btn" onclick="window.confirmSubmit()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+            `;
+        }
+    }
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Các em vui lòng nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 1 (LÝ THUYẾT)
+            if (maDe === 'de1') {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('timer-banner').style.display = 'none';
+                document.getElementById('nav-buttons').innerHTML = buildNavButtons(true);
+                document.getElementById('question-container').innerHTML = theoryHTML;
+                showSection('quiz');
+                return;
+            }
+
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 2 (TRẮC NGHIỆM)
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('timer-banner').style.display = 'flex';
+            document.getElementById('nav-buttons').innerHTML = buildNavButtons(false);
+
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // ĐÁNH SỐ TỪ CHO CÂU TRẮC NGHIỆM ĐƠN
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+            });
+            
+            // ĐÁNH SỐ TIẾP TỤC CHO CÂU ĐÚNG SAI
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                let startIdx = part1.length + idx + 1;
+                q.displayQuestion = `Câu ${startIdx}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    let cleanText = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${cleanText}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        let total = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') total += q.subQuestions.length; 
+            else total += 1; 
+        });
+        return total; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] !== undefined) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl font-bold leading-relaxed shadow-inner" style="white-space: pre-wrap;">${q.displayQuestion}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // LOGIC NỘP BÀI MỚI VỚI CUSTOM MODAL
+    window.confirmSubmit = function() {
+        if (!isQuizStarted) return; 
+        
+        let ansCount = getAnsweredCount();
+        let totItems = getTotalItems();
+        
+        if(ansCount < totItems) {
+            const modal = document.getElementById('custom-confirm-modal');
+            const card = document.getElementById('confirm-card');
+            document.getElementById('confirm-msg').innerText = `Các em mới làm ${ansCount}/${totItems} thao tác. Có chắc chắn muốn nộp bài không?`;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            }, 10);
+
+            document.getElementById('btn-cancel-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            };
+
+            document.getElementById('btn-confirm-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    executeSubmitLogic(); 
+                }, 300);
+            };
+            return; 
+        }
+
+        executeSubmitLogic();
+    };
+
+    function executeSubmitLogic() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+        const score = scoreP1P2.toFixed(2);
+        
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctP1P2, tongCau: totalP1P2,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctP1P2, totalP1P2, record.duration); });
+        } else {
+            window.showModalResult(score, correctP1P2, totalP1P2, record.duration);
+        }
+    }
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="absolute top-4 left-4 z-10">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center pt-8">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed" style="white-space: pre-wrap;">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-slate-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="text-2xl mr-2 drop-shadow-sm">${statusIcon}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'} shadow-sm">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                    
+                    if(sub.giaiThich) {
+                        html += `<div class="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${sub.giaiThich}</div>`;
+                    }
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                
+                if(q.giaiThich) {
+                    html += `<div class="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${q.giaiThich}</div>`;
+                }
+                
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.executeSubmitLogic(); 
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
