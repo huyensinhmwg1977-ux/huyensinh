@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Lịch Sử 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all relative">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white relative">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1 uppercase">Kiểm Tra Lịch Sử 12</h1>
+      <p class="text-gray-600 font-bold">Chủ đề: Cộng đồng ASEAN - Từ ý tưởng đến hiện thực</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn nội dung:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 1: NỘI DUNG ÔN TẬP</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 2: BÀI TẬP TRẮC NGHIỆM</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 VÀO HỌC </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100 relative">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 ý</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl relative" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10 flex gap-2">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+         <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+     </div>
+     <div class="mb-6 pb-4 border-b-2 border-gray-100 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+     </div>
+     <div class="mb-6 border-b-2 border-gray-100 pb-4 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </p>
+   </footer>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-[90%] shadow-2xl transform transition-transform duration-300 scale-95" id="confirm-card">
+            <div class="text-5xl mb-4 text-center animate-bounce">⚠️</div>
+            <h3 class="text-2xl font-black text-red-600 mb-2 text-center uppercase">Khoan đã!</h3>
+            <p class="text-gray-600 mb-8 text-center font-medium leading-relaxed" id="confirm-msg"></p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="btn-cancel-submit" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200">Tiếp tục làm bài</button>
+                <button id="btn-confirm-submit" class="flex-1 py-3 px-4 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold rounded-xl transition-all shadow-md shadow-red-500/30 transform hover:-translate-y-0.5">Vẫn Nộp Luôn</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_lichsu12_chude4_p3_sau_ctl'); 
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== HTML LÝ THUYẾT (DÀNH CHO PHẦN 1) ====================
+    const theoryHTML = `
+ <div class="theory-content text-gray-800 leading-relaxed">
+    <h2 style="color: #dc2626;" class="text-2xl font-black mb-4">I. NỘI DUNG ÔN TẬP</h2>
+    <div style="text-align: center; font-weight: bold; margin-bottom: 30px; font-size: 1.1rem; color: #1e40af;">
+        B. CỘNG ĐỒNG ASEAN: TỪ Ý TƯỞNG ĐẾN HIỆN THỰC
+    </div>
+    
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 15px;">1. Ý tưởng, mục tiêu và kế hoạch xây dựng Cộng đồng ASEAN</h3>
+    <p><strong>a) Ý tưởng xây dựng Cộng đồng ASEAN</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Ngay khi ra Tuyên bố ASEAN (năm 1967), ASEAN đã mong muốn "xây dựng một cộng đồng thịnh vượng và hoà bình ở Đông Nam Á".</li>
+        <li>Tháng 12/1997, văn kiện Tầm nhìn ASEAN 2020 xác định mục tiêu đưa ASEAN trở thành một nhóm hài hoà các dân tộc Đông Nam Á gắn bó, đùm bọc lẫn nhau.</li>
+        <li>Tháng 10/2003, ASEAN kí Tuyên bố về sự Hoà hợp ASEAN II (Tuyên bố Ba-li II), đặt nền móng cho sự hình thành Cộng đồng ASEAN.</li>
+        <li>Tháng 01/2007, ASEAN đã quyết định đẩy nhanh tiến trình liên kết nội khối, thống nhất mục tiêu hình thành Cộng đồng ASEAN vào năm 2015.</li>
+    </ul>
+
+    <p><strong>b) Mục tiêu xây dựng Cộng đồng ASEAN</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Mục tiêu tổng quát của Cộng đồng ASEAN là xây dựng hiệp hội thành một tổ chức hợp tác liên Chính phủ liên kết sâu rộng hơn và ràng buộc hơn.</li>
+        <li>Cộng đồng ASEAN cũng hướng tới mục tiêu làm sâu sắc hơn quan hệ với các đối tác, giữ vai trò trung tâm ở khu vực.</li>
+    </ul>
+
+    <p><strong>c) Kế hoạch xây dựng Cộng đồng ASEAN</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Tháng 02/2009, ASEAN thông qua Lộ trình xây dựng Cộng đồng ASEAN trong giai đoạn 2009-2015, kèm theo kế hoạch tổng thể xây dựng ba trụ cột.</li>
+        <li>Ngày 09/4/2010, ASEAN thống nhất chủ đề: "Hướng tới Cộng đồng ASEAN: Từ tầm nhìn đến hành động".</li>
+        <li>Ngày 22/11/2015, ASEAN ra Tuyên bố Cu-a-la Lăm-pơ về việc thành lập Cộng đồng ASEAN với ba trụ cột: APSC, AEC và ASCC.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">2. Ba trụ cột của Cộng đồng ASEAN</h3>
+    <p><strong>a) Cộng đồng Chính trị - An ninh ASEAN (APSC)</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Mục tiêu:</strong> Nỗ lực tạo dựng môi trường hoà bình và an ninh ở khu vực thông qua việc nâng cao hợp tác chính trị - an ninh ASEAN.</li>
+        <li><strong>Nội dung chính:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>Hoạt động giữa các thành viên dựa trên các giá trị, chuẩn mực chung.</li>
+                <li>Gắn kết, hoà bình và tự cường, có trách nhiệm chung bảo đảm an ninh toàn diện.</li>
+                <li>Xây dựng một khu vực năng động, quan hệ rộng mở với bên ngoài.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <p><strong>b) Cộng đồng Kinh tế ASEAN (AEC)</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Mục tiêu:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>Hướng đến tạo dựng một khu vực kinh tế ASEAN ổn định, thịnh vượng và cạnh tranh cao.</li>
+                <li>Có sự di chuyển tự do của hàng hoá, dịch vụ, đầu tư, vốn, giảm nghèo, thu hẹp khoảng cách phát triển.</li>
+            </ul>
+        </li>
+        <li><strong>Nội dung chính:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>Tạo ra một thị trường chung và cơ sở sản xuất thống nhất.</li>
+                <li>Xây dựng một khu vực có sức cạnh tranh, phát triển đồng đều.</li>
+                <li>Đưa Cộng đồng hội nhập vào nền kinh tế toàn cầu.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <p><strong>c) Cộng đồng Văn hoá - Xã hội ASEAN (ASCC)</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Mục tiêu:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>Hướng đến xây dựng một cộng đồng lấy con người làm trung tâm.</li>
+                <li>Chú trọng gìn giữ và phát huy các giá trị văn hoá truyền thống của khu vực, thúc đẩy trao đổi văn hoá, đề cao nguyên tắc thống nhất trong đa dạng.</li>
+            </ul>
+        </li>
+        <li><strong>Nội dung chính:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>Chú trọng phát triển con người.</li>
+                <li>Xây dựng cộng đồng các xã hội đùm bọc lẫn nhau, gắn kết xã hội của khu vực.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">3. Cộng đồng ASEAN sau năm 2015</h3>
+    <p><strong>a) Tầm nhìn ASEAN sau năm 2015</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Ngày 22/11/2015, Hội nghị Thượng đỉnh ASEAN lần thứ 27 ở Cu-a-la Lăm-pơ (Ma-lai-xi-a), ASEAN thông qua Tầm nhìn Cộng đồng ASEAN 2025.</li>
+        <li>Tháng 11/2020, tại Hội nghị Cấp cao ASEAN lần thứ 37 ở Hà Nội (Việt Nam), ASEAN triển khai soạn thảo Tầm nhìn Cộng đồng ASEAN sau năm 2025 theo lộ trình đã đề ra.</li>
+    </ul>
+
+    <p><strong>b) Những thách thức và triển vọng của Cộng đồng ASEAN</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Những thách thức của Cộng đồng ASEAN:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>Vấn đề an ninh được xem là thách thức lớn nhất mà Cộng đồng ASEAN phải đối mặt.</li>
+                <li>Sự chênh lệch về trình độ phát triển kinh tế, khoa học công nghệ.</li>
+                <li>Sự khác biệt trong hệ thống chính trị giữa các nước ASEAN.</li>
+                <li>Những vấn đề an ninh phi truyền thống như: ô nhiễm môi trường, biến đổi khí hậu, tội phạm xuyên quốc gia, dịch bệnh,...</li>
+            </ul>
+        </li>
+        <li><strong>Những triển vọng của Cộng đồng ASEAN:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>Tiếp tục phát huy đặc trưng "thống nhất trong đa dạng", tạo dựng sự đoàn kết, tự cường, thích ứng trước những biến động phức tạp của thế giới.</li>
+                <li>Quá trình hoàn thiện thể chế, chính sách và các cơ chế hợp tác của Cộng đồng tiếp tục được đẩy mạnh, thúc đẩy sự hợp tác và phát triển của các thành viên, đưa khu vực Đông Nam Á trở thành một trong những khu vực phát triển năng động bậc nhất của thế giới.</li>
+                <li>Cộng đồng ASEAN thông qua tổ chức ASEAN ngày càng mở rộng quan hệ với các đối tác bên ngoài.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <div class="my-6 border-b-2 border-gray-200"></div>
+</div>
+    `;
+
+    // ==================== NGÂN HÀNG CÂU HỎI LỊCH SỬ ====================
+    const de2_data = [
+        // TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN (10 CÂU)
+        { id: "cd_1", type: "single", question: "Ngày 31-12-2015 được ASEAN quyết định chọn là ngày", options: ["Hiến chương ASEAN chính thức có hiệu lực.", "thành lập Cộng đồng ASEAN.", "ra Tuyên bố Cu-a-la Lăm-pơ.", "thành lập Cộng đồng Kinh tế ASEAN (AEC)."], correct: 1, giaiThich: "Ngày 31/12/2015 là cột mốc lịch sử khi Cộng đồng ASEAN (ASEAN Community) chính thức được thành lập trên cơ sở 3 trụ cột vững chắc." },
+        { id: "cd_2", type: "single", question: "ASEAN đã ra văn bản nào sau đây để quyết định chính thức thành lập Cộng đồng ASEAN?", options: ["Tuyên bố Cu-a-la Lăm-pơ.", "Tuyên bố Ba-li I.", "Tuyên bố Ba-li II.", "Tuyên bố về Khu vực Hoà bình, Tự do và Trung lập."], correct: 0, giaiThich: "Ngày 22-11-2015, ASEAN ra Tuyên bố Kuala Lumpur (Cu-a-la Lăm-pơ) chính thức tuyên bố về việc thành lập Cộng đồng ASEAN vào ngày 31/12/2015." },
+        { id: "cd_3", type: "single", question: "Ngay khi ra \"Tuyên bố ASEAN\" (1967), ASEAN đã thể hiện mong muốn gì?", options: ["Mở rộng quan hệ hợp tác, đối thoại với các đối tác bên ngoài khu vực.", "Tăng cường hợp tác kinh tế, văn hoá, xã hội ở Đông Nam Á.", "Củng cố sự đoàn kết giữa các nước trong khu vực Đông Nam Á.", "Xây dựng một cộng đồng thịnh vượng và hoà bình ở Đông Nam Á."], correct: 3, giaiThich: "Mặc dù khái niệm 'Cộng đồng' chưa hoàn thiện như bây giờ, nhưng ngay từ Tuyên bố Băng Cốc (1967), ASEAN đã ấp ủ ý tưởng 'xây dựng một cộng đồng thịnh vượng và hoà bình ở Đông Nam Á'." },
+        { id: "cd_4", type: "single", question: "Văn kiện \"Tầm nhìn ASEAN 2020” đã xác định mục tiêu là đưa ASEAN trở thành", options: ["một nhóm hài hoà các dân tộc Đông Nam Á gắn bó, đùm bọc lẫn nhau.", "liên minh kinh tế, chính trị khu vực lớn nhất hành tinh.", "liên minh quân sự lớn nhất ở châu Á.", "một nhóm hài hoà các dân tộc ở Đông Nam Á và Đông Bắc Á."], correct: 0, giaiThich: "Tháng 12/1997, văn kiện Tầm nhìn ASEAN 2020 xác định rõ mục tiêu đưa ASEAN trở thành một nhóm hài hoà các dân tộc Đông Nam Á gắn bó, đùm bọc lẫn nhau." },
+        { id: "cd_5", type: "single", question: "Văn kiện \"Tầm nhìn ASEAN 2020\" được thông qua tại Hội nghị", options: ["Cấp cao ASEAN lần thứ nhất tại Ba-li.", "Cấp cao ASEAN không chính thức lần thứ hai tại Ma-lai-xi-a.", "Thượng đỉnh ASEAN lần thứ nhất tại Ba-li.", "Cấp cao ASEAN-Trung Quốc lần thứ sáu tại Cam-pu-chia."], correct: 1, giaiThich: "Tầm nhìn ASEAN 2020 được thông qua tại Hội nghị Cấp cao ASEAN không chính thức lần thứ 2 diễn ra tại Kuala Lumpur, Malaysia (tháng 12/1997)." },
+        { id: "cd_6", type: "single", question: "Tuyên bố nào sau đây của ASEAN đã đặt nền móng cho sự hình thành Cộng đồng ASEAN?", options: ["Tuyên bố Băng Cốc.", "Tuyên bố về Khu vực Hoà bình, Tự do và Trung lập.", "Tuyên bố về sự Hoà hợp ASEAN I.", "Tuyên bố về sự Hoà hợp ASEAN II."], correct: 3, giaiThich: "Tháng 10/2003, ASEAN kí Tuyên bố về sự Hoà hợp ASEAN II (còn gọi là Tuyên bố Bali II), chính thức đặt nền móng và phác thảo về 3 trụ cột cho việc hình thành Cộng đồng ASEAN." },
+        { id: "cd_7", type: "single", question: "Nội dung nào sau đây là mục tiêu tổng quát của Cộng đồng ASEAN?", options: ["Thúc đẩy sự tăng trưởng kinh tế, tiến bộ xã hội và phát triển văn hoá trong khu vực Đông Nam Á.", "Làm sâu sắc hơn mối quan hệ giữa ASEAN với các đối tác, giữ vai trò trung tâm ở khu vực thông qua nhiều khuôn khổ.", "Xây dựng hiệp hội thành một tổ chức hợp tác liên Chính phủ liên kết sâu rộng trên cơ sở pháp lí là Hiến chương ASEAN.", "Phát triển cơ cấu tổ chức, hoàn thiện nguyên tắc hoạt động, chú trọng hợp tác giữa các thành viên."], correct: 2, giaiThich: "Mục tiêu tổng quát của việc chuyển mình thành Cộng đồng ASEAN là xây dựng hiệp hội thành một tổ chức hợp tác liên Chính phủ liên kết sâu rộng hơn, có tính pháp lý cao hơn dựa trên nền tảng Hiến chương ASEAN." },
+        { id: "cd_8", type: "single", question: "ASCC là tên viết tắt theo tiếng Anh của tổ chức nào trong ba trụ cột của Cộng đồng ASEAN?", options: ["Cộng đồng Chính trị - An ninh ASEAN.", "Cộng đồng Kinh tế ASEAN.", "Cộng đồng Văn hoá - Xã hội ASEAN.", "Hiệp hội Đông Nam Á."], correct: 2, giaiThich: "Cộng đồng ASEAN gồm 3 trụ cột: APSC (Chính trị - An ninh), AEC (Kinh tế) và ASCC (Văn hoá - Xã hội). ASCC là viết tắt của ASEAN Socio-Cultural Community." },
+        { id: "cd_9", type: "single", question: "Thách thức lớn nhất mà Cộng đồng ASEAN phải đối mặt là", options: ["sự chênh lệch về trình độ phát triển kinh tế.", "sự khác biệt trong hệ thống chính trị.", "sự chênh lệch về trình độ khoa học - công nghệ.", "vấn đề an ninh."], correct: 3, giaiThich: "Mặc dù chênh lệch kinh tế và khác biệt chính trị cũng là rào cản, nhưng vấn đề an ninh (cả truyền thống và phi truyền thống) luôn được xem là thách thức lớn nhất và phức tạp nhất đe doạ sự ổn định của Cộng đồng ASEAN." },
+        { id: "cd_10", type: "single", question: "Tháng 11-2020, Hội nghị Cấp cao ASEAN lần thứ 37 được tổ chức tại", options: ["Cu-a-la Lăm-pơ (Ma-lai-xi-a).", "Hà Nội (Việt Nam).", "Gia-các-ta (In-đô-nê-xi-a).", "Ma-ni-la (Phi-líp-pin)."], correct: 1, giaiThich: "Hội nghị Cấp cao ASEAN lần thứ 37 (tháng 11/2020) được tổ chức dưới hình thức trực tuyến do Việt Nam làm Chủ tịch ASEAN, đầu cầu trung tâm tại thủ đô Hà Nội." },
+
+        // TRẮC NGHIỆM ĐÚNG/SAI (10 CÂU)
+        { id: 'cd_c1', type: 'tf_cluster', question: "Ý tưởng xây dựng Cộng đồng ASEAN được thực hiện xuất phát từ nhiều mục tiêu.", subQuestions: [
+            { id: 'tfb_1a', text: "Xây dựng hiệp hội thành một tổ chức hợp tác liên Chính phủ liên kết sâu rộng hơn và ràng buộc hơn.", correct: "Đúng", giaiThich: "Đây chính là mục tiêu tổng quát của việc xây dựng Cộng đồng ASEAN." },
+            { id: 'tfb_1b', text: "Trở thành một cộng đồng gắn kết về chính trị, liên kết về kinh tế, có trách nhiệm về xã hội và hợp tác rộng mở với bên ngoài.", correct: "Đúng", giaiThich: "Đây là tóm tắt hoàn hảo cho 3 trụ cột (APSC, AEC, ASCC) và chính sách đối ngoại của Cộng đồng." },
+            { id: 'tfb_1c', text: "Đưa ASEAN hoạt động theo đúng nguyên tắc và hướng tới những người đứng đầu.", correct: "Sai", giaiThich: "Một trong những mục tiêu quan trọng nhất của ASEAN là hướng tới một cộng đồng 'lấy con người làm trung tâm' (người dân), chứ không phải những người đứng đầu." },
+            { id: 'tfb_1d', text: "Đưa ASEAN trở thành một cộng đồng có sự thống nhất chặt chẽ về chính trị, văn hoá, xã hội.", correct: "Sai", giaiThich: "ASEAN không có mục tiêu 'thống nhất chặt chẽ' (đồng nhất/xóa bỏ khác biệt) về chính trị hay văn hoá. Tổ chức đề cao nguyên tắc 'thống nhất trong đa dạng' (Unity in Diversity)." }
+        ]},
+        { id: 'cd_c2', type: 'tf_cluster', question: "Cộng đồng ASEAN được hình thành dựa trên ba trụ cột, giữ vai trò trung tâm ở khu vực thông qua nhiều khuôn khổ và được lồng ghép vào hoạt động trong từng trụ cột của Cộng đồng ASEAN.", subQuestions: [
+            { id: 'tfb_2a', text: "Cộng đồng Kinh tế châu Âu (EEC).", correct: "Sai", giaiThich: "EEC là tiền thân của Liên minh châu Âu (EU), không liên quan đến cơ cấu trụ cột của ASEAN." },
+            { id: 'tfb_2b', text: "Cộng đồng Chính trị - An ninh ASEAN (APSC).", correct: "Đúng", giaiThich: "Là trụ cột đầu tiên đảm bảo môi trường hoà bình, an ninh khu vực." },
+            { id: 'tfb_2c', text: "Cộng đồng Kinh tế ASEAN (AEC).", correct: "Đúng", giaiThich: "Là trụ cột thứ hai thúc đẩy sự thịnh vượng, tự do thương mại." },
+            { id: 'tfb_2d', text: "Cộng đồng Văn hoá - Xã hội ASEAN (ASCC).", correct: "Đúng", giaiThich: "Là trụ cột thứ ba hướng tới sự gắn kết, đùm bọc, lấy người dân làm trung tâm." }
+        ]},
+        { id: 'cd_c3', type: 'tf_cluster', question: "Cộng đồng Chính trị - An ninh ASEAN được xây dựng dựa trên nền tảng những thành quả hợp tác chính trị - an ninh đã đạt được, gồm nhiều nội dung quan trọng.", subQuestions: [
+            { id: 'tfb_3a', text: "Tạo dựng trụ cột APSC giữ vai trò chính cho các trụ cột khác trên cơ sở các nguyên tắc cơ bản của ASEAN.", correct: "Sai", giaiThich: "Ba trụ cột (APSC, AEC, ASCC) phát triển đan xen, gắn kết và bình đẳng với nhau. Không có trụ cột nào được tuyên bố là 'giữ vai trò chính' chi phối các trụ cột khác." },
+            { id: 'tfb_3b', text: "Hoạt động giữa các thành viên dựa trên các giá trị, chuẩn mực chung.", correct: "Đúng", giaiThich: "Đây là một trong những nội dung chính để xây dựng sự đồng thuận chính trị." },
+            { id: 'tfb_3c', text: "Gắn kết, hoà bình và tự cường, có trách nhiệm chung bảo đảm an ninh toàn diện.", correct: "Đúng", giaiThich: "Trách nhiệm chung trong an ninh toàn diện là hạt nhân cốt lõi của APSC." },
+            { id: 'tfb_3d', text: "Xây dựng một khu vực trung lập, hạn chế quan hệ mở rộng với bên ngoài.", correct: "Sai", giaiThich: "Mục tiêu của APSC là xây dựng khu vực năng động, quan hệ 'rộng mở với bên ngoài' chứ không phải hạn chế hay đóng cửa." }
+        ]},
+        { id: 'cd_c4', type: 'tf_cluster', question: "Cộng đồng Kinh tế ASEAN là sự tiếp nối và mở rộng các chương trình hợp tác kinh tế ASEAN, được xây dựng dựa trên nhiều nội dung quan trọng.", subQuestions: [
+            { id: 'tfb_4a', text: "Đẩy mạnh sự hợp tác của AEC với tất cả các tổ chức kinh tế thế giới.", correct: "Sai", giaiThich: "Văn kiện hội nhập không đề cập tính chất tuyệt đối 'với tất cả các tổ chức', mà chỉ tập trung đẩy mạnh hội nhập nền kinh tế toàn cầu nói chung." },
+            { id: 'tfb_4b', text: "Tạo ra một thị trường chung và cơ sở sản xuất thống nhất.", correct: "Đúng", giaiThich: "Đây là nội dung quan trọng số 1 của Cộng đồng Kinh tế (AEC)." },
+            { id: 'tfb_4c', text: "Đưa AEC trở thành Cộng đồng kinh tế hàng đầu thế giới.", correct: "Sai", giaiThich: "Mục tiêu thực tế của AEC là tạo dựng khu vực kinh tế ổn định, thịnh vượng và có sức cạnh tranh cao, không đặt tham vọng phi thực tế là 'hàng đầu thế giới'." },
+            { id: 'tfb_4d', text: "Xây dựng một khu vực có sức cạnh tranh, phát triển đồng đều.", correct: "Đúng", giaiThich: "Thu hẹp khoảng cách phát triển nội khối và gia tăng sức cạnh tranh là chiến lược trọng tâm của AEC." }
+        ]},
+        { id: 'cd_c5', type: 'tf_cluster', question: "Cộng đồng Văn hoá - Xã hội ASEAN là một trụ cột quan trọng, được xây dựng dựa trên nền tảng từ sự phát triển các giá trị văn hoá truyền thống lâu đời.", subQuestions: [
+            { id: 'tfb_5a', text: "Chú trọng phát triển kinh tế.", correct: "Sai", giaiThich: "Phát triển kinh tế thuộc về nhiệm vụ của trụ cột AEC (Cộng đồng Kinh tế)." },
+            { id: 'tfb_5b', text: "Xây dựng cộng đồng các xã hội đùm bọc lẫn nhau.", correct: "Đúng", giaiThich: "Mục tiêu nhân văn xuyên suốt của trụ cột ASCC." },
+            { id: 'tfb_5c', text: "Tạo dựng bản sắc ASEAN.", correct: "Đúng", giaiThich: "ASCC chú trọng việc hình thành ý thức hệ và bảo tồn, phát huy bản sắc chung của ASEAN." },
+            { id: 'tfb_5d', text: "Tăng cường nền tảng gắn kết chính trị của khu vực.", correct: "Sai", giaiThich: "Gắn kết chính trị là nội dung của trụ cột APSC (Cộng đồng Chính trị - An ninh)." }
+        ]},
+        { id: 'cd_c6', type: 'tf_cluster', question: "Trong quá trình phát triển, Cộng đồng ASEAN phải đối mặt với những thách thức trong nội khối và từ bên ngoài.", subQuestions: [
+            { id: 'tfb_6a', text: "Sự khác biệt về phong tục tập quán, bản sắc dân tộc.", correct: "Sai", giaiThich: "Đa dạng văn hóa được ASEAN xem là lợi thế ('thống nhất trong đa dạng'), không bị liệt kê như một thách thức cản trở sự phát triển." },
+            { id: 'tfb_6b', text: "Sự chênh lệch về trình độ phát triển văn hoá.", correct: "Sai", giaiThich: "Văn hóa không dùng tiêu chí 'trình độ' để so sánh cao thấp làm thách thức. Thách thức lớn là chênh lệch về kinh tế và khoa học - công nghệ." },
+            { id: 'tfb_6c', text: "Sự chênh lệch về trình độ phát triển kinh tế, khoa học - công nghệ.", correct: "Đúng", giaiThich: "Khoảng cách phát triển (giữa nhóm ASEAN-6 và CLMV) là rào cản cực lớn cho sự hội nhập hoàn toàn của khối." },
+            { id: 'tfb_6d', text: "Sự khác biệt trong hệ thống chính trị.", correct: "Đúng", giaiThich: "Đông Nam Á có nhiều thể chế chính trị khác nhau (Quân chủ, Cộng hoà, Xã hội chủ nghĩa...), khiến việc đồng thuận trong một số vấn đề gặp nhiều khó khăn." }
+        ]},
+        { id: 'cd_c7', type: 'tf_cluster', question: "Cộng đồng ASEAN tiếp tục phát triển, có nhiều triển vọng để phát huy đặc trưng \"thống nhất trong đa dạng\".", subQuestions: [
+            { id: 'tfb_7a', text: "Thích ứng hiệu quả trước những biến động phức tạp của thế giới và khu vực.", correct: "Đúng", giaiThich: "Khả năng tự cường, đoàn kết và thích ứng linh hoạt là điểm sáng đầy triển vọng của khối." },
+            { id: 'tfb_7b', text: "Quá trình hoàn thiện thể chế, chính sách, cơ chế hợp tác của Cộng đồng đã được hoàn thành.", correct: "Sai", giaiThich: "Quá trình này vẫn đang 'tiếp tục được đẩy mạnh' chứ chưa hoàn thành triệt để." },
+            { id: 'tfb_7c', text: "Đông Nam Á trở thành khu vực phát triển năng động nhất của thế giới.", correct: "Sai", giaiThich: "Văn kiện định hướng đưa Đông Nam Á trở thành 'một trong những khu vực' phát triển năng động bậc nhất, không khẳng định độc tôn là 'nhất thế giới'." },
+            { id: 'tfb_7d', text: "Ngày càng mở rộng quan hệ với các đối tác bên ngoài.", correct: "Đúng", giaiThich: "Đây là thành tựu và cũng là một định hướng triển vọng dài hạn vững chắc." }
+        ]},
+        { id: 'cd_c8', type: 'tf_cluster', question: "Nhiều vấn đề an ninh phi truyền thống ảnh hưởng đến sự phát triển của các quốc gia Đông Nam Á.", subQuestions: [
+            { id: 'tfb_8a', text: "Ô nhiễm môi trường, biến đổi khí hậu.", correct: "Đúng", giaiThich: "Đông Nam Á là một trong những khu vực chịu tổn thương nặng nề nhất do biến đổi khí hậu." },
+            { id: 'tfb_8b', text: "Tội phạm xuyên quốc gia.", correct: "Đúng", giaiThich: "Buôn bán ma tuý, buôn người, khủng bố mạng... là những vấn đề phi truyền thống nhức nhối." },
+            { id: 'tfb_8c', text: "Vi phạm độc lập, chủ quyền, toàn vẹn lãnh thổ.", correct: "Sai", giaiThich: "Đây là nhóm vấn đề thuộc về an ninh 'truyền thống' (liên quan trực tiếp đến biên giới lãnh thổ, quân sự)." },
+            { id: 'tfb_8d', text: "Xung đột quân sự.", correct: "Sai", giaiThich: "Xung đột quân sự cũng thuộc về nhóm an ninh truyền thống, không phải phi truyền thống." }
+        ]},
+        { id: 'cd_c9', type: 'tf_cluster', question: "Cộng đồng Kinh tế ASEAN được xây dựng, hướng đến sự hợp tác kinh tế giữa các quốc gia trong khu vực.", subQuestions: [
+            { id: 'tfb_9a', text: "Tạo dựng một khu vực kinh tế ASEAN ổn định, thịnh vượng và cạnh tranh cao.", correct: "Đúng", giaiThich: "Đây là mục tiêu lớn nhất yếu của trụ cột Cộng đồng Kinh tế (AEC)." },
+            { id: 'tfb_9b', text: "Sự di chuyển tự do của hàng hoá, dịch vụ và đầu tư.", correct: "Đúng", giaiThich: "Xoá bỏ rào cản thuế quan và phi thuế quan nhằm tạo thành một thị trường chung." },
+            { id: 'tfb_9c', text: "Sự di chuyển tự do hơn của các luồng vốn.", correct: "Đúng", giaiThich: "Là yếu tố bắt buộc để thu hút đầu tư, liên kết tài chính nội khối." },
+            { id: 'tfb_9d', text: "Phát triển kinh tế đồng đều, xoá bỏ khoảng cách về kinh tế - xã hội.", correct: "Sai", giaiThich: "Mục tiêu thực tế là 'thu hẹp' và 'giảm bớt' khoảng cách phát triển, không thể xoá bỏ hoàn toàn khoảng cách." }
+        ]},
+        { id: 'cd_c10', type: 'tf_cluster', question: "Cộng đồng Văn hoá - Xã hội ASEAN hướng đến việc hình thành ý thức về bản sắc khu vực, nhận thức về khu vực và xây dựng sự hiểu biết lẫn nhau trong nhân dân các nước ASEAN.", subQuestions: [
+            { id: 'tfb_10a', text: "Xây dựng một cộng đồng lấy con người làm trung tâm.", correct: "Đúng", giaiThich: "Đây là khẩu hiệu cốt lõi và mục tiêu trung tâm của trụ cột ASCC." },
+            { id: 'tfb_10b', text: "Xây dựng tình đoàn kết và thống nhất bền lâu giữa các quốc gia và dân tộc.", correct: "Đúng", giaiThich: "Thông qua gắn kết xã hội và đùm bọc, hướng tới sự thống nhất lâu dài của hiệp hội." },
+            { id: 'tfb_10c', text: "Hạn chế quảng bá các giá trị văn hoá truyền thống của khu vực.", correct: "Sai", giaiThich: "Ngược lại, ASCC chú trọng việc 'gìn giữ và phát huy' các giá trị văn hoá truyền thống ra ngoài thế giới." },
+            { id: 'tfb_10d', text: "Hạn chế trao đổi văn hoá, không đề cao nguyên tắc thống nhất trong đa dạng.", correct: "Sai", giaiThich: "Trụ cột này kịch liệt ủng hộ việc 'thúc đẩy trao đổi văn hoá' và luôn đề cao tôn chỉ 'thống nhất trong đa dạng'." }
+        ]}
+    ];
+
+    const testBanks = { de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // HIỂN THỊ NÚT ĐIỀU HƯỚNG TÙY THEO PHẦN 1 HAY 2
+    function buildNavButtons(isTheory) {
+        if (isTheory) {
+            return `<button onclick="window.goHome()" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">🏠 ĐÃ HIỂU - QUAY LẠI TRANG CHỦ</button>`;
+        } else {
+            return `
+                <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+                <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+                <button id="submit-btn" onclick="window.confirmSubmit()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+            `;
+        }
+    }
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Các em vui lòng nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 1 (LÝ THUYẾT)
+            if (maDe === 'de1') {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('timer-banner').style.display = 'none';
+                document.getElementById('nav-buttons').innerHTML = buildNavButtons(true);
+                document.getElementById('question-container').innerHTML = theoryHTML;
+                showSection('quiz');
+                return;
+            }
+
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 2 (TRẮC NGHIỆM)
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('timer-banner').style.display = 'flex';
+            document.getElementById('nav-buttons').innerHTML = buildNavButtons(false);
+
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // ĐÁNH SỐ TỪ 1 CHO CÂU TRẮC NGHIỆM ĐƠN
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+            });
+            
+            // ĐÁNH SỐ TIẾP TỤC CHO CÂU ĐÚNG SAI
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                let startIdx = part1.length + idx + 1;
+                q.displayQuestion = `Câu ${startIdx}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    let cleanText = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${cleanText}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        let total = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') total += q.subQuestions.length; 
+            else total += 1; 
+        });
+        return total; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] !== undefined) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl font-bold leading-relaxed shadow-inner">${q.displayQuestion.replace(/\n/g, '<br/>')}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // LOGIC NỘP BÀI MỚI VỚI CUSTOM MODAL
+    window.confirmSubmit = function() {
+        if (!isQuizStarted) return; 
+        
+        let ansCount = getAnsweredCount();
+        let totItems = getTotalItems();
+        
+        if(ansCount < totItems) {
+            const modal = document.getElementById('custom-confirm-modal');
+            const card = document.getElementById('confirm-card');
+            document.getElementById('confirm-msg').innerText = `Các em mới làm ${ansCount}/${totItems} thao tác. Có chắc chắn muốn nộp bài không?`;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            }, 10);
+
+            document.getElementById('btn-cancel-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            };
+
+            document.getElementById('btn-confirm-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    executeSubmitLogic(); 
+                }, 300);
+            };
+            return; 
+        }
+
+        executeSubmitLogic();
+    };
+
+    function executeSubmitLogic() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+        const score = scoreP1P2.toFixed(2);
+        
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctP1P2, tongCau: totalP1P2,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctP1P2, totalP1P2, record.duration); });
+        } else {
+            window.showModalResult(score, correctP1P2, totalP1P2, record.duration);
+        }
+    }
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="absolute top-4 left-4 z-10">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center pt-8">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-slate-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="text-2xl mr-2 drop-shadow-sm">${statusIcon}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'} shadow-sm">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                    
+                    if(sub.giaiThich) {
+                        html += `<div class="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${sub.giaiThich}</div>`;
+                    }
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                
+                if(q.giaiThich) {
+                    html += `<div class="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${q.giaiThich}</div>`;
+                }
+                
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.executeSubmitLogic(); 
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
