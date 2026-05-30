@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Lịch Sử 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all relative">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white relative">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1 uppercase">Kiểm Tra Lịch Sử 12</h1>
+      <p class="text-gray-600 font-bold">Chủ đề: Cuộc kháng chiến chống Mỹ, cứu nước (1954-1975)</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn nội dung:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 1: NỘI DUNG ÔN TẬP</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 2: BÀI TẬP TRẮC NGHIỆM</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 VÀO HỌC </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100 relative">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 ý</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl relative" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10 flex gap-2">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+         <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+     </div>
+     <div class="mb-6 pb-4 border-b-2 border-gray-100 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+     </div>
+     <div class="mb-6 border-b-2 border-gray-100 pb-4 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </p>
+   </footer>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-[90%] shadow-2xl transform transition-transform duration-300 scale-95" id="confirm-card">
+            <div class="text-5xl mb-4 text-center animate-bounce">⚠️</div>
+            <h3 class="text-2xl font-black text-red-600 mb-2 text-center uppercase">Khoan đã!</h3>
+            <p class="text-gray-600 mb-8 text-center font-medium leading-relaxed" id="confirm-msg"></p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="btn-cancel-submit" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200">Tiếp tục làm bài</button>
+                <button id="btn-confirm-submit" class="flex-1 py-3 px-4 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold rounded-xl transition-all shadow-md shadow-red-500/30 transform hover:-translate-y-0.5">Vẫn Nộp Luôn</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_lichsu12_chude5_p3_sau_ctl'); 
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== HTML LÝ THUYẾT (DÀNH CHO PHẦN 1) ====================
+    const theoryHTML = `
+ <div class="theory-content text-gray-800 leading-relaxed">
+    <h2 style="color: #dc2626;" class="text-2xl font-black mb-4">I. NỘI DUNG ÔN TẬP</h2>
+    <div style="text-align: center; font-weight: bold; margin-bottom: 30px; font-size: 1.1rem; color: #1e40af;">
+        C. CUỘC KHÁNG CHIẾN CHỐNG MỸ, CỨU NƯỚC (1954-1975)
+    </div>
+    
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 15px;">1. Bối cảnh lịch sử của cuộc kháng chiến chống Mỹ, cứu nước</h3>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Hệ thống xã hội chủ nghĩa ngày càng lớn mạnh. Phong trào giải phóng dân tộc ngày càng phát triển mạnh ở châu Á, châu Phi, khu vực Mỹ La-tinh. Phong trào đấu tranh vì hoà bình, dân chủ dâng cao ở các nước tư bản.</li>
+        <li>Chiến tranh lạnh đã lôi kéo các nước vào cuộc chạy đua vũ trang và đối đầu giữa hai phe tư bản chủ nghĩa và xã hội chủ nghĩa. Quan hệ giữa các nước lớn có nhiều diễn biến phức tạp.</li>
+        <li>Sau Hiệp định Giơ-ne-vơ năm 1954, miền Bắc hoà bình và đi lên chủ nghĩa xã hội; ở miền Nam, Mỹ thay chân Pháp, dựng lên chính quyền Ngô Đình Diệm (chính quyền Sài Gòn), thực hiện âm mưu chia cắt Việt Nam, biến miền Nam Việt Nam thành thuộc địa kiểu mới, căn cứ quân sự của Mỹ ở Đông Dương và Đông Nam Á.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">2. Các giai đoạn phát triển của cuộc kháng chiến chống Mỹ, cứu nước (1954-1975)</h3>
+    <p><strong>a) Giai đoạn 1954 - 1960</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Miền Bắc:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>1954 - 1957: hoàn thành cải cách ruộng đất, thực hiện hàn gắn vết thương chiến tranh.</li>
+                <li>1958 - 1960: cải tạo quan hệ sản xuất, bước đầu phát triển kinh tế - xã hội, là căn cứ địa cách mạng của cả nước.</li>
+            </ul>
+        </li>
+        <li><strong>Miền Nam:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>Phong trào đấu tranh chính trị, đòi các quyền tự do, dân chủ, gìn giữ và phát triển lực lượng.</li>
+                <li>Nghị quyết 15 (1959) với việc sử dụng bạo lực cách mạng, đã đưa đến thắng lợi của phong trào Đồng khởi (1960).</li>
+                <li>Từ đó, thắng lợi của phong trào Đồng khởi đánh dấu bước phát triển của cách mạng miền Nam chuyển từ thế giữ gìn lực lượng sang thế tiến công. Mặt trận Dân tộc giải phóng miền Nam Việt Nam (20/12/1960) được thành lập, thúc đẩy lực lượng vũ trang cách mạng phát triển.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <p><strong>b) Giai đoạn 1961 - 1965</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Miền Bắc:</strong> Tháng 9/1960, Đại hội đại biểu toàn quốc lần thứ III của Đảng Lao động Việt Nam được tổ chức tại Hà Nội, xác định nhiệm vụ chiến lược của cách mạng cả nước và cách mạng từng miền. Thực hiện kế hoạch 5 năm lần thứ nhất. Là hậu phương lớn, chi viện sức người, sức của cho miền Nam.</li>
+        <li><strong>Miền Nam:</strong>
+            <ul class="list-circle ml-5 mt-1 space-y-1 text-gray-700">
+                <li>- Chiến đấu chống chiến lược “Chiến tranh đặc biệt” (1961 - 1965) <br>- một hình thức chiến tranh xâm lược thực dân mới, được tiến hành bằng quân đội Sài Gòn, dưới sự chỉ huy của cố vấn Mỹ, dựa vào vũ khí, phương tiện chiến tranh của Mỹ.
+<br>- Dưới ngọn cờ đoàn kết cứu nước của Mặt trận Dân tộc giải phóng miển Nam Việt Nam, quân dân miển Nam chiến đấu chống Mỹ và chính quyển Sài Gòn giành được nhiểu thắng lợi quan trọng.
+<br>+ Trên mặt trận chính trị, phong trào đấu tranh của các tẩng lớp nhân dân trong các đô thị lớn như Sài Gòn, Huế, Đà Nẵng dâng cao, tiêu biểu là cuộc đấu tranh của các tín đổ Phật giáo, “Đội quân tóc dài', học sinh - sinh viên đẩy chính quyên Sài Gòn lâm vào tình trạng khủng hoảng triển miền.
+<br>+ Trên mặt trận chống bình định, ở nông thôn, phong trào chống phá bình định ngày càng phát triển đã từng bước làm phá sản quốc sách "ấp chiến lược" của Mỹ và chính quyền Sài Gòn.
+<br>+ Trên mặt trận quân sự, giành thắng lợi ở trận Ấp Bắc (Mỹ Tho (nay thuộc Đổng Tháp),tháng 01 - 1963) bước đẩu đánh bại chiến thuật "trực thăng vận", “thiết xa vận', mở ra khả năng đánh bại chiến lược “Chiến tranh đặc biệt” của Mỹ. Từ đây, phong trào "Thi đua Ấp Bắc, giết giặc lập công” dấy lên khắp miền Nam. Trong nhūng nǎm 1964-1965, giành những thắng lợi ở Bình Giã (Bà Rịa, nay thuộc xã Bình Giā,Thành phố Hổ Chí Minh), An Lão (Bình Định, nay thuộc xã An Lão, tỉnh Gia Lai), Ba Gia (nay thuộc xā Ba Gia,tinh Quảng Ngãi),. gây cho quân đội Sài Gòn những thiệt hại nặng, có nguy cơ tan rā, làm phá sản hoàn toàn chiến lược"Chiến tranh đặc biệt"s.
+</li>
+            </ul>
+        </li>
+    </ul>
+
+    <p><strong>c) Giai đoạn 1965 - 1968</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Sau thất bại của chiến lược "Chiến tranh đặc biệt", Mỹ chuyển sang chiến lược <strong>"Chiến tranh cục bộ" (1965 - 1968)</strong> ở miền Nam và mở rộng chiến tranh phá hoại miền Bắc.</li>
+        <li><strong>Miền Nam:</strong>- Quân dân miền Nam tiếp tục chiến đấu chống chiến lược“Chiến tranh cục bộ", giành những thắng lợi trên các mặt trận chính trị, quân sự, ngoại giao. 
+<br>+ Trên mặt trận chính trị, được sự hỗ trợ của lực lượng vũ trang, quẩn chúng đấu tranh phá vỡ nhiểu "ấp chiến lược" trong vùng nông thôn. Ở thành thị, phong trào đấu tranh của công nhân, học sinh, sinh viên đòi Mỹ rút vế nước, đòi tự do dân chủ phát triển mạnh mẽ. Vùng giải phóng được mở rộng, vị thế và uy tín của Mặt trận Dân tộc giải phóng miển Nam Việt Nam được nâng cao trên trường quốc tế.
+<br>+ Trên mặt trận quân sự, quân dân miền Nam anh dũng chiến đấu và giành thắng lợi mở đấu ở Núi Thành (Đà Nẵng, tháng 5 - 1965), Vạn Tường (Quảng Ngãi, tháng 8 - 1965), mở ra khả năng đánh thắng Mỹ trong chiến lược “Chiến tranh cục bộ”.Tiếp đó, quân dân miền Nam đập tan hai cuộc phản công chiến lược mùa khô(1965-1966, 1966-1967) của Mỹ.
+<br>- Chiến thắng Xuân Mậu Thân (1968) buộc Mỹ phải"phi Mỹ hoá" cuộc chiến tranh, ngổi vào bàn đàm phán ở Pa-ri.
+</li>
+        <li><strong>Miền Bắc:</strong> Vừa chiến đấu chống chiến tranh phá hoại của Mỹ, vừa sản xuất và chi viện cho tiền tuyến miền Nam.</li>
+    </ul>
+
+    <p><strong>d) Giai đoạn 1969 - 1973</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>- Sau thất bại của chiến lược“Chiến tranh cục bộ', Mỹ chuyển sang chiến lược"Việt Nam hoá chiến tranh" ở miển Nam (1969 - 1973) và mở rộng chiến tranh ra toàn Đông Dương.
+<br>- Quân dân hai miền Nam - Bắc chiến đấu chống chiến lược "Việt Nam hoá chiến tranh", giành nhiểu thắng lợi lớn trên các mặt trận.
+<br>+ Trên mặt trận chính trị, Chính phủ Cách mạng lâm thời Cộng hoà miền Nam Việt Nam được thành lập (06 - 6 - 1969); Hội nghị cấp cao ba nước Đông Duơng họp (tháng 4- 1970), biểu thị quyết tâm của nhân dân ba nước đoàn kết chiến đấu chống Mỹ.
+<br>+ Trên mặt trận quân sự, phối hợp với quân và dân Cam-pu-chia đập tan cuộc hành quân xâm lược của quân Mỹ và quân đội Sài Gòn sang Cam-pu-chia (1970); phối hợp với quân dân Lào đập tan cuộc hành quân “Lam Sơn 719', buộc Mỹ và quân đội Sài Gòn rút khỏi Đường 9 - Nam Lào (1971); giữ vững hành lang chi viện từ hậu phương miển Bắc cho các chiến trường của ba nước Đông Dương. Xuân - hè 1972, tiến công Quảng Tri, Tây Nguyên (nay thuộc Nam Trung Bộ), Đông Nam Bộ, buộc Mỹ tuyên bố"Mỹ hoá” trở lại.
+<br>Miền Bắc khôi phục và phát triển kinh tế, chống chiến tranh phá hoại lân hai của My,chi viện cho tiển tuyến miển Nam, đánh bại cuộc tập kích đường không bằng B52, buộc Mỹ ngừng hẳn hoạt động chống phá và kí Hiệp định Pa-ri.
+<br>+ Trên mặt trận ngoại giao, cuộc đàm phán bốn bên ở Pa-ri từ tháng 01 - 1969 đến đẩu năm 1973 đã kết thúc thắng lợi. Ngày 27 - 01 - 1973, Hiệp định Pa-ri vê chấm dút chiến tranh, lập lại hoà bình ở Việt Nam được kí kết, mở ra thời cơ thuận lợi để nhân dân ta tiến lên giải phóng hoàn toàn miền Nam. 
+</li>
+    </ul>
+
+    <p><strong>e) Giai đoạn 1973 - 1975</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Với Hiệp định Pa-ri, Mỹ buộc phải rút quân về nước. So sánh lực lượng thay đổi có lợi cho cách mạng.</li>
+        <li>·Miền Bắc
+<br>- Nhanh chóng khôi phục và phát triển kinh tế - xã hội, đẩy mạnh chi viện cho miền Nam.
+<br>- Trong 2 năm (1973 - 1974), gẩn 20 vạn bộ đội cùng hàng vạn tấn vật chất từ miển Bắc dược tăng cường cho miển Nam, đáp ứng kịp thời nhu cấu của chién truờng.
+<br>·Miền Nam
+<br>- Đấu tranh chống bình định lấn chiếm, bảo vệ và mở rộng vùng giải phóng.
+<br>-Từ tháng 3- 1975, mở cuộc Tổng tiến công và nổi dậy Xuân 1975 với 3 chién dich lón:chiến dịch Tây Nguyên, chiến dịch Huế- Đà Nẵng, Chiến dịch Hổ Chí Minh.
+<br>Chiến dịch Tây Nguyên (từ ngày 04- 3 đến 24-3-1975)
+<br>Tây Nguyên là địa bàn chiến lược quan trọng. Nhưng do địch nhận định sai hướng tiến công của quân Giải phóng nên bố trí lực lượng ở đây mòng.
+<br>+Ngày 10-3-1975,quân Giải phóng tiến công Buôn Ma Thuột mở màn chiến dịch.
+<br>+Ngày 12 - 3 - 1975, địch phản công chiếm lại, nhưng bị thất bại.
+<br>+ Ngày 14 - 3 - 1975, địch được lệnh rút toàn bộ quân khỏi Tây Nguyên. Trên đường rút chạy, địch bị quân Giải phóng truy kích tiêu diệt.
+<br>+ Ngày 24 - 3 - 1975, Tây Nguyên hoàn toàn giải phóng.
+<br>Chiến thắng Tây Nguyên đã mở ra quá trình sụp đổ hoàn toàn của nguy quân, nguy quyên,không thể cứu vān được. Chuyển cuộc kháng chiến chống Mỹ, cứu nước từ tiến công chiến lược sang tổng tiến công chiến lược trên toàn miền Nam.
+<br>Chiến dịch Huế- Đà Nẵng (từ ngày 21- 3 đến 29-3-1975)
+<br>+Ngày 21 - 3 - 1975, quân Giải phóng tiến công Huế và chặn đường rút chạy cua dich.Ngày 26 - 3 - 1975, quân ta giải phóng thành phố Huế, toàn tỉnh Thừa Thiên.
+
+
+
+<br>+ Từ cuối tháng 3 đến tháng 4, quân dân ta ở các tỉnh ven biển miền Trung, Nam Tây Nguyên và một số tỉnh Nam Bộ quân và dân đã nổi dậy đánh địch giải phóng quê hương.Chiến thắng Huế - Đà Nẵng gây nên tâm lí tuyệt vọng trong nguỵ quyển, đưa cuộc Tổng tiến công và nổi dậy của quân dân ta tiến lên một bước mới với sức mạnh áp đảo.
+<br>Chiến dịch Hổ Chí Minh (từ ngày 26-4 đến ngày 30-4-1975)
+Sau thắng lợi của chiến dịch Tây Nguyên và Huế - Đà Nẵng, Bộ Chính tri Trung uơng Đảng quyết định giải phóng miền Nam trước mùa mua. 
+Chiến dịch giải phóng Sài Gòn - Gia Định được Bộ Chính trị quyết định mang tên Chiên dich Hô Chí Minh.
+<br>+Vào 17 giờ ngày 26-4 -1975, quân Giải phóng nổsúng mở đấu Chiến djch Hô Chí Minh,5 cánh quân vượt qua tuyến phòng thủ vòng ngoài, tiến vào trung tâm thành phó.
+<br>+10 giờ 45 phút ngày 30 - 4 - 1975, xe tăng ta tiến thẳng vào Dinh Độc Lập, bắt sống toàn bộ nội các chính quyên Sài Gòn, Dương Văn Minh tuyên bố đấu hàng.
+<br>+11 giờ 30 phút ngày 30 - 4 - 1975, lá cờ cách mạng tung bay trên nóc Dinh Độc Lập,Chiến dich Hô Chí Minh toàn thắng.
+Chiến dịch Hổ Chí Minh lịch sử toàn thắng, đã tạo điểu kiện vô cùng thuận lợi cho quân dân ta tiến công và nổi dậy giải phóng hoàn toàn các tình còn lại ở Nam Bộ.
+<br>-Ngày 02 - 5 - 1975, toàn bộ miển Nam cùng các đảo và quẩn đảo hoàn toàn đuợc giải phóng.
+</li>
+    </ul>
+<p><strong>3. Nguyên nhân thắng lợi và ý nghīa lịch sử của cuộc kháng chién chóng Mỹ,cứu nước(1954-1975)
+</strong></p>
+<p><strong>a) Nguyên nhân tháng lợi</strong> <br>- Sự lānh đạo sáng suốt của Đảng Lao động Việt Nam, đứng đẩu là Chủ tịch Hô Chí Minh,với đường lối chính trị, quân sự độc lập, tự chủ, sáng tạo.
+<br>-Truyển thống yêu nước, tinh thẩn bất khuất kiên cường, đoàn kết một lòng của nhân dân trên cả hai miển Nam- Bắc.
+<br>- Hậu phương miền Bắc không ngừng lớn mạnh, đáp ứng kịp thời yêu cẩu của cuộc kháng chiến ở cả hai miền.
+<br>- Sự phối hợp của nhân dân Lào, nhân dân Cam-pu-chia.
+<br>- Sự đổng tình, ủng hộ, giúp đỡ của Liên Xô, Trung Quốc và các nước xā hội chủ nghīa,nhân dân tiến bộ trên thế giới.
+</p>
+    <p><strong>b) Ý nghĩa lịch sử</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Kết thúc 21 năm kháng chiến chống Mỹ và 30 năm chiến tranh giải phóng dân tộc (1945-1975).</li>
+        <li>Chấm dứt ách thống trị của chủ nghĩa đế quốc; hoàn thành cách mạng dân tộc dân chủ nhân dân, thống nhất đất nước.</li>
+        <li>Mở ra kỉ nguyên mới: cả nước độc lập, thống nhất, đi lên chủ nghĩa xã hội.</li>
+        <li>Tác động mạnh mẽ đến tình hình nước Mỹ và thế giới, cổ vū phong trào giải phóng dân tộc ở châu Á, châu Phi và khu vực Mỹ La-tinh. </li>
+    </ul>
+
+    <div class="my-6 border-b-2 border-gray-200"></div>
+</div>
+    `;
+
+    // ==================== NGÂN HÀNG CÂU HỎI LỊCH SỬ ====================
+    const de2_data = [
+        // TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN (25 CÂU)
+        { id: "cm_1", type: "single", question: "Ý nghĩa to lớn của phong trào Đồng khởi (1960) ở miền Nam Việt Nam là", options: ["đánh dấu cách mạng miền Nam chuyển từ thế giữ gìn lực lượng sang thế tiến công.", "đưa đến sự ra đời của Mặt trận Dân tộc giải phóng miền Nam Việt Nam.", "mở rộng vùng giải phóng của ta.", "giáng một đòn nặng nề vào chính sách thực dân mới của Mỹ."], correct: 0, giaiThich: "Thắng lợi của Đồng khởi (1960) đã làm lung lay tận gốc rễ chính quyền Ngô Đình Diệm, đánh dấu bước ngoặt của cách mạng miền Nam: chuyển từ thế phòng ngự, giữ gìn lực lượng sang thế tiến công chủ động." },
+        { id: "cm_2", type: "single", question: "Quân Pháp rút khỏi miền Nam Việt Nam (tháng 5-1956) khi nội dung nào trong “Hiệp định Giơ-ne-vơ” về chấm dứt chiến tranh, lập lại hoà bình ở Đông Dương ngày 21-7-1954 chưa được thực hiện?", options: ["Các bên tham chiến thực hiện ngừng bắn, lập lại hoà bình trên toàn Đông Dương.", "Việt Nam tiến tới thống nhất bằng cuộc tổng tuyển cử tự do trong cả nước.", "Các bên tham chiến thực hiện cuộc tập kết, chuyển quân, chuyển giao khu vực.", "Rút hết căn cứ quân sự ở Đông Dương."], correct: 1, giaiThich: "Theo Hiệp định, tháng 7/1956 sẽ diễn ra tổng tuyển cử tự do để thống nhất đất nước. Tuy nhiên, tháng 5/1956 Pháp đã rút quân khỏi miền Nam khi cuộc tổng tuyển cử chưa diễn ra, để lại hậu quả chính trị bị Mỹ và chính quyền Diệm lợi dụng chia cắt nước ta." },
+        { id: "cm_3", type: "single", question: "Lực lượng nòng cốt được Mỹ sử dụng trong chiến lược “Chiến tranh đặc biệt” (1961 - 1965) ở miền Nam Việt Nam là", options: ["quân đội Sài Gòn, dưới sự chỉ huy của cố vấn Mỹ.", "quân Mỹ và quân đồng minh.", "quân đội Sài Gòn và quân đồng minh của Mỹ.", "quân đội Sài Gòn đảm nhiệm, không có sự chi viện của Mỹ."], correct: 0, giaiThich: "Chiến tranh đặc biệt là hình thức chiến tranh thực dân mới, tiến hành bằng quân đội tay sai (quân đội Sài Gòn) là lực lượng nòng cốt, dưới sự chỉ huy của hệ thống cố vấn quân sự Mỹ." },
+        { id: "cm_4", type: "single", question: "Đặc điểm nổi bật của tình hình nước ta sau “Hiệp định Giơ-ne-vơ” về chấm dứt chiến tranh, lập lại hoà bình ở Đông Dương (ngày 21-7-1954) là", options: ["miền Bắc hoàn toàn giải phóng, tiến lên chủ nghĩa xã hội.", "Mỹ thay chân Pháp đưa tay sai lên nắm chính quyền ở miền Nam.", "miền Nam Việt Nam trở thành thuộc địa kiểu mới, căn cứ quân sự của Mỹ.", "đất nước bị chia cắt làm hai miền với hai chế độ chính trị - xã hội khác nhau."], correct: 3, giaiThich: "Đặc điểm nổi bật và chi phối toàn bộ tiến trình lịch sử Việt Nam giai đoạn 1954-1975 là việc đất nước tạm thời bị chia cắt làm hai miền với hai chế độ chính trị và hai nhiệm vụ chiến lược khác nhau." },
+        { id: "cm_5", type: "single", question: "Đại hội đại biểu toàn quốc lần thứ III (tháng 9-1960) của Đảng Lao động Việt Nam đã thông qua kế hoạch", options: ["cải cách ruộng đất, tiến tới thực hiện người cày có ruộng.", "5 năm lần thứ hai nhằm xây dựng cơ sở vật chất - kĩ thuật của chủ nghĩa xã hội.", "5 năm lần thứ nhất nhằm xây dựng chủ nghĩa xã hội trong cả nước.", "5 năm lần thứ nhất nhằm xây dựng bước đầu cơ sở vật chất - kĩ thuật của chủ nghĩa xã hội."], correct: 3, giaiThich: "Đại hội III đã đề ra nhiệm vụ xây dựng chủ nghĩa xã hội ở miền Bắc thông qua Kế hoạch 5 năm lần thứ nhất (1961-1965) nhằm xây dựng bước đầu cơ sở vật chất - kĩ thuật cho CNXH." },
+        { id: "cm_6", type: "single", question: "Cuộc Tổng tiến công và nổi dậy Xuân 1975 diễn ra trong gần hai tháng, qua các chiến dịch", options: ["Tây Nguyên, Huế - Đà Nẵng, Hồ Chí Minh.", "Buôn Ma Thuột, Huế - Đà Nẵng, Hồ Chí Minh.", "Hồ Chí Minh, Huế, Đà Nẵng.", "Đà Nẵng, Tây Nguyên, Hồ Chí Minh."], correct: 0, giaiThich: "Tổng tiến công Xuân 1975 trải qua 3 đòn tiến công chiến lược liên tiếp nhau theo trình tự: Chiến dịch Tây Nguyên -> Chiến dịch Huế - Đà Nẵng -> Chiến dịch Hồ Chí Minh." },
+        { id: "cm_7", type: "single", question: "Sau \"Hiệp định Giơ-ne-vơ\" (1954), nhân dân miền Nam Việt Nam đấu tranh chống Mỹ-Diệm chủ yếu bằng hình thức nào?", options: ["Đấu tranh vũ trang.", "Dùng bạo lực cách mạng.", "Đấu tranh vũ trang, kết hợp với đấu tranh chính trị hoà bình.", "Đấu tranh chính trị, hoà bình."], correct: 3, giaiThich: "Trong giai đoạn đầu (1954-1959), thực hiện nghiêm chỉnh Hiệp định Giơ-ne-vơ, hình thức đấu tranh chủ yếu của nhân dân miền Nam là đấu tranh chính trị, hoà bình (đòi thi hành hiệp định, chống khủng bố)." },
+        { id: "cm_8", type: "single", question: "Kết quả lớn nhất của phong trào Đồng khởi (1960) ở miền Nam Việt Nam là", options: ["phá vỡ từng mảng lớn bộ máy cai trị của địch.", "lực lượng vũ trang được hình thành và phát triển, lực lượng chính trị được tập hợp đông đảo.", "sự ra đời của Mặt trận Dân tộc giải phóng miền Nam Việt Nam (20-12-1960).", "Uỷ ban nhân dân tự quản tịch thu ruộng đất của bọn địa chủ chia cho dân cày nghèo."], correct: 0, giaiThich: "Phong trào đã đánh trúng khâu yếu nhất của địch ở nông thôn, làm tan rã hệ thống kìm kẹp của nguỵ quyền cấp cơ sở, qua đó phá vỡ từng mảng lớn bộ máy cai trị của địch. Sự ra đời của Mặt trận DTGPMN là ý nghĩa thiết chế sau đó." },
+        { id: "cm_9", type: "single", question: "Trong lịch sử Việt Nam từ năm 1919 đến nay, sự kiện có tầm quan trọng quốc tế to lớn và có tính thời đại sâu sắc là", options: ["sự ra đời của Đảng Cộng sản Việt Nam (tháng 02-1930).", "thắng lợi của cuộc kháng chiến chống Mỹ, cứu nước (1954-1975).", "thắng lợi của cuộc kháng chiến chống thực dân Pháp (1945-1954).", "kí kết Hiệp định Pa-ri về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam (tháng 01-1973)."], correct: 1, giaiThich: "Thắng lợi chống Mỹ không chỉ giải phóng Việt Nam mà còn giáng đòn mạnh vào hệ thống thực dân kiểu mới, cổ vũ phong trào giải phóng dân tộc toàn cầu, mang tính thời đại sâu sắc." },
+        { id: "cm_10", type: "single", question: "Chiến dịch Hồ Chí Minh (tháng 4-1975) toàn thắng, đã tạo điều kiện vô cùng thuận lợi cho quân dân ta", options: ["nổi dậy giành chính quyền ở các địa phương.", "nổi dậy lật đổ hoàn toàn chính quyền Sài Gòn.", "tiến công và nổi dậy giải phóng hoàn toàn các tỉnh còn lại ở Nam Bộ.", "tiến công giải phóng cả nước."], correct: 2, giaiThich: "Sau khi đầu não địch ở Sài Gòn bị đập tan vào trưa 30/4, các tỉnh còn lại ở ĐBSCL và Nam Bộ đã tận dụng thời cơ nổi dậy giải phóng hoàn toàn quê hương vào ngày 2/5/1975." },
+        { id: "cm_11", type: "single", question: "Đến năm 1965, Mỹ phải chuyển sang chiến lược “Chiến tranh cục bộ\" vì", options: ["chiến lược “Chiến tranh đặc biệt” đã bị phá sản hoàn toàn.", "Mỹ muốn mở rộng và quốc tế hoá chiến tranh Việt Nam.", "Mỹ muốn nhanh chóng kết thúc chiến tranh ở Việt Nam.", "Mỹ lo ngại sự ủng hộ của Trung Quốc và Liên Xô cho cuộc kháng chiến của nhân dân ta."], correct: 0, giaiThich: "Các chiến thắng liên tiếp của ta (Ấp Bắc, Bình Giã, Ba Gia, Đồng Xoài...) trong năm 1964-1965 đã làm phá sản hoàn toàn chiến lược 'Chiến tranh đặc biệt', buộc Mỹ phải leo thang sang 'Chiến tranh cục bộ'." },
+        { id: "cm_12", type: "single", question: "Lực lượng chủ yếu được Mỹ sử dụng trong chiến lược “Việt Nam hoá chiến tranh\" (1969-1973) là quân đội", options: ["các nước đồng minh của Mỹ.", "Sài Gòn.", "đồng minh của Mỹ và quân đội Mỹ.", "viễn chinh Mỹ."], correct: 1, giaiThich: "Bản chất của 'Việt Nam hoá chiến tranh' là 'dùng người Việt đánh người Việt'. Do đó, Mỹ rút dần quân Viễn chinh và tăng cường xây dựng quân đội Sài Gòn làm lực lượng chiến đấu chủ yếu." },
+        { id: "cm_13", type: "single", question: "Cuộc Tổng tiến công và nổi dậy Xuân Mậu Thân 1968 đã mở ra bước ngoặt cơ bản cho cuộc đấu tranh của nhân dân ta trên mặt trận ngoại giao vì đã", options: ["buộc Mỹ chấm dứt không điều kiện chiến tranh phá hoại miền Bắc.", "làm lung lay ý chí xâm lược của quân Mỹ, buộc chúng phải tuyên bố \"phi Mỹ hoá\" chiến tranh.", "giáng một đòn mạnh vào chính quyền Sài Gòn.", "buộc Mỹ phải chấp nhận đến đàm phán ở Pa-ri để bàn về chấm dứt chiến tranh ở Việt Nam."], correct: 3, giaiThich: "Cuộc tiến công bất ngờ vào sào huyệt địch đã đập tan ý chí xâm lược của Mỹ, buộc Mỹ phải chấp nhận ngồi vào bàn đàm phán tại Paris, chính thức mở ra mặt trận đấu tranh ngoại giao trực diện." },
+        { id: "cm_14", type: "single", question: "Đế quốc Mỹ thực hiện cuộc chiến tranh phá hoại miền Bắc Việt Nam lần thứ hai (1972) với ý đồ", options: ["ngăn chặn sự chi viện của miền Nam đối với miền Bắc.", "làm lung lay ý chí quyết tâm chống Mỹ, cứu nước của nhân dân ta.", "cứu nguy cho chiến lược “Việt Nam hoá chiến tranh\" và tạo thế mạnh trên bàn đàm phán ở Pa-ri.", "phong toả cảng Hải Phòng và các sông, luồng, lạch, vùng biển ở miền Bắc."], correct: 2, giaiThich: "Sau những đòn đánh nặng nề của quân ta ở miền Nam năm 1972, Mỹ quay lại ném bom phá hoại miền Bắc lần hai hòng cứu vớt chiến lược 'Việt Nam hóa chiến tranh' đang trên đà phá sản và ép ta nhượng bộ tại Hội nghị Paris." },
+        { id: "cm_15", type: "single", question: "Chiến thắng của quân và dân miền Bắc Việt Nam đập tan cuộc tập kích chiến lược bằng máy bay B52 của Mỹ trong 12 ngày đêm cuối năm 1972 được ví như trận", options: ["\"Điện Biên Phủ trên không\".", "Ngọc Hồi - Đống Đa.", "Chi Lăng - Xương Giang.", "Bạch Đằng."], correct: 0, giaiThich: "Chiến thắng bắn rơi siêu pháo đài bay B52 được bạn bè quốc tế và lịch sử vinh danh là trận 'Điện Biên Phủ trên không', có sức chấn động tương đương với chiến thắng Điện Biên Phủ 1954." },
+        { id: "cm_16", type: "single", question: "Điểm giống nhau giữa chiến dịch Điện Biên Phủ (1954) và Chiến dịch Hồ Chí Minh (1975) của nhân dân Việt Nam là", options: ["những thắng lợi có ý nghĩa quyết định kết thúc cuộc kháng chiến.", "cuộc tiến công của lực lượng vũ trang.", "buộc kẻ thù phải kí hiệp định kết thúc chiến tranh.", "cuộc tiến công của lực lượng vũ trang và đấu tranh ngoại giao."], correct: 0, giaiThich: "Cả hai đều là những đòn quyết chiến chiến lược cuối cùng, kết liễu ý chí xâm lược của đối phương và trực tiếp kết thúc hoàn toàn cuộc chiến tranh (chống Pháp và chống Mỹ)." },
+        { id: "cm_17", type: "single", question: "Ý nghĩa lịch sử quan trọng nhất của chiến thắng “Điện Biên Phủ trên không” cuối năm 1972 của nhân dân miền Bắc Việt Nam là", options: ["buộc Mỹ tuyên bố ngừng hẳn các cuộc tiến công chống phá miền Bắc.", "đánh bại âm mưu phá hoại công cuộc xây dựng chủ nghĩa xã hội ở miền Bắc của đế quốc Mỹ.", "buộc Mỹ kí Hiệp định Pa-ri về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam.", "đánh bại âm mưu ngăn chặn sự chi viện của miền Bắc cho chiến trường miền Nam, Lào và Cam-pu-chia."], correct: 2, giaiThich: "Đây là trận đòn quyết định đập tan nỗ lực cứu vãn thể diện của Mỹ, trực tiếp buộc Mỹ phải chấp nhận kí kết Hiệp định Paris (01/1973), rút toàn bộ quân Mỹ khỏi miền Nam." },
+        { id: "cm_18", type: "single", question: "Chiến dịch mở màn cho cuộc Tổng tiến công và nổi dậy Xuân 1975 là chiến dịch", options: ["Hồ Chí Minh.", "Huế-Đà Nẵng.", "Đường 14 - Phước Long.", "Tây Nguyên."], correct: 3, giaiThich: "Chiến dịch Tây Nguyên (bắt đầu từ 4/3/1975 với trận quyết chiến ở Buôn Ma Thuột) là chiến dịch mở màn, tạo đòn bẩy cho toàn bộ cuộc Tổng tiến công và nổi dậy Xuân 1975." },
+        { id: "cm_19", type: "single", question: "Ý nào sau đây không phải là ý nghĩa của cuộc Tổng tiến công và nổi dậy Xuân Mậu Thân 1968 ở Việt Nam?", options: ["Buộc Mỹ phải tuyên bố \"phi Mỹ hoá\" chiến tranh.", "Buộc Mỹ phải tuyên bố \"Mỹ hoá\" trở lại chiến tranh.", "Buộc Mỹ phải chấm dứt không điều kiện chiến tranh phá hoại miền Bắc.", "Buộc Mỹ phải chấp nhận đến Hội nghị Pa-ri để đàm phán với ta."], correct: 1, giaiThich: "Sự kiện Mỹ tuyên bố 'Mỹ hoá' trở lại là phản ứng của Mỹ trước cuộc Tiến công chiến lược năm 1972 của quân ta, chứ không phải hậu quả của Tết Mậu Thân 1968." },
+        { id: "cm_20", type: "single", question: "Nguyên nhân nào có tính chất quyết định đưa tới thắng lợi của cuộc kháng chiến chống Mỹ, cứu nước (1954-1975)?", options: ["Có hậu phương vững chắc ở miền Bắc xã hội chủ nghĩa.", "Nhân dân ta có truyền thống yêu nước nồng nàn.", "Sự giúp đỡ của các nước xã hội chủ nghĩa, tinh thần đoàn kết của nhân dân ba nước Đông Dương.", "Sự lãnh đạo đúng đắn và sáng suốt của Đảng."], correct: 3, giaiThich: "Tương tự mọi cuộc cách mạng khác của Việt Nam, đường lối chính trị, quân sự đúng đắn, độc lập, tự chủ do Đảng Cộng sản vạch ra luôn là nhân tố mang tính quyết định hàng đầu." },
+        { id: "cm_21", type: "single", question: "Thắng lợi có ý nghĩa cơ bản hoàn thành nhiệm vụ đánh cho \"Mỹ cút\", tạo thời cơ thuận lợi để nhân dân ta tiến lên giải phóng hoàn toàn miền Nam là", options: ["cuộc Tổng tiến công và nổi dậy Xuân Mậu Thân 1968.", "Hiệp định Pa-ri về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam được kí kết năm 1973.", "cuộc Tiến công chiến lược năm 1972.", "chiến thắng \"Điện Biên Phủ trên không” cuối năm 1972."], correct: 1, giaiThich: "Với Hiệp định Paris 1973, Mỹ cam kết rút toàn bộ quân Viễn chinh về nước (Mỹ cút), làm suy yếu hoàn toàn chỗ dựa của nguỵ quyền Sài Gòn, tạo tiền đề để ta tiến tới 'đánh cho nguỵ nhào'." },
+        { id: "cm_22", type: "single", question: "Trong chiến lược “Việt Nam hoá chiến tranh” (1969-1973), Mỹ đã sử dụng thủ đoạn ngoại giao", options: ["liên minh với các nước đồng minh trong khối NATO.", "hoà hoãn với Trung Quốc và thoả hiệp với Liên Xô.", "thoả hiệp với Trung Quốc và hoà hoãn với Liên Xô.", "nhân nhượng Trung Quốc để chống cách mạng Đông Dương."], correct: 2, giaiThich: "Năm 1972, Tổng thống Mỹ Nixon đã sang thăm Trung Quốc (thoả hiệp) và Liên Xô (hoà hoãn) nhằm lợi dụng mâu thuẫn Xô-Trung, hạn chế sự viện trợ của các cường quốc này đối với Việt Nam." },
+        { id: "cm_23", type: "single", question: "Chiến dịch Tây Nguyên (1975) thắng lợi đã chuyển cuộc kháng chiến chống Mỹ, cứu nước của nhân dân ta sang giai đoạn mới", options: ["từ tiến công chiến lược ở Tây Nguyên thành tổng tiến công chiến lược trên toàn chiến trường miền Nam.", "từ thế phản công sang thế phòng ngự.", "từ thế bị động sang thế chủ động trên chiến trường chính.", "từ thế phòng ngự sang thế phản công trên toàn chiến trường miền Nam."], correct: 0, giaiThich: "Chiến thắng Tây Nguyên rực rỡ ngoài sức tưởng tượng đã trực tiếp đẩy nguỵ quân vào thế tan rã nhanh chóng, chuyển cuộc kháng chiến từ các đòn tiến công chiến lược cục bộ sang Tổng tiến công trên toàn miền Nam." },
+        { id: "cm_24", type: "single", question: "Phương châm tác chiến của quân dân Việt Nam trong Chiến dịch Hồ Chí Minh (tháng 4-1975) là", options: ["\"đánh ăn chắc, tiến ăn chắc\".", "\"thần tốc, táo bạo, bất ngờ, chắc thắng\".", "\"đánh nhanh thắng nhanh\".", "\"cơ động, linh hoạt, chắc thắng\"."], correct: 1, giaiThich: "Để không lỡ thời cơ vàng, Đại tướng Võ Nguyên Giáp đã truyền đạt mệnh lệnh nổi tiếng: 'Thần tốc, thần tốc hơn nữa. Táo bạo, táo bạo hơn nữa' làm phương châm cho toàn quân tiến vào Sài Gòn." },
+        { id: "cm_25", type: "single", question: "Ý nghĩa lớn nhất trong thắng lợi của cuộc kháng chiến chống Mỹ, cứu nước (1954 - 1975) của nhân dân ta là gì?", options: ["Nguồn cổ vũ mạnh mẽ đối với phong trào cách mạng thế giới, nhất là phong trào giải phóng dân tộc.", "Kết thúc 21 năm chiến đấu chống Mỹ và 30 năm chiến tranh giải phóng dân tộc bảo vệ Tổ quốc.", "Chấm dứt ách thống trị của chủ nghĩa thực dân - đế quốc trên đất nước ta.", "Mở ra một kỉ nguyên mới cho lịch sử dân tộc: kỉ nguyên độc lập, thống nhất, đi lên chủ nghĩa xã hội."], correct: 3, giaiThich: "Vượt lên trên mọi thành quả quân sự hay chính trị, ý nghĩa lớn lao nhất đối với dân tộc ta là đất nước từ nay vĩnh viễn sạch bóng quân thù, liền một dải từ Bắc chí Nam và cùng bước vào kỉ nguyên xây dựng CNXH." },
+
+        // TRẮC NGHIỆM ĐÚNG/SAI DỰA TRÊN TƯ LIỆU VÀ KIẾN THỨC (1 CÂU GỒM 4 Ý)
+        { id: 'cm_tl1', type: 'tf_cluster', question: "Dựa vào đoạn tư liệu sau và kiến thức đã học, hãy đánh giá tính Đúng/Sai của các nhận định dưới đây:\n\n\"...Cuộc Tổng tiến công và nổi dậy Xuân Mậu Thân 1968 là đòn sét đánh làm lung lay nghiêm trọng ý chí xâm lược của Mỹ. Tướng Mỹ Westmoreland bị cách chức, Bộ trưởng Quốc phòng Mỹ McNamara từ chức, Tổng thống Mỹ Johnson phải tuyên bố đơn phương ngừng ném bom miền Bắc từ vĩ tuyến 20 trở ra, nhận đàm phán với ta tại Hội nghị Pa-ri...\n...Quá trình 'xuống thang chiến tranh' của Mỹ còn là một cuộc đọ sức dai dẳng, quyết liệt. Nhân dân ta sát cánh cùng nhân dân hai nước Lào và Cam-pu-chia đánh bại âm mưu của Mỹ.\n...Sau khi cùng quân và dân Lào đánh bại cuộc hành quân Lam Sơn 719 ở Đường 9 - Nam Lào, tiếp đến cuộc Tiến công chiến lược 1972 trên toàn miền Nam và trận 'Điện Biên Phủ trên không' trên miền Bắc, quân ta giành thắng lợi quyết định. Mỹ buộc phải kí Hiệp định Pa-ri cam kết rút hết quân Mỹ về nước... tạo nên bước ngoặt về so sánh lực lượng có lợi cho ta.\nTrước tình hình ấy, tháng 7-1973, Ban Chấp hành Trung ương Đảng ra Nghị quyết 21 về nhiệm vụ cách mạng miền Nam trong giai đoạn mới. Cuộc Tổng tiến công và nổi dậy Xuân 1975 đã đưa kháng chiến đến toàn thắng.\"\n(Theo Báo Điện tử Nhân Dân)", subQuestions: [
+            { id: 'tftl_2a', text: "Cuộc Tổng tiến công và nổi dậy Xuân Mậu Thân 1968 đã mở ra bước ngoặt cơ bản cho cuộc đấu tranh của nhân dân ta trên mặt trận ngoại giao vì buộc Mỹ chấm dứt không điều kiện chiến tranh phá hoại miền Bắc.", correct: "Sai", giaiThich: "Nguyên nhân mở ra mặt trận đàm phán ngoại giao là vì đòn đánh này làm lung lay ý chí xâm lược, buộc Mỹ phải chấp nhận ngồi vào bàn đàm phán tại Paris. Việc ngừng ném bom là điều kiện để ta đồng ý tham gia đàm phán." },
+            { id: 'tftl_2b', text: "Thắng lợi lớn nhất của quân và dân miền Bắc trong trận \"Điện Biên Phủ trên không\" (cuối tháng 12-1972) là buộc Mỹ kí Hiệp định Pa-ri về chấm dứt chiến tranh lập lại hoà bình ở Việt Nam (1973).", correct: "Đúng", giaiThich: "Tư liệu ghi rõ: sau Tiến công 1972 và Điện Biên Phủ trên không, 'Mỹ buộc phải kí Hiệp định Pa-ri cam kết tôn trọng độc lập...'. Đây là đòn quyết định buộc Mỹ kí Hiệp định." },
+            { id: 'tftl_2c', text: "Sự kiện có ý nghĩa kết thúc cuộc kháng chiến chống Mỹ, cứu nước của nhân dân Việt Nam là Hiệp định Pa-ri được kí kết.", correct: "Sai", giaiThich: "Hiệp định Paris chỉ hoàn thành nhiệm vụ 'đánh cho Mỹ cút'. Tư liệu xác nhận 'Cuộc Tổng tiến công và nổi dậy Xuân 1975... mới đưa kháng chiến đến toàn thắng' (kết thúc cuộc kháng chiến)." },
+            { id: 'tftl_2d', text: "Thắng lợi của cuộc kháng chiến chống Mỹ (1954 - 1975) đã \"đi vào lịch sử thế giới như một chiến công vĩ đại của thế kỉ XX, một sự kiện có tầm quan trọng quốc tế to lớn và có tính thời đại sâu sắc\".", correct: "Đúng", giaiThich: "Đây là nhận định chính xác về tầm vóc quốc tế và thời đại của cuộc kháng chiến chống Mỹ cứu nước, được khẳng định trong các văn kiện lịch sử của Đảng ta." }
+        ]}
+    ];
+
+    const testBanks = { de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // HIỂN THỊ NÚT ĐIỀU HƯỚNG TÙY THEO PHẦN 1 HAY 2
+    function buildNavButtons(isTheory) {
+        if (isTheory) {
+            return `<button onclick="window.goHome()" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">🏠 ĐÃ HIỂU - QUAY LẠI TRANG CHỦ</button>`;
+        } else {
+            return `
+                <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+                <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+                <button id="submit-btn" onclick="window.confirmSubmit()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+            `;
+        }
+    }
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Các em vui lòng nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 1 (LÝ THUYẾT)
+            if (maDe === 'de1') {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('timer-banner').style.display = 'none';
+                document.getElementById('nav-buttons').innerHTML = buildNavButtons(true);
+                document.getElementById('question-container').innerHTML = theoryHTML;
+                showSection('quiz');
+                return;
+            }
+
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 2 (TRẮC NGHIỆM)
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('timer-banner').style.display = 'flex';
+            document.getElementById('nav-buttons').innerHTML = buildNavButtons(false);
+
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // ĐÁNH SỐ TỪ 1 CHO CÂU TRẮC NGHIỆM ĐƠN
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+            });
+            
+            // ĐÁNH SỐ TIẾP TỤC CHO CÂU ĐÚNG SAI
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                let startIdx = part1.length + idx + 1;
+                q.displayQuestion = `Câu ${startIdx}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    let cleanText = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${cleanText}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        let total = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') total += q.subQuestions.length; 
+            else total += 1; 
+        });
+        return total; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] !== undefined) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl font-bold leading-relaxed shadow-inner" style="white-space: pre-wrap;">${q.displayQuestion}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // LOGIC NỘP BÀI MỚI VỚI CUSTOM MODAL
+    window.confirmSubmit = function() {
+        if (!isQuizStarted) return; 
+        
+        let ansCount = getAnsweredCount();
+        let totItems = getTotalItems();
+        
+        if(ansCount < totItems) {
+            const modal = document.getElementById('custom-confirm-modal');
+            const card = document.getElementById('confirm-card');
+            document.getElementById('confirm-msg').innerText = `Các em mới làm ${ansCount}/${totItems} thao tác. Có chắc chắn muốn nộp bài không?`;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            }, 10);
+
+            document.getElementById('btn-cancel-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            };
+
+            document.getElementById('btn-confirm-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    executeSubmitLogic(); 
+                }, 300);
+            };
+            return; 
+        }
+
+        executeSubmitLogic();
+    };
+
+    function executeSubmitLogic() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+        const score = scoreP1P2.toFixed(2);
+        
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctP1P2, tongCau: totalP1P2,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctP1P2, totalP1P2, record.duration); });
+        } else {
+            window.showModalResult(score, correctP1P2, totalP1P2, record.duration);
+        }
+    }
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="absolute top-4 left-4 z-10">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center pt-8">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed" style="white-space: pre-wrap;">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-slate-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="text-2xl mr-2 drop-shadow-sm">${statusIcon}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'} shadow-sm">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                    
+                    if(sub.giaiThich) {
+                        html += `<div class="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${sub.giaiThich}</div>`;
+                    }
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                
+                if(q.giaiThich) {
+                    html += `<div class="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${q.giaiThich}</div>`;
+                }
+                
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.executeSubmitLogic(); 
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
