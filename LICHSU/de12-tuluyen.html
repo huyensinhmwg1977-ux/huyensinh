@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Lịch Sử 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        position: relative; /* Dùng để định vị nút Trang chủ */
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:not(.disabled):hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+    
+    .disabled-option { opacity: 0.8; pointer-events: none !important; }
+
+    #feedback-modal { z-index: 9999; }
+    #feedback-modal-content { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    
+    /* CSS cho Nút Đúng/Sai Phần II - Màu Xanh Đồng Nhất */
+    .btn-tf { transition: all 0.2s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):hover { background-color: #f3f4f6; }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+ <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white relative">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span> </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-red-500 mb-3">THI THỬ LỊCH SỬ 12 <br><span class="text-xl text-gray-600">(Chuẩn 2025 - 2026)</span></h1>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 0101<br><span class="text-xs font-medium text-gray-500">Cấu trúc mới: 2 Phần, 28 Câu</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 0102<br><span class="text-xs font-medium text-gray-500">Cấu trúc mới: 2 Phần, 28 Câu</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ (ý)</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/40</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">50:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-gray-500 hover:bg-gray-600 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="feedback-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
+       <div class="bg-blue-50 border-4 border-blue-300 rounded-3xl w-full max-w-3xl shadow-2xl transform scale-95 opacity-0 flex flex-col" id="feedback-modal-content">
+           <div class="p-6 sm:p-8 flex-grow overflow-y-auto max-h-[85vh]">
+               <div id="feedback-header" class="text-center mb-4"></div>
+               <div id="feedback-body" class="text-black font-extrabold text-lg leading-relaxed text-left"></div>
+           </div>
+           <div class="p-4 bg-white border-t-2 border-blue-100 rounded-b-2xl">
+               <button onclick="window.closeFeedbackModal()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-xl rounded-xl shadow hover:shadow-lg transform hover:-translate-y-1 transition-all uppercase tracking-wider">Đã hiểu & Tiếp tục ➔</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8 relative">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl relative" id="result-content">
+        </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col relative">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden relative">
+     
+     <div class="absolute top-4 left-4 z-50">
+        <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 flex items-center gap-2">🏠 Trang chủ</button>
+     </div>
+
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4 mt-12 sm:mt-0">
+      <div class="flex gap-2 sm:ml-32">
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 text-right w-full sm:w-auto">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col relative">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full relative">
+     
+     <div class="absolute top-4 left-4 z-50">
+        <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 flex items-center gap-2">🏠 Trang chủ</button>
+     </div>
+
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-end gap-4 border-b-2 border-gray-100 pb-4 mt-12 sm:mt-0">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 w-full text-right">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+ 
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_history_12_qtri_v1'); // Đổi key database
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    /*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI MÔN LỊCH SỬ (Đã xóa các ký tự A, B, C, D ở các tùy chọn và cập nhật Câu 17)
+    =================================================================================================*/
+    const de1_data = [
+        // --- PHẦN I ---
+        { id: "1_1", type: "single", question: "Câu 1. Liên hợp quốc được thành lập trong bối cảnh lịch sử nào?", options: ["Chiến tranh thế giới thứ hai đang diễn ra khốc liệt trong sự giằng co giữa hai phe tham chiến.", "Chiến tranh thế giới thứ hai bước vào giai đoạn kết thúc, đặt ra nhiều vấn đề cần phải giải quyết.", "Chiến tranh thế giới thứ hai kết thúc với sự thất bại hoàn toàn của phe phát xít.", "Thế giới phân chia thành hai cực, do Mỹ và Liên Xô đứng đầu mỗi cực."], correct: 1, explanation: "Liên hợp quốc được nhen nhóm và ra đời trong hội nghị l-an-ta (tháng 2/1945) và chính thức được thông qua Hiến chương tại hội nghị Xan Phran-xi-xco (tháng 4-6/1945). Đây là thời điểm Chiến tranh thế giới thứ hai chuẩn bị kết thúc, đặt ra yêu cầu phải có một tổ chức quốc tế để duy trì hòa bình thế giới sau chiến tranh." },
+        { id: "1_2", type: "single", question: "Câu 2. Hội nghị l-an-ta (Liên Xô) diễn ra trong bối cảnh thế giới như thế nào?", options: ["Hồng quân Liên Xô giành thắng lợi bước ngoặt ở thành phố Xta-lin-grát.", "Phe Đồng minh giành được những thắng lợi quan trọng trên các mặt trận và thất bại của phe phát xít đã trở nên rõ ràng.", "Hồng quân Liên Xô bắt đầu chiến dịch công phá Béc-lin (Đức) và giành được thắng lợi hoàn toàn.", "Quân đội Nhật Bản ngày càng lún sâu vào thất bại và Nhật hoàng phải tuyên bố đầu hàng quân Đồng minh không điều kiện."], correct: 1, explanation: "Hội nghị l-an-ta diễn ra vào tháng 2/1945. Lúc này phe Đồng minh đang trên đà thắng lợi mạnh mẽ, liên tục tiến công phe phát xít trên các mặt trận. Sự thất bại của phát xít Đức và Nhật đã rất rõ ràng, đòi hỏi các nước lớn phải họp lại để phân chia khu vực ảnh hưởng." },
+        { id: "1_3", type: "single", question: "Câu 3. Sự kiện nào sau đây chính thức đánh dấu việc hoàn thành quá trình thành lập Nhà nước Liên bang Cộng hoà xã hội chủ nghĩa Xô viết (gọi tắt là Liên Xô)?", options: ["Khai mạc Đại hội Xô viết toàn Nga lần thứ hai, thành lập chính quyền Xô viết.", "Đại hội lần thứ nhất các Xô viết toàn Liên bang thông qua bản Hiệp ước Liên bang.", "Các nhà nước Cộng hoà liên minh và giành thắng lợi chống thù trong, giặc ngoài.", "Thông qua bản Hiến pháp đầu tiên của Liên Xô, ghi nhận việc hợp tác dựa trên cơ sở tự nguyện của các nước Cộng hoà Xô viết."], correct: 3, explanation: "Tháng 1/1924, Hiến pháp đầu tiên của Liên Xô được thông qua. Đây là văn kiện mang tính pháp lý cao nhất, chính thức hoàn thành quá trình thành lập Nhà nước Liên Xô dựa trên sự tự nguyện hợp tác của các nước Cộng hòa Xô viết." },
+        { id: "1_4", type: "single", question: "Câu 4. Sau khi Chiến tranh lạnh chấm dứt, các quốc gia đều điều chỉnh chiến lược phát triển lấy lĩnh vực nào làm trọng tâm?", options: ["Chính trị.", "Quân sự.", "Kinh tế.", "Văn hoá."], correct: 2, explanation: "Bài học từ sự sụp đổ của Liên Xô do quá tập trung chạy đua vũ trang đã khiến các quốc gia sau Chiến tranh lạnh nhận ra rằng: Kinh tế mới là nền tảng cốt lõi của sức mạnh quốc gia. Do đó, các nước chuyển sang chiến lược lấy phát triển kinh tế làm trọng tâm." },
+        { id: "1_5", type: "single", question: "Câu 5. Những nước tham gia sáng lập ASEAN là", options: ["Thái Lan, In-đô-nê-xi-a, Ma-lai-xi-a, Phi-líp-pin, Xin-ga-po.", "Thái Lan, In-đô-nê-xi-a, Ma-lai-xi-a, Mi-an-ma, Xin-ga-po.", "Thái Lan, Bru-nây, In-đô-nê-xi-a, Ma-lai-xi-a, Xin-ga-po.", "Thái Lan, Việt Nam, Xin-ga-po, Bru-nây, Ma-lai-xi-a."], correct: 0, explanation: "Tổ chức ASEAN được thành lập ngày 8/8/1967 tại Băng Cốc (Thái Lan) với 5 quốc gia sáng lập đầu tiên là: In-đô-nê-xi-a, Ma-lai-xi-a, Phi-líp-pin, Xin-ga-po và Thái Lan." },
+        { id: "1_6", type: "single", question: "Câu 6. Nội dung nào sau đây không phản ánh đúng về mục đích thành lập của ASEAN?", options: ["Tăng cường hợp tác kinh tế, văn hoá, xã hội, tạo điều kiện cho các nước thành viên phát triển và hội nhập với khu vực, thế giới.", "Phấn đấu để Đông Nam Á trở thành khu vực hoà bình, tự do, thịnh vượng.", "Trở thành tổ chức bao gồm tất cả các quốc gia Đông Nam Á.", "Nhất thể hoá khu vực về kinh tế - chính trị."], correct: 3, explanation: "ASEAN là một tổ chức hợp tác liên chính phủ tôn trọng chủ quyền độc lập của các quốc gia thành viên, chứ không hướng tới việc \"nhất thể hóa khu vực về chính trị\" (xóa bỏ biên giới chính trị tạo thành một siêu quốc gia như định hướng của Liên minh châu Âu EU)." },
+        { id: "1_7", type: "single", question: "Câu 7. Từ năm 1991 đến nay, công cuộc cải cách mở cửa ở Trung Quốc, Đổi mới ở Việt Nam, Lào, Cu-ba có điểm chung nào sau đây?", options: ["Nhận được sự giúp đỡ to lớn về vật chất từ nước Nga.", "Trở thành thành viên của các nước có nền kinh tế phát triển.", "Tồn tại nhiều sai lầm, hạn chế trong phát triển kinh tế, xã hội.", "Kiên định con đường xây dựng chủ nghĩa xã hội."], correct: 3, explanation: "Dù trải qua nhiều biến động và sụp đổ của hệ thống XHCN ở Đông Âu và Liên Xô (1991), các quốc gia như Việt Nam, Trung Quốc, Lào, Cu-ba vẫn luôn kiên định mục tiêu độc lập dân tộc gắn liền với chủ nghĩa xã hội, tiến hành đổi mới để phát triển đất nước." },
+        { id: "1_8", type: "single", question: "Câu 8. Thời cơ tiến hành Tổng khởi nghĩa giành chính quyền của nhân dân Việt Nam xuất hiện khi", options: ["Mỹ ném hai quả bom nguyên tử xuống Nhật Bản.", "Liên Xô tiến công quân Nhật Bản ở Đông Bắc Trung Quốc.", "Quân phiệt Nhật tuyên bố đầu hàng Đồng minh không điều kiện.", "Phát xít Đức đầu hàng Đồng minh không điều kiện."], correct: 2, explanation: "Khi Nhật hoàng tuyên bố đầu hàng Đồng minh không điều kiện (giữa tháng 8/1945), quân Nhật ở Đông Dương rơi vào thế hoang mang tột độ, chính phủ bù nhìn Trần Trọng Kim tê liệt. Đây chính là thời cơ \"ngàn năm có một\" để nhân dân ta đứng lên giành chính quyền." },
+        { id: "1_9", type: "single", question: "Câu 9. Sự kiện mở đầu cuộc xâm lược nước ta lần thứ hai của thực dân Pháp là", options: ["Đêm 22, rạng ngày 23-9-1945, Pháp cho quân đánh úp trụ sở Uỷ ban nhân dân Nam Bộ và cơ quan tự vệ thành phố Sài Gòn.", "Ngày 06-01-1946, Pháp quấy nhiễu nhân dân ta trong ngày Tổng tuyên cử bầu Quốc hội khoá I.", "Ngày 02-9-1945, Pháp xả súng vào dân chúng khi nhân dân Sài Gòn - Chợ Lớn tổ chức mít tinh.", "Ngày 18-12-1945, Pháp gửi tối hậu thư đòi Chính phủ ta giải tán các lực lượng tự vệ chiến đấu."], correct: 0, explanation: "Vào đêm 22 rạng sáng ngày 23/9/1945, thực dân Pháp (được sự hậu thuẫn của quân Anh) đã đánh úp trụ sở Ủy ban Nhân dân Nam Bộ tại Sài Gòn, chính thức nổ súng mở đầu cuộc xâm lược Việt Nam lần thứ hai." },
+        { id: "1_10", type: "single", question: "Câu 10. \"Ai có súng dùng súng. Ai có gươm dùng gươm, không có gươm thì dùng cuốc thuổng, gậy gộc\" là câu nói trích từ tài liệu nào sau đây?", options: ["Kháng chiến nhất định thắng lợi của Tổng Bí thư Trường Chinh.", "Tuyên ngôn Độc lập của nước Việt Nam Dân chủ Cộng hoà.", "Lời kêu gọi toàn quốc kháng chiến của Chủ tịch Hồ Chí Minh.", "Chỉ thị Toàn dân kháng chiến của Ban Thường vụ Trung ương Đảng Cộng sản Đông Dương."], correct: 2, explanation: "Đây là câu trích dẫn nổi tiếng trong bản 'Lời kêu gọi toàn quốc kháng chiến' do Chủ tịch Hồ Chí Minh soạn thảo ngày 19/12/1946, nhằm kêu gọi toàn thể đồng bào không phân biệt vũ khí thô sơ hay hiện đại, cùng nhau đứng lên đánh đuổi thực dân Pháp." },
+        { id: "1_11", type: "single", question: "Câu 11. Sự thất bại của các cuộc khởi nghĩa trong thời kì Bắc thuộc (năm 179 TCN đến năm 938) là do", options: ["Chênh lệch về tương quan lực lượng.", "Không được sự ủng hộ của nhân dân.", "Quý tộc người Việt chống đối, đàn áp.", "Điều kiện thời tiết quá khắc nghiệt."], correct: 0, explanation: "Trong hơn 1000 năm Bắc thuộc, nguyên nhân cơ bản nhất khiến nhiều cuộc khởi nghĩa (dù rất anh dũng) bị thất bại là do sự chênh lệch quá lớn về tương quan lực lượng quân sự và thế trận giữa quân khởi nghĩa và các thế lực phong kiến phương Bắc." },
+        { id: "1_12", type: "single", question: "Câu 12. Cuộc Tổng tiến công và nổi dậy Xuân Mậu Thân 1968 đã mở ra bước ngoặt cơ bản cho cuộc đấu tranh của nhân dân ta trên mặt trận ngoại giao vì đã", options: ["Buộc Mỹ chấm dứt không điều kiện chiến tranh phá hoại miền Bắc.", "Làm lung lay ý chí xâm lược của quân Mỹ, buộc chúng phải tuyên bố \"phi Mỹ hoá\" chiến tranh.", "Giáng một đòn mạnh vào chính quyền Sài Gòn.", "Buộc Mỹ phải chấp nhận đến đàm phán ở Pa-ri để bàn về chấm dứt chiến tranh ở Việt Nam."], correct: 3, explanation: "Đòn đánh bất ngờ của ta trong Tết Mậu Thân 1968 đã đập tan uy thế quân sự của Mỹ, buộc Mỹ phải ngồi vào bàn đàm phán tại Pa-ri (Pháp) để nói chuyện chính thức với đại diện của ta. Đây là bước ngoặt quan trọng đưa kháng chiến phát triển thêm mặt trận Ngoại giao." },
+        { id: "1_13", type: "single", question: "Câu 13. Cuộc đấu tranh bảo vệ Tổ quốc từ sau tháng 4-1975 của nhân dân Việt Nam có ý nghĩa nào sau đây?", options: ["Góp phần bảo vệ hoà bình, ổn định ở khu vực và thế giới.", "Góp phần thiết lập Trật tự thế giới hai cực I-an-ta.", "Chấm dứt ách cai trị của chủ nghĩa đế quốc.", "Chấm dứt âm mưu chống phá của các thế lực thù địch."], correct: 0, explanation: "Sau khi giải phóng miền Nam, quân dân ta tiếp tục chiến đấu bảo vệ biên giới Tây Nam (chống Pol Pot) và biên giới phía Bắc. Thắng lợi này đã đập tan các thế lực phản động, góp phần quan trọng duy trì hòa bình, ổn định cho Việt Nam nói riêng và khu vực Đông Nam Á nói chung." },
+        { id: "1_14", type: "single", question: "Câu 14. Để thực thi chủ quyền, năm 1982, Chính phủ nước Cộng hoà xã hội chủ nghĩa Việt Nam đã thành lập huyện đảo Hoàng Sa thuộc tỉnh hoặc thành phố nào sau đây?", options: ["Quảng Nam - Đà Nẵng.", "Khánh Hoà.", "Quảng Ninh.", "Quảng Trị."], correct: 0, explanation: "Năm 1982, Hội đồng Bộ trưởng (nay là Chính phủ) ra nghị quyết thành lập huyện đảo Hoàng Sa thuộc tỉnh Quảng Nam - Đà Nẵng (khi Đà Nẵng tách ra thành thành phố trực thuộc Trung ương, huyện đảo Hoàng Sa trực thuộc TP. Đà Nẵng)." },
+        { id: "1_15", type: "single", question: "Câu 15. Nội dung nào sau đây phản ánh đúng về mục tiêu trong đường lối Đổi mới ở Việt Nam từ năm 1986 đến nay?", options: ["Thực hiện hoà bình, thống nhất hai miền về lãnh thổ, về nhà nước.", "Hoàn thành cuộc cách mạng dân tộc dân chủ nhân dân trong cả nước.", "Làm cho mục tiêu xã hội chủ nghĩa được thực hiện có hiệu quả hơn.", "Xoá bỏ tàn dư của chế độ phong kiến, thực hiện người cày có ruộng."], correct: 2, explanation: "Đường lối Đổi mới năm 1986 khẳng định: Đổi mới không phải là thay đổi mục tiêu Chủ nghĩa xã hội, mà là tìm ra những biện pháp, bước đi phù hợp để làm cho mục tiêu xây dựng Chủ nghĩa xã hội được thực hiện một cách có hiệu quả hơn." },
+        { id: "1_16", type: "single", question: "Câu 16. Nội dung nào sau đây là thành tựu của lĩnh vực hội nhập quốc tế trong công cuộc Đổi mới ở Việt Nam từ năm 1986 đến nay?", options: ["Xây dựng nông thôn mới ở các tỉnh thành.", "Thực hiện ba chương trình kinh tế lớn.", "Xoá bỏ cơ chế kinh tế kế hoạch hoá, tập trung.", "Việt Nam gia nhập nhiều tổ chức quốc tế và khu vực."], correct: 3, explanation: "Thành tựu về \"hội nhập quốc tế\" rõ nét nhất là Việt Nam đã vươn mình tham gia sâu rộng vào các sân chơi lớn, trở thành thành viên của ASEAN (1995), APEC (1998) và WTO (2007)." },
+        { id: "1_17", type: "single", question: "Câu 17. Sau ngày Nhật Bản đảo chính Pháp (ngày 09-3-1945), đại diện Mặt trận Việt Minh và Hồ Chí Minh đã tiếp xúc với người Mỹ thể hiện", options: ["Nhiệm vụ phối hợp tổ chức huấn luyện quân sự, cung cấp hậu cần, y tế cho Việt Minh.", "Thiện chí của Việt Minh muốn tìm kiếm một giải pháp cho vấn đề Đông Dương.", "Sách lược ngoại giao mềm dẻo, linh hoạt, sáng tạo của Đảng Cộng sản Đông Dương.", "Sự chỉ đạo đúng đắn của Quốc tế Cộng sản cho vấn đề Đông Dương."], correct: 1, explanation: "Việc đại diện Mặt trận Việt Minh và Chủ tịch Hồ Chí Minh tiếp xúc với người Mỹ sau ngày Nhật đảo chính Pháp (09/03/1945) là một bước đi chiến lược, nhằm tranh thủ sự ủng hộ từ phe Đồng minh, khẳng định vị thế của Việt Minh và thể hiện thiện chí muốn tìm kiếm một giải pháp độc lập, hòa bình cho vấn đề Đông Dương." },
+        { id: "1_18", type: "single", question: "Câu 18. Năm 1976, Quốc hội nước Cộng hoà xã hội chủ nghĩa Việt Nam (khoá VI) đã quyết định đổi tên Thành phố Sài Gòn - Gia Định là", options: ["Thành phố Hồ Chí Minh.", "Thành phố Đà Nẵng.", "Thành phố Cần Thơ.", "Thành phố Nha Trang."], correct: 0, explanation: "Kỳ họp thứ nhất, Quốc hội khóa VI (tháng 6-7/1976) đã quyết định đổi tên thành phố Sài Gòn - Gia Định thành Thành phố Hồ Chí Minh để ghi nhớ công ơn to lớn của vị lãnh tụ vĩ đại của dân tộc." },
+        { id: "1_19", type: "single", question: "Câu 19. Trong cuộc kháng chiến chống Mỹ, cứu nước giai đoạn 1954-1969, Chủ tịch Hồ Chí Minh có đóng góp nào sau đây?", options: ["Tranh thủ sự ủng hộ, giúp đỡ của các nước xã hội chủ nghĩa.", "Tranh thủ sự ủng hộ, giúp đỡ của Quốc tế Cộng sản.", "Giữ vị trí Tổng Bí thư và hoạch định đường lối của Đảng.", "Trực tiếp chỉ đạo các chiến dịch đánh Mỹ ở miền Nam."], correct: 0, explanation: "Trong giai đoạn này, Bác Hồ luôn nỗ lực hoạt động ngoại giao, kêu gọi tình đoàn kết quốc tế, nhờ đó đã tranh thủ được nguồn viện trợ cực kỳ to lớn và quý báu về vật chất lẫn tinh thần từ các nước xã hội chủ nghĩa anh em (Liên Xô, Trung Quốc...)." },
+        { id: "1_20", type: "single", question: "Câu 20. Chính phủ Việt Nam Dân chủ Cộng hoà kí với đại diện Chính phủ Pháp bản Hiệp định Sơ bộ (06-3-1946) nhằm mục đích gì?", options: ["Không cho thực dân Pháp đem quân ra Bắc.", "Đẩy nhanh quân Trung Hoa Dân quốc về nước.", "Có thêm thời gian hoà bình để củng cố chính quyền.", "Hoà hoãn với Pháp nhằm đẩy quân Trung Hoa Dân quốc ra khỏi nước ta."], correct: 3, explanation: "Lúc này ở miền Bắc có 20 vạn quân Tưởng (Trung Hoa Dân quốc), ở miền Nam có quân Pháp. Bằng việc ký Hiệp định Sơ bộ, ta chủ động hòa hoãn, mượn tay Pháp để đuổi 20 vạn quân Tưởng về nước một cách êm thấm, giúp ta bớt đi một kẻ thù nguy hiểm." },
+        { id: "1_21", type: "single", question: "Câu 21. Các hoạt động đối ngoại của Chủ tịch Hồ Chí Minh trong những năm 1945-1946 có ý nghĩa nào sau đây?", options: ["Làm thất bại âm mưu xâm lược Việt Nam của thực dân Pháp.", "Buộc thực dân Pháp phải công nhận Việt Nam độc lập.", "Kéo dài thời gian hoà hoãn để chuẩn bị cho kháng chiến lâu dài.", "Giúp Việt Nam nhận được nhiều viện trợ từ các nước."], correct: 2, explanation: "Bằng những nhượng bộ có nguyên tắc (ký Hiệp định Sơ bộ và Tạm ước 14/9), Bác Hồ đã giành được những khoảng thời gian hòa bình vô cùng quý giá. Thời gian này giúp quân và dân ta tranh thủ củng cố lực lượng, chuẩn bị mọi mặt cho cuộc kháng chiến trường kỳ không thể tránh khỏi." },
+        { id: "1_22", type: "single", question: "Câu 22. Trong suốt tiến trình của lịch sử, Việt Nam luôn trở thành đối tượng nhòm ngó của các thế lực xâm lược bên ngoài không phải vì lí do nào sau đây?", options: ["Là quốc gia lạc hậu, phát triển chậm.", "Nằm ở vị trí địa chiến lược quan trọng.", "Có nguồn tài nguyên thiên nhiên phong phú.", "Cư dân sinh sống đông đúc, thuận lợi cho sự phát triển."], correct: 0, explanation: "Việt Nam bị nhòm ngó do vị trí địa lý đắc địa (ngã tư đường giao thương), tài nguyên phong phú và nguồn nhân lực dồi dào. \"Là quốc gia lạc hậu\" không phải là lý do gốc rễ khiến nước ta trở thành mục tiêu (nhiều vùng đất lạc hậu trên thế giới nhưng không bị xâm lược vì thiếu giá trị chiến lược)." },
+        { id: "1_23", type: "single", question: "Câu 23. Hoạt động đối ngoại của Việt Nam trong giai đoạn từ tháng 9-1945 đến tháng 7-1954 có nhiệm vụ trọng tâm là", options: ["Phục vụ cho kháng chiến chống thực dân Pháp.", "Thiết lập quan hệ ngoại giao với các nước xã hội chủ nghĩa.", "Tuyên truyền tính chính nghĩa của cuộc kháng chiến.", "Đẩy mạnh liên minh đoàn kết chiến đấu giữa ba nước Đông Dương."], correct: 0, explanation: "Mọi hoạt động đối ngoại trong giai đoạn này (1945-1954) đều xoay quanh một nhiệm vụ sinh tử, tối thượng: Đó là phục vụ đắc lực cho công cuộc kháng chiến bảo vệ độc lập, đánh đuổi thực dân Pháp xâm lược." },
+        { id: "1_24", type: "single", question: "Câu 24. Nhiệm vụ của hoạt động đối ngoại Việt Nam giai đoạn 1975 - 1985 là", options: ["Ra sức tranh thủ những điều kiện quốc tế thuận lợi để phục vụ công cuộc xây dựng và bảo vệ Tổ quốc.", "Đã tích cực đóng góp vào công cuộc đổi mới, công nghiệp hoá.", "Cùng các nước tích cực tham gia tìm giải pháp chính trị cho vấn đề Cam-pu-chia.", "Tăng cường quan hệ với các nước tư bản chủ nghĩa có nền công nghiệp phát triển."], correct: 0, explanation: "Sau khi thống nhất đất nước 1975, nhiệm vụ tối cao của ngoại giao là tạo ra một môi trường hòa bình, tranh thủ các điều kiện quốc tế thuận lợi (như viện trợ, hợp tác) để xây dựng lại đất nước sau chiến tranh tàn phá." },
+
+        // --- PHẦN II (ĐÚNG/SAI) ---
+        { id: "1_II_1", type: "tf_cluster", context: "Câu 1. Đọc kĩ đoạn tư liệu sau: “Bài học của thời kì Chiến tranh lạnh đã chứng tỏ phương thức quan hệ quốc tế lấy đối đầu chính trị – quân sự là chủ yếu không còn phù hợp, phải chịu nhiều tổn thất hoặc thất bại như hai nước Xô – Mỹ và một bị thương, một bị mất. Trong khi đó, phương thức lấy hợp tác và cạnh tranh về kinh tế – chính trị là chính lại thu được nhiều tiến bộ, kết quả như các nước Đức, Nhật và NICs. Sự hưng thịnh hay suy vong của một quốc gia quyết định bởi sức mạnh tổng hợp của quốc gia đó, mà chủ yếu là thực lực kinh tế và khoa học – kĩ thuật”.<br>(Vũ Dương Ninh (Chủ biên), Một số chuyên đề lịch sử thế giới, NXB Đại học Quốc gia Hà Nội, 2001, trang 401)", items: [
+            { id: "a", text: "a) Kinh tế và khoa học - kĩ thuật là hai yếu tố chủ yếu tạo nên sức mạnh tổng hợp của một quốc gia sau khi Chiến tranh lạnh chấm dứt.", correct: true, expl: "Sau năm 1991, thế giới chuyển sang xu thế hòa hoãn. Các quốc gia nhận thức sâu sắc rằng sức mạnh thực sự không nằm ở vũ khí, mà nằm ở nền tảng kinh tế và khoa học kĩ thuật vững chắc. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Một trong những bài học rút ra từ thời kì Chiến tranh lạnh cho tất cả các quốc gia là không nên tập trung vào phát triển quân sự, quốc phòng đất nước.", correct: false, expl: "Quốc phòng an ninh luôn là nhiệm vụ cốt lõi để bảo vệ chủ quyền. Bài học rút ra là không nên chạy đua vũ trang quá đà làm kiệt quệ kinh tế (như Liên Xô), chứ không phải là \"không nên tập trung vào phát triển quân sự\". Mệnh đề SAI." },
+            { id: "c", text: "c) Sau thời kì Chiến tranh lạnh, Xô - Mỹ lấy đối đầu về chính trị - quân sự là chủ yếu, trong khi đó Đức và Nhật Bản lại lấy hợp tác và cạnh tranh về kinh tế - chính trị là chủ yếu.", correct: false, expl: "Chiến tranh lạnh chấm dứt thì Liên Xô sụp đổ, xu thế đối đầu chính trị - quân sự đã nhường chỗ cho xu thế hòa hoãn, đối thoại, hợp tác và cạnh tranh kinh tế. Khẳng định Xô - Mỹ tiếp tục lấy đối đầu quân sự làm chủ yếu là đi ngược lịch sử. Mệnh đề SAI." },
+            { id: "d", text: "d) Sau thời kì Chiến tranh lạnh, nội dung của quan hệ quốc tế có sự điều chỉnh từ chỗ lấy yếu tố quân sự sang lấy yếu tố kinh tế là trọng tâm.", correct: true, expl: "Các liên minh kinh tế, các tổ chức thương mại quốc tế (như WTO) phát triển rầm rộ, thay thế cho các khối liên minh quân sự đối đầu thời chiến tranh lạnh. Mệnh đề ĐÚNG." }
+        ]},
+        { id: "1_II_2", type: "tf_cluster", context: "Câu 2. Đọc kĩ đoạn tư liệu sau: \"Ngay sau khi thành lập nước Việt Nam Dân chủ Cộng hoà (năm 1945), dưới sự lãnh đạo sáng suốt của Chủ tịch Hồ Chí Minh và của Đảng, ngành ngoại giao đã giữ vai trò tiên phong trong việc giữ vững nền độc lập nước nhà và bảo vệ thành công chính quyền cách mạng còn non trẻ. Những sách lược, quyết sách táo bạo, khôn khéo của ngoại giao... cùng các nguyên tắc 'dĩ bất biến, ứng vạn biến'... đã giúp cách mạng nước ta vượt qua được những tình huống hiểm nghèo...\" (Trích 75 năm ngoại giao Việt Nam, Tạp chí Cộng sản, 27-8-2020)", items: [
+            { id: "a", text: "a) Đoạn tư liệu đề cập đến đường lối, chủ trương, sách lược ngoại giao mềm dẻo của Đảng, Chính phủ, Chủ tịch Hồ Chí Minh trong thời kì 1945-1946.", correct: true, expl: "Đoạn văn trực tiếp ca ngợi sách lược ứng xử cực kì khôn khéo, \"hòa để tiến\", \"dĩ bất biến ứng vạn biến\" của Bác Hồ và Đảng ta trong giai đoạn gian nguy 1945-1946. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Đấu tranh ngoại giao là mặt trận khẳng định giá trị những thắng lợi trên mặt trận quân sự để bảo vệ nền độc lập của dân tộc Việt Nam.", correct: false, expl: "Trong giai đoạn 1945-1946, chúng ta chủ yếu dùng ngoại giao để tránh xung đột quân sự quy mô lớn (vì lực lượng ta còn quá yếu), chứ không phải để \"khẳng định thắng lợi quân sự\" như ở Hội nghị Geneva 1954 hay Paris 1973. Mệnh đề SAI." },
+            { id: "c", text: "c) Nguyên tắc của đấu tranh ngoại giao \"dĩ bất biến, ứng vạn biến\" trong thời kì 1945-1946 đúng với mọi giai đoạn cách mạng Việt Nam sau này.", correct: true, expl: "Dĩ bất biến (giữ vững mục tiêu độc lập tự do) và Ứng vạn biến (linh hoạt trong phương pháp) là sợi chỉ đỏ xuyên suốt và luôn đúng trong mọi thời kỳ cách mạng của nước ta. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Đấu tranh ngoại giao trong giai đoạn 1930 - 1945 là giữ vững thành quả Cách mạng tháng Tám năm 1945 và bảo vệ nhà nước xã hội chủ nghĩa đầu tiên ở Đông Nam Á.", correct: false, expl: "Giai đoạn 1930-1945 là thời kỳ đấu tranh giành chính quyền, lúc này Cách mạng tháng Tám chưa thành công thì không thể gọi là \"giữ vững thành quả\". Mệnh đề SAI." }
+        ]},
+        { id: "1_II_3", type: "tf_cluster", context: "Câu 3. Đọc kĩ đoạn tư liệu sau: “.. Một xã hội dân giàu, nước mạnh, dân chủ, công bằng, văn minh; do nhân dân làm chủ; có nên kinh tế phát triển cao, dựa trên lực lượng sản xuất hiện đại và quan hệsản xuất tiến bộ phù hợp; có nên văn hoá tiên tiến, đậm đà bản sắc dân tộc; con người có cuộc sống ấm no, tự do, hạnh phúc, có điểu kiện phát triển toàn diện; các dân tộc trong cộng đống Việt Nam bình đẳng, đoàn kết, tôn trọng và giúp đỡ nhau cùng phát triển; có Nhà nước pháp quyển xã hội chủ nghĩa của nhân dân, do nhân dân, vì nhân dân do Đảng Cộng sản lãnh đạo; có quan hệ hữu nghị và hợp tác với các nước trên thế giới'.(Nguyễn Phú Trọng, Một số vấn để li luận và thực tiến vể chủ nghĩa xã hội và con đường đi lên chủ nghīa xã hội ở Việt Nam, NXB Chính trị quốc gia Sự thật,Hà Nội,2022, trang 24) ", items: [
+            { id: "a", text: "a) Đất nước Việt Nam phát triển toàn diện phải đảm bảo quyền lợi về kinh tế, văn hoá - xã hội và sự ổn định nền chính trị của Nhà nước pháp quyền xã hội chủ nghĩa cho nhân dân.", correct: true, expl: "Đây chính là bản tóm tắt mục tiêu phát triển của chủ nghĩa xã hội ở nước ta, bao trùm mọi mặt: kinh tế phát triển cao, văn hóa đậm đà bản sắc, chính trị ổn định với nhà nước của dân. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Con người giữ vị trí trung tâm trong chiến lược phát triển đất nước; phát triển văn hoá xây dựng con người vừa là mục tiêu, vừa là động lực của công cuộc Đổi mới.", correct: true, expl: "Tư liệu nhấn mạnh \"con người có cuộc sống ấm no, tự do, hạnh phúc, có điều kiện phát triển toàn diện\", điều này chứng minh con người chính là trung tâm của sự phát triển. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Nền kinh tế thị trường định hướng xã hội chủ nghĩa phải hội nhập quốc tế, vận hành đầy đủ, đồng bộ theo các quy luật, lấy kinh tế đầu tư nước ngoài làm trọng tâm.", correct: false, expl: "Nền kinh tế của nước ta phải đảm bảo vai trò chủ đạo của \"Kinh tế Nhà nước\", chứ không phải lấy vốn đầu tư nước ngoài (FDI) làm trọng tâm. FDI chỉ là một thành phần đóng góp. Mệnh đề SAI." },
+            { id: "d", text: "d) Trong đất nước Việt Nam phát triển phải xây dựng một hệ thống chính trị mà quyền lực thực sự thuộc về người lãnh đạo do nhân dân bầu ra và phục vụ lợi ích của nhân dân.", correct: false, expl: "Quan điểm cốt lõi là quyền lực nhà nước thuộc về NHÂN DÂN (\"do nhân dân làm chủ\"), chứ không phải thuộc về \"người lãnh đạo do nhân dân bầu ra\". Cán bộ chỉ là người được ủy quyền. Mệnh đề SAI." }
+        ]},
+        { id: "1_II_4", type: "tf_cluster", context: "Câu 4. Dấu ấn Hồ Chí Minh đối với thế giới<br>Tại một số quốc gia trên thế giới đã có tượng và tượng đài tưởng niệm Chủ tịch Hồ Chí Minh như: Lào, Thái Lan, Pháp, Nga,...<br>Tên của Chủ tịch Hồ Chí Minh được đặt cho nhiều quảng trường, trường học, đường phố tại nhiều quốc gia trên thế giới, từ châu Á, châu Âu, châu Phi, châu Mỹ.<br>Một số quốc gia nơi Chủ tịch Hồ Chí Minh từng đến và hoạt động đều có những công trình, di tích tưởng niệm như: khách sạn Can-tơ (Anh); Nhà số 9, Thủ đô Pa-ri (Pháp); Nhà số 248 và 250 đường Văn Minh, thành phố Quảng Châu (Trung Quốc).", items: [
+            { id: "a", text: "a) Chủ tịch Hồ Chí Minh để lại dấu ấn to lớn, được chính phủ và nhân dân nhiều nước trên thế giới lập tượng đài, quảng trường mang tên Người.", correct: true, expl: "Thực tế, có rất nhiều quốc gia như Nga, Pháp, Cuba, Ấn Độ... đã vinh danh Bác bằng cách đặt tên đường, trường học và xây dựng các tượng đài để tưởng nhớ. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Chủ tịch Hồ Chí Minh có công lao trực tiếp cầm súng giải phóng các nước trên thế giới khỏi ách thống trị của chủ nghĩa đế quốc.", correct: false, expl: "Bác Hồ lãnh đạo công cuộc giải phóng dân tộc ở Việt Nam và trở thành biểu tượng cổ vũ các dân tộc khác, chứ Người không trực tiếp cầm súng sang giải phóng các nước khác. Mệnh đề SAI." },
+            { id: "c", text: "c) Chủ tịch Hồ Chí Minh đã đóng góp to lớn vào cuộc đấu tranh chung của các dân tộc vì hoà bình, độc lập dân tộc, dân chủ và tiến bộ xã hội.", correct: true, expl: "Với tư tưởng giải phóng dân tộc gắn liền với giải phóng giai cấp, Bác đã truyền cảm hứng và cổ vũ mạnh mẽ phong trào giải phóng dân tộc trên toàn cầu ở thế kỷ XX. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Chủ tịch Hồ Chí Minh là nhà tư tưởng duy nhất lãnh đạo phong trào cộng sản và công nhân quốc tế trong thời kỳ Chiến tranh lạnh.", correct: false, expl: "Phong trào cộng sản quốc tế có rất nhiều nhà lãnh đạo xuất sắc khác (như ở Liên Xô, Trung Quốc, Cuba...). Khẳng định Bác là người \"duy nhất\" là sai về mặt lịch sử. Mệnh đề SAI." }
+        ]}
+    ];
+
+    const de2_data = [
+        // --- PHẦN I ---
+        { id: "2_1", type: "single", question: "Câu 1. Hội nghị l-an-ta được triệu tập vào thời điểm Chiến tranh thế giới thứ hai", options: ["bùng nổ.", "bước vào giai đoạn quyết liệt.", "bước vào giai đoạn kết thúc.", "đã kết thúc."], correct: 2, explanation: "Hội nghị l-an-ta diễn ra vào tháng 2/1945, lúc này Liên Xô và lực lượng Đồng minh đang tổng tiến công trên mọi mặt trận, dồn phát xít Đức vào đường cùng. Đây là giai đoạn chiến tranh đang chuẩn bị kết thúc." },
+        { id: "2_2", type: "single", question: "Câu 2. Theo quyết định của Hội nghị l-an-ta, miền Tây nước Đức, Tây Béc-lin và các nước Tây Âu sẽ do quân đội", options: ["Mỹ, Anh và Pháp chiếm đóng.", "Liên Xô và Trung Quốc chiếm đóng.", "Anh và Pháp chiếm đóng.", "Anh, Pháp và Trung Quốc chiếm đóng."], correct: 0, explanation: "Theo sự phân chia khu vực ảnh hưởng tại l-an-ta, toàn bộ khu vực Tây Âu và miền Tây nước Đức (bao gồm cả Tây Béc-lin) thuộc vùng kiểm soát và chiếm đóng của liên quân tư bản chủ nghĩa: Mỹ, Anh, Pháp." },
+        { id: "2_3", type: "single", question: "Câu 3. Cu-ba chính thức bắt tay vào xây dựng chủ nghĩa xã hội sau sự kiện nào?", options: ["Chế độ độc tài Ba-ti-xta sụp đổ, nước Cộng hoà Cu-ba ra đời (1959).", "Cu-ba đánh bại cuộc tấn công đổ bộ của quân Mỹ ở bãi biển Hi-rôn (1961).", "Cu-ba tiến hành các cải cách dân chủ về kinh tế, chính trị, xã hội (1960).", "Cuộc khủng hoảng tên lửa ở Cu-ba kết thúc (1962)."], correct: 1, explanation: "Sau khi xuất sắc đập tan cuộc đổ bộ của lính đánh thuê do Mỹ hậu thuẫn tại bãi biển Hi-rôn (tháng 4/1961), Chủ tịch Phi-đen Cát-xtơ-rô đã chính thức tuyên bố Cu-ba đi lên con đường xây dựng Chủ nghĩa xã hội." },
+        { id: "2_4", type: "single", question: "Câu 4. Trong suốt tiến trình của lịch sử, những cuộc kháng chiến thắng lợi của dân tộc Việt Nam không thể hiện ý nghĩa nào sau đây?", options: ["Xây dựng tư tưởng tự tôn của dân tộc bách chiến bách thắng.", "Hình thành và nâng cao lòng tự hào, ý thức tự cường dân tộc.", "Tô đậm thêm những truyền thống tốt đẹp của dân tộc.", "Để lại những bài học kinh nghiệm sâu sắc và quý báu cho dân tộc."], correct: 0, explanation: "Dân tộc ta có truyền thống yêu nước, tự cường, nhưng KHÔNG xây dựng tư tưởng \"tự tôn bách chiến bách thắng\" mang tính chất ngạo mạn. Chúng ta luôn yêu chuộng hòa bình và chỉ chiến đấu khi bắt buộc phải bảo vệ tổ quốc." },
+        { id: "2_5", type: "single", question: "Câu 5. Nội dung nào sau đây không phản ánh đúng những mục tiêu của ý tưởng xây dựng Cộng đồng ASEAN?", options: ["Đưa ASEAN trở thành một cộng đồng có mức độ liên kết sâu rộng trên cơ sở ba trụ cột.", "Đưa ASEAN trở thành một cộng đồng có mức độ liên kết sâu rộng dựa trên sự ràng buộc bởi cơ sở pháp lí là Hiến chương ASEAN.", "Đưa ASEAN trở thành một cộng đồng có sự mở rộng hợp tác với bên ngoài.", "Đưa ASEAN trở thành một cộng đồng có sự thống nhất chặt chẽ về chính trị, văn hoá."], correct: 3, explanation: "ASEAN luôn tôn trọng nguyên tắc đồng thuận và không can thiệp vào công việc nội bộ. Các nước ASEAN vô cùng đa dạng về văn hóa và thể chế chính trị, do đó mục tiêu \"thống nhất chặt chẽ về chính trị, văn hóa\" là sai với tôn chỉ hoạt động." },
+        { id: "2_6", type: "single", question: "Câu 6. Ý tưởng thành lập Cộng đồng ASEAN được chính thức khẳng định trong văn bản nào?", options: ["Tuyên bố Băng Cốc (1967).", "Tuyên bố Ba-li I (1976).", "Tầm nhìn ASEAN 2020 (1997).", "Tuyên bố Ba-li II (2003)."], correct: 3, explanation: "Tại Hội nghị cấp cao ASEAN lần thứ 9 tổ chức ở Ba-li (In-đô-nê-xi-a) năm 2003, các nhà lãnh đạo đã ký Tuyên bố Ba-li II, chính thức khẳng định ý chí vươn tới xây dựng một Cộng đồng ASEAN với 3 trụ cột vững chắc." },
+        { id: "2_7", type: "single", question: "Câu 7. Chiều ngày 16-8-1945, một đội Giải phóng quân do Võ Nguyên Giáp chỉ huy, xuất phát từ Tân Trào về giải phóng thị xã", options: ["Cao Bằng.", "Thái Nguyên.", "Tuyên Quang.", "Phú Thọ."], correct: 1, explanation: "Chiều ngày 16/8/1945, ngay sau Đại hội Quốc dân Tân Trào, đồng chí Võ Nguyên Giáp đã trực tiếp chỉ huy đội quân giải phóng tiến về giải phóng thị xã Thái Nguyên, mở đường cho cuộc Tổng khởi nghĩa lan rộng." },
+        { id: "2_8", type: "single", question: "Câu 8. Triều đại nào sau đây đã ba lần tiến hành kháng chiến đánh bại quân xâm lược Mông-Nguyên ở thế kỉ XIII?", options: ["Triều Hồ.", "Triều Trần.", "Triều Lý.", "Triều Lê."], correct: 1, explanation: "Vương triều nhà Trần (với các danh tướng như Trần Hưng Đạo) đã lập nên kỳ tích vô tiền khoáng hậu trong lịch sử dân tộc: 3 lần đánh tan đạo quân Mông - Nguyên (1258, 1285, 1287-1288) hùng mạnh nhất thế giới lúc bấy giờ." },
+        { id: "2_9", type: "single", question: "Câu 9. Đảng, Chính phủ và Chủ tịch Hồ Chí Minh quyết định phát động cuộc kháng chiến toàn quốc chống thực dân Pháp xâm lược (19-12-1946) là do", options: ["Việt Nam đã tranh thủ được sự ủng hộ của Liên Xô và một số nước khác.", "Quá trình chuẩn bị lực lượng của Việt Nam cho cuộc kháng chiến đã hoàn tất.", "Pháp ráo riết chuẩn bị lực lượng quân sự để tiến hành xâm lược Việt Nam.", "Việt Nam không thể tiếp tục sử dụng biện pháp hoà bình với Pháp được nữa."], correct: 3, explanation: "Đến tháng 12/1946, thực dân Pháp đã liên tiếp khiêu khích và gửi Tối hậu thư đòi tước vũ khí của ta. Chúng ta đã nhân nhượng hết mức, nhưng \"càng nhân nhượng thực dân Pháp càng lấn tới\". Biện pháp hòa bình đã cạn kiệt, ta buộc phải nổ súng tự vệ." },
+        { id: "2_10", type: "single", question: "Câu 10. Trong cuộc kháng chiến chống thực dân Pháp xâm lược (1945 - 1954), Đảng Cộng sản Đông Dương xác định đường lối \"kháng chiến lâu dài\" là do", options: ["Thực dân Pháp tiến hành \"đánh nhanh, thắng nhanh\".", "Thực dân Pháp tiến hành đánh lâu dài.", "So sánh lực lượng lúc đầu giữa ta và địch chênh lệch, địch mạnh hơn ta về nhiều mặt.", "Thực dân Pháp được Mỹ viện trợ về kinh tế, quân sự."], correct: 2, explanation: "Vào đầu cuộc kháng chiến, Pháp là một đế quốc sừng sỏ, vũ khí hiện đại. Ta có vũ khí thô sơ, lực lượng mỏng. Đường lối \"kháng chiến lâu dài\" nhằm giúp ta vừa đánh vừa bảo toàn lực lượng, dần dần tiêu hao sinh lực địch, chuyển hóa so sánh lực lượng." },
+        { id: "2_11", type: "single", question: "Câu 11. Khi thành lập Nhà nước Liên bang Cộng hoà xã hội chủ nghĩa Xô viết, nguyên tắc nào sau đây không được thực hiện?", options: ["Độc lập.", "Bình đẳng.", "Tự quyết.", "Xây dựng cộng đồng."], correct: 0, explanation: "Các nước Cộng hòa Xô viết khi đồng ý sáp nhập vào Liên bang đã tự nguyện nhượng lại một phần quyền \"độc lập\" (quốc phòng, ngoại giao chung) để đổi lấy sự \"bình đẳng\", quyền \"tự quyết\" xây dựng một thể chế vững mạnh." },
+        { id: "2_12", type: "single", question: "Câu 12. Chiến dịch nào đã mở ra bước phát triển mới trong cuộc kháng chiến chống thực dân Pháp (1945- 1954) của nhân dân Việt Nam?", options: ["Biên giới thu-đông năm 1950.", "Điện Biên Phủ năm 1954.", "Hoà Bình đông-xuân 1951-1952.", "Việt Bắc thu-đông năm 1947."], correct: 0, explanation: "Chiến dịch Biên giới Thu Đông 1950 là một chiến dịch chủ động tiến công quy mô lớn đầu tiên của ta. Thắng lợi này đã giúp quân ta giành thế chủ động trên chiến trường chính Bắc Bộ, mở ra bước ngoặt mới cho cuộc kháng chiến." },
+        { id: "2_13", type: "single", question: "Câu 13. Trong lịch sử Việt Nam từ năm 1919 đến nay, sự kiện có tầm quan trọng quốc tế to lớn và có tính thời đại sâu sắc là", options: ["Sự ra đời của Đảng Cộng sản Việt Nam (tháng 02-1930).", "Thắng lợi của cuộc kháng chiến chống Mỹ, cứu nước (1954-1975).", "Thắng lợi của cuộc kháng chiến chống thực dân Pháp (1945-1954).", "Kí kết Hiệp định Pa-ri về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam (tháng 01-1973)."], correct: 1, explanation: "Thắng lợi chống Mỹ (1954-1975) không chỉ giải phóng miền Nam thống nhất đất nước, mà còn đập tan cuộc phản công lớn nhất của chủ nghĩa đế quốc, cổ vũ mạnh mẽ phong trào giải phóng dân tộc trên toàn cầu." },
+        { id: "2_14", type: "single", question: "Câu 14. Đế quốc Mỹ thực hiện cuộc chiến tranh phá hoại miền Bắc Việt Nam lần thứ hai (1972) với ý đồ", options: ["Ngăn chặn sự chi viện của miền Bắc đối với miền Nam.", "Làm lung lay ý chí quyết tâm chống Mỹ, cứu nước của nhân dân ta.", "Cứu nguy cho chiến lược \"Việt Nam hoá chiến tranh\" và tạo thế mạnh trên bàn đàm phán ở Pa-ri.", "Phong toả cảng Hải Phòng và các sông, luồng, lạch, vùng biển ở miền Bắc."], correct: 2, explanation: "Cuộc chiến tranh phá hoại lần 2 (đỉnh cao là B-52 ném bom Hà Nội) được Nixon tung ra nhằm cứu vãn thất bại trên chiến trường miền Nam, đồng thời đe dọa ép Việt Nam phải nhượng bộ, chấp nhận ký Hiệp định Pa-ri theo điều kiện có lợi cho Mỹ." },
+        { id: "2_15", type: "single", question: "Câu 15. Chiến dịch mở màn cho cuộc Tổng tiến công và nổi dậy Xuân 1975 là Chiến dịch", options: ["Hồ Chí Minh.", "Huế - Đà Nẵng.", "Đường 14 - Phước Long.", "Tây Nguyên."], correct: 3, explanation: "Vào tháng 3/1975, quân ta bất ngờ nổ súng đánh úp Buôn Ma Thuột, chính thức mở màn Chiến dịch Tây Nguyên. Đây là đòn đánh trúng huyệt làm rung chuyển toàn bộ hệ thống phòng thủ của địch, mở đầu cho Đại thắng mùa xuân." },
+        { id: "2_16", type: "single", question: "Câu 16. Thắng lợi có ý nghĩa cơ bản hoàn thành nhiệm vụ đánh cho \"Mỹ cút\", tạo thời cơ thuận lợi để nhân dân ta tiến lên giải phóng hoàn toàn miền Nam là", options: ["Cuộc Tổng tiến công và nổi dậy Xuân Mậu Thân 1968.", "Hiệp định Pa-ri về chấm dứt chiến tranh, lập lại hoà bình ở Việt Nam được kí kết năm 1973.", "Cuộc Tiến công chiến lược năm 1972.", "Chiến thắng \"Điện Biên Phủ trên không\" cuối năm 1972."], correct: 1, explanation: "Hiệp định Pa-ri (27/1/1973) buộc Mỹ phải rút toàn bộ quân đội viễn chinh ra khỏi lãnh thổ Việt Nam. Điều này đã hiện thực hóa được vế đầu trong lời chúc Tết của Bác Hồ: \"Đánh cho Mỹ cút\", tạo tiền đề để \"Đánh cho ngụy nhào\"." },
+        { id: "2_17", type: "single", question: "Câu 17. Sau khi Chủ tịch Hồ Chí Minh qua đời, theo nguyện vọng của nhân dân cả nước, công trình nào đã được xây dựng để tưởng nhớ công lao vĩ đại của Người?", options: ["Đường Hồ Chí Minh.", "Đường Hồ Chí Minh trên biển.", "Lăng Chủ tịch Hồ Chí Minh.", "Đền thờ Chủ tịch Hồ Chí Minh."], correct: 2, explanation: "Lăng Chủ tịch Hồ Chí Minh tại Quảng trường Ba Đình được khởi công xây dựng vào ngày 2/9/1973 để gìn giữ thi hài Bác, đáp ứng nguyện vọng tha thiết của đồng bào cả nước luôn được chiêm ngưỡng vị Cha già dân tộc." },
+        { id: "2_18", type: "single", question: "Câu 18. Năm 1987, tổ chức UNESCO tôn vinh \"Hồ Chí Minh là...", options: ["Anh hùng giải phóng dân tộc, nhà văn hoá kiệt xuất Việt Nam.", "Một trong những huyền thoại của lịch sử hiện đại Việt Nam ở thế kỉ XX.", "Vị tướng thiên tài, nhà lãnh đạo quân sự lỗi lạc của thế giới ở thế kỉ XX.", "Anh hùng dân tộc, Danh nhân văn hoá thế giới."], correct: 0, explanation: "Vào năm 1987, tại kỳ họp thứ 24, Tổ chức Giáo dục, Khoa học và Văn hóa Liên Hợp Quốc (UNESCO) đã thông qua nghị quyết vinh danh Chủ tịch Hồ Chí Minh là: \"Anh hùng giải phóng dân tộc, Nhà văn hóa kiệt xuất của Việt Nam\"." },
+        { id: "2_19", type: "single", question: "Câu 19. Điểm tương đồng trong hoạt động đối ngoại của Phan Bội Châu và Phan Châu Trinh trong những năm đầu thế kỉ XX là đều", options: ["Đi theo con đường dân chủ tư sản.", "Thực hiện đường lối vũ trang bạo động.", "Chủ trương nâng cao tinh thần dân chủ, khai dân trí.", "Xây dựng các tổ chức chính trị riêng."], correct: 0, explanation: "Dù cụ Phan Bội Châu chủ trương bạo động (dựa vào Nhật), còn cụ Phan Châu Trinh chủ trương cải cách (dựa vào Pháp), nhưng khuynh hướng chính trị cốt lõi mà hai nhà yêu nước này hướng tới đều là thiết lập mô hình nhà nước Dân chủ Tư sản." },
+        { id: "2_20", type: "single", question: "Câu 20. Trung Quốc huy động lực lượng quân đội lớn tấn công đảo Gạc Ma thuộc quần đảo Hoàng Sa của Việt Nam vào thời gian nào?", options: ["Tháng 3-1986.", "Tháng 3-1987.", "Tháng 3-1988.", "Tháng 3-1989."], correct: 2, explanation: "Vào ngày 14/3/1988, quân đội Trung Quốc đã dùng vũ lực trắng trợn nổ súng tấn công và đánh chiếm rạn san hô Gạc Ma (thuộc quần đảo Trường Sa, không phải Hoàng Sa - lưu ý đề bài có nhầm lẫn tên quần đảo, nhưng sự kiện Gạc Ma xảy ra năm 1988)." },
+        { id: "2_21", type: "single", question: "Câu 21. Nội dung nào sau đây phản ánh không đúng cuộc đấu tranh bảo vệ, thực thi chủ quyền, các quyền và lợi ích hợp pháp của Nhà nước Cộng hoà xã hội chủ nghĩa Việt Nam ở Biển Đông?", options: ["Từ chối tham gia Công ước Luật Biển năm 1982 của Liên hợp quốc.", "Thành lập huyện đảo Trường Sa và huyện đảo Hoàng Sa.", "Tổ chức nghiên cứu để cung cấp các bằng chứng về chủ quyền.", "Kiên quyết đấu tranh với các hoạt động vi phạm chủ quyền biển đảo."], correct: 0, explanation: "Việt Nam luôn là quốc gia đi đầu tôn trọng luật pháp quốc tế, chúng ta đã KÝ KẾT và THAM GIA Công ước Luật Biển năm 1982 (UNCLOS 1982) chứ không hề từ chối. Vì vậy phương án A là sai thực tế." },
+        { id: "2_22", type: "single", question: "Câu 22. Các cuộc kháng chiến bảo vệ Tổ quốc từ năm 1945 để lại bài học nào sau đây cho công cuộc bảo vệ Tổ quốc Việt Nam xã hội chủ nghĩa?", options: ["Phát huy yếu tố ngoại lực làm nhân tố quyết định sức mạnh bảo vệ Tổ quốc.", "Kết hợp sức mạnh dân tộc và sức mạnh thời đại, kết hợp xây dựng và bảo vệ Tổ quốc.", "Luôn đẩy mạnh các hoạt động ngoại giao để mở đường cho đấu tranh quân sự.", "Tăng cường sức mạnh quân sự là biện pháp duy nhất để bảo vệ Tổ quốc."], correct: 1, explanation: "Bài học lớn nhất xuyên suốt lịch sử: phải phát huy nội lực (sức mạnh dân tộc) kết hợp với tranh thủ ngoại lực (sức mạnh thời đại), đồng thời vừa xây dựng đất nước vững mạnh vừa sẵn sàng bảo vệ tổ quốc." },
+        { id: "2_23", type: "single", question: "Câu 23. Nội dung nào sau đây không phải là bài học kinh nghiệm của công cuộc Đổi mới ở Việt Nam (từ năm 1986 đến nay)?", options: ["Đổi mới toàn diện, đồng bộ, có bước đi, cách làm phù hợp.", "Tranh thủ sự ủng hộ của các nước đồng minh chống phát xít.", "Đặt lợi ích của nhân dân lên hàng đầu, dựa vào nhân dân.", "Kết hợp hài hoà sức mạnh dân tộc và sức mạnh thời đại."], correct: 1, explanation: "\"Đồng minh chống phát xít\" là khái niệm lịch sử thuộc về thời kỳ Chiến tranh thế giới thứ hai (1939-1945), không liên quan đến công cuộc Đổi mới diễn ra từ năm 1986." },
+        { id: "2_24", type: "single", question: "Câu 24. Nội dung nào sau đây là thành tựu về kinh tế của công cuộc Đổi mới ở Việt Nam từ năm 1986 đến nay?", options: ["Thiết lập mối quan hệ ngoại giao với nhiều nước trên thế giới.", "Xây dựng nền văn hoá tiên tiến, đậm đà bản sắc dân tộc.", "Xây dựng Nhà nước pháp quyền xã hội chủ nghĩa.", "Tổng kim ngạch xuất, nhập khẩu hàng hoá tăng mạnh."], correct: 3, explanation: "Từ vị thế một nước bị cấm vận và nền kinh tế bao cấp nghèo nàn, nhờ Đổi mới, nền kinh tế Việt Nam đã bứt phá. Thành tựu kinh tế nổi bật là tổng kim ngạch xuất nhập khẩu tăng vọt, đưa Việt Nam vào top các nước có độ mở kinh tế lớn." },
+
+        // --- PHẦN II (ĐÚNG/SAI) ---
+        { id: "2_II_1", type: "tf_cluster", context: "Câu 1. Đọc kĩ đoạn tư liệu: “Trong kháng chiến chống ngoại xâm, nhất là đối với một kẻ thù hung bạo và có tiếm lực mạnh, tổ tiên chúng ta còn phải chú ý đặc biệt đến việc củng cố nội bộ lãnh thổ. Phải xây dựng đường sá, cẩu cống, vét sông, khơi nguốn thường xuyên để có thể nhanh chóng chuyển quân rút lui chiến lược hay tổng phản công nhanh chóng.(Trương Hữu Quýnh, Tác dụng của kháng chiến chống ngoại xâm đối với sự hình thành dân tộcViệt Nam, Tạp chí Nghiên cứu Lịch sử, số 5, 1981, trang 23)", items: [            { id: "a", text: "a) Củng cố tiềm lực trong nước giữ vai trò quyết định các cuộc kháng chiến chống ngoại xâm của dân tộc Việt Nam.", correct: true, expl: "Việc củng cố nội bộ, xây dựng cơ sở hạ tầng giao thông như tư liệu đề cập chính là phát huy nội lực. Nội lực quốc gia luôn là yếu tố quyết định thắng lợi. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Các kẻ thù phương Bắc và phương Tây từ những thế kỉ trước Công nguyên đã đem quân xâm lược đất nước Việt Nam.", correct: false, expl: "Kẻ thù phương Bắc xâm lược ta từ trước Công nguyên (ví dụ nhà Triệu), nhưng kẻ thù phương Tây (như thực dân Pháp) mãi đến thế kỷ XIX mới xâm lược. Mệnh đề SAI." },
+            { id: "c", text: "c) Những thắng lợi vẻ vang trong lịch sử chống ngoại xâm của dân tộc Việt Nam đều gắn với các dòng sông.", correct: false, expl: "Rất nhiều trận đánh nổi tiếng diễn ra trên sông (Bạch Đằng, Như Nguyệt), nhưng không phải \"đều\" gắn với sông. Có những chiến thắng vĩ đại trên bộ như Chi Lăng, Đống Đa, Điện Biên Phủ. Mệnh đề SAI." },
+            { id: "d", text: "d) Tư tưởng chủ đạo trong các cuộc kháng chiến chống ngoại xâm của dân tộc Việt Nam là kiên quyết giữ thế tiến công.", correct: true, expl: "Tư tưởng tiến công (bao gồm cả tiến công quân sự và tiến công chính trị, ngoại giao) là sợi chỉ đỏ trong nghệ thuật quân sự Việt Nam để đánh bại kẻ thù lớn mạnh hơn. Mệnh đề ĐÚNG." }
+        ]},
+        { id: "2_II_2", type: "tf_cluster", context: "Câu 2. Đọc kĩ đoạn tư liệu: Trong cuón sách Kì diệu ASEAN- Chất xúc tác cho hoà bình (The ASEAN miracle,A Catalyst for Peace), xuất bản vào dịp kỉ niệm 50 năm thành lập tổ chức ASEAN (1967-2017),các tác giả cho rằng: Thành công của ASEAN là một điểu kì diệu và thế giái sẽ trở nên tốt đẹp hơn khi các khu vực đang phát triển khác noi gương sự thành công của ASEAN để tạo ra hoà bình, thịnh vượng.", items: [            { id: "a", text: "a) ASEAN ra đời và phát triển, chứng minh sự hợp tác khu vực trên thế giới ngày nay là tất yếu và có hiệu quả.", correct: true, expl: "Sự thành công của ASEAN (\"một điều kì diệu\") khẳng định rõ xu hướng liên kết khu vực mang lại hiệu quả to lớn về kinh tế và hòa bình. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Khác biệt về thể chế và trình độ phát triển không phải là rào cản cho sự ra đời và phát triển của một tổ chức mang tính khu vực như ASEAN.", correct: false, expl: "Sự khác biệt về thể chế (cộng sản, tư bản, quân chủ) thực chất LÀ một rào cản rất lớn, gây ra nhiều khó khăn. Chỉ là ASEAN đã xuất sắc vượt qua được rào cản đó chứ không phải nó không tồn tại. Mệnh đề SAI." },
+            { id: "c", text: "c) Thành công của ASEAN góp phần quyết định tạo dựng một nhà nước Đông Nam Á thống nhất trong sự phát triển.", correct: false, expl: "ASEAN là một tổ chức liên kết giữa các quốc gia độc lập có chủ quyền, chưa bao giờ hướng tới việc tạo ra một \"nhà nước thống nhất\" (siêu quốc gia). Mệnh đề SAI." },
+            { id: "d", text: "d) Sự phát triển và mở rộng uy tín, vị thế của ASEAN biến khu vực Đông Nam Á trở thành ngôi nhà chung hoà bình và thịnh vượng.", correct: true, expl: "Đây là kết quả và mục tiêu cao cả nhất mà ASEAN hướng tới và đã đạt được những thành quả rõ rệt, được thế giới công nhận. Mệnh đề ĐÚNG." }
+        ]},
+        { id: "2_II_3", type: "tf_cluster", context: "Câu 3. Đọc kĩ đoạn tư liệu:“Vào một ngày tháng 3, khi chiến dịch Điện Biên Phủ mới mở màn chua duợc bao lâu, trong buổi gặp mặt nhà báo Ô-xtrây-li-a, với phong độ riêng biệt của mình, Bác Hồ đã lật ngược chiếc mū đang cẩm trên tay rổi nói: Đây là Diện Biên Phủ. Bác đưa tay chạy quanh vành mũ: Núi ở đây và chúng tôi cũng ở đây. Bác nắm tay lại, nhấn mạnh vào lòng mū, rôi nói tiếp: Còn đây là quân Pháp. Họ không thể thoát khỏi chỗ này được. Cólẽ thời gian còn dài nhưng họ không thể thoát được....(Trích từ Điện Biên Phủ - Sự kiện và tư liệu)", items: [
+            { id: "a", text: "a) Chiến dịch Điện Biên Phủ mở màn bằng việc quân đội Việt Nam đánh đồi A1.", correct: false, expl: "Chiến dịch Điện Biên Phủ mở màn vào ngày 13/3/1954 bằng trận đánh tiêu diệt cứ điểm Him Lam, không phải đồi A1 (A1 đánh ở đợt 2). Mệnh đề SAI." },
+            { id: "b", text: "b) Lần đầu tiên, quân đội Việt Nam sử dụng chiến thuật bao vây đánh tập đoàn cứ điểm.", correct: true, expl: "Hành động \"tay chạy quanh vành mũ\" của Bác mô phỏng chiến thuật vây ép. Đây là lần đầu tiên quân đội ta đánh một tập đoàn cứ điểm phòng ngự kiên cố nhất của Pháp. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Tập đoàn cứ điểm Điện Biên Phủ là trận địa mà Pháp hoàn toàn ở thế chủ động.", correct: false, expl: "Khi bị bộ đội ta lập vòng vây cô lập hoàn toàn dưới lòng chảo, Pháp rơi vào thế bị động chống đỡ, phụ thuộc hoàn toàn vào cầu hàng không tiếp tế. Mệnh đề SAI." },
+            { id: "d", text: "d) Quyết tâm và niềm tin của Chủ tịch Hồ Chí Minh, của toàn Đảng, toàn dân đã chiến thắng.", correct: true, expl: "Câu nói khẳng định \"họ không thể thoát khỏi chỗ này được\" thể hiện niềm tin tất thắng mãnh liệt của Bác, và lịch sử đã chứng minh điều đó. Mệnh đề ĐÚNG." }
+        ]},
+        { id: "2_II_4", type: "tf_cluster", context: "Câu 4. Đọc kĩ đoạn tư liệu: Tháng 10 - 1938, Nguyễn Ái Quốc rời Mát-xcơ-va đến Diên An, tỉnh Thiểm Tây,là căn cứ đẩu não của cách mạng Trung Quốc, liên hệ trực tiếp với Đảng Cộng sản Trung Quốc.... Đầu năm 1939, Nguyễn Ái Quốc đến Trùng Khánh, làm việc tại Văn phòng Bát Lộ quân Trùng Khánh. Cuối năm 1938 và trong năm 1939,Nguyěn Ái Quốc viết nhiểu bài báo gửi vể Việt Nam giới thiệu cuộc chiến đấu, những vấn đế và kinh nghiệm của nhân dân Trung Quốc chống phát xít Nhật và chống chiến tranh.Tháng 7-1939,Nguyễn Ái Quốc viết tám điểm làm rô đường lối chủ trương của cách mang Dong Duơng.(Nguyěn Đình Bin, Ngoai giao Việt Nam 1945-2000,NXB Chính trị quốc gia, Hà Nội, 2005, trang 36)", items: [           { id: "a", text: "a) Đoạn tư liệu phản ánh hoạt động đối ngoại của Nguyễn Ái Quốc với Quốc tế Cộng sản và Đảng Cộng sản Pháp.", correct: false, expl: "Đoạn tư liệu chỉ nhắc đến sự di chuyển từ Mát-xcơ-va đến căn cứ Diên An và việc Bác liên hệ trực tiếp với Đảng Cộng sản Trung Quốc. Không nhắc đến Đảng Cộng sản Pháp. Mệnh đề SAI." },    { id: "b", text: "b) Nguyễn Ái Quốc đã có những hoạt động đối ngoại tích cực với Đảng Cộng sản Trung Quốc và làm rõ chủ trương đường lối của cách mạng Đông Dương.", correct: true, expl: "Chính xác theo văn bản: \"liên hệ trực tiếp với Đảng Cộng sản Trung Quốc\" và \"làm rõ đường lối chủ trương của cách mạng Đông Dương\". Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Các hoạt động đối ngoại của Nguyễn Ái Quốc và Đảng Cộng sản Đông Dương giai đoạn này đều phục vụ cuộc đấu tranh giải phóng dân tộc của nhân dân Việt Nam.", correct: true, expl: "Việc Bác viết báo gửi về nước để phổ biến kinh nghiệm chống phát xít đều nhằm mục đích cao cả nhất là phục vụ công cuộc giải phóng dân tộc ta. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Nguyễn Ái Quốc và Đảng Cộng sản Đông Dương chủ trương tranh thủ quan hệ đối ngoại tích cực với Đảng Cộng sản Trung Quốc để mở rộng quan hệ với Liên Xô.", correct: false, expl: "Nguyễn Ái Quốc vừa rời Liên Xô (Mát-xcơ-va) đến Trung Quốc, do đó không phải là dựa vào Trung Quốc để mở rộng quan hệ ngược lại với Liên Xô. Mệnh đề SAI." }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // BẮT ĐẦU BÀI THI
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                currentIdx = 0;
+                userAnswers = {};
+                window.renderQuestion();
+                startTimer(50 * 60); 
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.items.length;
+            else count += 1;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        return Object.keys(userAnswers).length;
+    }
+
+    // LƯU ĐÁP ÁN PHẦN I VÀ PHẦN II
+    window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            
+            const parts = qId.split('_'); 
+            const mainQId = parts.slice(0, 3).join('_'); 
+            const itemId = parts[3]; 
+            const q = currentQuestions.find(i => i.id === mainQId);
+            const item = q.items.find(i => i.id === itemId);
+            
+            // Gọi Popup giải thích
+            window.showFeedbackModal(item, val, 'tf');
+
+        } else if (type === 'single') {
+            if (userAnswers[qId] !== undefined) return;
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            const q = currentQuestions[currentIdx];
+            window.showFeedbackModal(q, val, 'single');
+        }
+    };
+
+    // MODAL PHẢN HỒI LỜI GIẢI CHI TIẾT
+    window.showFeedbackModal = function(qOrItem, uAns, type = 'single') {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        const header = document.getElementById('feedback-header');
+        const body = document.getElementById('feedback-body');
+        
+        if(!modal || !content) return; 
+
+        let isCorrect = false;
+        let correctOptText = '';
+        let userChoiceText = '';
+        let explanation = qOrItem.explanation || qOrItem.expl || "Chưa có lời giải chi tiết.";
+
+        if (type === 'single') {
+            isCorrect = (uAns === qOrItem.correct);
+            correctOptText = qOrItem.options[qOrItem.correct];
+            userChoiceText = String.fromCharCode(65 + uAns);
+        } else if (type === 'tf') {
+            isCorrect = (uAns === qOrItem.correct);
+            correctOptText = qOrItem.correct ? "ĐÚNG" : "SAI";
+            userChoiceText = uAns ? "ĐÚNG" : "SAI";
+        }
+        
+        let bgColor = isCorrect ? 'emerald' : 'red';
+        let statusTitle = isCorrect ? 'Chính xác!' : 'Bạn làm sai rồi!';
+        let emoji = isCorrect ? '🎉' : '💡';
+
+        header.innerHTML = `<div class="text-6xl mb-4 animate-bounce">${emoji}</div><h3 class="text-3xl font-black text-${bgColor}-600 uppercase tracking-widest drop-shadow-sm">${statusTitle}</h3>`;
+        
+        body.innerHTML = `<p class="mb-4 text-${bgColor}-800 text-xl font-bold text-center">Em đã chọn: <span class="bg-${bgColor}-100 text-${bgColor}-700 px-3 py-1 rounded-lg">${userChoiceText}</span></p>
+                          <div class="p-5 bg-white border-4 border-${bgColor}-100 rounded-2xl shadow-inner mt-4 text-center">
+                              <p class="text-${bgColor}-700 font-extrabold text-lg mb-2">ĐÁP ÁN CHUẨN LÀ:</p>
+                              <p class="text-2xl text-black drop-shadow-sm font-black">${correctOptText}</p>
+                          </div>`;
+        
+        body.innerHTML += `<div class="mt-6"><div class="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-t-xl font-black uppercase text-sm border-b-4 border-blue-500">📖 Giải chi tiết từng bước:</div><div class="p-5 bg-white border-2 border-blue-200 rounded-b-2xl rounded-tr-2xl shadow-sm text-black font-medium text-base md:text-lg leading-loose math-scroll">${explanation}</div></div>`;
+
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    };
+
+    window.closeFeedbackModal = function() {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        if(!modal) return;
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    };
+
+    // RENDERING ĐA LOẠI CÂU HỎI
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = `<div class="fade-in w-full">`;
+        
+        // --- MULTIPLE CHOICE ---
+        if (q.type === 'single') {
+            const hasAnswered = userAnswers[q.id] !== undefined;
+            const uAns = userAnswers[q.id];
+            
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">CÂU HỎI TRẮC NGHIỆM</h3></div>`;
+            html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+            html += `<div class="space-y-4 md:pl-6 mt-6">`;
+            q.options.forEach((opt, i) => {
+                const isChecked = (uAns === i) ? 'checked' : '';
+                const disabledClass = hasAnswered ? 'disabled-option' : '';
+                html += `<div class="flex items-center">
+                    <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} ${hasAnswered ? 'disabled' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                    <label for="opt_${i}" class="option-label ${disabledClass} w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg cursor-pointer">
+                        <div class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                        <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                    </label>
+                </div>`;
+            });
+            html += `</div>`;
+            
+        } 
+        // --- TRUE / FALSE ---
+        else if (q.type === 'tf_cluster') {
+            
+            let displayContext = q.context;
+
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">TRẮC NGHIỆM ĐÚNG/SAI</h3></div>`;
+            html += `<div class="bg-red-50 text-red-700 p-4 rounded-xl font-bold mb-4 border-2 border-red-100 text-lg sm:text-xl leading-relaxed math-scroll">${displayContext}</div>`;
+            html += `<div class="space-y-3 mt-6">`;
+            q.items.forEach((item) => {
+                const combinedId = q.id + '_' + item.id;
+                let ans = userAnswers[combinedId];
+                let btnT = ans === true ? 'selected' : ''; 
+                let btnF = ans === false ? 'selected' : ''; 
+
+                html += `<div class="p-4 sm:p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                    <div class="font-bold text-gray-800 flex-1 text-base sm:text-lg math-scroll">${item.text}</div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnT}">ĐÚNG</button>
+                        <button onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnF}">SAI</button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        } 
+
+        html += `</div>`;
+        container.innerHTML = html;
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        const pBtn = document.getElementById('prev-btn');
+        const nBtn = document.getElementById('next-btn');
+        const sBtn = document.getElementById('submit-btn');
+        if(pBtn) pBtn.style.display = (currentIdx === 0) ? 'none' : 'block';
+        if(nBtn) nBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        if(sBtn) sBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // CHẤM ĐIỂM BÀI THI LỊCH SỬ
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25; // 0.25 điểm cho trắc nghiệm nhiều phương án
+            } else if (q.type === 'tf_cluster') {
+                let c = 0;
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) c++; });
+                // Cách tính điểm phần Trắc nghiệm Đúng/Sai
+                if (c === 1) score += 0.1;
+                else if (c === 2) score += 0.25;
+                else if (c === 3) score += 0.75;
+                else if (c === 4) score += 1.0;
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="absolute top-4 left-4 z-50">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm flex items-center gap-2">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center mt-12 sm:mt-6">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại & Giải chi tiết</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                let explanation = q.explanation;
+
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-2">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-2xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-2xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3"><div class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                if (q.explanation) html += `<div class="review-explanation mt-4 pt-4 border-t-2 border-gray-200"><p class="text-sm font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết từng bước:</p><p class="text-black font-medium text-base leading-loose math-scroll">${explanation}</p></div>`;
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                let displayContext = q.context;
+
+                html += `<div class="p-4 sm:p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-indigo-800 mb-4 math-scroll">${displayContext}</div>`;
+                html += `<div class="space-y-4">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isCorrect = uAns === item.correct;
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+                    let explanation = item.expl;
+
+                    html += `<div class="p-4 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 math-scroll">${item.text}</div>
+                        <div class="mt-2 flex items-center justify-between border-b border-gray-100 pb-2">
+                            <span class="text-sm font-bold text-gray-500">Bạn chọn: <span class="${uAns === undefined ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${uAns === undefined ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-lg ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án chuẩn: ${ansText} ${iconHtml}</span>
+                        </div>
+                        <div class="review-explanation mt-2 pt-2 text-sm text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${explanation}</div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+            <td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
