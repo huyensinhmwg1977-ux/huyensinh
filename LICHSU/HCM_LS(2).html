@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Lịch Sử 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all relative">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white relative">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1 uppercase">Kiểm Tra Lịch Sử 12</h1>
+      <p class="text-gray-600 font-bold">Chủ đề: Khái quát cuộc đời và sự nghiệp của Hồ Chí Minh</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn nội dung:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 1: NỘI DUNG ÔN TẬP</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-lg sm:text-xl tracking-wide">PHẦN 2: BÀI TẬP TRẮC NGHIỆM</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 VÀO HỌC </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="absolute top-4 left-4 z-10 flex gap-2">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+     </div>
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100 relative mt-12 sm:mt-0">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/0 ý</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+     </div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl relative" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10 flex gap-2">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+         <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+     </div>
+     <div class="mb-6 pb-4 border-b-2 border-gray-100 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+     </div>
+     <div class="mb-6 border-b-2 border-gray-100 pb-4 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚    Phát triển bởi cô  <span class="text-blue-600 font-extrabold">Lê Huyền Sinh     📚 🏆</span>  
+      </p>
+   </footer>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-[90%] shadow-2xl transform transition-transform duration-300 scale-95" id="confirm-card">
+            <div class="text-5xl mb-4 text-center animate-bounce">⚠️</div>
+            <h3 class="text-2xl font-black text-red-600 mb-2 text-center uppercase">Khoan đã!</h3>
+            <p class="text-gray-600 mb-8 text-center font-medium leading-relaxed" id="confirm-msg"></p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="btn-cancel-submit" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200">Tiếp tục làm bài</button>
+                <button id="btn-confirm-submit" class="flex-1 py-3 px-4 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold rounded-xl transition-all shadow-md shadow-red-500/30 transform hover:-translate-y-0.5">Vẫn Nộp Luôn</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            scoresRef = database.ref('bxh_lichsu12_chude8_p2_sau_ctl'); 
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let isSubmitting = false;
+
+    // ==================== HTML LÝ THUYẾT (DÀNH CHO PHẦN 1) ====================
+    const theoryHTML = `
+ <div class="theory-content text-gray-800 leading-relaxed">
+    <h2 style="color: #dc2626;" class="text-2xl font-black mb-4">I. NỘI DUNG ÔN TẬP</h2>
+    
+    <div style="text-align: center; font-weight: bold; margin-bottom: 30px; font-size: 1.1rem; color: #1e40af;">
+        A. KHÁI QUÁT VỀ CUỘC ĐỜI VÀ SỰ NGHIỆP CỦA HỒ CHÍ MINH
+    </div>
+    
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 15px;">1. Những yếu tố ảnh hưởng đến cuộc đời và sự nghiệp của Hồ Chí Minh</h3>
+    <p><strong>Hoàn cảnh đất nước:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Sau khi hoàn thành cuộc xâm lược, thực dân Pháp chia Việt Nam thành 3 xứ để cai trị và tiến hành khai thác thuộc địa.</li>
+        <li>Mâu thuẫn giữa toàn thể nhân dân Việt Nam với thực dân Pháp xâm lược ngày càng gay gắt.</li>
+        <li>Sự khủng hoảng sâu sắc về đường lối cứu nước: phong trào yêu nước chống thực dân Pháp theo hệ tư tưởng phong kiến (phong trào Cần vương, khởi nghĩa Yên Thế,...) và phong trào yêu nước theo khuynh hướng dân chủ tư sản (Phan Bội Châu, Phan Châu Trinh,...) cũng không thành công.</li>
+    </ul>
+
+    <p><strong>Hoàn cảnh quê hương:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Nghệ An là vùng đất địa linh nhân kiệt, giàu truyền thống văn hoá, hiếu học, người dân cần cù, chịu khó.</li>
+        <li>Nơi có nhiều nhà khoa bảng, nhiều sĩ phu yêu nước lãnh đạo các phong trào đấu tranh anh dũng chống ngoại xâm. Các nhà Nho "xứ Nghệ" đương thời đã tiếp xúc với sách báo mới, họ thường bàn luận về các phong trào yêu nước chống thực dân xâm lược và phong kiến tay sai.</li>
+    </ul>
+
+    <p><strong>Hoàn cảnh gia đình:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Hồ Chí Minh sinh ra trong một gia đình nhà Nho yêu nước, có nền nếp, giàu lòng thương người, trọng nghĩa khí.</li>
+        <li>Chịu ảnh hưởng lớn từ tấm gương yêu nước của người cha Nguyễn Sinh Sắc và sự đảm đang của người mẹ Hoàng Thị Loan.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">2. Tiểu sử và tiến trình hoạt động cách mạng của Hồ Chí Minh</h3>
+    <p><strong>Từ năm 1890 đến năm 1911:</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Hồ Chí Minh sinh ngày 19-5-1890, quê ngoại (làng Hoàng Trù), quê nội (làng Kim Liên).</li>
+        <li>Năm 1895, theo cha mẹ vào Huế sinh sống.</li>
+        <li>Năm 1901, mẹ qua đời, Nguyễn Sinh Cung trở về quê sinh sống, lấy tên là Nguyễn Tất Thành.</li>
+        <li>Năm 1906, Nguyễn Tất Thành theo cha vào Huế, học ở Trường Tiểu học Pháp - Việt Đông Ba, Trường Quốc học Huế...</li>
+        <li>Năm 1910, Nguyễn Tất Thành đi vào Bình Thuận (nay thuộc Lâm Đồng), dạy học ở Trường Dục Thanh, được các sĩ phu duy tân tạo điều kiện tìm đường cứu nước.</li>
+        <li>Ngày 05-6-1911, từ Bến Nhà Rồng (Thành phố Hồ Chí Minh), Nguyễn Tất Thành lấy tên Văn Ba, bắt đầu ra đi tìm đường cứu nước.</li>
+    </ul>
+
+    <div style="text-align: center; font-weight: bold; margin-bottom: 30px; font-size: 1.1rem; color: #1e40af; margin-top: 40px;">
+        B. HỒ CHÍ MINH - ANH HÙNG GIẢI PHÓNG DÂN TỘC
+    </div>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 15px;">1. Hành trình tìm đường cứu nước (1911-1920)</h3>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Năm 1911, từ Sài Gòn (Việt Nam), Nguyễn Tất Thành (Văn Ba) làm phụ bếp trên con tàu La-tu-sơ Tơ-rê-vin, bắt đầu hành trình cứu nước.</li>
+        <li>Từ năm 1911 đến năm 1917, Nguyễn Tất Thành đi qua nhiều châu lục, nhiều quốc gia; vừa lao động, vừa tìm hiểu, học hỏi.</li>
+        <li>Cuối năm 1917, từ nước Anh trở lại Pháp, tham gia Hội những người yêu nước tại Pháp.</li>
+        <li>Năm 1919, tại Pháp, lấy tên là Nguyễn Ái Quốc, gửi bản Yêu sách của nhân dân An Nam đến Hội nghị Véc-xai.</li>
+        <li>Giữa năm 1920, đọc Sơ thảo lần thứ nhất những luận cương về vấn đề dân tộc và vấn đề thuộc địa của Lê-nin, tìm thấy con đường cứu nước giải phóng dân tộc - con đường cách mạng vô sản.</li>
+        <li>Cuối năm 1920, Nguyễn Ái Quốc tham dự Đại hội đại biểu toàn quốc lần thứ XVIII của Đảng Xã hội Pháp họp ở Tua, bỏ phiếu tán thành Quốc tế Cộng sản và tham gia sáng lập Đảng Cộng sản Pháp.</li>
+        <li>Với việc tìm ra con đường cứu nước, Nguyễn Ái Quốc đã góp phần trực tiếp vào việc giải quyết cuộc khủng hoảng đường lối trong phong trào giải phóng dân tộc ở Việt Nam cuối thế kỉ XIX đầu thế kỉ XX.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">2. Sáng lập Đảng Cộng sản Việt Nam</h3>
+    <p><strong>a) Chuẩn bị về chính trị, tư tưởng và tổ chức cho sự ra đời Đảng Cộng sản Việt Nam</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li><strong>Về chính trị, tư tưởng:</strong> Tham gia sáng lập Hội Liên hiệp thuộc địa ở Pháp (1921); ra báo tiếng Pháp Người cùng khổ; viết bài trên báo Nhân đạo (Pháp), viết Bản án chế độ thực dân Pháp... qua đó khơi dậy chủ nghĩa yêu nước, vạch trần bản chất và tội ác của chủ nghĩa đế quốc, tuyên truyền chủ nghĩa Mác - Lê-nin và con đường cách mạng vô sản.</li>
+        <li><strong>Về tổ chức:</strong> Thành lập Hội Việt Nam Cách mạng Thanh niên (1925), ra báo Thanh niên (số đầu tiên ra ngày 21-6-1925).</li>
+    </ul>
+
+    <p><strong>b) Triệu tập và chủ trì Hội nghị thành lập Đảng Cộng sản Việt Nam</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Các tổ chức cộng sản ra đời, hoạt động riêng rẽ, tranh giành ảnh hưởng làm cho cách mạng đứng trước nguy cơ bị chia rẽ lớn.</li>
+        <li>Đầu năm 1930, Nguyễn Ái Quốc triệu tập và chủ trì Hội nghị hợp nhất các tổ chức cộng sản tại Cửu Long (Hương Cảng, Trung Quốc).</li>
+        <li>Hội nghị quyết định hợp nhất các tổ chức cộng sản thành một đảng duy nhất, lấy tên là Đảng Cộng sản Việt Nam, thông qua các văn kiện do Nguyễn Ái Quốc soạn thảo.</li>
+    </ul>
+
+    <p><strong>c) Ý nghĩa của việc thành lập Đảng Cộng sản Việt Nam</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Là sản phẩm tất yếu của sự kết hợp chủ nghĩa Mác - Lê-nin với phong trào công nhân và phong trào yêu nước.</li>
+        <li>Đánh dấu bước ngoặt vĩ đại trong lịch sử Việt Nam; mở ra thời kì cách mạng giải phóng dân tộc đặt dưới sự lãnh đạo duy nhất của Đảng.</li>
+        <li>Là sự chuẩn bị đầu tiên có tính quyết định cho những bước phát triển nhảy vọt của cách mạng và dân tộc Việt Nam.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">3. Chuẩn bị và lãnh đạo Cách mạng tháng Tám năm 1945</h3>
+    <p><strong>a) Triệu tập và chủ trì Hội nghị Ban chấp hành Trung ương Đảng Cộng sản Đông Dương lần thứ 8, thành lập Việt Minh</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Ngày 28-01-1941, Nguyễn Ái Quốc về nước trực tiếp lãnh đạo cách mạng Việt Nam.</li>
+        <li>Tháng 5-1941, triệu tập và chủ trì Hội nghị Ban Chấp hành Trung ương Đảng Cộng sản Đông Dương lần thứ 8 tại Pác Bó (Cao Bằng). Hội nghị đã đặt nhiệm vụ giải phóng dân tộc lên hàng đầu; xác định hình thái khởi nghĩa đi từ khởi nghĩa từng phần tiến lên tổng khởi nghĩa.</li>
+        <li>Theo đề nghị của Nguyễn Ái Quốc, thành lập Việt Nam Độc lập Đồng minh (gọi tắt là Việt Minh) (19-5-1941).</li>
+    </ul>
+
+    <p><strong>b) Thành lập Đội Việt Nam Tuyên truyền Giải phóng quân</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Trên cơ sở các đội du kích và Cứu quốc quân, Hồ Chí Minh ra Chỉ thị thành lập Đội Việt Nam Tuyên truyền Giải phóng quân nhằm “lập ra đội chủ lực”.</li>
+        <li>Ngày 22-12-1944, Đội Việt Nam Tuyên truyền Giải phóng quân được thành lập.</li>
+    </ul>
+
+    <p><strong>c) Lãnh đạo Tổng khởi nghĩa giành chính quyền, khai sinh nước Việt Nam Dân chủ Cộng hoà</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Ngày 14 và 15-8-1945, Hồ Chí Minh triệu tập và chủ trì Hội nghị toàn quốc của Đảng, thông qua kế hoạch lãnh đạo toàn dân Tổng khởi nghĩa.</li>
+        <li>Ngày 16 và 17-8-1945, Hồ Chí Minh triệu tập và chủ trì Đại hội Quốc dân tại Tân Trào, tán thành chủ trương Tổng khởi nghĩa của Đảng...</li>
+        <li>Ngày 28-8-1945, Hồ Chí Minh cải tổ Uỷ ban Dân tộc giải phóng thành Chính phủ lâm thời, bắt tay soạn thảo bản Tuyên ngôn Độc lập.</li>
+        <li>Ngày 02-9-1945, Chủ tịch Hồ Chí Minh trịnh trọng công bố bản Tuyên ngôn Độc lập, khai sinh ra nước Việt Nam Dân chủ Cộng hoà.</li>
+    </ul>
+
+    <h3 style="color: #dc2626; font-size: 18px; font-weight: bold; margin-top: 25px;">4. Lãnh đạo cuộc kháng chiến chống Pháp (1945 - 1954) và cuộc kháng chiến chống Mỹ, cứu nước (1954 - 1969)</h3>
+    <p><strong>a) Giai đoạn 1945 - 1946</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Lãnh đạo Chính phủ và nhân dân giải quyết kịp thời, hiệu quả: nạn đói, nạn dốt, khó khăn về tài chính, chống "thù trong, giặc ngoài"...</li>
+        <li>Tháng 5-1946, theo sáng kiến của Chủ tịch Hồ Chí Minh, Hội Liên hiệp quốc dân Việt Nam (Liên Việt) được thành lập để mở rộng khối đoàn kết toàn dân.</li>
+        <li>Chủ động thiết lập mối liên hệ và tranh thủ sự ủng hộ của Liên hợp quốc, các nước Đồng minh về nền độc lập của Việt Nam.</li>
+        <li>Khởi xướng và thực hiện sách lược "hoà để tiến", kí với Pháp Hiệp định Sơ bộ (06-3-1946) và bản Tạm ước (14-9-1946) nhằm tranh thủ thời gian hoà hoãn chuẩn bị cho cuộc kháng chiến lâu dài.</li>
+    </ul>
+
+    <p><strong>b) Giai đoạn 1946 - 1954</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Đêm 19-12-1946, Chủ tịch Hồ Chí Minh ra Lời kêu gọi toàn quốc kháng chiến, phát động cuộc kháng chiến chống thực dân Pháp xâm lược.</li>
+        <li>Cùng Trung ương Đảng hoạch định đường lối kháng chiến toàn dân, toàn diện, trường kì, tự lực cánh sinh.</li>
+        <li>Chủ trì Đại hội đại biểu lần thứ II của Đảng Cộng sản Đông Dương (tháng 02-1951), từng bước mở rộng ngoại giao.</li>
+        <li>Cùng Trung ương Đảng chỉ đạo thắng lợi nhiều chiến dịch quân sự, đỉnh cao là chiến dịch Điện Biên Phủ.</li>
+    </ul>
+
+    <p><strong>c) Giai đoạn 1954 - 1969</strong></p>
+    <ul class="list-disc ml-5 mb-4 space-y-2">
+        <li>Chủ trì Đại hội đại biểu toàn quốc lần thứ III của Đảng Lao động Việt Nam (tháng 9-1960), hoạch định đường lối chiến lược cho cách mạng hai miền Nam - Bắc.</li>
+        <li>Thay mặt Đảng, Chính phủ đi thăm và tăng cường quan hệ hữu nghị với các nước anh em, tranh thủ sự ủng hộ quốc tế.</li>
+        <li>Người nêu cao chân lí "Không có gì quý hơn độc lập, tự do" và ý chí quyết tâm quét sạch quân xâm lược.</li>
+        <li>Người thường xuyên viết thư, gửi điện thăm hỏi, động viên chiến sĩ và nhân dân. Ngày 02-9-1969, Chủ tịch Hồ Chí Minh qua đời tại Thủ đô Hà Nội.</li>
+    </ul>
+
+    <div class="my-6 border-b-2 border-gray-200"></div>
+</div>
+    `;
+
+    // ==================== NGÂN HÀNG CÂU HỎI LỊCH SỬ ====================
+    const de2_data = [
+        // TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN (14 CÂU)
+        { id: "hm_1", type: "single", question: "Sự kiện nào trên thế giới có ảnh hưởng lớn đến cách mạng Việt Nam từ sau Chiến tranh thế giới thứ nhất?", options: ["Sự thành công của Cách mạng tháng Mười Nga (1917).", "Nguyễn Ái Quốc gửi bản Yêu sách của nhân dân An Nam đến Hội nghị Véc-xai (1919).", "Nguyễn Ái Quốc tham dự Đại hội đại biểu toàn quốc lần thứ XVIII của Đảng Xã hội Pháp (1920).", "Nước Pháp bị khủng hoảng kinh tế."], correct: 0, giaiThich: "Cách mạng tháng Mười Nga (1917) thành công đã thức tỉnh các dân tộc bị áp bức, để lại bài học kinh nghiệm quý báu và trực tiếp ảnh hưởng đến con đường cứu nước của Nguyễn Ái Quốc sau này." },
+        { id: "hm_2", type: "single", question: "Sự kiện nào đánh dấu Nguyễn Ái Quốc bước đầu tìm thấy con đường cứu nước đúng đắn?", options: ["Nguyễn Ái Quốc đưa bản Yêu sách của nhân dân An Nam đến Hội nghị Véc-xai (1919).", "Nguyễn Ái Quốc tham gia sáng lập Đảng Cộng sản Pháp (1920).", "Nguyễn Ái Quốc đọc Sơ thảo lần thứ nhất những luận cương về vấn đề dân tộc và vấn đề thuộc địa của Lê-nin (1920).", "Nguyễn Ái Quốc thành lập Hội Việt Nam Cách mạng Thanh niên (1925)."], correct: 2, giaiThich: "Giữa năm 1920, khi đọc được 'Sơ thảo lần thứ nhất những luận cương về vấn đề dân tộc và vấn đề thuộc địa' của V.I. Lê-nin, Nguyễn Ái Quốc đã tìm thấy con đường giải phóng dân tộc đúng đắn: con đường cách mạng vô sản." },
+        { id: "hm_3", type: "single", question: "Để nghiên cứu, học tập chủ nghĩa Mác - Lê-nin và Cách mạng tháng Mười Nga, từ năm 1920 đến 1923, Nguyễn Ái Quốc hoạt động chủ yếu ở nước nào?", options: ["Liên Xô.", "Pháp.", "Trung Quốc.", "Anh."], correct: 1, giaiThich: "Sau khi gia nhập Đảng Cộng sản Pháp (12/1920), từ năm 1921 đến tháng 6/1923, Nguyễn Ái Quốc tiếp tục ở lại Pháp để hoạt động cách mạng, nghiên cứu chủ nghĩa Mác-Lênin, viết báo và thành lập Hội Liên hiệp thuộc địa." },
+        { id: "hm_4", type: "single", question: "Khi Quốc tế Cộng sản được thành lập ở Mát-xcơ-va vào tháng 02-1919 thì Nguyễn Ái Quốc đang ở", options: ["Anh.", "Pháp.", "Liên Xô.", "Trung Quốc."], correct: 1, giaiThich: "Quốc tế Cộng sản (Quốc tế III) được thành lập tháng 2/1919 (chính thức Đại hội I diễn ra vào tháng 3/1919). Lúc này, Nguyễn Ái Quốc đang hoạt động tại Pháp (Người từ Anh trở lại Pháp vào cuối năm 1917)." },
+        { id: "hm_5", type: "single", question: "\"Đứng trước chủ nghĩa tư bản và chủ nghĩa đế quốc, quyền lợi của chúng ta là thống nhất, các bạn hãy nhớ lời kêu gọi của Các Mác: Vô sản tất cả các nước đoàn kết lại\". Hãy cho biết đoạn văn trên của ai, viết trong tác phẩm nào?", options: ["Lê-nin, trong Sơ thảo lần thứ nhất những luận cương về vấn đề dân tộc và vấn đề thuộc địa.", "Mác-Ăng-ghen, trong Tuyên ngôn Đảng Cộng sản.", "Nguyễn Ái Quốc, trong Tuyên ngôn của Hội Liên hiệp thuộc địa.", "Nguyễn Ái Quốc, trong Bản án chế độ thực dân Pháp."], correct: 2, giaiThich: "Đây là lời kêu gọi đanh thép được Nguyễn Ái Quốc soạn thảo trong 'Tuyên ngôn của Hội Liên hiệp thuộc địa' (thành lập năm 1921 tại Pháp) nhằm thức tỉnh và đoàn kết nhân dân các nước thuộc địa." },
+        { id: "hm_6", type: "single", question: "Công lao đầu tiên và to lớn nhất của Nguyễn Ái Quốc trong giai đoạn 1911-1930 là gì?", options: ["Từ chủ nghĩa yêu nước đến với chủ nghĩa Mác - Lê-nin, tìm ra con đường cứu nước đúng đắn.", "Thành lập Hội Việt Nam Cách mạng Thanh niên.", "Hợp nhất ba tổ chức cộng sản.", "Khởi thảo Cương lĩnh chính trị đầu tiên của Đảng Cộng sản Việt Nam."], correct: 0, giaiThich: "Mặc dù Người có nhiều công lao to lớn như lập Đảng hay viết Cương lĩnh, nhưng công lao 'đầu tiên và to lớn nhất' mang tính chất mở đường, quyết định toàn bộ lịch sử Việt Nam sau này chính là việc Người tìm ra con đường cứu nước đúng đắn: con đường cách mạng vô sản." },
+        { id: "hm_7", type: "single", question: "Sự kiện đánh dấu bước ngoặt trong cuộc đời hoạt động của Nguyễn Ái Quốc là", options: ["ảnh hưởng của Cách mạng tháng Mười Nga năm 1917 đến tư tưởng cứu nước của Nguyễn Ái Quốc.", "đưa bản Yêu sách của nhân dân An Nam đến Hội nghị Véc-xai (1919).", "đọc Sơ thảo lần thứ nhất những luận cương về vấn đề dân tộc và vấn đề thuộc địa của Lê-nin (1920).", "bỏ phiếu tán thành việc gia nhập Quốc tế Cộng sản và tham gia sáng lập Đảng Cộng sản Pháp (1920)."], correct: 3, giaiThich: "Việc bỏ phiếu tán thành gia nhập Quốc tế Cộng sản tại Đại hội Tours (12/1920) đánh dấu bước ngoặt lịch sử: Người chính thức từ bỏ lập trường quốc gia tư sản để chuyển sang lập trường cộng sản, trở thành người đảng viên Cộng sản đầu tiên của Việt Nam." },
+        { id: "hm_8", type: "single", question: "Tác phẩm của Nguyễn Ái Quốc được xuất bản lần đầu tiên tại Pa-ri năm 1925 là", options: ["Bản án chế độ thực dân Pháp.", "Đường Kách mệnh.", "Báo Thanh niên.", "Báo Người cùng khổ."], correct: 0, giaiThich: "Tác phẩm 'Bản án chế độ thực dân Pháp' (Le Procès de la colonisation française) được xuất bản lần đầu tại Paris (Pháp) năm 1925, là đòn tấn công quyết liệt bằng ngòi bút vào chủ nghĩa thực dân." },
+        { id: "hm_9", type: "single", question: "Thời gian ở Liên Xô (1923 - 1924), Nguyễn Ái Quốc đã viết bài cho", options: ["Báo Đời sống công nhân.", "Báo Nhân đạo.", "Báo Sự thật.", "Tạp chí Thư tín quốc tế."], correct: 3, giaiThich: "Trong thời gian học tập và làm việc tại Liên Xô (từ giữa năm 1923 đến cuối 1924), Nguyễn Ái Quốc đã tích cực viết nhiều bài nghiên cứu về Đông Dương đăng trên tạp chí 'Thư tín quốc tế' (Inprecorr) của Quốc tế Cộng sản và báo 'Sự thật' (Pravda). Ở đây chọn đáp án 'Tạp chí Thư tín quốc tế' theo hệ thống dữ liệu chuẩn của bài học." },
+        { id: "hm_10", type: "single", question: "\"Cương lĩnh chính trị đầu tiên\" (1930) do Nguyễn Ái Quốc soạn thảo và được thông qua tại Hội nghị thành lập Đảng Cộng sản Việt Nam có sự kết hợp đúng đắn về vấn đề dân tộc và vấn đề giai cấp vì đã", options: ["xác định nhiệm vụ giải phóng dân tộc và giai cấp ngang hàng nhau.", "kết hợp vấn đề dân tộc và giai cấp nhưng đặt nhiệm vụ dân tộc lên hàng đầu.", "coi vấn đề ruộng đất là vấn đề quan trọng nhất của cách mạng.", "xác định phải tiến hành đồng thời cách mạng giải phóng dân tộc và ruộng đất."], correct: 1, giaiThich: "Sự sáng tạo và đúng đắn của Cương lĩnh nằm ở chỗ: tuy đứng trên lập trường giai cấp vô sản (kết hợp dân tộc và giai cấp) nhưng trong hoàn cảnh một nước thuộc địa như Việt Nam, Cương lĩnh đã sáng suốt đặt nhiệm vụ đánh đế quốc, giải phóng dân tộc lên hàng đầu." },
+        { id: "hm_11", type: "single", question: "Các hoạt động đối ngoại của Chủ tịch Hồ Chí Minh trong những năm 1945-1946 có ý nghĩa nào sau đây?", options: ["Làm thất bại âm mưu xâm lược Việt Nam của thực dân Pháp.", "Buộc thực dân Pháp phải công nhận Việt Nam độc lập.", "Kéo dài thời gian hoà hoãn để chuẩn bị cho kháng chiến lâu dài.", "Giúp Việt Nam nhận được nhiều viện trợ từ các nước."], correct: 2, giaiThich: "Việc kí Hiệp định Sơ bộ và Tạm ước với Pháp là sách lược 'Hoà để tiến' xuất sắc của Bác, giúp ta bảo toàn lực lượng, gạt bớt một kẻ thù (quân Tưởng) và có thêm thời gian quý báu để chuẩn bị cho cuộc kháng chiến trường kì tất yếu sẽ nổ ra." },
+        { id: "hm_12", type: "single", question: "Trong cuộc kháng chiến chống Mỹ, cứu nước giai đoạn 1954-1969, Chủ tịch Hồ Chí Minh có đóng góp nào sau đây?", options: ["Tranh thủ sự ủng hộ, giúp đỡ của các nước xã hội chủ nghĩa.", "Tranh thủ sự ủng hộ, giúp đỡ của Quốc tế Cộng sản.", "Giữ vị trí Tổng Bí thư và hoạch định đường lối của Đảng.", "Trực tiếp chỉ đạo các chiến dịch đánh Mỹ ở miền Nam."], correct: 0, giaiThich: "Giai đoạn này, với cương vị là Chủ tịch nước và Chủ tịch Đảng, Người đã thực hiện nhiều chuyến công du ngoại giao, viết thư kêu gọi nhằm tăng cường tình đoàn kết và tranh thủ sự viện trợ to lớn từ các nước xã hội chủ nghĩa anh em." },
+        { id: "hm_13", type: "single", question: "Con đường cách mạng Việt Nam được xác định trong \"Cương lĩnh chính trị đầu tiên\" do Nguyễn Ái Quốc khởi thảo là", options: ["làm tư sản dân quyền cách mạng và thổ địa cách mạng để đi tới xã hội cộng sản.", "thực hiện cách mạng ruộng đất cho triệt để.", "tịch thu hết sản nghiệp của bọn đế quốc.", "đánh đổ địa chủ phong kiến, làm cách mạng thổ địa, sau đó làm cách mạng dân tộc."], correct: 0, giaiThich: "Cương lĩnh chính trị đầu tiên đã vạch rõ đường lối chiến lược của cách mạng Việt Nam là 'chủ trương làm tư sản dân quyền cách mạng và thổ địa cách mạng để đi tới xã hội cộng sản' (làm cách mạng giải phóng dân tộc rồi tiến thẳng lên CNXH)." },
+        { id: "hm_14", type: "single", question: "Tư tưởng cốt lõi trong \"Cương lĩnh chính trị đầu tiên\" của Đảng Cộng sản Việt Nam do Nguyễn Ái Quốc soạn thảo là gì?", options: ["Độc lập dân tộc và chủ nghĩa xã hội.", "Độc lập dân tộc và dân chủ.", "Độc lập dân tộc và tự do.", "Độc lập dân tộc và mọi người sống sung sướng, tự do."], correct: 2, giaiThich: "Cương lĩnh xác định đánh đổ đế quốc chủ nghĩa Pháp và bọn phong kiến, làm cho nước Nam được hoàn toàn độc lập, dân chúng được tự do. Vì vậy tư tưởng cốt lõi xuyên suốt là Độc lập dân tộc và Tự do." },
+
+        // TRẮC NGHIỆM ĐÚNG/SAI 
+        { id: 'hm_c1', type: 'tf_cluster', question: "Đọc kĩ đoạn tư liệu sau và xác định các nhận định là Đúng hay Sai:\n\n\"Hồ Chí Minh là Anh hùng giải phóng dân tộc có những công lao to lớn đối với dân tộc Việt Nam. Người đã tìm ra con đường cứu nước đúng đắn và là người sáng lập Đảng Cộng sản Việt Nam. Sự kiện thành lập Đảng Cộng sản Việt Nam đã chấm dứt cuộc khủng hoảng về đường lối và tổ chức của phong trào giải phóng dân tộc Việt Nam. Hồ Chí Minh cũng là người đóng vai trò quan trọng trong quá trình chuẩn bị và trực tiếp lãnh đạo Cách mạng tháng Tám năm 1945 thành công. Sau Cách mạng tháng Tám năm 1945, với cương vị Chủ tịch nước, Người đã kí nhiều sắc lệnh quan trọng, qua đó, giải quyết những khó khăn của nước Việt Nam Dân chủ Cộng hoà. Chủ tịch Hồ Chí Minh đại diện cho Chính phủ Việt Nam kí với Chính phủ Pháp bản Hiệp định Sơ bộ (06-3-1946) và bản Tạm ước (14-9-1946), qua đó, kéo dài thời gian hoà hoãn để chuẩn bị cho kháng chiến toàn quốc chống thực dân Pháp. Người chủ trì Đại hội đại biểu toàn quốc lần thứ III của Đảng Lao động Việt Nam (tháng 9-1960) và cùng Trung ương Đảng hoạch định đường lối kháng chiến chống Mỹ, đấu tranh thống nhất nước nhà.\"", subQuestions: [
+            { id: 'tf_hm1a', text: "Việc Nguyễn Ái Quốc lựa chọn con đường cách mạng vô sản (1920) đã chấm dứt cuộc khủng hoảng về đường lối và tổ chức lãnh đạo của phong trào giải phóng dân tộc Việt Nam.", correct: "Sai", giaiThich: "Năm 1920 Người mới chỉ 'tìm ra' con đường. Phải đến khi Đảng Cộng sản Việt Nam ra đời (năm 1930) thì cuộc khủng hoảng về đường lối và 'tổ chức lãnh đạo' mới thực sự được chấm dứt hoàn toàn." },
+            { id: 'tf_hm1b', text: "Trong những năm 1945-1946, Chủ tịch Hồ Chí Minh đã kí với Chính phủ Pháp Hiệp định Sơ bộ (06-3-1946) và bản Tạm ước (14-9-1946).", correct: "Đúng", giaiThich: "Đoạn tư liệu ghi rõ: Chủ tịch Hồ Chí Minh đại diện cho Chính phủ Việt Nam kí với Chính phủ Pháp bản Hiệp định Sơ bộ (06-3-1946) và bản Tạm ước (14-9-1946)." },
+            { id: 'tf_hm1c', text: "Hồ Chí Minh đóng vai trò quan trọng trong việc chuẩn bị lực lượng chính trị và lực lượng vũ trang cho thắng lợi của Cách mạng tháng Tám (1945).", correct: "Đúng", giaiThich: "Việc Người về nước lập ra Mặt trận Việt Minh (chuẩn bị lực lượng chính trị) và lập Đội VN Tuyên truyền Giải phóng quân (lực lượng vũ trang) là minh chứng rõ nét." },
+            { id: 'tf_hm1d', text: "Chủ tịch Hồ Chí Minh cùng Trung ương Đảng hoạch định đường lối chiến lược và sách lược cho cách mạng hai miền Nam - Bắc.", correct: "Đúng", giaiThich: "Đoạn tư liệu khẳng định: Người chủ trì Đại hội III (1960) và cùng Trung ương Đảng hoạch định đường lối kháng chiến chống Mỹ, đấu tranh thống nhất nước nhà (thực hiện đồng thời 2 chiến lược ở 2 miền)." }
+        ]}
+    ];
+
+    const testBanks = { de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // HIỂN THỊ NÚT ĐIỀU HƯỚNG TÙY THEO PHẦN 1 HAY 2
+    function buildNavButtons(isTheory) {
+        if (isTheory) {
+            return `<button onclick="window.goHome()" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">🏠 ĐÃ HIỂU - QUAY LẠI TRANG CHỦ</button>`;
+        } else {
+            return `
+                <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+                <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+                <button id="submit-btn" onclick="window.confirmSubmit()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+            `;
+        }
+    }
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Các em vui lòng nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 1 (LÝ THUYẾT)
+            if (maDe === 'de1') {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('timer-banner').style.display = 'none';
+                document.getElementById('nav-buttons').innerHTML = buildNavButtons(true);
+                document.getElementById('question-container').innerHTML = theoryHTML;
+                showSection('quiz');
+                return;
+            }
+
+            // XỬ LÝ NẾU HỌC SINH CHỌN PHẦN 2 (TRẮC NGHIỆM)
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('timer-banner').style.display = 'flex';
+            document.getElementById('nav-buttons').innerHTML = buildNavButtons(false);
+
+            let rawQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+            
+            // ĐÁNH SỐ TỪ CH0 CÂU TRẮC NGHIỆM ĐƠN
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+            });
+            
+            // ĐÁNH SỐ TIẾP TỤC CHO CÂU ĐÚNG SAI
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                let startIdx = part1.length + idx + 1;
+                q.displayQuestion = `Câu ${startIdx}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => {
+                    let cleanText = sub.text.replace(/^[a-d]\)\s*/i, '');
+                    sub.text = `${labels[sIdx]} ${cleanText}`;
+                });
+            });
+
+            currentQuestions = [...part1, ...part2];
+            quizStartTime = new Date();
+            
+            setTimeout(() => { isQuizStarted = true; }, 1000);
+            showSection('quiz');
+            currentIdx = 0;
+            userAnswers = {};
+            window.renderQuestion();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalItems() {
+        let total = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') total += q.subQuestions.length; 
+            else total += 1; 
+        });
+        return total; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    if (userAnswers[sub.id] !== undefined) count++;
+                });
+            } else {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        if (q.type === 'tf_cluster') {
+            container.innerHTML = `<div class="fade-in"><div class="flex items-center gap-3 mb-6 border-b-2 border-orange-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM ĐÚNG/SAI</h3></div><div class="bg-red-50 border-2 border-red-200 p-4 md:p-6 rounded-2xl mb-6 text-red-600 text-lg sm:text-xl font-bold leading-relaxed shadow-inner" style="white-space: pre-wrap;">${q.displayQuestion}</div><div class="space-y-3 md:pl-6">${q.subQuestions.map(sub => `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 border-2 border-gray-100 hover:border-red-300 rounded-2xl gap-4 shadow-sm hover:shadow-md transition-all"><span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span><div class="flex gap-2 flex-shrink-0 self-end sm:self-auto mt-2 sm:mt-0"><input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')" ${userAnswers[sub.id] === 'Đúng' ? 'checked' : ''}><label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label><input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')" ${userAnswers[sub.id] === 'Sai' ? 'checked' : ''}><label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-extrabold text-gray-500 text-sm text-center w-24 sm:w-28 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label></div></div>`).join('')}</div></div>`;
+        } else if (q.type === 'single') {
+            let isFirstSingle = (currentIdx === 0) || (currentQuestions[currentIdx - 1].type !== 'single');
+            container.innerHTML = `<div class="fade-in">${isFirstSingle ? `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">PHẦN TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>` : ''}<div class="flex gap-4 mb-5"><div class="w-full"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.displayQuestion}</p></div></div><div class="space-y-4 md:pl-14 mt-6">${q.options.map((opt, i) => `<div class="flex items-center"><input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${userAnswers[q.id] === i ? 'checked' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')"><label for="opt_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg"><span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span><span class="text-gray-700 leading-relaxed">${opt}</span></label></div>`).join('')}</div></div>`;
+        }
+        
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        document.getElementById('prev-btn').style.display = (currentIdx === 0) ? 'none' : 'block';
+        document.getElementById('next-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        document.getElementById('submit-btn').style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // LOGIC NỘP BÀI MỚI VỚI CUSTOM MODAL
+    window.confirmSubmit = function() {
+        if (!isQuizStarted) return; 
+        
+        let ansCount = getAnsweredCount();
+        let totItems = getTotalItems();
+        
+        if(ansCount < totItems) {
+            const modal = document.getElementById('custom-confirm-modal');
+            const card = document.getElementById('confirm-card');
+            document.getElementById('confirm-msg').innerText = `Các em mới làm ${ansCount}/${totItems} thao tác. Có chắc chắn muốn nộp bài không?`;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            }, 10);
+
+            document.getElementById('btn-cancel-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            };
+
+            document.getElementById('btn-confirm-submit').onclick = function() {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    executeSubmitLogic(); 
+                }, 300);
+            };
+            return; 
+        }
+
+        executeSubmitLogic();
+    };
+
+    function executeSubmitLogic() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+        const score = scoreP1P2.toFixed(2);
+        
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctP1P2, tongCau: totalP1P2,
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctP1P2, totalP1P2, record.duration); });
+        } else {
+            window.showModalResult(score, correctP1P2, totalP1P2, record.duration);
+        }
+    }
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="absolute top-4 left-4 z-10">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center pt-8">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed" style="white-space: pre-wrap;">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-3">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 ${borderColor}">`;
+                    html += `<span class="font-bold text-slate-700 flex-1">${sub.text}</span>`;
+                    html += `<div class="flex gap-2 font-bold text-sm flex-shrink-0 items-center">`;
+                    html += `  <span class="text-2xl mr-2 drop-shadow-sm">${statusIcon}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'} shadow-sm">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `  <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Đáp án: ${sub.correct}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                    
+                    if(sub.giaiThich) {
+                        html += `<div class="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${sub.giaiThich}</div>`;
+                    }
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-2xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                
+                if(q.giaiThich) {
+                    html += `<div class="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích:</span> ${q.giaiThich}</div>`;
+                }
+                
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() {
+        showSection('result');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+<td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.executeSubmitLogic(); 
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
