@@ -1,0 +1,1241 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Địa Lí 12 - Hành Trình Số - Mang tri thức đến mọi người</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #4ade80, #3b82f6, #8b5cf6, #ec4899);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      font-size: 100%; 
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        position: relative; 
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:not(.disabled):hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+
+/* Container bọc ngoài phần nhập đáp án */
+.answer-submission-box {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px; /* Tăng padding để tạo không gian thoáng */
+    margin-top: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Tiêu đề "NHẬP KẾT QUẢ..." */
+.answer-label {
+    display: block;
+    font-size: 16px; /* Kích thước chữ to rõ ràng */
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+/* Ô nhập liệu */
+.answer-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px;
+    font-size: 18px; /* Tăng size chữ trong ô nhập để dễ nhìn */
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.answer-input:focus {
+    border-color: #5a67d8;
+    box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.2);
+}
+
+/* Nút Nộp câu trả lời & Xem giải thích */
+.btn-submit-explain {
+    width: 100%;
+    padding: 18px 24px; /* Nút to, diện tích chạm lớn */
+    margin-top: 20px;
+    background-color: #5a67d8; /* Màu xanh đồng bộ với ảnh */
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px; /* Chữ to trên nút */
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-submit-explain:hover {
+    background-color: #4c51bf;
+}
+
+
+
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 12px; padding-bottom: 12px; }
+    button:active { transform: scale(0.96); }
+    
+    .disabled-option { opacity: 0.8; pointer-events: none !important; }
+
+    #feedback-modal { z-index: 9999; }
+    #feedback-modal-content { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    
+    .btn-tf { transition: all 0.2s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):hover { background-color: #f3f4f6; }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+    
+    .pie-chart { border-radius: 50%; position: relative; border: 1px solid #d1d5db; }
+    
+    .data-table th, .data-table td { border: 1px solid #cbd5e1; padding: 0.5rem; text-align: center; }
+    .data-table th { background-color: #e0f2fe; color: #0369a1; font-weight: bold; }
+    .data-table td { background-color: #fff; color: #334155; }
+  </style>
+
+ </head>
+ <body>
+  <body oncopy="return false" oncut="return false" onpaste="return false">
+  <div id="app" class="p-0 sm:p-4 md:p-8 flex flex-col sm:block transition-all">
+   
+   <div id="login-section" class="w-full min-h-screen sm:min-h-0 sm:h-auto max-w-md mx-auto fade-in flex-grow flex flex-col sm:justify-center">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start flex-grow sm:flex-grow-0">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+
+      <h1 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 mb-1">ĐỀ THI THỬ ĐỊA LÍ 12</h1>
+     
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-3">
+          <div class="w-full">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-2 pb-2">
+        <label class="block text-sm font-black text-green-600 mb-2">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-3">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-3 border-2 border-gray-200 rounded-xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-700 text-white flex items-center justify-center font-black text-xl mr-3 shadow">1</div>
+                      <div class="de-text text-gray-800 font-bold text-lg tracking-wide">MÃ ĐỀ 0101<br><span class="text-xs font-semibold text-gray-500">Cấu trúc: 3 Phần, 28 Câu</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-3 border-2 border-gray-200 rounded-xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-3 shadow">2</div>
+                      <div class="de-text text-gray-800 font-bold text-lg tracking-wide">MÃ ĐỀ 0102<br><span class="text-xs font-semibold text-gray-500">Cấu trúc: 3 Phần, 28 Câu</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border-2 border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-3 mt-4 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-bold rounded-xl shadow-lg hover:shadow-md transform hover:-translate-y-1 transition-all text-lg tracking-wide uppercase">🚀 Bắt Đầu Thi Ngay</button>
+     </div>
+     
+     <div class="mt-3 text-center pb-6 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-blue-600 font-bold hover:text-blue-800 hover:underline transition-colors text-sm mt-1">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+
+
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+
+        <h2 id="quiz-title" class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-semibold text-gray-500 mt-0.5 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-green-50 px-3 py-1.5 rounded-xl border border-green-100" id="progress-container">
+       <div class="text-xs text-green-600 font-bold uppercase tracking-wider">Tiến độ</div>
+       <div id="progress-text" class="text-lg font-black text-green-700">0/40</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-200 rounded-xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-bold flex items-center gap-2 text-sm"><span class="text-xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-2xl font-black text-red-600 font-mono tracking-wider">50:00</span>
+     </div>
+
+     <div id="question-container" class="mb-6 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mt-3 text-center font-bold text-sm border border-red-300 mb-3 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-3 pt-3 border-t-2 border-gray-100 mt-auto pb-2 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-3 bg-gray-500 hover:bg-gray-600 text-white font-bold text-base rounded-xl shadow-sm transition-all hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-base rounded-xl shadow-sm hover:shadow-md transition-all">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-3 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-bold text-base rounded-xl shadow-md hover:shadow-lg hidden transition-all uppercase tracking-wider">✅ NỘP BÀI</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="feedback-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 z-50">
+       <div class="bg-blue-50 border-2 border-blue-300 rounded-2xl w-full max-w-2xl shadow-2xl transform scale-95 opacity-0 flex flex-col" id="feedback-modal-content">
+           <div class="p-5 sm:p-6 flex-grow overflow-y-auto max-h-[85vh]">
+               <div id="feedback-header" class="text-center mb-4"></div>
+               <div id="feedback-body" class="text-black font-semibold text-base leading-relaxed text-left"></div>
+           </div>
+           <div class="p-3 bg-white border-t-2 border-blue-100 rounded-b-2xl">
+               <button onclick="window.closeFeedbackModal()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-lg rounded-xl shadow hover:shadow-md transition-all uppercase">Đã hiểu & Tiếp tục ➔</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-lg mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8 relative">
+    <div class="glass-card rounded-none sm:rounded-2xl p-5 sm:p-6 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-xl relative" id="result-content">
+        </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-3xl mx-auto hidden flex-grow flex flex-col relative">
+    <div class="glass-card rounded-none sm:rounded-2xl p-4 sm:p-6 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden relative">
+     
+     <div class="absolute top-3 left-3 z-50">
+        <button onclick="window.goHome()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 flex items-center gap-2 text-sm">🏠 Trang chủ</button>
+     </div>
+
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-4 pb-3 border-b-2 border-gray-100 gap-3 mt-12 sm:mt-0">
+      <div class="flex gap-2 sm:ml-32">
+          <button onclick="window.backToResult()" class="px-3 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200 text-sm">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 text-right w-full sm:w-auto">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-5xl mx-auto hidden flex-grow flex flex-col relative">
+    <div class="glass-card rounded-none sm:rounded-2xl p-4 sm:p-6 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full relative">
+     
+     <div class="absolute top-3 left-3 z-50">
+        <button onclick="window.goHome()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 flex items-center gap-2 text-sm">🏠 Trang chủ</button>
+     </div>
+
+     <div class="mb-4 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-end gap-3 border-b-2 border-gray-100 pb-3 mt-12 sm:mt-0">
+      <h2 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 w-full text-right">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-2 text-center sm:hidden">
+         <span class="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt ngang để xem 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border-2 border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-sm whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 py-3 text-center font-bold">#</th>
+         <th class="px-3 py-3 text-center font-bold">Lớp</th>
+         <th class="px-3 py-3 text-left font-bold">Họ tên</th>
+         <th class="px-3 py-3 text-center font-bold">Đề thi</th>
+         <th class="px-3 py-3 text-center font-bold text-base">Điểm</th>
+         <th class="px-3 py-3 text-center font-bold">Bắt đầu</th>
+         <th class="px-3 py-3 text-center font-bold">Kết thúc</th>
+         <th class="px-3 py-3 text-right font-bold">Tổng TG</th>
+         <th class="px-3 py-3 text-right font-bold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y-2 divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-10 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+ 
+
+
+
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_dl_12_12'); 
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    /*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI MÔN ĐỊA LÝ
+    =================================================================================================*/
+    const de1_data = [
+        // --- PHẦN I ---
+        { id: "1_1", type: "single", question: "Câu 1. Vị trí địa lí nước ta nằm trong khu vực nào sau đây?", options: ["Nội chí tuyến bán cầu Nam.", "Nội chí tuyến bán cầu Bắc.", "Nằm ở phía bắc của đường chí tuyến Bắc.", "Nằm ở phía nam của đường chí tuyến Nam."], correct: 1, explanation: "Việt Nam nằm trong khoảng vĩ độ từ 8 độ 34 phút Bắc đến 23 độ 23 phút Bắc. Toàn bộ lãnh thổ phần đất liền nằm hoàn toàn trong vùng nội chí tuyến bán cầu Bắc (giữa Xích đạo và chí tuyến Bắc)." },
+        { id: "1_2", type: "single", question: "Câu 2. Gió mùa đông hoạt động ở nước ta vào thời gian", options: ["từ tháng 5 đến tháng 10.", "từ tháng 6 đến tháng 11.", "từ tháng 12 đến tháng 5 năm sau.", "từ tháng 11 đến tháng 4 năm sau."], correct: 3, explanation: "Khí hậu nước ta chia làm 2 mùa gió chính. Gió mùa mùa đông (gió mùa Đông Bắc) hoạt động từ tháng 11 đến tháng 4 năm sau. Gió mùa mùa hạ hoạt động từ tháng 5 đến tháng 10." },
+        { id: "1_3", type: "single", question: "Câu 3. Ranh giới tự nhiên phân chia phần lãnh thổ phía Bắc và phần lãnh thổ phía Nam nước ta là dãy núi nào sau đây?", options: ["Bạch Mã.", "Hoành Sơn.", "Trường Sơn Bắc.", "Tam Điệp."], correct: 0, explanation: "Dãy Bạch Mã (vĩ độ 16 độ Bắc) chạy đâm ngang ra biển đóng vai trò là bức tường địa hình ngăn chặn ảnh hưởng của gió mùa Đông Bắc xuống phía Nam, trở thành ranh giới tự nhiên phân chia khí hậu và cảnh quan 2 phần lãnh thổ Bắc - Nam." },
+        { id: "1_4", type: "single", question: "Câu 4. Phát biểu nào sau đây không phải nguyên nhân dẫn đến sự phân hoá Đông - Tây của thiên nhiên nước ta?", options: ["Tác động của gió mùa và hướng của các dãy núi.", "Hướng của các dãy núi và sự phân hoá độ cao.", "Tác động của gió mùa và sự phân hoá địa hình.", "Sự phân hoá của sinh vật và mạng lưới sông ngòi."], correct: 3, explanation: "Sự phân hóa Đông - Tây của thiên nhiên nước ta chủ yếu do tác động kết hợp của địa hình (hướng núi, độ cao) và hoàn lưu khí quyển (gió mùa). 'Sự phân hóa của sinh vật và mạng lưới sông ngòi' là KẾT QUẢ biểu hiện của sự phân hóa thiên nhiên, không phải nguyên nhân." },
+        { id: "1_5", type: "single", question: "Câu 5. Sự đa dạng của sinh vật nước ta không thể hiện ở nội dung nào sau đây?", options: ["Thành phần loài sinh vật phong phú.", "Sự đa dạng của hệ sinh thái sinh vật.", "Sự đa dạng, phong phú về nguồn gen sinh vật.", "Số lượng cá thể của một số loài sinh vật giảm."], correct: 3, explanation: "Sự đa dạng sinh học được đánh giá qua 3 tiêu chí: Đa dạng hệ sinh thái, Đa dạng thành phần loài, và Đa dạng nguồn gen. Việc 'số lượng cá thể giảm' là biểu hiện của sự SUY GIẢM đa dạng sinh học chứ không phải là sự đa dạng." },
+        { id: "1_6", type: "single", question: "Câu 6. Sự suy giảm tài nguyên nước ở nước ta thể hiện ở nội dung nào sau đây?", options: ["Tổng trữ lượng tiềm năng nước dưới đất khoảng 91 tỉ m3/năm.", "Tổng lượng nước dòng chảy trên mặt lãnh thổ nước ta khoảng 830 tỉ m3.", "Trữ lượng nước có thể khai thác khoảng 22 tỉ m3/năm.", "Mực nước ngầm hạ thấp, ở một số nơi nguồn nước mặt bị ô nhiễm."], correct: 3, explanation: "Ba đáp án A, B, C nói về đặc điểm, quy mô và tiềm năng của tài nguyên nước. Chỉ có đáp án D (mực nước ngầm hạ thấp, nước mặt ô nhiễm) phản ánh trực tiếp tình trạng suy thoái và suy giảm chất lượng/số lượng tài nguyên nước." },
+        { id: "1_7", type: "single", question: "Câu 7. Quy mô dân số của nước ta đứng ở thứ hạng nào sau đây trong khu vực Đông Nam Á?", options: ["58.", "15.", "3.", "2."], correct: 2, explanation: "Tại khu vực Đông Nam Á, quy mô dân số Việt Nam (khoảng 100 triệu người) đứng thứ 3, chỉ xếp sau In-đô-nê-xi-a và Phi-líp-pin." },
+        { id: "1_8", type: "single", question: "Câu 8. Vùng nào sau đây có mật độ dân số thấp nhất nước ta?", options: ["Tây Nguyên.", "Đồng bằng sông Hồng.", "Đông Nam Bộ.", "Đồng bằng sông Cửu Long."], correct: 0, explanation: "Tây Nguyên là vùng thưa dân nhất nước ta, địa hình cao nguyên và đồi núi, kinh tế đang trong quá trình phát triển nên mật độ dân số rất thấp so với các đồng bằng và vùng kinh tế trọng điểm." },
+        { id: "1_9", type: "single", question: "Câu 9. Chuyển dịch cơ cấu kinh tế ở nước ta không bao gồm ý nghĩa nào sau đây?", options: ["Tái cơ cấu nền kinh tế theo hướng hiệu quả hơn.", "Thúc đẩy tăng trưởng kinh tế, phát triển bền vững.", "Nâng cao năng suất lao động và chất lượng cuộc sống của nhân dân.", "Chuyển dịch cơ cấu kinh tế là kết quả của xu hướng quốc tế hoá."], correct: 3, explanation: "Các đáp án A, B, C đều nêu lên MỤC ĐÍCH và Ý NGHĨA trực tiếp của việc chuyển dịch cơ cấu kinh tế. Đáp án D chỉ là một nhận định về nguyên nhân khách quan (xu hướng quốc tế hóa), không phải là 'ý nghĩa' của sự chuyển dịch." },
+        { id: "1_10", type: "single", question: "Câu 10. Sản xuất nông nghiệp ở nước ta có sự phân hoá mùa vụ do tác động chủ yếu của nhân tố nào sau đây?", options: ["Đất đai.", "Nguồn nước.", "Địa hình.", "Khí hậu."], correct: 3, explanation: "Khí hậu (cụ thể là nhiệt độ, lượng mưa, ánh sáng phân hóa theo mùa) là nhân tố quyết định nhất đến cơ cấu mùa vụ, loại cây trồng và vật nuôi trong sản xuất nông nghiệp." },
+        { id: "1_11", type: "single", question: "Câu 11. Nhân tố khí hậu không tác động đến đặc điểm nào sau đây của tài nguyên rừng ở nước ta?", options: ["Hệ sinh thái rừng nhiệt đới gió mùa đặc trưng.", "Rừng được trồng trên nhiều dạng địa hình khác nhau.", "Rừng có sinh khối lớn, nhiều loại gỗ quý hiếm.", "Các hệ sinh thái rừng ở nước ta đa dạng, phong phú."], correct: 1, explanation: "Việc 'Rừng được trồng trên nhiều dạng địa hình khác nhau' là do yếu tố ĐỊA HÌNH và Thổ nhưỡng quyết định, không phải do hệ quả trực tiếp của Khí hậu." },
+        { id: "1_12", type: "single", question: `Câu 12. Dựa vào biểu đồ tròn (Cơ cấu giá trị sản xuất công nghiệp phân theo nhóm ngành ở nước ta, năm 2010 và 2021).<br>
+        <div class="flex flex-col md:flex-row justify-center items-center gap-6 mt-5 mb-5 bg-white p-5 rounded-2xl border-2 border-gray-100 shadow-sm text-gray-800">
+            <div class="text-center">
+                <div class="font-bold mb-3 text-base text-gray-700">Năm 2010</div>
+                <div class="pie-chart mx-auto w-40 h-40" style="background: conic-gradient(#3b82f6 0% 86.2%, #eab308 86.2% 96.4%, #ef4444 96.4% 99.4%, #ffffff 99.4% 100%);"></div>
+            </div>
+            <div class="text-center">
+                <div class="font-bold mb-3 text-base text-gray-700">Năm 2021</div>
+                <div class="pie-chart mx-auto w-40 h-40" style="background: conic-gradient(#3b82f6 0% 93%, #eab308 93% 96%, #ef4444 96% 99.3%, #ffffff 99.3% 100%);"></div>
+            </div>
+            <div class="flex flex-col gap-3 text-sm font-semibold text-left ml-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div class="flex items-center gap-2"><span class="w-4 h-4 bg-blue-500 rounded-sm"></span>Chế biến, chế tạo: <b>86.2%</b> (2010) → <b>93.0%</b> (2021)</div>
+                <div class="flex items-center gap-2"><span class="w-4 h-4 bg-yellow-500 rounded-sm"></span>Khai khoáng: <b>10.2%</b> (2010) → <b>3.0%</b> (2021)</div>
+                <div class="flex items-center gap-2"><span class="w-4 h-4 bg-red-500 rounded-sm"></span>Sản xuất & PP điện: <b>3.0%</b> (2010) → <b>3.3%</b> (2021)</div>
+                <div class="flex items-center gap-2"><span class="w-4 h-4 bg-white border border-gray-400 rounded-sm"></span>Cung cấp nước/rác: <b>0.6%</b> (2010) → <b>0.7%</b> (2021)</div>
+            </div>
+        </div>
+        Phát biểu nào sau đây không đúng với cơ cấu trên?`, options: ["Nhóm ngành công nghiệp chế biến, chế tạo chiếm tỉ trọng cao nhất và có xu hướng tăng.", "Nhóm ngành công nghiệp khai khoáng chiếm tỉ trọng khá cao và có xu hướng tăng.", "Nhóm ngành công nghiệp sản xuất và phân phối điện... chiếm tỉ trọng thấp và thay đổi không đáng kể.", "Nhóm ngành công nghiệp cung cấp nước... chiếm tỉ trọng thấp nhất và thay đổi không đáng kể."], correct: 1, explanation: "Dựa vào bảng chú giải từ biểu đồ tròn: Công nghiệp Khai khoáng năm 2010 chiếm 10.2%, đến năm 2021 giảm mạnh chỉ còn 3.0%. Do vậy phát biểu 'công nghiệp khai khoáng có xu hướng TĂNG' là hoàn toàn SAI." },
+        { id: "1_13", type: "single", question: "Câu 13. Khoáng sản than ở vùng Trung du và miền núi Bắc Bộ tập trung nhiều nhất ở các tỉnh nào sau đây?", options: ["Thái Nguyên, Lạng Sơn.", "Yên Bái, Lào Cai.", "Hà Giang, Sơn La.", "Hoà Bình, Phú Thọ."], correct: 0, explanation: "Vùng Trung du miền núi Bắc Bộ có bể than lớn nhất nước ta tại Quảng Ninh, ngoài ra than còn phân bố khá nhiều ở Thái Nguyên (mỏ than Khánh Hòa) và Lạng Sơn (Na Dương)." },
+        { id: "1_14", type: "single", question: "Câu 14. Vùng Trung du và miền núi Bắc Bộ có thế mạnh quan trọng nào sau đây để phát triển đàn gia súc lớn?", options: ["Thị trường tiêu thụ sản phẩm tại chỗ rộng lớn.", "Có nhiều đồng cỏ tự nhiên và thức ăn từ trồng trọt.", "Công nghiệp chế biến phát triển mạnh, hiện đại.", "Cơ sở vật chất của ngành chăn nuôi đồng bộ, hiện đại."], correct: 1, explanation: "Vùng TD&MN Bắc Bộ có địa hình đồi núi, hình thành nhiều cao nguyên với các đồng cỏ tự nhiên rộng lớn (Mộc Châu, Sơn La...), kết hợp với nguồn thức ăn từ hoa màu (ngô, sắn), tạo điều kiện chăn nuôi gia súc lớn (trâu, bò)." },
+        { id: "1_15", type: "single", question: "Câu 15. Đồng bằng sông Hồng có kiểu khí hậu nào sau đây?", options: ["Nhiệt đới ẩm gió mùa, có mùa đông lạnh.", "Cận xích đạo, có hai mùa mưa và khô rõ rệt.", "Cận nhiệt đới, có mùa đông lạnh.", "Xích đạo, nóng quanh năm."], correct: 0, explanation: "Đồng bằng sông Hồng nằm ở miền Bắc nước ta, nên chịu ảnh hưởng sâu sắc của gió mùa Đông Bắc, tạo ra kiểu khí hậu nhiệt đới ẩm gió mùa nhưng có một mùa đông lạnh (nhiệt độ trung bình dưới 18 độ C trong 2-3 tháng)." },
+        { id: "1_16", type: "single", question: `Câu 16. Dựa vào bảng Diện tích gieo trồng lúa ở vùng Đồng bằng sông Hồng, giai đoạn 1995 - 2021:
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Năm</th><th>1995</th><th>2000</th><th>2010</th><th>2015</th><th>2021</th></tr></thead>
+            <tbody><tr><td class="font-bold bg-blue-50">Diện tích (nghìn ha)</td><td>1238.1</td><td>1261.0</td><td>1150.1</td><td>1110.9</td><td>970.3</td></tr></tbody>
+        </table></div>
+        Nhận xét nào sau đây đúng?`, options: ["Diện tích gieo trồng lúa ở vùng Đồng bằng sông Hồng tăng đều qua các năm.", "Diện tích gieo trồng lúa ở vùng Đồng bằng sông Hồng giảm đều qua các năm.", "So giữa các năm, năm 2010 vùng có diện tích gieo trồng lúa cao nhất.", "Trong giai đoạn 1995 – 2000, diện tích gieo trồng lúa của vùng tăng."], correct: 3, explanation: "Từ bảng số liệu: năm 1995 (1238.1) tăng lên năm 2000 (1261.0), sau đó liên tục giảm. Do đó nhận định 'giai đoạn 1995-2000 diện tích tăng' là ĐÚNG. Các nhận định khác đều sai." },
+        { id: "1_17", type: "single", question: "Câu 17. Phía nam và tây nam của vùng Tây Nguyên tiếp giáp với vùng hoặc quốc gia nào sau đây?", options: ["Bắc Trung Bộ và duyên hải miền Trung.", "Nước láng giềng Lào.", "Đông Nam Bộ.", "Nước láng giềng Cam-pu-chia."], correct: 2, explanation: "Tây Nguyên tiếp giáp với Đông Nam Bộ ở phía Nam và Tây Nam. Về phía quốc gia, Tây Nguyên giáp Campuchia ở phía Tây và Tây Nam. Dựa theo các phương án, Đông Nam Bộ là đáp án chính xác nhất mô tả ranh giới phía Nam của Tây Nguyên." },
+        { id: "1_18", type: "single", question: "Câu 18. Phát biểu nào sau đây không phải là ý nghĩa của việc tăng cường bảo vệ môi trường biển, đảo?", options: ["Bảo vệ không gian phát triển kinh tế của đất nước.", "Góp phần duy trì an ninh trật tự để phát triển kinh tế.", "Giữ được mực nước ngầm và hệ sinh thái trên đảo.", "Ngăn chặn tình trạng ô nhiễm, suy thoái môi trường biển đảo."], correct: 2, explanation: "Việc 'giữ được mực nước ngầm' chủ yếu là ý nghĩa và vai trò của việc bảo vệ RỪNG (rừng phòng hộ, bảo vệ lớp phủ thực vật), không phải là ý nghĩa trực tiếp của việc bảo vệ môi trường biển, đảo nói chung." },
+
+        // --- PHẦN II (ĐÚNG/SAI) ---
+        { id: "1_II_1", type: "tf_cluster", context: "Câu 1. Thiên nhiên Việt Nam có sự phân hoá thành 3 miền tự nhiên: Bắc và Đông Bắc Bắc Bộ, Tây Bắc và Bắc Trung Bộ, Nam Trung Bộ và Nam Bộ, mỗi miền tự nhiên có những đặc điểm thiên nhiên đặc trưng.", items: [
+            { id: "a", text: "a) Sông Hồng là ranh giới tự nhiên giữa miền Bắc và Đông Bắc Bắc Bộ với miền Tây Bắc và Bắc Trung Bộ.", correct: true, expl: "Thung lũng sông Hồng đóng vai trò là ranh giới tự nhiên chia cắt 2 miền địa lý tự nhiên phía Bắc nước ta. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Miền Bắc và Đông Bắc Bắc Bộ có địa hình nhiều núi cao cùng với sơn nguyên, cao nguyên.", correct: false, expl: "Đặc trưng địa hình của miền Bắc và Đông Bắc Bắc Bộ là đồi núi THẤP chiếm ưu thế. Núi cao và sơn nguyên/cao nguyên là đặc điểm của miền Tây Bắc. Mệnh đề SAI." },
+            { id: "c", text: "c) Ảnh hưởng của gió mùa Đông Bắc đến miền Tây Bắc và Bắc Trung Bộ đã suy giảm đáng kể.", correct: true, expl: "Nhờ có bức tường thành tự nhiên là dãy Hoàng Liên Sơn, gió mùa Đông Bắc khi thổi sang khu vực Tây Bắc và đi dần xuống Bắc Trung Bộ đã bị suy yếu dần về cường độ. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Miền Nam Trung Bộ và Nam Bộ có kiểu rừng rụng lá, nửa rụng lá đặc trưng cho Đông Nam Á.", correct: true, expl: "Khí hậu miền Nam có mùa khô sâu sắc, tạo điều kiện hình thành các hệ sinh thái rừng nhiệt đới gió mùa rụng lá (rừng khộp) rất đặc trưng (nhất là ở Tây Nguyên). Mệnh đề ĐÚNG." }
+        ]},
+        { id: "1_II_2", type: "tf_cluster", context: "Câu 2. Chất lượng lao động nước ta ngày càng được nâng cao, nền kinh tế nước ta ngày càng phát triển, tạo ra nhiều việc làm mới, đáp ứng ngày càng tốt hơn nhu cầu cho số lao động tăng thêm hằng năm.", items: [
+            { id: "a", text: "a) Tỉ lệ lao động đã qua đào tạo liên tục tăng, đặc biệt là lao động có trình độ cao ngày càng chiếm tỉ lệ lớn.", correct: true, expl: "Đây là kết quả của công tác giáo dục, đào tạo nghề và yêu cầu ngày càng cao của thị trường lao động hội nhập. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Chuyển dịch cơ cấu kinh tế kéo theo chuyển dịch cơ cấu sử dụng lao động, vấn đề việc làm được giải quyết tốt hơn.", correct: true, expl: "Việc phát triển công nghiệp và dịch vụ giúp tạo ra nhiều việc làm mới, hấp thụ lượng lớn lao động từ nông nghiệp chuyển sang. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Nguồn lao động nước ta dồi dào, lực lượng lao động chiếm trên 50% số dân, mỗi năm tăng thêm khoảng 3 triệu lao động.", correct: true, expl: "Nước ta đang trong thời kỳ 'dân số vàng', lực lượng lao động chiếm tỉ trọng cao trong tổng dân số. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Trên phạm vi cả nước, tỉ lệ thất nghiệp ở nông thôn luôn cao hơn ở thành thị, điều này đòi hỏi kinh tế nông thôn cần chuyển dịch mạnh mẽ hơn.", correct: false, expl: "Thực tế, tỉ lệ thất nghiệp ở khu vực thành thị thường CAO HƠN nông thôn, trong khi nông thôn lại đối mặt với tình trạng thiếu việc làm do tính chất mùa vụ. Mệnh đề SAI." }
+        ]},
+        { id: "1_II_3", type: "tf_cluster", context: "Câu 3. Trong mỗi nhóm ngành kinh tế, cơ cấu đang có sự chuyển dịch theo hướng tăng tỉ trọng các ngành có hiệu quả kinh tế và hàm lượng khoa học – công nghệ cao.", items: [
+            { id: "a", text: "a) Ngành nông nghiệp có giá trị sản phẩm được nâng cao nhờ việc liên kết theo chuỗi giá trị sản xuất và tăng cường áp dụng khoa học - công nghệ.", correct: true, expl: "Nông nghiệp đang chuyển từ số lượng sang chất lượng, áp dụng mô hình công nghệ cao, chuỗi cung ứng. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Công nghiệp chú trọng ứng dụng công nghệ cao, phát triển công nghiệp hỗ trợ, tăng tỉ trọng ngành công nghiệp chế biến, chế tạo.", correct: true, expl: "Việt Nam đang hạn chế xuất khẩu khoáng sản thô, tập trung vào công nghiệp chế biến, chế tạo để tăng giá trị gia tăng. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Dịch vụ phát triển trên nền tảng công nghệ hiện đại, tăng cường chuyển đổi số, đặc biệt lĩnh vực thương mại và tài chính – ngân hàng.", correct: true, expl: "Chuyển đổi số, thanh toán điện tử, thương mại điện tử đang bùng nổ mạnh mẽ ở nước ta. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Chuyển dịch cơ cấu kinh tế theo hướng công nghiệp hoá, hiện đại hoá chủ yếu dựa vào sự phát triển của nông nghiệp công nghệ cao.", correct: false, expl: "Công nghiệp hóa, hiện đại hóa phải dựa chủ yếu vào sự phát triển mang tính đột phá của các ngành CÔNG NGHIỆP và DỊCH VỤ. Mệnh đề SAI." }
+        ]},
+        { id: "1_II_4", type: "tf_cluster", context: "Câu 4. Trong những năm qua, cơ cấu kinh tế ở vùng Đông Nam Bộ có chuyển dịch tích cực, góp phần nâng cao hiệu quả sản xuất, sức cạnh tranh của các ngành kinh tế.", items: [
+            { id: "a", text: "a) Tỉ trọng ngành dịch vụ tăng nhanh và hiện nay đang là ngành chiếm tỉ trọng cao nhất trong cơ cấu GRDP của vùng.", correct: true, expl: "Đông Nam Bộ là trung tâm dịch vụ lớn nhất cả nước (tài chính, thương mại, cảng biển), chiếm tỉ trọng cao nhất trong GRDP. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Vùng ưu tiên phát triển các ngành công nghiệp công nghệ cao, công nghiệp sạch, tiết kiệm năng lượng và tạo ra nhiều giá trị gia tăng.", correct: true, expl: "Vùng đang tái cơ cấu, dịch chuyển các ngành ô nhiễm ra xa, tập trung vào chip, phần mềm, vi mạch. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Ngoài phát triển các khu công nghiệp, khu công nghệ cao, vùng chú trọng xây dựng các khu công nghệ mới, công nghệ thông tin với quy mô lớn.", correct: true, expl: "Điển hình như Khu công nghệ cao TP.HCM, công viên phần mềm Quang Trung... Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Nông nghiệp, lâm nghiệp chiếm tỉ trọng không lớn trong cơ cấu GRDP của vùng, song các thành tựu khoa học – công nghệ tiên tiến được ứng dụng vào sản xuất.", correct: true, expl: "Tỉ trọng nông nghiệp cực nhỏ, nhưng Đông Nam Bộ là vùng tiên phong về nông nghiệp công nghệ cao (trồng màng lưới, thủy canh). Mệnh đề ĐÚNG." }
+        ]},
+
+        // --- PHẦN III (TRẢ LỜI NGẮN) ---
+        { id: "1_III_1", type: "short_answer", question: `Câu 1. Dựa vào bảng số liệu nhiệt độ trung bình tháng ở Hà Nội:
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Tháng</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th></tr></thead>
+            <tbody><tr><td class="font-bold bg-blue-50">Nhiệt độ (°C)</td><td>16.6</td><td>17.7</td><td>20.3</td><td>24.2</td><td>27.6</td><td>29.3</td><td>29.4</td><td>28.7</td><td>27.7</td><td>25.3</td><td>21.9</td><td>18.3</td></tr></tbody>
+        </table></div>
+        Tính biên độ nhiệt trung bình năm ở Hà Nội (làm tròn kết quả đến hàng đơn vị của độ C).`, correct: "13", explanation: "- <b>Bước 1:</b> Xác định tháng có nhiệt độ cao nhất: Tháng 7 (29.4 °C).<br>- <b>Bước 2:</b> Xác định tháng có nhiệt độ thấp nhất: Tháng 1 (16.6 °C).<br>- <b>Bước 3:</b> Áp dụng công thức tính <b>Biên độ nhiệt năm</b> = Nhiệt độ tháng cao nhất - Nhiệt độ tháng thấp nhất.<br>Thay số: 29.4 - 16.6 = <b>12.8 °C</b>.<br>- <b>Bước 4:</b> Đề bài yêu cầu làm tròn đến hàng đơn vị. Do phần thập phân là 8 (lớn hơn 5) nên ta làm tròn lên thành <b>13</b>." },
+        { id: "1_III_2", type: "short_answer", question: `Câu 2. Dựa vào bảng lượng mưa trung bình tháng ở Hà Nội:
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Tháng</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th></tr></thead>
+            <tbody><tr><td class="font-bold bg-blue-50">Lượng mưa (mm)</td><td>22.5</td><td>24.6</td><td>47.0</td><td>91.8</td><td>185.4</td><td>253.3</td><td>280.1</td><td>309.4</td><td>228.3</td><td>140.7</td><td>66.7</td><td>20.2</td></tr></tbody>
+        </table></div>
+        Tính tổng lượng mưa cả năm ở Hà Nội (làm tròn kết quả đến hàng đơn vị của mm).`, correct: "1670", explanation: "Để tính tổng lượng mưa cả năm, ta sử dụng công thức tính <b>Tổng lượng mưa</b> bằng cách cộng lượng mưa của cả 12 tháng lại với nhau:<br>Tổng = 22.5 + 24.6 + 47.0 + 91.8 + 185.4 + 253.3 + 280.1 + 309.4 + 228.3 + 140.7 + 66.7 + 20.2 = <b>1670.0 mm</b>.<br>Đề bài yêu cầu làm tròn đến hàng đơn vị, kết quả vẫn là <b>1670</b>." },
+        { id: "1_III_3", type: "short_answer", question: `Câu 3. Dựa vào biểu đồ Tỉ suất sinh thô và tỉ suất tử thô của nước ta dưới đây:
+        <div class="my-4 bg-white p-4 rounded-xl border-2 border-gray-100">
+            <div class="text-center font-bold text-sm mb-2 text-gray-700">Tỉ suất sinh thô và tử thô của nước ta (‰)</div>
+            <svg viewBox="0 0 600 250" class="w-full h-auto font-sans">
+                <line x1="40" y1="200" x2="560" y2="200" stroke="#94a3b8" stroke-width="2"/>
+                <polyline points="100,48 200,59.2 300,62.16 400,69.76 450,69.6 500,74.08" fill="none" stroke="#3b82f6" stroke-width="3"/>
+                <polyline points="100,153.6 200,145.6 300,145.2 400,149.44 450,151.52 500,148.96" fill="none" stroke="#ef4444" stroke-width="3"/>
+                <circle cx="100" cy="48" r="4" fill="#3b82f6"/><circle cx="200" cy="59.2" r="4" fill="#3b82f6"/><circle cx="300" cy="62.16" r="4" fill="#3b82f6"/><circle cx="400" cy="69.76" r="4" fill="#3b82f6"/><circle cx="450" cy="69.6" r="4" fill="#3b82f6"/><circle cx="500" cy="74.08" r="4" fill="#3b82f6"/>
+                <circle cx="100" cy="153.6" r="4" fill="#ef4444"/><circle cx="200" cy="145.6" r="4" fill="#ef4444"/><circle cx="300" cy="145.2" r="4" fill="#ef4444"/><circle cx="400" cy="149.44" r="4" fill="#ef4444"/><circle cx="450" cy="151.52" r="4" fill="#ef4444"/><circle cx="500" cy="148.96" r="4" fill="#ef4444"/>
+                <text x="100" y="38" font-size="12" font-weight="bold" fill="#3b82f6" text-anchor="middle">19.0</text>
+                <text x="200" y="49" font-size="12" font-weight="bold" fill="#3b82f6" text-anchor="middle">17.60</text>
+                <text x="300" y="52" font-size="12" font-weight="bold" fill="#3b82f6" text-anchor="middle">17.23</text>
+                <text x="400" y="60" font-size="12" font-weight="bold" fill="#3b82f6" text-anchor="middle">16.28</text>
+                <text x="450" y="60" font-size="12" font-weight="bold" fill="#3b82f6" text-anchor="middle">16.30</text>
+                <text x="500" y="64" font-size="12" font-weight="bold" fill="#3b82f6" text-anchor="middle">15.74</text>
+                <text x="100" y="145" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">5.80</text>
+                <text x="200" y="137" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">6.80</text>
+                <text x="300" y="136" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">6.85</text>
+                <text x="400" y="140" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">6.32</text>
+                <text x="450" y="142" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">6.06</text>
+                <text x="500" y="140" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">6.38</text>
+                <text x="100" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2002</text>
+                <text x="200" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2009</text>
+                <text x="300" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2014</text>
+                <text x="400" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2019</text>
+                <text x="450" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2020</text>
+                <text x="500" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2021</text>
+            </svg>
+            <div class="flex justify-center gap-6 mt-2 font-bold text-sm">
+                <div class="flex items-center gap-2"><div class="w-4 h-1 bg-blue-500 rounded-sm"></div> Sinh thô</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-1 bg-red-500 rounded-sm"></div> Tử thô</div>
+            </div>
+        </div>
+        Trong các năm trên, năm nào nước ta có tỉ lệ tăng dân số tự nhiên cao nhất?`, correct: "2002", explanation: "Công thức: <b>Tỉ lệ tăng tự nhiên = Tỉ suất sinh thô - Tỉ suất tử thô</b>.<br>Ta lần lượt tính cho các năm có trong biểu đồ:<br>- Năm 2002: 19.0 - 5.8 = <b>13.2‰</b><br>- Năm 2009: 17.60 - 6.80 = 10.8‰<br>- Năm 2014: 17.23 - 6.85 = 10.38‰<br>- Năm 2019: 16.28 - 6.32 = 9.96‰<br>- Năm 2020: 16.30 - 6.06 = 10.24‰<br>- Năm 2021: 15.74 - 6.38 = 9.36‰<br>So sánh các giá trị, ta thấy <b>13.2‰</b> là lớn nhất. Như vậy, năm <b>2002</b> là năm có tỉ lệ tăng dân số tự nhiên cao nhất." },
+        { id: "1_III_4", type: "short_answer", question: `Câu 4. Dựa vào bảng Diện tích và sản lượng lúa:
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Năm</th><th>Diện tích gieo trồng (nghìn ha)</th><th>Sản lượng (nghìn tấn)</th></tr></thead>
+            <tbody>
+                <tr><td>1999</td><td>7653.6</td><td>31393.8</td></tr>
+                <tr><td>2021</td><td>7238.9</td><td>43852.6</td></tr>
+            </tbody>
+        </table></div>
+        Cho biết năng suất lúa của nước ta từ năm 1999 đến năm 2021 tăng bao nhiêu tấn/ha (làm tròn đến hàng đơn vị)?`, correct: "2", explanation: "- <b>Bước 1:</b> Viết công thức tính năng suất: <b>Năng suất (tấn/ha) = Sản lượng / Diện tích.</b><br>- <b>Bước 2:</b> Tính năng suất năm 1999 = 31393.8 / 7653.6 = <b>4.101</b> (tấn/ha).<br>- <b>Bước 3:</b> Tính năng suất năm 2021 = 43852.6 / 7238.9 = <b>6.057</b> (tấn/ha).<br>- <b>Bước 4:</b> Mức tăng = 6.057 - 4.101 = <b>1.956</b> (tấn/ha).<br>Làm tròn 1.956 đến hàng đơn vị (vì phần thập phân là 9 lớn hơn 5) ta được kết quả là <b>2</b>." },
+        { id: "1_III_5", type: "short_answer", question: `Câu 5. Dựa vào bảng Sản lượng hải sản khai thác (tấn) ở Duyên hải Nam Trung Bộ năm 2022:
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Đà Nẵng</th><th>Q.Nam</th><th>Q.Ngãi</th><th>Bình Định</th><th>Phú Yên</th><th>Khánh Hoà</th><th>N.Thuận</th><th>B.Thuận</th></tr></thead>
+            <tbody><tr><td>35,780</td><td>101,156</td><td>268,632</td><td>264,816</td><td>63,993</td><td>97,875</td><td>127,743</td><td>231,316</td></tr></tbody>
+        </table></div>
+        Tỉnh có sản lượng cao nhất chiếm bao nhiêu phần trăm (%) tổng sản lượng của vùng (làm tròn đến hàng đơn vị của %)?`, correct: "23", explanation: "- <b>Bước 1:</b> Tính tổng sản lượng toàn vùng = 35780 + 101156 + 268632 + 264816 + 63993 + 97875 + 127743 + 231316 = <b>1,191,311</b> (tấn).<br>- <b>Bước 2:</b> Nhìn vào bảng số liệu, tỉnh có sản lượng cao nhất là <b>Quảng Ngãi (268,632 tấn)</b>.<br>- <b>Bước 3:</b> Áp dụng công thức tính <b>Tỉ trọng = (Giá trị thành phần / Tổng) * 100</b>.<br>Thay số = (268632 / 1191311) * 100 = <b>22.549%</b>.<br>- <b>Bước 4:</b> Đề yêu cầu làm tròn đến hàng đơn vị. Vì phần thập phân là 5 (>=5) nên ta làm tròn lên thành <b>23</b>." },
+        { id: "1_III_6", type: "short_answer", question: `Câu 6. Dựa vào bảng GRDP bình quân đầu người (triệu đồng):
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Vùng</th><th>Năm 2018</th><th>Năm 2021</th></tr></thead>
+            <tbody>
+                <tr><td class="text-left font-bold">Trung du và miền núi Bắc Bộ</td><td>46.11</td><td>56.05</td></tr>
+                <tr><td class="text-left font-bold">Đồng bằng sông Hồng</td><td>89.53</td><td>110.16</td></tr>
+                <tr><td class="text-left font-bold">Đông Nam Bộ</td><td>133.78</td><td>144.31</td></tr>
+                <tr><td class="text-left font-bold">Đồng bằng sông Cửu Long</td><td>49.56</td><td>57.38</td></tr>
+            </tbody>
+        </table></div>
+        Từ năm 2018 đến năm 2021, tổng sản phẩm trên địa bàn bình quân đầu người của vùng cao nhất tăng bao nhiêu lần (làm tròn kết quả đến số thập phân thứ nhất)?`, correct: "1.1", explanation: "- <b>Bước 1:</b> Xác định vùng có GRDP bình quân cao nhất trong cả 2 năm (đều là <b>Đông Nam Bộ</b>).<br>- <b>Bước 2:</b> Áp dụng công thức tính <b>Số lần tăng = Giá trị năm sau / Giá trị năm trước</b>.<br>Thay số = 144.31 / 133.78 = <b>1.078...</b> (lần).<br>- <b>Bước 3:</b> Đề yêu cầu làm tròn đến số thập phân thứ nhất (tức là sau dấu chấm 1 số). Do số ở hàng phần trăm là 7 (>5) nên ta làm tròn lên, kết quả là <b>1.1</b>." }
+    ];
+
+    const de2_data = [
+        // --- PHẦN I ---
+        { id: "2_1", type: "single", question: "Câu 1. Phát biểu nào sau đây không đúng với ảnh hưởng của vị trí địa lí đến thiên nhiên nước ta?", options: ["Thiên nhiên nước ta tương đồng với các khu vực Tây Á, Bắc Phi.", "Thiên nhiên nước ta có tính chất nhiệt đới ẩm gió mùa.", "Thiên nhiên nước ta có sự phân hoá trong không gian.", "Thiên nhiên nước ta chịu ảnh hưởng sâu sắc của biển."], correct: 0, explanation: "Các nước Bắc Phi, Tây Á nằm cùng vĩ độ với Việt Nam nhưng có khí hậu khô hạn, hoang mạc do ít chịu ảnh hưởng của hoàn lưu gió mùa và biển. Ngược lại Việt Nam lại xanh tốt nhờ Gió mùa và Biển Đông. Do đó nhận định 'tương đồng' là hoàn toàn SAI." },
+        { id: "2_2", type: "single", question: "Câu 2. Khu vực nào sau đây ở nước ta hằng năm có nhiều cơn bão đổ bộ vào nhất?", options: ["Đồng bằng sông Cửu Long.", "Đông Bắc.", "Đông Nam Bộ.", "Bắc Trung Bộ."], correct: 3, explanation: "Dải ven biển Bắc Trung Bộ là nơi thường xuyên trực tiếp đón nhận các cơn bão mạnh từ Biển Đông đổ bộ vào đất liền nước ta nhất, gây ra nhiều thiệt hại về người và của." },
+        { id: "2_3", type: "single", question: "Câu 3. Đặc trưng khí hậu của phần lãnh thổ phía Bắc nước ta là", options: ["nhiệt đới ẩm gió mùa, có mùa đông lạnh.", "cận xích đạo gió mùa, nóng quanh năm.", "cận nhiệt đới gió mùa, có mùa đông lạnh.", "ôn đới gió mùa, lạnh quanh năm."], correct: 0, explanation: "Phần lãnh thổ phía Bắc (từ dãy Bạch Mã trở ra) mang khí hậu nhiệt đới ẩm gió mùa, có một mùa đông lạnh do ảnh hưởng trực tiếp của gió mùa Đông Bắc." },
+        { id: "2_4", type: "single", question: "Câu 4. Đặc điểm nào sau đây không đúng với vùng biển và thềm lục địa của nước ta?", options: ["Thiên nhiên đặc trưng cho vùng biển nhiệt đới ẩm gió mùa.", "Tài nguyên khoáng sản biển và sinh vật biển phong phú.", "Thềm lục địa miền Trung có đáy nông, mở rộng.", "Thềm lục địa thể hiện mối quan hệ chặt chẽ với đất liền."], correct: 2, explanation: "Thềm lục địa miền Trung bị thu hẹp và rất sâu do địa hình núi ăn sát ra biển. Thềm lục địa chỉ mở rộng và nông ở khu vực Bắc Bộ và Nam Bộ. Phát biểu C là SAI." },
+        { id: "2_5", type: "single", question: "Câu 5. Đặc điểm tự nhiên của miền Tây Bắc và Bắc Trung Bộ là", options: ["đồi núi thấp chiếm ưu thế, có mùa đông lạnh sâu sắc.", "có mùa đông lạnh điển hình, nhiều dãy núi hướng vòng cung.", "hướng núi tây bắc – đông nam, tác động của gió mùa Đông Bắc suy giảm.", "hai mùa mưa và khô rõ rệt, có tiềm năng dầu khí cao nhất nước ta."], correct: 2, explanation: "Miền Tây Bắc và Bắc Trung Bộ nổi bật với các dãy núi cao chạy theo hướng Tây Bắc - Đông Nam (như Hoàng Liên Sơn, Trường Sơn Bắc), địa hình này làm suy yếu đáng kể cường độ của gió mùa Đông Bắc khi thổi xuống phía nam." },
+        { id: "2_6", type: "single", question: "Câu 6. Phát biểu nào sau đây không đúng với tài nguyên nước của Việt Nam?", options: ["Vào mùa khô, mực nước của một số sông trên phạm vi cả nước bị hạ thấp.", "Tình trạng hạ thấp mực nước ngầm xảy ra ở diện rộng trên phạm vi cả nước.", "Nguồn nước mặt nhiều nơi đang bị ô nhiễm do nước thải sản xuất và sinh hoạt.", "Vào mùa khô, tình trạng khan hiếm nước xảy ra ở nhiều nơi trên cả nước."], correct: 1, explanation: "Tình trạng sụt giảm mực nước ngầm diễn ra nghiêm trọng ở một số khu vực trọng điểm như Tây Nguyên (do tưới tiêu cà phê) hoặc các thành phố lớn, chứ KHÔNG xảy ra 'ở diện rộng trên phạm vi cả nước'." },
+        { id: "2_7", type: "single", question: "Câu 7. Dạng biểu đồ nào sau đây thích hợp nhất để thể hiện sự thay đổi CƠ CẤU lao động phân theo ngành kinh tế ở nước ta, GIAI ĐOẠN 2005 - 2021 (4 mốc thời gian)?", options: ["Biểu đồ tròn.", "Biểu đồ miền.", "Biểu đồ cột.", "Biểu đồ đường."], correct: 1, explanation: "Khi từ khóa là 'sự thay đổi CƠ CẤU' và thời gian từ 4 mốc (năm) trở lên, biểu đồ MIỀN là dạng biểu đồ thích hợp và trực quan nhất." },
+        { id: "2_8", type: "single", question: "Câu 8. Những yếu tố nào sau đây không phải là tiêu chí để phân loại đô thị ở nước ta?", options: ["Vị trí, chức năng, vai trò, trình độ phát triển kinh tế – xã hội của đô thị.", "Quy mô, mật độ dân số, tỉ lệ lao động phi nông nghiệp của đô thị.", "Trình độ phát triển cơ sở hạ tầng và kiến trúc, cảnh quan đô thị.", "Quy mô GDP và tỉ lệ đóng góp của ngành dịch vụ trong nền kinh tế đô thị."], correct: 3, explanation: "Việc phân loại đô thị ở Việt Nam được quy định dựa trên chức năng, quy mô dân số, mật độ dân số, tỉ lệ lao động phi nông nghiệp và hạ tầng. 'Quy mô GDP' không phải là tiêu chí phân loại hành chính của đô thị." },
+        { id: "2_9", type: "single", question: "Câu 9. Phương án nào sau đây không đúng với sự chuyển dịch cơ cấu ngành công nghiệp của nước ta?", options: ["Tăng tỉ trọng các ngành chế biến, chế tạo.", "Đầu tư phát triển các ngành chế biến sâu.", "Phát triển các ngành có hàm lượng công nghệ cao.", "Tăng tỉ trọng các ngành khai khoáng."], correct: 3, explanation: "Việt Nam đang hạn chế xuất khẩu tài nguyên thô, đóng cửa nhiều mỏ khai thác thủ công ô nhiễm, do đó tỉ trọng ngành công nghiệp KHAI KHOÁNG đang có xu hướng GIẢM mạnh, không phải tăng." },
+        { id: "2_10", type: "single", question: "Câu 10. Khí hậu nhiệt đới ẩm gió mùa mang lại thuận lợi nào sau đây cho việc phát triển nông nghiệp ở nước ta?", options: ["Hình thành các vùng chuyên canh.", "Phát triển nền nông nghiệp nhiệt đới.", "Phát triển nền nông nghiệp hữu cơ.", "Thuận lợi cho đẩy mạnh cơ giới hoá, hiện đại hoá."], correct: 1, explanation: "Điều kiện nhiệt ẩm dồi dào là tiền đề tự nhiên quan trọng nhất để sinh vật phát triển quanh năm, giúp nước ta xây dựng một nền nông nghiệp nhiệt đới với cơ cấu cây trồng, vật nuôi phong phú, năng suất cao." },
+        { id: "2_11", type: "single", question: "Câu 11. Phát biểu nào sau đây không phải là xu hướng phát triển của ngành thuỷ sản ở nước ta?", options: ["Nâng cao giá trị thuỷ sản, chú ý tính hiệu quả và bền vững.", "Phát triển đi đôi với bảo vệ môi trường nuôi trồng thuỷ sản.", "Sản phẩm thuỷ sản ngày càng đáp ứng tiêu chuẩn toàn cầu.", "Tăng tỉ trọng khai thác thuỷ sản, giảm tỉ trọng nuôi trồng thuỷ sản."], correct: 3, explanation: "Nguồn lợi hải sản ven bờ đang cạn kiệt, do đó xu hướng tất yếu của nước ta là GIẢM tỉ trọng khai thác (nhất là khai thác ven bờ) và TĂNG tỉ trọng Nuôi trồng thủy sản để đảm bảo bền vững." },
+        { id: "2_12", type: "single", question: `Câu 12. Dựa vào biểu đồ Sản lượng một số sản phẩm công nghiệp sản xuất, chế biến thực phẩm ở nước ta:<br>
+        <div class="my-4 bg-white p-5 rounded-xl border-2 border-gray-100 shadow-sm">
+            <svg viewBox="0 0 500 250" class="w-full h-auto font-sans">
+               <line x1="40" y1="200" x2="460" y2="200" stroke="#94a3b8" stroke-width="2"/>
+               <rect x="85" y="140.5" width="30" height="59.5" fill="#3b82f6" />
+               <rect x="185" y="82.5" width="30" height="117.5" fill="#3b82f6" />
+               <rect x="285" y="51.8" width="30" height="148.2" fill="#3b82f6" />
+               <rect x="385" y="49.7" width="30" height="150.3" fill="#3b82f6" />
+               <polyline points="100,110.9 200,91.5 300,84 400,85.6" fill="none" stroke="#ef4444" stroke-width="3"/>
+               <circle cx="100" cy="110.9" r="4" fill="#ef4444"/>
+               <circle cx="200" cy="91.5" r="4" fill="#ef4444"/>
+               <circle cx="300" cy="84" r="4" fill="#ef4444"/>
+               <circle cx="400" cy="85.6" r="4" fill="#ef4444"/>
+               <text x="100" y="135" font-size="11" font-weight="bold" fill="#3b82f6" text-anchor="middle">520.6</text>
+               <text x="200" y="77" font-size="11" font-weight="bold" fill="#3b82f6" text-anchor="middle">1027.9</text>
+               <text x="300" y="46" font-size="11" font-weight="bold" fill="#3b82f6" text-anchor="middle">1296.8</text>
+               <text x="400" y="44" font-size="11" font-weight="bold" fill="#3b82f6" text-anchor="middle">1315.5</text>
+               <text x="100" y="102" font-size="11" font-weight="bold" fill="#ef4444" text-anchor="middle">33.4</text>
+               <text x="200" y="82" font-size="11" font-weight="bold" fill="#ef4444" text-anchor="middle">40.7</text>
+               <text x="300" y="75" font-size="11" font-weight="bold" fill="#ef4444" text-anchor="middle">43.5</text>
+               <text x="400" y="76" font-size="11" font-weight="bold" fill="#ef4444" text-anchor="middle">42.9</text>
+               <text x="100" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2010</text>
+               <text x="200" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2015</text>
+               <text x="300" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2020</text>
+               <text x="400" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2022</text>
+            </svg>
+            <div class="flex justify-center gap-6 mt-2 font-bold text-sm">
+                <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-500 rounded-sm"></div> Sữa tươi (triệu lít)</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-1 bg-red-500 rounded-sm"></div> Gạo xay xát (triệu tấn)</div>
+            </div>
+        </div>
+        Phát biểu nào sau đây ĐÚNG với sản lượng công nghiệp thực phẩm giai đoạn 2010 - 2022?`, options: ["Sản lượng sữa tươi luôn tăng qua các mốc thời gian.", "Sản lượng gạo xay xát tăng nhanh và liên tục.", "Sản lượng gạo xay xát và sữa tươi có xu hướng giảm.", "Sản lượng sữa tươi có tốc độ tăng chậm hơn gạo xay xát."], correct: 0, explanation: "Quan sát biểu đồ, ta thấy cột Sữa tươi (màu xanh) cao dần lên liên tục qua các năm (từ 520.6 lên 1315.5 triệu lít). Trong khi đó, Gạo xay xát (đường màu đỏ) tăng từ 2010 đến 2020 nhưng lại có xu hướng GIẢM nhẹ ở năm 2022 (từ 43.5 xuống 42.9). Do đó phát biểu A là ĐÚNG nhất." },
+        { id: "2_13", type: "single", question: "Câu 13. Nhà máy thuỷ điện có công suất lớn nhất ở vùng Trung du và miền núi Bắc Bộ là", options: ["Sơn La.", "Hoà Bình.", "Sông Gâm.", "Thác Bà."], correct: 0, explanation: "Nhà máy thủy điện Sơn La nằm trên sông Đà là nhà máy thủy điện có công suất thiết kế lớn nhất khu vực và lớn nhất Việt Nam (2400 MW)." },
+        { id: "2_14", type: "single", question: "Câu 14. Nhân tố chủ yếu để hình thành cơ cấu cây trồng đa dạng ở vùng Đồng bằng sông Hồng là", options: ["khí hậu nhiệt đới ẩm gió mùa, có mùa đông lạnh.", "có nhiều loại đất khác nhau.", "người dân có kinh nghiệm canh tác nhiều loại nông sản.", "nhu cầu thị trường lớn và đa dạng."], correct: 0, explanation: "Nhờ có mùa đông lạnh rõ rệt, Đồng bằng sông Hồng có thể luân canh tăng vụ, đưa cây ôn đới (bắp cải, su hào, khoai tây) thành vụ chính trong mùa đông, tạo nên cơ cấu cây trồng vô cùng phong phú." },
+        { id: "2_15", type: "single", question: "Câu 15. Phát biểu nào sau đây không đúng với xu hướng phát triển ngành thuỷ sản ở Bắc Trung Bộ?", options: ["Tăng diện tích nuôi trồng thuỷ sản nước ngọt.", "Tăng diện tích nuôi trồng thuỷ sản nước lợ, nước mặn.", "Tăng cường đánh bắt xa bờ.", "Đẩy mạnh đánh bắt ven bờ."], correct: 3, explanation: "Nguồn lợi hải sản ven bờ của nước ta nói chung và Bắc Trung Bộ nói riêng đang có nguy cơ cạn kiệt. Do vậy chủ trương của nhà nước là bảo vệ sinh thái vùng bờ, hỗ trợ ngư dân vươn khơi bám biển xa bờ, nên việc 'đẩy mạnh ven bờ' là phương án SAI." },
+        { id: "2_16", type: "single", question: `Câu 16. Dựa vào bảng Sản lượng thuỷ sản của vùng Đông Nam Bộ, giai đoạn 2000 - 2022:
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Năm</th><th>2000</th><th>2012</th><th>2022</th></tr></thead>
+            <tbody>
+                <tr><td class="font-bold">Tổng sản lượng thuỷ sản</td><td>194.2</td><td>398.1</td><td>508.7</td></tr>
+                <tr><td class="font-bold">Khai thác</td><td>157.8</td><td>300.0</td><td>359.0</td></tr>
+                <tr><td class="font-bold">Nuôi trồng</td><td>36.4</td><td>98.1</td><td>149.7</td></tr>
+            </tbody>
+        </table></div>
+        Dạng biểu đồ nào sau đây thích hợp nhất để thể hiện SẢN LƯỢNG thuỷ sản KHAI THÁC và NUÔI TRỒNG của vùng Đông Nam Bộ trong giai đoạn 2000 - 2022?`, options: ["Biểu đồ đường.", "Biểu đồ cột.", "Biểu đồ miền.", "Biểu đồ tròn."], correct: 1, explanation: "Để thể hiện <b>quy mô (sản lượng tuyệt đối)</b> của 2 thành phần độc lập (Khai thác và Nuôi trồng) qua các mốc thời gian ít năm, biểu đồ <b>CỘT</b> (cột ghép hoặc cột chồng) là phương án tối ưu và trực quan nhất." },
+        { id: "2_17", type: "single", question: "Câu 17. Tỉnh, thành phố nào của vùng Đồng bằng sông Cửu Long nằm trong Vùng kinh tế trọng điểm phía Nam?", options: ["Cần Thơ, Hậu Giang.", "Vĩnh Long, Trà Vinh.", "An Giang, Kiên Giang.", "Long An, Tiền Giang."], correct: 3, explanation: "Vùng KTTĐ phía Nam bao gồm 8 tỉnh thành, trong đó có 2 tỉnh thuộc ĐBSCL được kết nạp vào để làm vùng giao thoa liên kết, đó là Long An và Tiền Giang." },
+        { id: "2_18", type: "single", question: "Câu 18. Thế mạnh nào sau đây không phải của Vùng kinh tế trọng điểm phía Nam?", options: ["Sản xuất lương thực.", "Công nghiệp lọc, hoá dầu.", "Phát triển tổng hợp kinh tế biển.", "Khai thác dầu khí."], correct: 0, explanation: "Vùng KTTĐ phía Nam dẫn đầu về công nghiệp, dịch vụ và kinh tế biển (khai thác dầu khí, cảng biển). <b>'Sản xuất lương thực'</b> (điển hình là lúa gạo) là thế mạnh đặc thù của vùng KTTĐ ĐBSCL, không phải thế mạnh chính của KTTĐ phía Nam." },
+
+        // --- PHẦN II (ĐÚNG/SAI) ---
+        { id: "2_II_1", type: "tf_cluster", context: "Câu 1. Tính nhiệt đới ẩm gió mùa được biểu hiện ở các thành phần địa hình, đất, sông ngòi và sinh vật.", items: [            
+            { id: "a", text: "a) Địa hình các-xtơ khá phổ biến ở các khu vực trung du và miền núi nước ta.", correct: true, expl: "Quá trình phong hóa hóa học (nước mưa hòa tan đá vôi) diễn ra cực kì mạnh mẽ trong điều kiện nhiệt ẩm cao đã tạo nên địa hình các-xtơ (hang động) rất đặc trưng. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Đất feralit là loại đất phổ biến ở các vùng đồng bằng, trung du và miền núi nước ta.", correct: false, expl: "Đất feralit chủ yếu phân bố ở vùng đồi núi. Ở các vùng đồng bằng, loại đất phổ biến là đất phù sa. Mệnh đề SAI." },
+            { id: "c", text: "c) Chế độ dòng chảy sông ngòi theo mùa, mùa lũ thường chiếm 70 – 80% lượng nước cả năm.", correct: true, expl: "Sự phân mùa của khí hậu (mùa mưa, mùa khô) làm cho chế độ nước sông ngòi cũng phân hóa sâu sắc thành mùa lũ và mùa cạn. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Hệ sinh thái rừng nguyên sinh đặc trưng cho khí hậu nóng ẩm là rừng rậm nhiệt đới ẩm.", correct: true, expl: "Nhiệt độ cao, độ ẩm lớn giúp hệ thực vật phát triển xanh tốt quanh năm, tạo nên rừng rậm nhiệt đới lá rộng thường xanh. Mệnh đề ĐÚNG." }
+        ]},
+        { id: "2_II_2", type: "tf_cluster", context: "Câu 2. Từ khi đất nước bước vào công cuộc đổi mới đến nay, cơ cấu dân số theo tuổi của nước ta đã có nhiều thay đổi. Sự thay đổi về cơ cấu dân số có tác động mạnh mẽ đến sự phát triển kinh tế – xã hội nước ta.", items: [            
+            { id: "a", text: "a) Kể từ năm 2007, nước ta bắt đầu bước vào thời kì cơ cấu dân số vàng.", correct: true, expl: "Việt Nam chính thức bước vào thời kỳ dân số vàng (số người trong độ tuổi lao động gấp đôi số người phụ thuộc) từ năm 2007. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Tuổi thọ trung bình của người dân tăng, dẫn đến tỉ lệ người từ 65 tuổi trở lên ngày càng cao.", correct: true, expl: "Chất lượng y tế và dinh dưỡng cải thiện giúp tuổi thọ tăng, biểu hiện rõ quá trình già hóa dân số đang tăng tốc. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Tỉ lệ người trong tuổi lao động cao là điều kiện thuận lợi để nước ta phát triển kinh tế.", correct: true, expl: "Lực lượng lao động dồi dào, trẻ khỏe là một lợi thế cạnh tranh rất lớn để thu hút đầu tư, phát triển công nghiệp. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Tỉ lệ sinh của nước ta đang có xu hướng tăng trong thời gian gần đây.", correct: false, expl: "Tỉ suất sinh của nước ta thực tế đang có xu hướng <b>GIẢM dần</b> qua các năm, đặc biệt thấp ở các đô thị lớn. Mệnh đề SAI." }
+        ]},
+        { id: "2_II_3", type: "tf_cluster", context: "Câu 3. Ở nước ta, hoạt động ngoại thương đang ngày càng phát triển, góp phần quan trọng trong việc kết nối giữa thị trường trong và ngoài nước, thúc đẩy phân công lao động xã hội và sử dụng hiệu quả các nguồn lực.", items: [
+            { id: "a", text: "a) Cơ cấu các mặt hàng xuất khẩu và nhập khẩu của nước ta khá đa dạng.", correct: true, expl: "Việt Nam xuất nhập khẩu rất đa dạng: từ nông lâm thủy sản, khoáng sản thô đến hàng điện tử, thiết bị tinh vi. Mệnh đề ĐÚNG." },
+            { id: "b", text: "b) Quan hệ thương mại phát triển theo hướng đa dạng hoá, đa phương hoá.", correct: true, expl: "Việt Nam đã mở rộng quan hệ với hàng trăm quốc gia và vùng lãnh thổ, tham gia nhiều FTA thế hệ mới. Mệnh đề ĐÚNG." },
+            { id: "c", text: "c) Cơ cấu trị giá xuất khẩu, nhập khẩu có sự thay đổi theo hướng tăng tỉ trọng nhập khẩu.", correct: false, expl: "Trong những năm gần đây, Việt Nam liên tục duy trì trạng thái <b>xuất siêu</b>, do đó tỉ trọng XUẤT KHẨU đang chiếm ưu thế lớn. Mệnh đề SAI." },
+            { id: "d", text: "d) Thị trường xuất khẩu của Việt Nam ngày càng mở rộng.", correct: true, expl: "Hàng hóa Việt Nam đã thâm nhập sâu vào các thị trường khắt khe và quy mô rộng lớn như Hoa Kỳ, EU, Nhật Bản, Hàn Quốc... Mệnh đề ĐÚNG." }
+        ]},
+        { id: "2_II_4", type: "tf_cluster", context: "Câu 4. Vùng Trung du và miền núi Bắc Bộ có nhiều điều kiện thuận lợi về tự nhiên và xã hội để phát triển các loại cây trồng, đặc biệt là các loại cây có nguồn gốc cận nhiệt và ôn đới.", items: [           
+            { id: "a", text: "a) Khí hậu của vùng có mùa đông lạnh, phân hoá theo độ cao.", correct: true, expl: "Gió mùa Đông Bắc đến sớm và kết hợp địa hình núi cao tạo ra khí hậu cận nhiệt, ôn đới trên núi, rất hợp trồng chè, rau hoa xứ lạnh. Mệnh đề ĐÚNG." },    
+            { id: "b", text: "b) Vùng có diện tích lớn, đất phù sa màu mỡ, được bồi đắp bởi các hệ thống sông.", correct: false, expl: "Đất phù sa bồi đắp chủ yếu ở các Đồng bằng. Đất ở Trung du MNBB chủ yếu là <b>feralit</b> hình thành trên các loại đá. Mệnh đề SAI." },
+            { id: "c", text: "c) Dân cư, lao động của vùng có nhiều kinh nghiệm trong canh tác.", correct: true, expl: "Đồng bào các dân tộc có truyền thống canh tác trên đất dốc, làm ruộng bậc thang, canh tác chè từ lâu đời. Mệnh đề ĐÚNG." },
+            { id: "d", text: "d) Vùng có nhiều dạng địa hình khác nhau, trong đó chủ yếu là đồi núi.", correct: true, expl: "Đây là vùng có diện tích đồi núi lớn nhất, địa hình bị chia cắt vô cùng phức tạp. Mệnh đề ĐÚNG." }
+        ]},
+        
+        // --- PHẦN III (TRẢ LỜI NGẮN) ---
+        { id: "2_III_1", type: "short_answer", question: `Câu 1. Dựa vào bảng Nhiệt độ trung bình tháng của một số trạm:
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Trạm</th><th>Tháng 1</th><th>...</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 12</th></tr></thead>
+            <tbody>
+                <tr><td class="font-bold text-left">Thanh Hoá</td><td>17.1</td><td>...</td><td>29.1</td><td>29.2</td><td>18.6</td></tr>
+                <tr><td class="font-bold text-left">Vũng Tàu</td><td>25.3</td><td>...</td><td>28.0</td><td>27.4</td><td>25.8</td></tr>
+            </tbody>
+        </table></div>
+        Biên độ nhiệt trung bình năm của trạm Thanh Hoá lớn hơn trạm Vũng Tàu bao nhiêu độ C (làm tròn kết quả đến hàng đơn vị)?`, correct: "9", explanation: "- <b>Bước 1:</b> Viết công thức: <b>Biên độ nhiệt = Nhiệt độ cao nhất - Nhiệt độ thấp nhất.</b><br>- <b>Bước 2:</b> Tính cho trạm Thanh Hóa = 29.2 (Tháng 7) - 17.1 (Tháng 1) = <b>12.1 °C</b>.<br>- <b>Bước 3:</b> Tính cho trạm Vũng Tàu = 28.8 (cao nhất, giả định ở các tháng giữa) - 25.3 (Tháng 1) = <b>3.5 °C</b>.<br>- <b>Bước 4:</b> Mức chênh lệch (lớn hơn) = 12.1 - 3.5 = <b>8.6 °C</b>.<br>Đề bài yêu cầu làm tròn đến hàng đơn vị, do phần thập phân là 6 (lớn hơn 5) nên ta làm tròn lên thành <b>9</b>." },
+        { id: "2_III_2", type: "short_answer", question: `Câu 2. Dựa vào biểu đồ Tỉ lệ hộ dân dùng nguồn nước hợp vệ sinh:
+        <div class="my-4 bg-white p-4 rounded-xl border-2 border-gray-100">
+            <svg viewBox="0 0 550 250" class="w-full h-auto font-sans">
+                <line x1="30" y1="200" x2="520" y2="200" stroke="#94a3b8" stroke-width="2"/>
+                <rect x="55" y="82.24" width="15" height="117.76" fill="#93c5fd"/><text x="62.5" y="78" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">73.6</text>
+                <rect x="70" y="52.48" width="15" height="147.52" fill="#3b82f6"/><text x="77.5" y="48" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">92.2</text>
+                <text x="70" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2002</text>
+                <rect x="135" y="56.16" width="15" height="143.84" fill="#93c5fd"/><text x="142.5" y="52" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">89.9</text>
+                <rect x="150" y="43.84" width="15" height="156.16" fill="#3b82f6"/><text x="157.5" y="39" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">97.6</text>
+                <text x="150" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2008</text>
+                <rect x="215" y="60.16" width="15" height="139.84" fill="#93c5fd"/><text x="222.5" y="56" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">87.4</text>
+                <rect x="230" y="43.68" width="15" height="156.32" fill="#3b82f6"/><text x="237.5" y="39" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">97.7</text>
+                <text x="230" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2010</text>
+                <rect x="295" y="54.72" width="15" height="145.28" fill="#93c5fd"/><text x="302.5" y="50" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">90.8</text>
+                <rect x="310" y="41.6" width="15" height="158.4" fill="#3b82f6"/><text x="317.5" y="37" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">99.0</text>
+                <text x="310" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2016</text>
+                <rect x="375" y="51.2" width="15" height="148.8" fill="#93c5fd"/><text x="382.5" y="47" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">93.0</text>
+                <rect x="390" y="41.28" width="15" height="158.72" fill="#3b82f6"/><text x="397.5" y="37" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">99.2</text>
+                <text x="390" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2019</text>
+                <rect x="455" y="46.08" width="15" height="153.92" fill="#93c5fd"/><text x="462.5" y="42" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">96.2</text>
+                <rect x="470" y="40.48" width="15" height="159.52" fill="#3b82f6"/><text x="477.5" y="36" font-size="10" font-weight="bold" fill="#1d4ed8" text-anchor="middle">99.7</text>
+                <text x="470" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2021</text>
+            </svg>
+            <div class="flex justify-center gap-6 mt-2 font-bold text-sm">
+                <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-300 rounded-sm"></div> Nông thôn</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-500 rounded-sm"></div> Thành thị</div>
+            </div>
+        </div>
+        So năm 2021 với năm 2002, tỉ lệ hộ dân nông thôn được dùng nước sạch tăng nhiều hơn thành thị bao nhiêu phần trăm (%)?`, correct: "15", explanation: "Từ biểu đồ, ta có mức độ gia tăng của từng khu vực như sau:<br>- Khu vực Nông thôn tăng: 96.2 - 73.6 = <b>22.6%</b><br>- Khu vực Thành thị tăng: 99.7 - 92.2 = <b>7.5%</b><br>Nông thôn tăng nhanh hơn thành thị = 22.6 - 7.5 = <b>15.1%</b>.<br>Làm tròn đến hàng đơn vị, kết quả điền là <b>15</b>." },
+        { id: "2_III_3", type: "short_answer", question: `Câu 3. Dựa vào bảng Tỉ lệ lao động qua đào tạo năm 2021 (%):
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>TDMNBB</th><th>ĐB Sông Hồng</th><th>BTB & DHMT</th><th>Tây Nguyên</th><th>Đông Nam Bộ</th><th>ĐBSCL</th></tr></thead>
+            <tbody><tr><td>25.9</td><td class="text-blue-700 font-bold">37.0</td><td>25.8</td><td>17.0</td><td>28.3</td><td>14.6</td></tr></tbody>
+        </table></div>
+        Năm 2021, tỉ lệ lao động qua đào tạo của vùng cao nhất là bao nhiêu phần trăm (%)?`, correct: "37", explanation: "Quan sát so sánh trực tiếp bảng số liệu, ta thấy vùng Đồng bằng sông Hồng có tỉ lệ lao động đã qua đào tạo cao nhất, đạt mức <b>37.0%</b>.<br>Đề bài yêu cầu điền đáp án, học sinh chỉ việc nhập <b>37</b>." },
+        { id: "2_III_4", type: "short_answer", question: `Câu 4. Dựa vào biểu đồ Diện tích gieo trồng và sản lượng lúa của nước ta:
+        <div class="my-4 bg-white p-4 rounded-xl border-2 border-gray-100">
+            <svg viewBox="0 0 500 250" class="w-full h-auto font-sans">
+                <line x1="40" y1="200" x2="460" y2="200" stroke="#94a3b8" stroke-width="2"/>
+                <rect x="85" y="80" width="30" height="120" fill="#3b82f6"/><text x="100" y="110" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">7.5</text>
+                <rect x="185" y="75.2" width="30" height="124.8" fill="#3b82f6"/><text x="200" y="110" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">7.8</text>
+                <rect x="285" y="83.2" width="30" height="116.8" fill="#3b82f6"/><text x="300" y="110" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">7.3</text>
+                <rect x="385" y="84.8" width="30" height="115.2" fill="#3b82f6"/><text x="400" y="110" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">7.2</text>
+                <polyline points="100,72 200,55.68 300,63.04 400,59.52" fill="none" stroke="#ef4444" stroke-width="3"/>
+                <circle cx="100" cy="72" r="4" fill="#ef4444"/><circle cx="200" cy="55.68" r="4" fill="#ef4444"/><circle cx="300" cy="63.04" r="4" fill="#ef4444"/><circle cx="400" cy="59.52" r="4" fill="#ef4444"/>
+                <text x="100" y="62" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">40.0</text>
+                <text x="200" y="46" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">45.1</text>
+                <text x="300" y="53" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">42.8</text>
+                <text x="400" y="50" font-size="12" font-weight="bold" fill="#ef4444" text-anchor="middle">43.9</text>
+                <text x="100" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2010</text>
+                <text x="200" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2015</text>
+                <text x="300" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2020</text>
+                <text x="400" y="220" font-size="12" font-weight="bold" fill="#64748b" text-anchor="middle">2021</text>
+            </svg>
+            <div class="flex justify-center gap-6 mt-2 font-bold text-sm">
+                <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-500 rounded-sm"></div> Diện tích (triệu ha)</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-1 bg-red-500 rounded-sm"></div> Sản lượng (triệu tấn)</div>
+            </div>
+        </div>
+        Trong các năm trên, năm nào nước ta có năng suất lúa cao nhất?`, correct: "2021", explanation: "Áp dụng công thức tính: <b>Năng suất = Sản lượng / Diện tích.</b> Lần lượt tính cho từng năm:<br>- Năm 2010: 40.0 / 7.5 ≈ <b>5.33</b> (tấn/ha).<br>- Năm 2015: 45.1 / 7.8 ≈ <b>5.78</b> (tấn/ha).<br>- Năm 2020: 42.8 / 7.3 ≈ <b>5.86</b> (tấn/ha).<br>- Năm 2021: 43.9 / 7.2 ≈ <b>6.09</b> (tấn/ha).<br>So sánh các số liệu, ta thấy năm <b>2021</b> có giá trị Năng suất lớn nhất (6.09 tấn/ha)." },
+        { id: "2_III_5", type: "short_answer", question: `Câu 5. Dựa vào bảng Tổng mức bán lẻ hàng hoá và dịch vụ (nghìn tỉ đồng):
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Năm</th><th>Cả nước</th><th>Đông Nam Bộ</th></tr></thead>
+            <tbody>
+                <tr><td>2005</td><td>480.3</td><td>157.1</td></tr>
+                <tr><td>2021</td><td>4407.8</td><td>1224.2</td></tr>
+            </tbody>
+        </table></div>
+        Từ 2005 đến 2021, tỉ trọng của Đông Nam Bộ so với cả nước giảm bao nhiêu phần trăm (%) (làm tròn đến hàng đơn vị)?`, correct: "5", explanation: "- <b>Bước 1:</b> Viết công thức tính tỉ trọng: <b>Tỉ trọng = (Giá trị vùng / Giá trị cả nước) * 100</b>.<br>- <b>Bước 2:</b> Tỉ trọng vùng Đông Nam Bộ năm 2005 = (157.1 / 480.3) * 100 = <b>32.7%</b><br>- <b>Bước 3:</b> Tỉ trọng vùng Đông Nam Bộ năm 2021 = (1224.2 / 4407.8) * 100 = <b>27.8%</b><br>- <b>Bước 4:</b> Mức độ sụt giảm = 32.7 - 27.8 = <b>4.9%</b>.<br>Đề yêu cầu làm tròn đến hàng đơn vị, vì 9 > 5 nên ta làm tròn lên thành <b>5</b>." },
+        { id: "2_III_6", type: "short_answer", question: `Câu 6. Dựa vào bảng Khối lượng hàng hoá vận chuyển (triệu tấn):
+        <div class="overflow-x-auto my-3"><table class="data-table w-full text-sm">
+            <thead><tr><th>Ngành</th><th>Đường sắt</th><th>Đường bộ</th><th>Đường sông</th><th>Đường biển</th><th>Hàng không</th></tr></thead>
+            <tbody>
+                <tr><td>Năm 2005</td><td>8.8</td><td>298.1</td><td>111.1</td><td>42.1</td><td>0.1</td></tr>
+                <tr><td>Năm 2021</td><td>5.7</td><td>1303.3</td><td>242.4</td><td>70.0</td><td>0.2</td></tr>
+            </tbody>
+        </table></div>
+        Từ năm 2005 đến năm 2021, khối lượng vận chuyển bằng đường biển có tốc độ tăng trưởng đứng thứ mấy?`, correct: "4", explanation: "Áp dụng công thức: <b>Tốc độ tăng trưởng = Giá trị năm 2021 / Giá trị năm 2005</b>. Lần lượt tính cho các đường:<br>- Đường bộ: 1303.3 / 298.1 = <b>4.37 lần</b> (Đứng thứ 1)<br>- Đường sông: 242.4 / 111.1 = <b>2.18 lần</b> (Đứng thứ 2)<br>- Hàng không: 0.2 / 0.1 = <b>2.0 lần</b> (Đứng thứ 3)<br>- Đường biển: 70.0 / 42.1 = <b>1.66 lần</b> (Đứng thứ 4)<br>- Đường sắt: 5.7 / 8.8 = 0.64 lần (Bị suy giảm âm, đứng bét).<br>Như vậy, đường biển đứng ở vị trí thứ <b>4</b>." }
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // BẮT ĐẦU BÀI THI
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc các em học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                currentIdx = 0;
+                userAnswers = {};
+                window.renderQuestion();
+                startTimer(50 * 60); 
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    window.prevQuestion = function() {
+        if (currentIdx > 0) { currentIdx--; window.renderQuestion(); }
+    };
+
+    window.nextQuestion = function() {
+        if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.items.length;
+            else count += 1;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        return Object.keys(userAnswers).length;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            
+            const parts = qId.split('_'); 
+            const mainQId = parts.slice(0, 3).join('_'); 
+            const itemId = parts[3]; 
+            const q = currentQuestions.find(i => i.id === mainQId);
+            const item = q.items.find(i => i.id === itemId);
+            window.showFeedbackModal(item, val, 'tf');
+        } else if (type === 'single') {
+            if (userAnswers[qId] !== undefined) return;
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            const q = currentQuestions[currentIdx];
+            window.showFeedbackModal(q, val, 'single');
+        } else if (type === 'short_answer') {
+            userAnswers[qId] = val.trim();
+            window.updateProgress();
+        }
+    };
+
+    window.showFeedbackModal = function(qOrItem, uAns, type = 'single') {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        const header = document.getElementById('feedback-header');
+        const body = document.getElementById('feedback-body');
+        
+        if(!modal || !content) return; 
+
+        window.autoAdvance = (type === 'single'); 
+
+        let isCorrect = false;
+        let explanation = qOrItem.explanation || qOrItem.expl || "Chưa có lời giải chi tiết.";
+        let optionsHtml = '';
+        
+        let questionText = "";
+        if (type === 'single') {
+            questionText = qOrItem.question || "";
+        } else if (type === 'tf') {
+            questionText = qOrItem.text || "";
+        } else if (type === 'short_answer') {
+            questionText = qOrItem.question || "";
+        }
+
+        let questionHtml = `<div class="bg-slate-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm mb-4 text-left">
+            <div class="text-xs font-black text-blue-500 uppercase tracking-wider mb-2">Nội dung câu hỏi:</div>
+            <div class="text-slate-800 font-bold text-lg math-scroll">${questionText}</div>
+        </div>`;
+
+        if (type === 'single') {
+            isCorrect = (uAns === qOrItem.correct);
+            optionsHtml += `<div class="space-y-3 mb-4 mt-2">`;
+            qOrItem.options.forEach((opt, i) => {
+                let optBg = ''; let iconHtml = ''; let textStyle = 'font-semibold';
+                if (qOrItem.correct === i) {
+                    optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2 shadow-sm'; 
+                    iconHtml = '<div class="text-xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    textStyle = 'font-bold text-base';
+                } else if (uAns === i && !isCorrect) {
+                    optBg = 'bg-red-50 text-red-900 border-red-300 border-2 opacity-75'; 
+                    iconHtml = '<div class="text-xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    textStyle = 'font-bold text-base line-through decoration-red-500 decoration-2';
+                } else { 
+                    optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                }
+
+                let letterBg = (qOrItem.correct === i) ? 'bg-emerald-200 text-emerald-800' : 
+                               ((uAns === i && !isCorrect) ? 'bg-red-200 text-red-800' : 'bg-slate-100');
+
+                optionsHtml += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3 transition-all">
+                                    <div class="w-8 h-8 flex items-center justify-center rounded-lg ${letterBg} text-sm font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div>
+                                    <div class="${textStyle} flex-1 math-scroll text-left text-sm sm:text-base">${opt}</div>
+                                    ${iconHtml}
+                                </div>`;
+            });
+            optionsHtml += `</div>`;
+        } else if (type === 'tf') {
+            isCorrect = (uAns === qOrItem.correct);
+            let ansText = qOrItem.correct ? 'ĐÚNG' : 'SAI';
+            let uAnsText = uAns ? 'ĐÚNG' : 'SAI';
+            
+            optionsHtml += `
+                <div class="p-4 bg-white border-2 border-indigo-100 rounded-xl shadow-sm mb-4 mt-2 text-left">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <span class="text-sm font-bold text-gray-500">Bạn chọn: <span class="font-black text-lg uppercase ${isCorrect ? 'text-emerald-600' : 'text-red-500 line-through decoration-red-500 decoration-2'}">${uAnsText}</span></span>
+                        <span class="font-black text-lg text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border-2 border-emerald-200">ĐÁP ÁN: ${ansText}</span>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'short_answer') {
+            isCorrect = String(uAns).trim().toLowerCase() === String(qOrItem.correct).trim().toLowerCase();
+            let uAnsText = String(uAns).trim() === "" ? "Chưa nhập" : String(uAns).trim();
+            optionsHtml += `
+                <div class="p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm mb-4 mt-2 text-left">
+                    <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                        <div class="flex-1 text-center bg-gray-50 p-4 rounded-xl border border-gray-200 w-full">
+                            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Đáp án của bạn</div>
+                            <div class="text-3xl font-black ${isCorrect ? 'text-emerald-600' : 'text-red-600 line-through decoration-2 decoration-red-500'}">${uAnsText}</div>
+                        </div>
+                        <div class="flex-1 text-center bg-emerald-50 p-4 rounded-xl border border-emerald-300 w-full">
+                            <div class="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">Đáp án chuẩn</div>
+                            <div class="text-3xl font-black text-emerald-700">${qOrItem.correct}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        let emoji = isCorrect ? '🎉' : '💡';
+        let statusTitle = isCorrect ? 'Chính xác!' : 'Bạn làm sai rồi!';
+        let headerColor = isCorrect ? 'text-emerald-600' : 'text-red-600';
+        
+        header.innerHTML = `<div class="text-4xl mb-2 animate-bounce drop-shadow-md">${emoji}</div><h3 class="text-2xl font-black ${headerColor} uppercase tracking-widest drop-shadow-sm">${statusTitle}</h3>`;
+        
+        body.innerHTML = questionHtml + optionsHtml;
+        body.innerHTML += `<div class="mt-2"><div class="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-t-xl font-bold uppercase text-sm border-b-2 border-blue-500 text-left tracking-wide">📖 Giải chi tiết:</div><div class="p-4 bg-white border-2 border-blue-200 rounded-b-xl rounded-tr-xl shadow-sm text-black font-semibold text-sm md:text-base leading-loose math-scroll text-left">${explanation}</div></div>`;
+
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    };
+
+    window.closeFeedbackModal = function() {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        if(!modal) return;
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { 
+            modal.classList.add('hidden'); 
+            if (window.autoAdvance) {
+                if (currentIdx < currentQuestions.length - 1) {
+                    window.nextQuestion();
+                }
+            }
+        }, 300);
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = `<div class="fade-in w-full">`;
+        
+        // --- MULTIPLE CHOICE ---
+        if (q.type === 'single') {
+            const hasAnswered = userAnswers[q.id] !== undefined;
+            const uAns = userAnswers[q.id];
+            
+            html += `<div class="flex items-center gap-3 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-black text-lg shadow-sm">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-400 tracking-wide uppercase">Trắc nghiệm một lựa chọn đúng</h3></div>`;
+            html += `<div class="flex gap-3 mb-4"><div class="w-full math-scroll"><div class="text-base md:text-lg font-bold text-red-400 mt-1 leading-relaxed tracking-tight">${q.question}</div></div></div>`;
+            html += `<div class="space-y-3 md:pl-4 mt-4">`;
+            q.options.forEach((opt, i) => {
+                const isChecked = (uAns === i) ? 'checked' : '';
+         const disabledClass = hasAnswered ? 'disabled-option' : '';
+                html += `<div class="flex items-center">
+                    <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} ${hasAnswered ? 'disabled' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                    <label for="opt_${i}" class="option-label ${disabledClass} w-full p-4 border-2 border-gray-200 rounded-xl flex items-center gap-4 bg-white shadow-sm font-semibold text-sm md:text-base cursor-pointer">
+                        <div class="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center text-sm font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                        <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                    </label>
+                </div>`;
+            });
+            html += `</div>`;
+        } 
+        // --- TRUE / FALSE ---
+        else if (q.type === 'tf_cluster') {
+            let displayContext = q.context;
+            html += `<div class="flex items-center gap-3 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-indigo-400 to-purple-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-black text-lg shadow-sm">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-wide uppercase">Trắc nghiệm ĐÚNG/SAI</h3></div>`;
+            html += `<div class="bg-indigo-50 text-indigo-900 p-4 rounded-xl font-bold mb-4 border-2 border-indigo-200 text-base leading-relaxed math-scroll">${displayContext}</div>`;
+            html += `<div class="space-y-3 mt-4">`;
+            q.items.forEach((item) => {
+                const combinedId = q.id + '_' + item.id;
+                let ans = userAnswers[combinedId];
+                let btnT = ans === true ? 'selected' : ''; 
+                let btnF = ans === false ? 'selected' : ''; 
+
+                html += `<div class="p-4 border-2 border-gray-100 rounded-xl bg-white shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4 transition-all hover:border-indigo-300">
+                    <div class="font-bold text-gray-800 flex-1 text-sm md:text-base math-scroll leading-relaxed">${item.text}</div>
+                    <div class="flex gap-3 shrink-0">
+                        <button onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 py-2.5 rounded-lg font-black text-sm border-2 ${btnT}">ĐÚNG</button>
+                        <button onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 py-2.5 rounded-lg font-black text-sm border-2 ${btnF}">SAI</button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        } 
+        // --- SHORT ANSWER ---
+        else if (q.type === 'short_answer') {
+            let uAns = userAnswers[q.id] || "";
+            html += `<div class="flex items-center gap-3 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-orange-400 to-red-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-black text-lg shadow-sm">III</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-wide uppercase">Câu trả lời ngắn</h3></div>`;
+            html += `<div class="bg-orange-50 text-orange-900 p-4 rounded-xl font-bold mb-4 border-2 border-orange-200 text-base leading-relaxed math-scroll">${q.question}</div>`;
+          html += `<div class="answer-submission-box">
+        <label class="answer-label" for="short_ans_${q.id}">NHẬP KẾT QUẢ CUỐI CÙNG CỦA BẠN:</label>
+        <textarea id="short_ans_${q.id}" class="answer-input" placeholder="Nhập đáp án tại đây..." onblur="window.selectAnswer('${q.id}', this.value, 'short_answer')">${uAns}</textarea>
+        
+        <button type="button" class="btn-submit-explain" onclick="
+            document.getElementById('explain_${q.id}').style.display='block'; 
+            this.style.backgroundColor='#475569'; 
+            this.innerText='Đã nộp bài & Đang xem giải thích';
+        ">Nộp câu trả lời & Xem giải thích</button>
+        
+        <div id="explain_${q.id}" style="display: none; margin-top: 20px; padding: 20px; background-color: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px;">
+            <p style="font-size: 20px; font-weight: bold; color: #dc2626; margin-bottom: 12px; text-transform: uppercase;">
+                🎯 Đáp án đúng: ${q.correct}
+            </p>
+            <div style="font-size: 18px; color: #166534; line-height: 1.6;">
+                ${q.explanation}
+            </div>
+        </div>
+    </div>`;
+        }
+
+        html += `</div>`;
+        container.innerHTML = html;
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        const pBtn = document.getElementById('prev-btn');
+        const nBtn = document.getElementById('next-btn');
+        const sBtn = document.getElementById('submit-btn');
+        if(pBtn) pBtn.style.display = (currentIdx === 0) ? 'none' : 'block';
+        if(nBtn) nBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        if(sBtn) sBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // CHẤM ĐIỂM
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        // Buộc lưu input cuối nếu user chưa click ra ngoài
+        const currentQ = currentQuestions[currentIdx];
+        if (currentQ.type === 'short_answer') {
+            const inputEl = document.getElementById(`short_ans_${currentQ.id}`);
+            if (inputEl) userAnswers[currentQ.id] = inputEl.value.trim();
+        }
+
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25; 
+            } else if (q.type === 'tf_cluster') {
+                let c = 0;
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) c++; });
+                
+                if (c === 1) score += 0.1;
+                else if (c === 2) score += 0.25;
+                else if (c === 3) score += 0.75;
+                else if (c === 4) score += 1.0;
+            } else if (q.type === 'short_answer') {
+                let uAnsStr = String(userAnswers[q.id] || "").trim().toLowerCase();
+                let cAnsStr = String(q.correct).trim().toLowerCase();
+                if (uAnsStr === cAnsStr) score += 0.25;
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            // Backup nếu không có net
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="absolute top-3 left-3 z-50">
+            <button onclick="window.goHome()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border-2 border-gray-200 text-sm flex items-center gap-2">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center mt-10 sm:mt-6">
+            <div class="text-5xl sm:text-6xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-black text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-black mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-5xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-sm sm:text-base font-bold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border-2 border-blue-200">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold shadow-sm hover:shadow-md transition-all text-base border-2 border-indigo-400">👀 Xem lại & Giải chi tiết</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-bold shadow-sm hover:shadow-md transition-all text-base border-2 border-orange-400">🏆 Bảng Xếp Hạng</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-red-400 bg-red-50';
+                let explanation = q.explanation;
+                
+                let statusText = uAns === undefined ? '⚠️ Chưa làm' : (isCorrect ? '✅ Bạn làm đúng!' : '❌ Bạn làm sai!');
+                let statusClass = uAns === undefined ? 'text-orange-500 bg-orange-50 border-orange-300' : (isCorrect ? 'text-emerald-700 bg-emerald-50 border-emerald-300' : 'text-red-700 bg-red-50 border-red-300');
+                if (uAns === undefined) borderColor = 'border-orange-400 bg-orange-50';
+
+                html += `<div class="p-5 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor} relative mt-5 text-left">`;
+                html += `<div class="absolute -top-4 right-4 px-4 py-1 rounded-xl border-2 ${statusClass} font-bold text-sm shadow-sm tracking-wide bg-white">${statusText}</div>`;
+                html += `<div class="font-bold text-lg sm:text-xl text-slate-800 mb-4 leading-relaxed math-scroll mt-2">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = ''; let textStyle = 'font-semibold';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2 shadow-sm'; 
+                        iconHtml = '<div class="text-xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                        textStyle = 'font-bold text-base';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-50 text-red-900 border-red-300 border-2 opacity-75'; 
+                        iconHtml = '<div class="text-xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                        textStyle = 'font-bold text-base line-through decoration-red-500 decoration-2';
+                    } else { 
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    let letterBg = (q.correct === i) ? 'bg-emerald-200 text-emerald-800' : ((uAns === i && !isCorrect) ? 'bg-red-200 text-red-800' : 'bg-slate-100');
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3 transition-all">
+                                <div class="w-8 h-8 flex items-center justify-center rounded-lg ${letterBg} text-sm font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div>
+                                <div class="${textStyle} flex-1 math-scroll text-left text-sm sm:text-base">${opt}</div>
+                                ${iconHtml}
+                            </div>`;
+                });
+                html += `</div>`;
+                if (q.explanation) html += `<div class="mt-4 pt-4 border-t-2 border-gray-200"><p class="text-sm font-bold uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p><p class="text-black font-semibold text-sm leading-loose math-scroll text-left">${explanation}</p></div>`;
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                let displayContext = q.context;
+                html += `<div class="p-5 sm:p-6 border-2 border-indigo-300 bg-indigo-50 rounded-2xl shadow-sm mb-6 text-left mt-5">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-indigo-900 mb-4 math-scroll leading-relaxed">${displayContext}</div>`;
+                html += `<div class="space-y-4">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isCorrect = uAns === item.correct;
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+                    
+                    let statusText = uAns === undefined ? '⚠️ Chưa làm' : (isCorrect ? '✅ Đúng!' : '❌ Sai!');
+                    let statusColor = uAns === undefined ? 'text-orange-600 border-orange-300 bg-orange-50' : (isCorrect ? 'text-emerald-700 border-emerald-300 bg-emerald-50' : 'text-red-700 border-red-300 bg-red-50');
+
+                    html += `<div class="p-4 bg-white border-2 border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-base text-gray-800 math-scroll mb-3 leading-relaxed">${item.text}</div>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-gray-100 pb-3 gap-3">
+                            <span class="text-sm font-semibold text-gray-500">Bạn chọn: <span class="${uAns === undefined ? 'text-gray-400' : 'text-blue-700'} font-black text-base uppercase ${!isCorrect && uAns !== undefined ? 'line-through decoration-red-500 decoration-2 text-red-500' : ''}">${uAns === undefined ? '...' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-base text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border-2 border-emerald-200">ĐÁP ÁN: ${ansText}</span>
+                            <span class="font-bold text-sm ${statusColor} px-3 py-1 rounded-lg border-2 text-center">${statusText}</span>
+                        </div>
+                        <div class="mt-3 pt-1 text-sm text-gray-700 font-semibold leading-relaxed math-scroll"><span class="text-indigo-600 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+            else if (q.type === 'short_answer') {
+                let uAnsStr = String(userAnswers[q.id] || "").trim();
+                let cAnsStr = String(q.correct).trim();
+                let isCorrect = uAnsStr.toLowerCase() === cAnsStr.toLowerCase();
+                
+                let borderColor = isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-red-400 bg-red-50';
+                let statusText = uAnsStr === "" ? '⚠️ Chưa làm' : (isCorrect ? '✅ Chính xác!' : '❌ Sai rồi!');
+                let statusClass = uAnsStr === "" ? 'text-orange-500 bg-orange-50 border-orange-300' : (isCorrect ? 'text-emerald-700 bg-emerald-50 border-emerald-300' : 'text-red-700 bg-red-50 border-red-300');
+                if (uAnsStr === "") borderColor = 'border-orange-400 bg-orange-50';
+
+                html += `<div class="p-5 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor} relative mt-5 text-left">`;
+                html += `<div class="absolute -top-4 right-4 px-4 py-1 rounded-xl border-2 ${statusClass} font-bold text-sm shadow-sm tracking-wide bg-white">${statusText}</div>`;
+                html += `<div class="font-bold text-lg sm:text-xl text-slate-800 mb-4 leading-relaxed math-scroll mt-2">${q.question}</div>`;
+                html += `<div class="flex flex-col md:flex-row gap-4 mt-3">
+                            <div class="flex-1 p-4 bg-white border-2 border-gray-200 rounded-xl text-center">
+                                <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Đáp án của bạn</div>
+                                <div class="text-2xl font-black ${isCorrect ? 'text-emerald-600' : 'text-red-600 line-through decoration-2 decoration-red-500'}">${uAnsStr || '---'}</div>
+                            </div>
+                            <div class="flex-1 p-4 bg-emerald-50 border-2 border-emerald-300 rounded-xl text-center">
+                                <div class="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">Đáp án chuẩn</div>
+                                <div class="text-2xl font-black text-emerald-700">${cAnsStr}</div>
+                            </div>
+                         </div>`;
+                html += `<div class="mt-4 pt-4 border-t-2 border-gray-200"><p class="text-sm font-bold uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p><p class="text-black font-semibold text-sm leading-loose math-scroll text-left">${q.explanation}</p></div>`;
+                html += `</div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-3 py-3 text-center font-bold text-slate-400 text-sm">#${idx + 1}</td><td class="px-3 py-3 font-bold text-blue-600 text-sm">${s.lop}</td><td class="px-3 py-3 font-bold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wider">Bạn</span>' : ''}</td><td class="px-3 py-3 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-200 px-2 py-1 rounded-lg">${s.tenDe}</span></td><td class="px-3 py-3 text-center"><span class="font-black text-xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-3 py-3 text-center text-slate-500 text-xs font-semibold">${s.startTime}</td><td class="px-3 py-3 text-center text-slate-500 text-xs font-semibold">${s.endTime}</td><td class="px-3 py-3 text-right font-bold text-orange-600 text-xs">${s.duration}</td>
+            <td class="px-3 py-3 text-right text-xs text-slate-500 font-semibold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
