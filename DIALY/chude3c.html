@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kiểm Tra Địa Lí 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    /* Cố định cỡ chữ chuẩn 18px theo yêu cầu */
+    html { font-size: 18px !important; }
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #10b981, #3b82f6, #6366f1, #8b5cf6);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"]:disabled + .option-label, input[type="radio"]:disabled + label {
+        cursor: not-allowed; opacity: 0.8;
+    }
+
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label span:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label span:last-child { color: white; }
+    
+    .tf-radio-T:checked + .tf-label-T, .tf-radio-S:checked + .tf-label-S {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; 
+        border-color: transparent !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all relative">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white relative">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-red-600 mb-1 uppercase">ĐỊA LÝ 12</h1>
+      <h3 class="text-xl font-extrabold text-red-600 mb-2 uppercase">CHỦ ĐỀ 3: CÁC NGÀNH KINH TẾ</h3>
+      <p class="text-blue-800 font-bold uppercase mt-3 text-base">C. PHÁT TRIỂN LÂM NGHIỆP VÀ THUỶ SẢN</p>
+     </div>
+     
+     <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-base" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-base" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-green-600 mb-3">📚 Vui lòng chọn nội dung:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-base tracking-wide">PHẦN 1: ÔN TẬP LÝ THUYẾT</div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-base tracking-wide">PHẦN 2: CÂU HỎI TRẮC NGHIỆM</div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-4 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 VÀO HỌC </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-green-600 font-extrabold hover:text-green-800 hover:underline transition-colors text-base mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-5xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-green-500 bg-white">
+     
+     <div class="bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+         <div class="flex items-center gap-3">
+             <div class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-xl shadow-md">📚</div>
+             <div>
+                 <div class="font-black text-blue-800 text-lg">Hệ thống học tập</div>
+                 <div class="text-blue-600 font-bold text-sm">Cùng nỗ lực để vươn xa!</div>
+             </div>
+         </div>
+         <button onclick="window.goHome()" class="w-full sm:w-auto px-5 py-2.5 bg-white text-blue-700 rounded-xl font-black hover:bg-blue-100 transition-colors shadow-md border-2 border-blue-200 text-sm flex items-center justify-center gap-2">
+             <span>🏠</span> Về Trang Chủ
+         </button>
+     </div>
+
+     <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600">Bài Học</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+      <div class="flex gap-3 w-full md:w-auto">
+          <div class="flex-1 md:flex-none text-center bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+           <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+           <div id="progress-text" class="text-xl font-black text-blue-700">0/0 ý</div>
+          </div>
+          <div class="flex-1 md:flex-none text-center bg-red-50 px-4 py-2 rounded-xl border border-red-100" id="timer-banner">
+             <div class="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">Thời gian</div>
+             <div id="timer" class="text-xl font-black text-red-600 font-mono">45:00</div>
+          </div>
+      </div>
+     </div>
+     
+     <div id="question-container" class="mb-8 flex-grow space-y-6"></div>
+     
+     <div id="nav-buttons" class="pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0"></div>
+    </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl relative" id="result-content"></div>
+   </div>
+   
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10 flex gap-2">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+         <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200 text-sm">🔙 Quay lại</button>
+     </div>
+     <div class="mb-6 pb-4 border-b-2 border-gray-100 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white relative">
+     <div class="absolute top-4 left-4 z-10">
+         <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+     </div>
+     <div class="mb-6 border-b-2 border-gray-100 pb-4 pt-14">
+      <h2 class="text-2xl sm:text-3xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="overflow-x-auto rounded-2xl border-2 border-gray-100 flex-grow shadow-lg bg-white/50">
+      <table class="w-full text-sm sm:text-base whitespace-nowrap">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đúng (Ý)</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+   
+   <footer class="w-full text-center py-4 bg-white/80 backdrop-blur-md border-t border-white shadow-[0_-5px_15px_rgba(0,0,0,0.05)] mt-auto z-50">
+      <p class="text-gray-700 font-bold text-sm tracking-wide">
+          🏆 📚 Hành Trình Số - Mang tri thức đến mọi người | Phát triển bởi cô <span class="text-green-600 font-extrabold text-base">Lê Huyền Sinh - THPT Phan Đình Phùng</span> 📚 🏆  
+      </p>
+   </footer>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-[90%] shadow-2xl transform transition-transform duration-300 scale-95" id="confirm-card">
+            <div id="confirm-icon" class="text-5xl mb-4 text-center animate-bounce text-yellow-500">⚠️</div>
+            <h3 class="text-2xl font-black text-gray-800 mb-2 text-center uppercase">Xác nhận nộp bài</h3>
+            <p class="text-gray-600 mb-8 text-center font-medium leading-relaxed text-base" id="confirm-msg"></p>
+            <div class="flex flex-col gap-3">
+                <button id="btn-cancel-submit" class="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200 text-base">Quay lại làm tiếp</button>
+                <button id="btn-confirm-submit" class="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transition-all shadow-md shadow-green-500/30 transform hover:-translate-y-0.5 text-base">Vẫn Nộp Luôn</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            database = firebase.database();
+            // Cập nhật đường dẫn cơ sở dữ liệu cho chủ đề Lâm nghiệp - Thủy sản
+            scoresRef = database.ref('bxh_diali12_lamnghiepthuysan'); 
+        }
+    } catch(err) {
+        console.error("Lỗi khởi tạo Firebase:", err);
+    }
+
+    let isQuizStarted = false; 
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    // ==================== HTML LÝ THUYẾT (DÀNH CHO PHẦN 1) ====================
+   const theoryHTML = `
+ <div class="theory-content text-gray-800 leading-relaxed text-base">
+    
+    <h2 style="color: #047857;" class="text-2xl font-black mb-6 uppercase border-b-4 border-green-500 inline-block pb-2">CHỦ ĐỀ 3: ĐỊA LÝ CÁC NGÀNH KINH TẾ</h2>
+    <h3 class="text-xl font-bold mb-6 uppercase text-green-700">C. PHÁT TRIỂN LÂM NGHIỆP VÀ THUỶ SẢN</h3>
+
+    <h3 style="color: #059669;" class="text-xl font-bold mt-6 mb-4">1. Vấn đề phát triển lâm nghiệp</h3>
+    <ul class="list-disc ml-6 mb-6 space-y-3">
+        <li><strong>a. Đặc điểm tài nguyên rừng và phân bố:</strong> 
+            Tính đến năm 2021, tổng diện tích rừng của nước ta đạt 14,7 triệu héc ta. Khí hậu nhiệt đới gió mùa đã mang lại cho tài nguyên rừng các hệ sinh thái đặc trưng, đa dạng, phong phú với sinh khối lớn và nhiều loại gỗ quý hiếm. Tuy diện tích rừng đang tăng lên, song chất lượng rừng vẫn chưa cao do rừng ở nước ta hiện nay chủ yếu là rừng trồng và rừng tự nhiên tái sinh. Về phân bố, vùng Trung du và miền núi Bắc Bộ có diện tích rừng tự nhiên lớn nhất, trong khi vùng Bắc Trung Bộ và duyên hải miền Trung lại có diện tích rừng trồng lớn nhất cả nước. Tài nguyên rừng được chia thành các loại chính như rừng phòng hộ gồm rừng chắn cát ven biển, rừng đầu nguồn, rừng ngập mặn và rừng đặc dụng gồm các vườn quốc gia, khu dự trữ thiên nhiên.
+        </li>
+        <li><strong>b. Tình hình phát triển lâm nghiệp:</strong> 
+            Các hoạt động lâm nghiệp chủ yếu của nước ta bao gồm lâm sinh, khai thác, chế biến gỗ và lâm sản. Sự phát triển của các ngành kinh tế khác đã tạo điều kiện thuận lợi để duy trì công tác bảo vệ rừng, đồng thời chính sách giao đất giao rừng cũng tạo tâm lí ổn định cho người làm lâm nghiệp. Tuy nhiên, hoạt động khai thác và chế biến gỗ vẫn còn gặp khó khăn do máy móc và thiết bị còn hạn chế, làm ảnh hưởng đến hiệu quả chung của toàn ngành.
+        </li>
+        <li><strong>c. Vấn đề quản lí và bảo vệ rừng:</strong> 
+            Việc phát triển bền vững phải đảm bảo hài hoà các mục tiêu kinh tế xã hội và bảo vệ môi trường. Nước ta đang tích cực nâng cao công tác tuyên truyền giáo dục để người dân hiểu rõ ý nghĩa của việc bảo vệ rừng, đồng thời kiểm soát chặt chẽ các quy hoạch, dự án phát triển kinh tế xã hội có tác động tiêu cực đến diện tích rừng. Cùng với đó là việc đẩy mạnh trồng rừng ngập mặn, rừng phòng hộ ven biển, ven sông, rừng đầu nguồn và tăng cường hội nhập quốc tế về quản lí, bảo vệ, phòng chống cháy rừng.
+        </li>
+    </ul>
+
+    <h3 style="color: #059669;" class="text-xl font-bold mt-8 mb-4">2. Vấn đề phát triển ngành thuỷ sản</h3>
+    <ul class="list-disc ml-6 mb-6 space-y-3">
+        <li><strong>a. Điều kiện phát triển thuỷ sản:</strong> 
+            Các điều kiện kinh tế xã hội có tác động rất mạnh mẽ đến sự phát triển và phân bố ngành thuỷ sản nước ta. Nguồn lao động ngày càng được đào tạo bài bản để đáp ứng các tiêu chuẩn toàn cầu trong khai thác và nuôi trồng. Việc ứng dụng các thành tựu khoa học công nghệ không chỉ góp phần nâng cao giá trị sản phẩm, đáp ứng tiêu chuẩn quốc tế mà còn giúp bảo vệ môi trường sinh thái. Bên cạnh đó, thị trường tiêu thụ không ngừng được mở rộng và các chính sách khai thác thuỷ sản gắn với giữ vững chủ quyền biển đảo đã tạo điều kiện vững chắc cho ngành phát triển.
+        </li>
+        <li><strong>b. Tình hình khai thác và phân bố:</strong> 
+            Trong những năm gần đây, sản lượng hải sản khai thác tăng nhanh chủ yếu nhờ việc đẩy mạnh khai thác xa bờ cùng phương tiện đánh bắt hiện đại hơn. Mặc dù vậy, năng suất lao động trong ngành khai thác vẫn còn thấp do tàu thuyền và phương tiện đánh bắt ở nhiều nơi vẫn còn hạn chế. Để tăng sản lượng, vấn đề quan trọng nhất cần giải quyết là đầu tư trang thiết bị, phương tiện hiện đại để vươn khơi. Nước ta có nhiều ngư trường trọng điểm, tiêu biểu như ngư trường Hải Phòng đến Quảng Ninh ở vùng biển phía Bắc và ngư trường Cà Mau đến Kiên Giang ở vùng biển phía Tây Nam. Việc tổ chức khai thác ngoài khơi ngày càng hiệu quả, bền vững và luôn gắn liền với việc phát triển sinh kế cho ngư dân.
+        </li>
+        <li><strong>c. Chuyển dịch cơ cấu và nuôi trồng thuỷ sản:</strong> 
+            Cơ cấu ngành thuỷ sản nước ta đang có sự chuyển dịch mạnh mẽ theo xu hướng giảm tỉ trọng sản lượng khai thác và tăng tỉ trọng sản lượng nuôi trồng. Cụ thể, tổng sản lượng thuỷ sản đã tăng từ 5,2 triệu tấn năm 2010 lên 8,8 triệu tấn năm 2021, trong đó nuôi trồng đạt 4,9 triệu tấn. Sản phẩm thuỷ sản nuôi trồng ngày càng trở nên đa dạng hơn. Nước ta đang định hướng phát triển nuôi trồng đi đôi với việc chế biến sâu, đa dạng hoá sản phẩm nhằm đẩy mạnh tốc độ tăng trưởng và hướng tới một nền kinh tế biển bền vững.
+        </li>
+    </ul>
+    <div class="my-8 border-b-2 border-gray-200"></div>
+</div>
+    `;
+
+    // ==================== HTML BẢNG SỐ LIỆU CHO CÂU HỎI ĐIỀN TỪ ====================
+    let tableHTML = `
+        <div class="bg-white rounded-3xl border-4 border-blue-100 shadow-xl overflow-hidden mb-10 mx-1 mt-12">
+            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-5 font-black text-center text-lg uppercase tracking-wide">
+                Bảng: Sản lượng thuỷ sản ở nước ta, năm 2010 và 2021 (Đơn vị: triệu tấn)
+            </div>
+            <div class="overflow-x-auto p-4">
+                <table class="w-full text-center border-collapse min-w-[500px] rounded-xl overflow-hidden shadow-sm">
+                    <thead class="bg-blue-100 text-blue-900 text-base font-black">
+                        <tr>
+                            <th class="border-b-4 border-white px-4 py-4 text-left w-1/2">Năm \\ Chỉ tiêu</th>
+                            <th class="border-b-4 border-white border-l-4 px-4 py-4 w-1/4">2010</th>
+                            <th class="border-b-4 border-white border-l-4 px-4 py-4 w-1/4">2021</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-800 text-base font-bold bg-blue-50/30">
+                        <tr class="hover:bg-blue-100 transition-colors">
+                            <td class="border-b-4 border-white px-4 py-4 text-left text-blue-800">Tổng sản lượng thuỷ sản</td>
+                            <td class="border-b-4 border-white border-l-4 px-4 py-4 text-blue-600 font-black">5,2</td>
+                            <td class="border-b-4 border-white border-l-4 px-4 py-4 text-blue-600 font-black">8,8</td>
+                        </tr>
+                        <tr class="hover:bg-blue-100 transition-colors">
+                            <td class="border-b-4 border-white px-4 py-4 text-left text-blue-800">Khai thác</td>
+                            <td class="border-b-4 border-white border-l-4 px-4 py-4 text-gray-700">2,5</td>
+                            <td class="border-b-4 border-white border-l-4 px-4 py-4 text-gray-700">3,9</td>
+                        </tr>
+                        <tr class="hover:bg-blue-100 transition-colors">
+                            <td class="px-4 py-4 text-left text-blue-800">Nuôi trồng</td>
+                            <td class="border-l-4 border-white px-4 py-4 text-gray-700">2,7</td>
+                            <td class="border-l-4 border-white px-4 py-4 text-gray-700">4,9</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    // ==================== NGÂN HÀNG CÂU HỎI ĐỊA LÝ LÂM NGHIỆP THUỶ SẢN ====================
+    const de2_data = [
+        // TRẮC NGHIỆM MỘT LỰA CHỌN
+        { id: "dl_1_1", type: "single", question: "Tính đến năm 2021, tổng diện tích rừng nước ta là bao nhiêu triệu ha?", options: ["14,7.", "42.", "4,5.", "7,8."], correct: 0, giaiThich: "Tính đến năm 2021, tổng diện tích rừng của nước ta đạt 14,7 triệu héc ta." },
+        { id: "dl_1_2", type: "single", question: "Năm 2021, vùng nào sau đây có diện tích rừng tự nhiên lớn nhất so với các vùng khác của nước ta?", options: ["Trung du và miền núi Bắc Bộ.", "Bắc Trung Bộ và duyên hải miền Trung.", "Tây Nguyên.", "Đồng bằng sông Cửu Long."], correct: 0, giaiThich: "Vùng Trung du và miền núi Bắc Bộ có diện tích rừng tự nhiên lớn nhất." },
+        { id: "dl_1_3", type: "single", question: "Năm 2021, vùng nào sau đây có diện tích rừng trồng lớn nhất so với các vùng khác của nước ta?", options: ["Trung du và miền núi Bắc Bộ.", "Bắc Trung Bộ và duyên hải miền Trung.", "Tây Nguyên.", "Đồng bằng sông Cửu Long."], correct: 1, giaiThich: "Vùng Bắc Trung Bộ và duyên hải miền Trung lại có diện tích rừng trồng lớn nhất cả nước." },
+        { id: "dl_1_4", type: "single", question: "Rừng phòng hộ không bao gồm loại nào sau đây?", options: ["Rừng chắn cát ven biển.", "Rừng đầu nguồn các con sông.", "Vườn quốc gia, khu dự trữ thiên nhiên.", "Các dải rừng ngập mặn ven biển."], correct: 2, giaiThich: "Vườn quốc gia, khu dự trữ thiên nhiên thuộc loại rừng đặc dụng, không phải rừng phòng hộ." },
+        { id: "dl_1_5", type: "single", question: "Rừng nào sau đây là rừng đặc dụng?", options: ["Các dải rừng trồng cây ngập mặn ven biển.", "Rừng phi lao chắn gió, chắn cát ven biển.", "Rừng trồng cây cao su và cây bạch đàn.", "Vườn quốc gia và khu dự trữ thiên nhiên."], correct: 3, giaiThich: "Rừng đặc dụng gồm các vườn quốc gia, khu dự trữ thiên nhiên." },
+        { id: "dl_1_6", type: "single", question: "Nhân tố khí hậu không tác động đến đặc điểm nào sau đây của tài nguyên rừng ở nước ta?", options: ["Hệ sinh thái rừng nhiệt đới gió mùa đặc trưng.", "Rừng được trồng trên nhiều dạng địa hình khác nhau.", "Rừng có sinh khối lớn, nhiều loại gỗ quý hiếm.", "Các hệ sinh thái rừng ở nước ta đa dạng, phong phú."], correct: 1, giaiThich: "Việc rừng được trồng trên nhiều dạng địa hình khác nhau là do đặc điểm phân hoá của địa hình đồi núi, không phải do tác động trực tiếp của khí hậu." },
+        { id: "dl_1_7", type: "single", question: "Diện tích rừng nước ta tăng, song chất lượng rừng chưa cao do nguyên nhân nào sau đây?", options: ["Rừng ở nước ta chủ yếu là rừng trồng và rừng tự nhiên tái sinh.", "Do khai thác rừng lấy đất trồng cây công nghiệp trong giai đoạn trước đây.", "Do hậu quả của chiến tranh và việc di dân tự do trong thời gian dài.", "Biến đổi khí hậu, thiên tai có ảnh hưởng không nhỏ đến chất lượng rừng."], correct: 0, giaiThich: "Tuy diện tích rừng đang tăng lên, song chất lượng rừng vẫn chưa cao do rừng ở nước ta hiện nay chủ yếu là rừng trồng và rừng tự nhiên tái sinh." },
+        { id: "dl_1_8", type: "single", question: "Ngư trường trọng điểm nào sau đây nằm ở vùng biển phía Tây Nam của nước ta?", options: ["Hải Phòng – Quảng Ninh.", "Ninh Thuận – Bình Thuận – Bà Rịa – Vũng Tàu.", "Quần đảo Hoàng Sa – quần đảo Trường Sa.", "Cà Mau – Kiên Giang."], correct: 3, giaiThich: "Tiêu biểu như ngư trường Cà Mau đến Kiên Giang ở vùng biển phía Tây Nam." },
+        { id: "dl_1_9", type: "single", question: "Ngư trường trọng điểm nào sau đây nằm ở vùng biển phía Bắc của nước ta?", options: ["Hải Phòng – Quảng Ninh.", "Ninh Thuận – Bình Thuận – Bà Rịa – Vũng Tàu.", "Quần đảo Hoàng Sa – quần đảo Trường Sa.", "Cà Mau – Kiên Giang."], correct: 0, giaiThich: "Tiêu biểu như ngư trường Hải Phòng đến Quảng Ninh ở vùng biển phía Bắc." },
+        { id: "dl_1_10", type: "single", question: "Phương án nào sau đây không đúng với sự tác động của khoa học – công nghệ đến phát triển ngành thuỷ sản ở nước ta?", options: ["Góp phần nâng cao giá trị thuỷ sản.", "Bảo vệ môi trường nuôi trồng thuỷ sản.", "Sản phẩm thuỷ sản đáp ứng tiêu chuẩn toàn cầu.", "Giúp cho các hoạt động đánh bắt gần bờ phát triển."], correct: 3, giaiThich: "Khoa học công nghệ và phương tiện đánh bắt hiện đại chủ yếu được áp dụng để đẩy mạnh khai thác xa bờ (vươn khơi), không phải để phát triển đánh bắt gần bờ vốn đang gây suy giảm nguồn lợi." },
+        { id: "dl_1_11", type: "single", question: "Nguyên nhân chủ yếu nào sau đây làm cho sản lượng hải sản khai thác ở nước ta tăng nhanh trong những năm gần đây?", options: ["Đẩy mạnh khai thác xa bờ, phương tiện đánh bắt hiện đại hơn.", "Ngư dân ngày càng có nhiều kinh nghiệm đánh bắt.", "Áp dụng khoa học – công nghệ tiên tiến trong khai thác.", "Do vùng biển nước ta có trữ lượng hải sản rất lớn."], correct: 0, giaiThich: "Trong những năm gần đây, sản lượng hải sản khai thác tăng nhanh chủ yếu nhờ việc đẩy mạnh khai thác xa bờ cùng phương tiện đánh bắt hiện đại hơn." },
+        { id: "dl_1_12", type: "single", question: "Năng suất lao động trong ngành khai thác thuỷ sản ở nước ta còn thấp chủ yếu do", options: ["nguồn lợi thuỷ sản suy giảm do đánh bắt quá mức.", "tàu thuyền, phương tiện đánh bắt còn hạn chế.", "ngư dân thiếu kinh nghiệm đánh bắt.", "vùng biển nước ta có nhiều thiên tai."], correct: 1, giaiThich: "Mặc dù vậy, năng suất lao động trong ngành khai thác vẫn còn thấp do tàu thuyền và phương tiện đánh bắt ở nhiều nơi vẫn còn hạn chế." },
+        { id: "dl_1_13", type: "single", question: "Cơ cấu giá trị sản xuất ngành thuỷ sản ở nước ta trong những năm qua có sự chuyển dịch theo xu hướng nào sau đây?", options: ["Tăng tỉ trọng khai thác.", "Tăng tỉ trọng nuôi trồng.", "Tỉ trọng khai thác ổn định.", "Tỉ trọng nuôi trồng ổn định."], correct: 1, giaiThich: "Cơ cấu ngành thuỷ sản nước ta đang có sự chuyển dịch mạnh mẽ theo xu hướng giảm tỉ trọng sản lượng khai thác và tăng tỉ trọng sản lượng nuôi trồng." },
+        { id: "dl_1_14", type: "single", question: "Để tăng sản lượng thuỷ sản khai thác, vấn đề quan trọng nhất cần giải quyết là", options: ["đầu tư trang thiết bị, phương tiện hiện đại để đánh bắt xa bờ.", "phổ biến kinh nghiệm và trang bị kiến thức cho ngư dân.", "tìm kiếm các ngư trường đánh bắt mới.", "phát triển mạnh công nghiệp chế biến."], correct: 0, giaiThich: "Để tăng sản lượng, vấn đề quan trọng nhất cần giải quyết là đầu tư trang thiết bị, phương tiện hiện đại để vươn khơi." },
+        { id: "dl_1_15", type: "single", question: "Các hoạt động lâm nghiệp của nước ta gồm", options: ["khoanh nuôi, bảo vệ rừng; chế biến gỗ.", "khai thác, chế biến lâm sản; bảo vệ rừng.", "trồng rừng và bảo vệ rừng.", "lâm sinh; khai thác, chế biến gỗ và lâm sản."], correct: 3, giaiThich: "Các hoạt động lâm nghiệp chủ yếu của nước ta bao gồm lâm sinh, khai thác, chế biến gỗ và lâm sản." },
+
+        // TRẮC NGHIỆM ĐÚNG/SAI
+        { id: 'dl_2_1', type: 'tf_cluster', question: "Các điều kiện kinh tế – xã hội như chính sách, vốn đầu tư, khoa học – công nghệ, nguồn lao động,... có tác động mạnh đến sự phát triển và phân bố ngành lâm nghiệp ở nước ta.", subQuestions: [
+            { id: 'tf_21a', text: "Chính sách giao đất, giao rừng tạo tâm lí ổn định cho người làm lâm nghiệp.", correct: "Đúng", giaiThich: "Chính sách giao đất giao rừng cũng tạo tâm lí ổn định cho người làm lâm nghiệp, giúp thúc đẩy sự phát triển của ngành." },
+            { id: 'tf_21b', text: "Biến đổi khí hậu, thiên tai ảnh hưởng trực tiếp đến việc trồng rừng của người dân.", correct: "Sai", giaiThich: "Câu dẫn đang phân tích về các tác động của điều kiện kinh tế - xã hội. Biến đổi khí hậu và thiên tai thuộc về tác động của điều kiện tự nhiên." },
+            { id: 'tf_21c', text: "Sự phát triển của các ngành kinh tế khác tạo điều kiện để duy trì công tác bảo vệ rừng.", correct: "Đúng", giaiThich: "Sự phát triển của các ngành kinh tế khác đã tạo điều kiện thuận lợi về kinh phí và nguồn lực để duy trì công tác bảo vệ rừng." },
+            { id: 'tf_21d', text: "Máy móc, thiết bị trong khai thác và chế biến gỗ còn hạn chế, ảnh hưởng đến hiệu quả hoạt động của ngành.", correct: "Đúng", giaiThich: "Hoạt động khai thác và chế biến gỗ vẫn còn gặp khó khăn do máy móc và thiết bị còn hạn chế, làm ảnh hưởng đến hiệu quả chung." }
+        ]},
+        { id: 'dl_2_2', type: 'tf_cluster', question: "Vấn đề quản lí và bảo vệ rừng đang được chú trọng, việc phát triển bền vững về diện tích và chất lượng rừng đảm bảo hài hoà các mục tiêu phát triển kinh tế – xã hội, bảo vệ môi trường.", subQuestions: [
+            { id: 'tf_22a', text: "Nâng cao công tác tuyên truyền, giáo dục để người dân thấy được ý nghĩa của việc bảo vệ rừng.", correct: "Đúng", giaiThich: "Nước ta đang tích cực nâng cao công tác tuyên truyền giáo dục để người dân hiểu rõ ý nghĩa của việc bảo vệ rừng." },
+            { id: 'tf_22b', text: "Kiểm soát tốt các quy hoạch, dự án phát triển kinh tế – xã hội có tác động tiêu cực đến diện tích rừng.", correct: "Đúng", giaiThich: "Kiểm soát chặt chẽ các quy hoạch, dự án phát triển kinh tế xã hội có tác động tiêu cực đến diện tích rừng là hành động thiết thực." },
+            { id: 'tf_22c', text: "Đẩy mạnh trồng rừng ngập mặn, rừng phòng hộ ven biển, ven sông, rừng đầu nguồn.", correct: "Đúng", giaiThich: "Cùng với đó là việc đẩy mạnh trồng rừng ngập mặn, rừng phòng hộ ven biển, ven sông, rừng đầu nguồn." },
+            { id: 'tf_22d', text: "Đẩy mạnh công tác hội nhập khu vực và quốc tế về quản lí, bảo vệ rừng và công tác trồng rừng, phòng chống cháy rừng.", correct: "Đúng", giaiThich: "Tăng cường hội nhập quốc tế về quản lí, bảo vệ, phòng chống cháy rừng để áp dụng kinh nghiệm và huy động nguồn vốn." }
+        ]},
+        { id: 'dl_2_3', type: 'tf_cluster', question: "Các điều kiện kinh tế – xã hội như chính sách, vốn đầu tư, khoa học – công nghệ, nguồn lao động,... có tác động mạnh đến sự phát triển và phân bố ngành thuỷ sản ở nước ta.", subQuestions: [
+            { id: 'tf_23a', text: "Nguồn lao động được đào tạo để đáp ứng các tiêu chuẩn toàn cầu trong khai thác và nuôi trồng thuỷ sản.", correct: "Đúng", giaiThich: "Nguồn lao động ngày càng được đào tạo bài bản để đáp ứng các tiêu chuẩn toàn cầu trong khai thác và nuôi trồng." },
+            { id: 'tf_23b', text: "Việc ứng dụng những thành tựu khoa học – công nghệ góp phần nâng cao giá trị thuỷ sản, đồng thời bảo vệ môi trường.", correct: "Đúng", giaiThich: "Việc ứng dụng các thành tựu khoa học công nghệ không chỉ góp phần nâng cao giá trị sản phẩm mà còn giúp bảo vệ môi trường sinh thái." },
+            { id: 'tf_23c', text: "Thị trường tiêu thụ sản phẩm ngày càng được mở rộng và đáp ứng được các tiêu chuẩn toàn cầu về sản phẩm.", correct: "Đúng", giaiThich: "Thị trường tiêu thụ không ngừng được mở rộng, tạo động lực to lớn cho ngành phát triển." },
+            { id: 'tf_23d', text: "Chính sách khai thác thuỷ sản gắn với giữ vững chủ quyền biển, đảo tạo điều kiện vững chắc cho sự phát triển ngành thuỷ sản.", correct: "Đúng", giaiThich: "Các chính sách khai thác thuỷ sản gắn với giữ vững chủ quyền biển đảo đã tạo điều kiện vững chắc cho ngành phát triển." }
+        ]},
+        { id: 'dl_2_4', type: 'tf_cluster', question: "Cơ cấu ngành thuỷ sản nước ta đang có sự chuyển dịch mạnh mẽ, góp phần đẩy mạnh tốc độ tăng trưởng và phát triển bền vững.", subQuestions: [
+            { id: 'tf_24a', text: "Trong những năm qua, tỉ trọng sản lượng thuỷ sản khai thác giảm, tỉ trọng sản lượng thuỷ sản nuôi trồng tăng.", correct: "Đúng", giaiThich: "Cơ cấu ngành thuỷ sản nước ta đang có sự chuyển dịch mạnh mẽ theo xu hướng giảm tỉ trọng sản lượng khai thác và tăng tỉ trọng sản lượng nuôi trồng." },
+            { id: 'tf_24b', text: "Sản phẩm thuỷ sản nuôi trồng ngày càng đa dạng; phát triển nuôi trồng đi đôi với chế biến sâu, đa dạng hoá sản phẩm.", correct: "Đúng", giaiThich: "Nước ta đang định hướng phát triển nuôi trồng đi đôi với việc chế biến sâu, đa dạng hoá sản phẩm." },
+            { id: 'tf_24c', text: "Việc khai thác thuỷ sản ngoài khơi ngày càng hiệu quả và bền vững, tổ chức hoạt động khai thác gắn với phát triển sinh kế.", correct: "Đúng", giaiThich: "Việc tổ chức khai thác ngoài khơi ngày càng hiệu quả, bền vững và luôn gắn liền với việc phát triển sinh kế cho ngư dân." },
+            { id: 'tf_24d', text: "Giá trị sản xuất ngành thuỷ sản chiếm hơn 1/4 tổng giá trị sản xuất ngành nông nghiệp, lâm nghiệp và thuỷ sản.", correct: "Đúng", giaiThich: "Theo số liệu Tổng cục Thống kê, ngành thuỷ sản mang lại giá trị kinh tế cao và hiện tại đóng góp trên 25% (hơn 1/4) tổng giá trị khu vực 1." }
+        ]},
+
+        // CÂU HỎI ĐIỀN TỪ DỰA TRÊN BẢNG SỐ LIỆU
+        { id: "dl_3_1", type: "fill", question: "Dựa vào Bảng: Từ năm 2010 đến năm 2021, tổng sản lượng thuỷ sản nước ta tăng bao nhiêu lần? (Làm tròn đến 1 chữ số thập phân)", correct: ["1,7", "1.7"], giaiThich: "Tổng sản lượng năm 2021 là 8,8 triệu tấn, năm 2010 là 5,2 triệu tấn. Số lần tăng = 8,8 / 5,2 ≈ 1,69. Làm tròn thành 1,7 lần." },
+        { id: "dl_3_2", type: "fill", question: "Dựa vào Bảng: Từ năm 2010 đến năm 2021, sản lượng thuỷ sản nuôi trồng tăng bao nhiêu triệu tấn?", correct: ["2,2", "2.2"], giaiThich: "Sản lượng nuôi trồng năm 2021 là 4,9 triệu tấn, năm 2010 là 2,7 triệu tấn. Mức tăng = 4,9 - 2,7 = 2,2 triệu tấn." },
+        { id: "dl_3_3", type: "fill", question: "Dựa vào Bảng: Năm 2021, tỉ trọng sản lượng thuỷ sản nuôi trồng chiếm bao nhiêu phần trăm (%) tổng sản lượng thuỷ sản? (Làm tròn đến 1 chữ số thập phân)", correct: ["55,7", "55.7"], giaiThich: "Tỉ trọng nuôi trồng năm 2021 = (Nuôi trồng / Tổng) x 100 = (4,9 / 8,8) x 100 ≈ 55,68%. Làm tròn thành 55,7%." },
+        { id: "dl_3_4", type: "fill", question: "Dựa vào Bảng: Từ năm 2010 đến năm 2021, tỉ trọng sản lượng thuỷ sản khai thác trong tổng sản lượng thuỷ sản giảm bao nhiêu phần trăm (%)? (Làm tròn đến 1 chữ số thập phân)", correct: ["3,8", "3.8"], giaiThich: "Năm 2010: Tỉ trọng khai thác = (2,5 / 5,2) x 100 ≈ 48,08%. Năm 2021: Tỉ trọng khai thác = (3,9 / 8,8) x 100 ≈ 44,32%. Mức giảm = 48,08% - 44,32% = 3,76%. Làm tròn thành 3,8%." }
+    ];
+
+    window.startQuizAction = function() {
+        const errDiv = document.getElementById('login-error');
+        errDiv.classList.add('hidden');
+        const name = document.getElementById('hoTen').value.trim();
+        const lop = document.getElementById('lop').value.trim();
+        const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+        if (!name || !lop) {
+            errDiv.innerText = "⚠️ Các em vui lòng nhập đầy đủ Họ tên và Lớp nhé!";
+            errDiv.classList.remove('hidden');
+            return;
+        }
+        if (name && lop && checkedRadio) {
+            const maDe = checkedRadio.value;
+            const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+            currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+            
+            document.getElementById('quiz-title').innerText = currentStudent.tenDe;
+            document.getElementById('student-info').innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+            
+            if (maDe === 'de1') {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('timer-banner').style.display = 'none';
+                document.getElementById('nav-buttons').innerHTML = `<button onclick="window.goHome()" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">🏠 ĐÃ HIỂU - QUAY LẠI TRANG CHỦ</button>`;
+                document.getElementById('question-container').innerHTML = theoryHTML;
+                showSection('quiz');
+                return;
+            }
+
+            let rawQuestions = JSON.parse(JSON.stringify(de2_data));
+            
+            let part1 = rawQuestions.filter(q => q.type === 'single');
+            part1.forEach((q, idx) => { q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`; });
+            
+            let part2 = rawQuestions.filter(q => q.type === 'tf_cluster');
+            part2.forEach((q, idx) => {
+                q.displayQuestion = `Câu ${idx + 1}: ${q.question.replace(/^Câu\s*\d+[\.\:]\s*/i, '')}`;
+                const labels = ['a)', 'b)', 'c)', 'd)'];
+                q.subQuestions.forEach((sub, sIdx) => { 
+                    let cleanText = sub.text.replace(/^[A-D][\.\)]\s*/i, '');
+                    sub.cleanText = cleanText; 
+                    sub.text = `${labels[sIdx]} ${cleanText}`; 
+                });
+            });
+
+            let part3 = rawQuestions.filter(q => q.type === 'fill');
+            part3.forEach((q) => {
+                let match = q.id.match(/dl_3_(\d+)/);
+                if(match) {
+                    q.displayQuestion = `Câu ${match[1]}: ${q.question.replace(/^(Câu|Dựa vào Bảng\s*:?)\s*/i, '').trim()}`;
+                } else {
+                    q.displayQuestion = `Câu: ${q.question}`;
+                }
+            });
+
+            currentQuestions = [...part1, ...part2, ...part3];
+            
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('timer-banner').style.display = 'block';
+            document.getElementById('nav-buttons').innerHTML = `
+                <button id="submit-btn" onclick="window.confirmSubmit()" class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black text-xl rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI HOÀN THÀNH</button>
+            `;
+
+            quizStartTime = new Date();
+            isQuizStarted = true;
+            userAnswers = {};
+            showSection('quiz');
+            window.renderAllQuestions();
+            startTimer(45 * 60);
+        }
+    };
+
+    window.renderAllQuestions = function() {
+        let html = '';
+        
+        let p1 = currentQuestions.filter(q => q.type === 'single');
+        if(p1.length > 0) {
+            html += `<div class="flex items-center gap-3 mb-6 border-b-4 border-blue-200 pb-3 mt-4"><span class="bg-gradient-to-br from-blue-500 to-cyan-500 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">I</span><h3 class="text-xl sm:text-2xl font-black text-blue-700 tracking-wide uppercase">PHẦN 1: TRẮC NGHIỆM MỘT LỰA CHỌN</h3></div>`;
+            p1.forEach((q, index) => { html += buildSingleQuestionHTML(q); });
+        }
+
+        let p2 = currentQuestions.filter(q => q.type === 'tf_cluster');
+        if(p2.length > 0) {
+            html += `<div class="flex items-center gap-3 mb-6 border-b-4 border-orange-200 pb-3 mt-12"><span class="bg-gradient-to-br from-orange-500 to-red-500 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">II</span><h3 class="text-xl sm:text-2xl font-black text-orange-700 tracking-wide uppercase">PHẦN 2: TRẮC NGHIỆM ĐÚNG SAI</h3></div>`;
+            p2.forEach(q => { html += buildTFClusterHTML(q); });
+        }
+
+        let p3 = currentQuestions.filter(q => q.type === 'fill');
+        if(p3.length > 0) {
+            html += `<div class="flex items-center gap-3 mb-6 border-b-4 border-emerald-200 pb-3 mt-12"><span class="bg-gradient-to-br from-emerald-500 to-teal-500 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">III</span><h3 class="text-xl sm:text-2xl font-black text-emerald-700 tracking-wide uppercase">PHẦN 3: ĐIỀN KHUYẾT BẢNG SỐ LIỆU</h3></div>`;
+            
+            html += tableHTML;
+
+            html += `<div class="p-5 sm:p-6 border-2 border-emerald-100 bg-emerald-50/30 rounded-3xl mb-8 shadow-sm">
+                        <div class="space-y-6">`;
+            p3.forEach(q => { html += buildFillQuestionHTML(q); });
+            html += `</div></div>`;
+        }
+
+        document.getElementById('question-container').innerHTML = html;
+        window.updateProgress();
+    };
+
+    function buildSingleQuestionHTML(q) {
+        let opts = q.options.map((opt, i) => `
+            <div class="flex items-center mt-3">
+                <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-3 bg-white shadow-sm font-bold text-base">
+                    <span class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-lg font-black text-gray-400 flex-shrink-0 bg-gray-50 transition-colors shadow-sm">${String.fromCharCode(65 + i)}</span>
+                    <span class="text-gray-700 leading-relaxed">${opt}</span>
+                </label>
+            </div>
+        `).join('');
+
+        return `
+            <div class="p-5 sm:p-6 border-2 border-blue-100 bg-blue-50/30 rounded-3xl mb-8 shadow-sm">
+                <div class="text-lg sm:text-xl font-black text-blue-800 mb-4 leading-snug">${q.displayQuestion}</div>
+                <div class="space-y-3 md:pl-6">${opts}</div>
+                <div id="fb_${q.id}" class="hidden mt-5 md:pl-6 animate-fadeIn"></div>
+            </div>
+        `;
+    }
+
+    function buildTFClusterHTML(q) {
+        let subs = q.subQuestions.map(sub => `
+            <div class="bg-white p-4 border-2 border-gray-100 rounded-2xl shadow-sm mb-4 transition-all hover:border-orange-200">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <span class="flex-1 text-gray-800 font-bold text-base leading-snug">${sub.text}</span>
+                    <div class="flex gap-2 flex-shrink-0 mt-2 sm:mt-0">
+                        <input type="radio" id="q_${sub.id}_T" name="q_${sub.id}" value="Đúng" class="hidden tf-radio-T" onchange="window.selectAnswer('${sub.id}', 'Đúng', 'tf')">
+                        <label for="q_${sub.id}_T" class="tf-label-T px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-bold text-gray-500 text-sm text-center w-24 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Đúng</label>
+                        
+                        <input type="radio" id="q_${sub.id}_S" name="q_${sub.id}" value="Sai" class="hidden tf-radio-S" onchange="window.selectAnswer('${sub.id}', 'Sai', 'tf')">
+                        <label for="q_${sub.id}_S" class="tf-label-S px-6 py-3 border-2 border-gray-200 rounded-xl cursor-pointer font-bold text-gray-500 text-sm text-center w-24 transition-all hover:bg-gray-50 uppercase tracking-wide shadow-sm">Sai</label>
+                    </div>
+                </div>
+                <div id="fb_${sub.id}" class="hidden mt-4 pt-4 border-t border-gray-100 w-full animate-fadeIn"></div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="p-5 sm:p-6 border-2 border-orange-100 bg-orange-50/30 rounded-3xl mb-8 shadow-sm">
+                <div class="bg-white border-2 border-orange-200 p-4 rounded-xl mb-5 text-orange-800 text-lg sm:text-xl font-bold leading-relaxed shadow-sm" style="white-space: pre-wrap;">${q.displayQuestion}</div>
+                <div class="md:pl-6">${subs}</div>
+            </div>
+        `;
+    }
+
+    function buildFillQuestionHTML(q) {
+        return `
+            <div class="bg-white p-4 border-2 border-gray-100 rounded-2xl shadow-sm hover:border-green-200 transition-all">
+                <div class="text-base sm:text-lg font-black text-green-800 mb-4">${q.displayQuestion}</div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="fill_${q.id}" class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all font-bold text-base text-gray-800 shadow-sm" placeholder="Nhập số liệu hoặc kết quả...">
+                    <button id="btn_fill_${q.id}" onclick="window.checkFill('${q.id}')" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-black text-base rounded-xl shadow-md transition-colors whitespace-nowrap">Kiểm Tra</button>
+                </div>
+                <div id="fb_${q.id}" class="hidden mt-4 pt-4 border-t border-gray-100 animate-fadeIn"></div>
+            </div>
+        `;
+    }
+
+    window.selectAnswer = function(qId, val, type) {
+        userAnswers[qId] = val;
+        window.updateProgress();
+
+        if (type === 'single') {
+            let q = currentQuestions.find(x => x.id === qId);
+            let isCorrect = val === q.correct;
+            let correctTextWithLetter = String.fromCharCode(65 + q.correct) + ". " + q.options[q.correct];
+            showFeedback(`fb_${q.id}`, isCorrect, correctTextWithLetter, q.giaiThich);
+            document.querySelectorAll(`input[name="q_${q.id}"]`).forEach(el => el.disabled = true);
+        } else if (type === 'tf') {
+            let cluster = currentQuestions.find(c => c.type === 'tf_cluster' && c.subQuestions.some(s => s.id === qId));
+            let sub = cluster.subQuestions.find(s => s.id === qId);
+            let isCorrect = val === sub.correct;
+            showFeedbackTF(`fb_${sub.id}`, isCorrect, sub.correct, sub.giaiThich);
+            document.querySelectorAll(`input[name="q_${sub.id}"]`).forEach(el => el.disabled = true);
+        }
+    };
+
+    window.checkFill = function(qId) {
+        let inputEl = document.getElementById(`fill_${qId}`);
+        let val = inputEl.value.trim();
+        if (!val) { alert("Vui lòng nhập câu trả lời trước khi kiểm tra!"); return; }
+        
+        userAnswers[qId] = val;
+        window.updateProgress();
+        
+        let q = currentQuestions.find(x => x.id === qId);
+        let isCorrect = q.correct.some(ans => ans.toLowerCase().trim() === val.toLowerCase());
+        showFeedback(`fb_${q.id}`, isCorrect, q.correct.join(' hoặc '), q.giaiThich);
+        
+        inputEl.disabled = true;
+        document.getElementById(`btn_fill_${qId}`).disabled = true;
+        document.getElementById(`btn_fill_${qId}`).classList.add('opacity-50', 'cursor-not-allowed');
+    };
+
+    function showFeedback(divId, isCorrect, correctText, explanation) {
+        let fb = document.getElementById(divId);
+        fb.classList.remove('hidden');
+        let icon = isCorrect ? '🎉 CHÍNH XÁC' : '❌ CHƯA CHÍNH XÁC';
+        let colorClass = isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-red-50 text-red-800 border-red-300';
+        
+        let answerText = !isCorrect ? `<div class="font-bold mt-2 text-base">Đáp án đúng: <span class="text-blue-700 bg-white px-2 py-1 rounded border border-blue-200 ml-1">${correctText}</span></div>` : '';
+        
+        fb.innerHTML = `
+            <div class="p-4 rounded-xl border-2 ${colorClass} text-base shadow-sm">
+                <div class="font-black text-lg flex items-center gap-2">${icon}</div>
+                ${answerText}
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <span class="font-black text-blue-800 text-sm">💡 Giải thích chi tiết:</span>
+                    <div class="mt-1 text-gray-800 leading-relaxed font-medium text-sm">${explanation || 'Không có giải thích chi tiết.'}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function showFeedbackTF(divId, isCorrect, correctText, explanation) {
+        let fb = document.getElementById(divId);
+        fb.classList.remove('hidden');
+        let icon = isCorrect ? '✅' : '❌';
+        let colorClass = isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-red-50 text-red-800 border-red-300';
+        
+        fb.innerHTML = `
+            <div class="p-4 rounded-xl border-2 ${colorClass} shadow-sm w-full">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-2xl drop-shadow-sm">${icon}</span>
+                    <div>
+                        ${!isCorrect ? `<div class="font-bold text-base">Đáp án chuẩn là: <span class="text-blue-700 uppercase">${correctText}</span></div>` : `<div class="font-bold text-base">Tuyệt vời! Lập luận chính xác.</div>`}
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <div class="text-gray-800 text-sm leading-relaxed font-medium"><span class="font-bold text-blue-800">💡 Giải thích khoa học:</span> ${explanation}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function getTotalItems() {
+        let total = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') total += q.subQuestions.length; 
+            else total += 1; 
+        });
+        return total; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => { if (userAnswers[sub.id] !== undefined) count++; });
+            } else if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            } else if (q.type === 'fill') {
+                if (userAnswers[q.id] !== undefined && userAnswers[q.id].toString().trim() !== '') count++;
+            }
+        });
+        return count;
+    }
+
+    window.updateProgress = function() {
+        document.getElementById('progress-text').innerText = `${getAnsweredCount()}/${getTotalItems()} ý`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.confirmSubmit = function() {
+        if (!isQuizStarted) return;
+        let ansCount = getAnsweredCount();
+        let totItems = getTotalItems();
+        
+        const modal = document.getElementById('custom-confirm-modal');
+        const card = document.getElementById('confirm-card');
+        
+        if(ansCount < totItems) {
+            document.getElementById('confirm-msg').innerText = `Các em mới làm ${ansCount}/${totItems} thao tác. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.`;
+            document.getElementById('confirm-icon').innerText = '⚠️';
+            document.getElementById('confirm-icon').classList.replace('text-green-500', 'text-yellow-500');
+        } else {
+            document.getElementById('confirm-msg').innerText = `Tuyệt vời! Các em đã hoàn thành tất cả ${ansCount}/${totItems} câu hỏi. Sẵn sàng nộp bài chưa?`;
+            document.getElementById('confirm-icon').innerText = '🚀';
+            document.getElementById('confirm-icon').classList.replace('text-yellow-500', 'text-green-500');
+        }
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.classList.add('opacity-100');
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }, 10);
+
+        document.getElementById('btn-cancel-submit').onclick = function() {
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        };
+
+        document.getElementById('btn-confirm-submit').onclick = function() {
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                executeSubmitLogic(); 
+            }, 300);
+        };
+    };
+
+    function executeSubmitLogic() {
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let correctP1P2 = 0;
+        let totalP1P2 = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') {
+                q.subQuestions.forEach(sub => {
+                    totalP1P2++;
+                    if (userAnswers[sub.id] === sub.correct) correctP1P2++;
+                });
+            } else if (q.type === 'single') {
+                totalP1P2++;
+                if (userAnswers[q.id] === q.correct) correctP1P2++;
+            } else if (q.type === 'fill') {
+                totalP1P2++;
+                let uAns = (userAnswers[q.id] || '').toString().toLowerCase().trim();
+                let isCorrect = q.correct.some(ans => ans.toLowerCase().trim() === uAns);
+                if (isCorrect) correctP1P2++;
+            }
+        });
+
+        let scoreP1P2 = (totalP1P2 > 0) ? (correctP1P2 / totalP1P2) * 10 : 0; 
+        const score = scoreP1P2.toFixed(2);
+        
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score), soCauDung: correctP1P2, tongCau: totalP1P2,
+            startTime: quizStartTime.toLocaleString('vi-VN'), endTime: quizEndTime.toLocaleString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, correctP1P2, totalP1P2, record.duration); });
+        } else {
+            window.showModalResult(score, correctP1P2, totalP1P2, record.duration);
+        }
+    }
+
+    window.showModalResult = function(score, correct, total, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById('result-section').classList.remove('hidden');
+        document.getElementById('result-content').innerHTML = `
+        <div class="absolute top-4 left-4 z-10">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center pt-8">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm leading-none">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Trả lời đúng ${correct}/${total} ý | TG: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem Lại Bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng Điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        let html = '';
+        let tableInjected = false;
+
+        currentQuestions.forEach((q) => {
+            
+            if (q.id.startsWith("dl_3_") && !tableInjected) { html += tableHTML; tableInjected = true; }
+
+            if (q.type === 'tf_cluster') {
+                html += `<div class="p-5 border border-slate-200 rounded-2xl bg-white shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg text-red-600 mb-4 leading-relaxed" style="white-space: pre-wrap;">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-4">`;
+                q.subQuestions.forEach(sub => {
+                    let uAns = userAnswers[sub.id];
+                    let isCorrect = uAns === sub.correct;
+                    let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                    let statusIcon = isCorrect ? '✅' : '❌';
+                    
+                    html += `<div class="p-4 border-2 rounded-xl flex flex-col gap-3 ${borderColor}">`;
+                    html += `  <span class="font-bold text-slate-700 text-base">${sub.text}</span>`;
+                    html += `  <div class="flex gap-2 font-bold text-sm items-center">`;
+                    html += `    <span class="text-xl drop-shadow-sm">${statusIcon}</span>`;
+                    html += `    <span class="px-3 py-1.5 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-red-100 text-red-700 border border-red-200'}">Bạn chọn: ${uAns || 'Chưa chọn'}</span>`;
+                    html += `    <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200">Đáp án: ${sub.correct}</span>`;
+                    html += `  </div>`;
+                    if(sub.giaiThich) {
+                        html += `  <div class="mt-2 text-sm text-gray-600 bg-white p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích khoa học:</span> ${sub.giaiThich}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            } else if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                html += `<div class="p-5 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg text-red-600 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="space-y-2">`;
+                q.options.forEach((opt, i) => {
+                    let optBg = '';
+                    let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<span class="text-xl drop-shadow-sm ml-auto">✅</span>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<span class="text-xl drop-shadow-sm ml-auto">❌</span>';
+                    } else {
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3 text-base">
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm">${String.fromCharCode(65 + i)}</span>
+                                <span class="${(q.correct === i || uAns === i) ? 'font-bold' : 'font-medium'} flex-1">${opt}</span>
+                                ${iconHtml}
+                             </div>`;
+                });
+                if(q.giaiThich) {
+                    html += `<div class="mt-4 text-sm text-gray-600 bg-white p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích khoa học:</span> ${q.giaiThich}</div>`;
+                }
+                html += `</div></div>`;
+            } else if (q.type === 'fill') {
+                
+                let uAns = (userAnswers[q.id] || '').toString().trim();
+                let isCorrect = q.correct.some(ans => ans.toLowerCase().trim() === uAns.toLowerCase());
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                let statusIcon = isCorrect ? '✅' : '❌';
+
+                html += `<div class="p-5 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg text-green-700 mb-4 leading-relaxed">${q.displayQuestion}</div>`;
+                html += `<div class="flex items-center gap-3">`;
+                html += `  <div class="flex-1 bg-white p-3 rounded-xl border border-gray-300 font-bold text-gray-800">${uAns || '<span class="text-gray-400 font-normal italic">Chưa trả lời</span>'}</div>`;
+                html += `  <div class="text-2xl drop-shadow-sm">${statusIcon}</div>`;
+                html += `</div>`;
+                html += `<div class="mt-3 bg-emerald-100 text-emerald-800 p-3 rounded-xl border border-emerald-300 font-bold text-sm">Đáp án chuẩn: ${q.correct.join(' / ')}</div>`;
+                if(q.giaiThich) {
+                    html += `<div class="mt-3 text-sm text-gray-600 bg-white p-3 rounded-lg border border-gray-200"><span class="font-bold text-blue-600">💡 Giải thích khoa học:</span> ${q.giaiThich}</div>`;
+                }
+                html += `</div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn');
+        if(btn) btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                if(btn) btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        document.getElementById('no-scores').classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)) || (a.hoTen.localeCompare(b.hoTen)));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center text-slate-600 font-bold text-sm">${s.soCauDung}/${s.tongCau}</td><td class="px-4 py-4 text-center"><span class="font-black text-xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td></tr>`).join('');
+    };
+
+    window.goHome = function() { clearInterval(timerInterval); showSection('login'); };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => document.getElementById(s+'-section').classList.add('hidden'));
+        document.getElementById(id+'-section').classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) executeSubmitLogic(); 
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) { localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now()); }
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
