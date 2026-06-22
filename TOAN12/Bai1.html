@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Toán 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    .review-explanation mjx-container {
+        color: #dc2626 !important;
+        font-weight: 900 !important;
+    }
+
+    .btn-tf { transition: all 0.2s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):hover { background-color: #f3f4f6; }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-blue-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-red-500 mb-3">THI THỬ TOÁN 12 THPT QG <br><span class="text-xl text-gray-600">(Đơn Điệu & Cực Trị)</span></h1>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-xs font-medium text-gray-500">Cấu trúc mới: 3 Phần, 34 Ý</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-xs font-medium text-gray-500">Cấu trúc mới: 3 Phần, 34 Ý</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ (ý)</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0/34</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">90:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-2xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp bài</h3>
+           <p class="text-gray-600 mb-6 font-medium text-base">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-lg">0</span>/<span id="confirm-total" class="font-black text-lg">34</span> thao tác. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-3 bg-gray-100 text-gray-800 font-extrabold rounded-xl hover:bg-gray-200 transition-colors border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-3 bg-emerald-600 text-white font-extrabold rounded-xl hover:bg-emerald-700 transition-colors shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-right font-extrabold">Ngày thi</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_math_12_qtri_v3');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    /*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI
+    =================================================================================================*/
+   const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1. Cho hàm số $y=f(x)$ có đạo hàm trên khoảng $K$. Phát biểu nào sau đây đúng?", options: ["A. Nếu $f'(x) > 0$ với mọi $x \\in K$ thì hàm số $f(x)$ nghịch biến trên $K$.", "B. Nếu $f'(x) < 0$ với mọi $x \\in K$ thì hàm số $f(x)$ đồng biến trên $K$.", "C. Nếu $f'(x) > 0$ với mọi $x \\in K$ thì hàm số $f(x)$ đồng biến trên $K$.", "D. Nếu $f'(x) = 0$ với mọi $x \\in K$ thì hàm số $f(x)$ đồng biến trên $K$."], correct: 2, explanation: "<b>Bước 1:</b> Nhắc lại định lý về tính đơn điệu của hàm số. Nếu đạo hàm $f'(x) > 0$ trên một khoảng $K$ thì đồ thị hàm số có hướng đi lên từ trái qua phải.<br><br><b>Kết luận:</b> Hàm số đồng biến trên $K$ khi $f'(x) > 0$. Đáp án đúng là C." },
+        { id: "d1_2", type: "single", question: "Câu 2. Cho hàm số $y = x^3 - 3x^2 + 2$. Hàm số đồng biến trên khoảng nào dưới đây?", options: ["A. $(0; 2)$", "B. $(-\\infty; 0)$ và $(2; +\\infty)$", "C. $(-\\infty; 2)$", "D. $(0; +\\infty)$"], correct: 1, explanation: "<b>Bước 1:</b> Tính đạo hàm: $y' = 3x^2 - 6x$.<br><b>Bước 2:</b> Cho $y' = 0 \\Leftrightarrow 3x(x - 2) = 0 \\Leftrightarrow x = 0$ hoặc $x = 2$.<br><b>Bước 3:</b> Lập bảng xét dấu, ta thấy $y' > 0$ trên các khoảng $(-\\infty; 0)$ và $(2; +\\infty)$.<br><b>Kết luận:</b> Hàm số đồng biến trên $(-\\infty; 0)$ và $(2; +\\infty)$." },
+        { id: "d1_3", type: "single", question: "Câu 3. Cho hàm số $y = -x^2 + 4x + 3$. Hàm số nghịch biến trên khoảng nào sau đây?", options: ["A. $(2; +\\infty)$", "B. $(-\\infty; 2)$", "C. $(-2; +\\infty)$", "D. $(-\\infty; -2)$"], correct: 0, explanation: "<b>Bước 1:</b> Tính đạo hàm: $y' = -2x + 4$.<br><b>Bước 2:</b> Cho $y' = 0 \\Leftrightarrow x = 2$.<br><b>Bước 3:</b> Hàm số nghịch biến khi $y' < 0 \\Leftrightarrow -2x + 4 < 0 \\Leftrightarrow x > 2$.<br><b>Kết luận:</b> Khoảng nghịch biến là $(2; +\\infty)$." },
+        { id: "d1_4", type: "single", question: "Câu 4. Tìm các khoảng đơn điệu của hàm số $y = \\frac{2x-1}{x+1}$.", options: ["A. Hàm số đồng biến trên $\\mathbb{R} \\setminus \\{-1\\}$.", "B. Hàm số nghịch biến trên các khoảng $(-\\infty; -1)$ và $(-1; +\\infty)$.", "C. Hàm số đồng biến trên các khoảng $(-\\infty; -1)$ và $(-1; +\\infty)$.", "D. Hàm số nghịch biến trên $\\mathbb{R} \\setminus \\{-1\\}$."], correct: 2, explanation: "<b>Bước 1:</b> Tập xác định $D = \\mathbb{R} \\setminus \\{-1\\}$.<br><b>Bước 2:</b> Tính đạo hàm: $y' = \\frac{2 \\times 1 - (-1) \\times 1}{(x+1)^2} = \\frac{3}{(x+1)^2} > 0, \\forall x \\neq -1$.<br><b>Kết luận:</b> Hàm số đồng biến trên từng khoảng $(-\\infty; -1)$ và $(-1; +\\infty)$." },
+        { id: "d1_5", type: "single", question: "Câu 5. Cho hàm số $y = f(x)$ liên tục trên $\\mathbb{R}$ và có bảng xét dấu đạo hàm như sau:<br><div class='overflow-x-auto my-4 flex justify-center'><table class='w-full max-w-md text-center border-collapse border-2 border-gray-300 shadow-sm bg-white'><tr class='font-bold text-gray-800 bg-gray-50 border-b-2 border-gray-300'><td class='border border-gray-300 p-2 border-r-2'>$x$</td><td class='border border-gray-300 p-2'>$-\\infty$</td><td class='border border-gray-300 p-2'>$-1$</td><td class='border border-gray-300 p-2'>$ $</td><td class='border border-gray-300 p-2'>$ 2 $</td><td class='border border-gray-300 p-2'>$+\\infty$</td></tr><tr class='font-bold text-blue-700'><td class='border border-gray-300 p-2 border-r-2 text-gray-800 bg-gray-50'>$f'(x)$</td><td class='border border-gray-300 p-2'>$+$</td><td class='border border-gray-300 p-2 text-red-600'>$0$</td><td class='border border-gray-300 p-2'>$-$</td><td class='border border-gray-300 p-2 text-red-600'>$0$</td><td class='border border-gray-300 p-2'>$+$</td></tr></table></div>Hàm số đã cho đạt cực đại tại điểm nào?", options: ["A. $x = 2$", "B. $x = -1$", "C. $x = 0$", "D. $x = -\\infty$"], correct: 1, explanation: "<b>Bước 1:</b> Phân tích quy luật đổi dấu. Đạo hàm đổi từ dương $(+)$ sang âm $(-)$ tại $x = -1$ chứng tỏ đồ thị đi lên đỉnh rồi đi xuống.<br><b>Kết luận:</b> Điểm $x = -1$ là điểm cực đại." },
+        { id: "d1_6", type: "single", question: "Câu 6. Điểm cực tiểu của đồ thị hàm số $y = x^3 - 3x + 1$ là:", options: ["A. $(1; -1)$", "B. $(-1; 3)$", "C. $(1; 1)$", "D. $(0; 1)$"], correct: 0, explanation: "<b>Bước 1:</b> Tính $y' = 3x^2 - 3$. Giải $y' = 0 \\Leftrightarrow x = 1$ hoặc $x = -1$.<br><b>Bước 2:</b> Đạo hàm bậc hai $y'' = 6x$. Tại $x = 1$, $y''(1) = 6 > 0$ (cực tiểu). Tại $x = -1$, $y''(-1) = -6 < 0$ (cực đại).<br><b>Bước 3:</b> Thay $x = 1$ vào hàm số ban đầu, $y = 1^3 - 3(1) + 1 = -1$.<br><b>Kết luận:</b> Tọa độ điểm cực tiểu là $(1; -1)$." },
+        { id: "d1_7", type: "single", question: "Câu 7. Hàm số $y = x^4 - 4x^2 + 3$ có bao nhiêu điểm cực trị?", options: ["A. $1$", "B. $2$", "C. $3$", "D. $0$"], correct: 2, explanation: "<b>Bước 1:</b> Tính $y' = 4x^3 - 8x$.<br><b>Bước 2:</b> Cho $y' = 0 \\Leftrightarrow 4x(x^2 - 2) = 0 \\Leftrightarrow x = 0, x = \\sqrt{2}, x = -\\sqrt{2}$.<br><b>Bước 3:</b> Có 3 nghiệm phân biệt và đạo hàm đổi dấu qua cả 3 nghiệm này.<br><b>Kết luận:</b> Hàm số có 3 điểm cực trị." },
+        { id: "d1_8", type: "single", question: "Câu 8. Cho hàm số $y = \\frac{x^2-2x+5}{x-1}$. Điểm cực đại của hàm số là:", options: ["A. $x = 3$", "B. $x = -1$", "C. $x = 1$", "D. $x = 5$"], correct: 1, explanation: "<b>Bước 1:</b> Tập xác định $x \\neq 1$. Tính đạo hàm $y' = \\frac{(2x-2)(x-1) - (x^2-2x+5)}{(x-1)^2} = \\frac{x^2-2x-3}{(x-1)^2}$.<br><b>Bước 2:</b> $y' = 0 \\Leftrightarrow x^2-2x-3 = 0 \\Leftrightarrow x = -1$ hoặc $x = 3$.<br><b>Bước 3:</b> Lập bảng biến thiên, $y'$ đổi từ $(+)$ sang $(-)$ tại $x = -1$.<br><b>Kết luận:</b> Hàm số đạt cực đại tại $x = -1$." },
+        { id: "d1_9", type: "single", question: "Câu 9. Hàm số nào sau đây đồng biến trên $\\mathbb{R}$?", options: ["A. $y = x^3 - x^2 + x$", "B. $y = x^4 + x^2 + 1$", "C. $y = \\frac{x-1}{x+2}$", "D. $y = -x^3 - 3x$"], correct: 0, explanation: "<b>Bước 1:</b> Xét đáp án A: $y' = 3x^2 - 2x + 1$. Ta có $\\Delta' = (-1)^2 - 3(1) = -2 < 0$, và hệ số $a=3>0$.<br><b>Bước 2:</b> Do đó $y' > 0$ với mọi $x \\in \\mathbb{R}$.<br><b>Kết luận:</b> Hàm số ở đáp án A luôn đồng biến trên $\\mathbb{R}$." },
+        { id: "d1_10", type: "single", question: "Câu 10. Cho hàm số $f(x)$ có đạo hàm $f'(x) = x(x-1)^2(x+2)$. Hàm số $f(x)$ nghịch biến trên khoảng nào?", options: ["A. $(-2; 0)$", "B. $(0; 1)$", "C. $(1; +\\infty)$", "D. $(-\\infty; -2)$"], correct: 0, explanation: "<b>Bước 1:</b> $f'(x) = 0 \\Leftrightarrow x=0, x=1, x=-2$.<br><b>Bước 2:</b> Lưu ý $x=1$ là nghiệm bội chẵn (bậc 2), qua đó đạo hàm không đổi dấu. Đổi dấu chỉ xảy ra tại $x=0$ và $x=-2$.<br><b>Bước 3:</b> Lập bảng xét dấu, ta thấy $f'(x) < 0$ khi $x \\in (-2; 0)$.<br><b>Kết luận:</b> Hàm số nghịch biến trên $(-2; 0)$." },
+        { id: "d1_11", type: "single", question: "Câu 11. Cho hàm số $y = \\frac{x+2}{x-1}$. Khẳng định nào sau đây đúng?", options: ["A. Hàm số có một điểm cực đại và một điểm cực tiểu.", "B. Hàm số không có cực trị.", "C. Hàm số đạt cực đại tại $x = 1$.", "D. Hàm số đạt cực tiểu tại $x = 1$."], correct: 1, explanation: "<b>Bước 1:</b> Hàm phân thức bậc nhất trên bậc nhất không bao giờ có cực trị.<br><b>Bước 2:</b> Tính $y' = \\frac{-3}{(x-1)^2} < 0, \\forall x \\neq 1$. Hàm số luôn nghịch biến trên các khoảng xác định.<br><b>Kết luận:</b> Hàm số không có cực trị." },
+        { id: "d1_12", type: "single", question: "Câu 12. Một vật được phóng thẳng đứng lên trên từ độ cao 2m với vận tốc ban đầu là 24,5 m/s. Bỏ qua sức cản của không khí, độ cao $h$ (mét) của vật sau $t$ (giây) được cho bởi $h(t) = 2 + 24,5t - 4,9t^2$. Tại thời điểm nào thì vật đạt độ cao lớn nhất?", options: ["A. $t = 2$ giây", "B. $t = 3$ giây", "C. $t = 2,5$ giây", "D. $t = 5$ giây"], correct: 2, explanation: "<b>Bước 1:</b> Tính đạo hàm vận tốc (tốc độ thay đổi độ cao): $h'(t) = 24,5 - 9,8t$.<br><b>Bước 2:</b> Đỉnh cao nhất đạt được khi vận tốc bằng 0: $24,5 - 9,8t = 0 \\Leftrightarrow t = 2,5$.<br><b>Kết luận:</b> Thời điểm đạt độ cao cực đại là 2,5 giây." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1. Cho hàm số $y = x^3 - 6x^2 + 9x - 2$.", items: [
+            { id: "a", text: "a) Tập xác định của hàm số là $D = \\mathbb{R}$.", correct: true, expl: "Hàm đa thức luôn có tập xác định là mọi số thực $\\mathbb{R}$." },
+            { id: "b", text: "b) Đạo hàm của hàm số là $y' = 3x^2 - 12x + 9$.", correct: true, expl: "Áp dụng công thức đạo hàm cơ bản: $(x^3)'=3x^2$; $(-6x^2)'=-12x$; $(9x)'=9$." },
+            { id: "c", text: "c) Hàm số nghịch biến trên khoảng $(1; 3)$.", correct: true, expl: "Giải $y' < 0 \\Leftrightarrow 3x^2 - 12x + 9 < 0 \\Leftrightarrow 1 < x < 3$. Trong khoảng này đồ thị đi xuống." },
+            { id: "d", text: "d) Giá trị cực đại của hàm số bằng $2$.", correct: true, expl: "Đạo hàm đổi dấu từ (+) sang (-) tại $x = 1$. Thay $x = 1$ vào hàm ban đầu: $y(1) = 1^3 - 6(1)^2 + 9(1) - 2 = 2$." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2. Cho hàm số $y = \\frac{x-2}{x+1}$.", items: [
+            { id: "a", text: "a) Hàm số xác định trên $\\mathbb{R} \\setminus \\{-1\\}$.", correct: true, expl: "Phân số có nghĩa khi mẫu khác 0, tức là $x + 1 \\neq 0 \\Leftrightarrow x \\neq -1$." },
+            { id: "b", text: "b) Đạo hàm $y' = \\frac{-3}{(x+1)^2}$.", correct: false, expl: "Áp dụng công thức tính nhanh: $y' = \\frac{1 \\times 1 - (-2) \\times 1}{(x+1)^2} = \\frac{3}{(x+1)^2}$. Mệnh đề cho ra $-3$ là tính toán sai." },
+            { id: "c", text: "c) Hàm số đồng biến trên các khoảng $(-\\infty; -1)$ và $(-1; +\\infty)$.", correct: true, expl: "Vì $y' = \\frac{3}{(x+1)^2} > 0$ trên toàn bộ miền xác định, hàm số luôn có xu hướng đi lên." },
+            { id: "d", text: "d) Đồ thị hàm số không có điểm cực trị.", correct: true, expl: "Đạo hàm luôn mang dấu dương (không bao giờ bằng 0 và không đổi dấu). Do đó hàm không có cực trị." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3. Cho hàm số $y = f(x)$ liên tục trên $\\mathbb{R}$ và có đạo hàm $f'(x) = (x-1)(x-2)^2$.", items: [
+            { id: "a", text: "a) Đạo hàm $f'(x) = 0$ khi $x = 1$ hoặc $x = 2$.", correct: true, expl: "Phương trình tích bằng 0 khi từng nhân tử bằng 0. Hoàn toàn chính xác." },
+            { id: "b", text: "b) Hàm số $f(x)$ có 2 điểm cực trị.", correct: false, expl: "Chỉ có nghiệm $x=1$ là nghiệm bậc lẻ làm đạo hàm đổi dấu. Nghiệm $x=2$ là bậc chẵn không tạo ra cực trị. Hàm số chỉ có 1 cực trị." },
+            { id: "c", text: "c) Hàm số đồng biến trên khoảng $(1; +\\infty)$.", correct: true, expl: "Với mọi $x > 1$, cả hai cụm $(x-1)$ và $(x-2)^2$ đều $\\ge 0$, dẫn đến $f'(x) > 0$. Đồ thị đi lên." },
+            { id: "d", text: "d) Hàm số đạt cực đại tại $x = 1$.", correct: false, expl: "Khi $x$ vượt qua mốc 1, đạo hàm chuyển từ Âm sang Dương. Đồ thị đi từ vực sâu lên trên, tạo thành đáy chữ V. Đây là Cực Tiểu." }
+        ]},
+        { id: "d1_II_4", type: "tf_cluster", context: "Câu 4. Cho hàm số $y = \\frac{x^2 - 2x + 9}{x - 2}$.", items: [
+            { id: "a", text: "a) Đạo hàm của hàm số là $y' = \\frac{x^2 - 4x - 5}{(x - 2)^2}$.", correct: true, expl: "Tính $( \\frac{u}{v} )'$: Tử đạo hàm là $(2x-2)(x-2) - (x^2-2x+9) = 2x^2-6x+4 - x^2+2x-9 = x^2-4x-5$. Chính xác." },
+            { id: "b", text: "b) Phương trình $y' = 0$ có hai nghiệm phân biệt là $x = -1$ và $x = 5$.", correct: true, expl: "Bấm máy giải phương trình $x^2-4x-5=0$, ta nhận ngay hai nghiệm là $-1$ và $5$." },
+            { id: "c", text: "c) Hàm số nghịch biến trên khoảng $(-1; 5)$.", correct: false, expl: "Hàm số bị đứt gãy (không xác định) tại điểm $x=2$. Phải viết tách rời là nghịch biến trên $(-1; 2)$ và $(2; 5)$." },
+            { id: "d", text: "d) Điểm cực tiểu của đồ thị hàm số là $(5; 8)$.", correct: true, expl: "Tại $x=5$, đạo hàm đổi dấu từ $(-)$ sang $(+)$ sinh ra cực tiểu. Thay $x=5$ vào hàm gốc, ta được $y = \\frac{25-10+9}{3} = 8$." }
+        ]},
+        
+        { id: "d1_III_1", type: "short_answer", question: "Câu 1. Tìm số điểm cực trị của hàm số $y = x^4 - 2x^2 + 5$.", correct: "3", explanation: "<b>Bước 1:</b> Tính $y' = 4x^3 - 4x$.<br><b>Bước 2:</b> Giải $y' = 0 \\Leftrightarrow 4x(x^2 - 1) = 0 \\Leftrightarrow x=0, x=1, x=-1$.<br><b>Kết luận:</b> Phương trình có 3 nghiệm phân biệt bậc lẻ, nên hàm số có 3 điểm cực trị." },
+        { id: "d1_III_2", type: "short_answer", question: "Câu 2. Cho hàm số $y = -x^3 + 3x^2 + 1$. Tính giá trị cực tiểu của hàm số.", correct: "1", explanation: "<b>Bước 1:</b> Tính $y' = -3x^2 + 6x$. Giải $y'=0 \\Leftrightarrow x=0$ hoặc $x=2$.<br><b>Bước 2:</b> Bảng xét dấu: hệ số $a$ âm, đồ thị dạng chữ 'N' ngược. Cực tiểu nằm ở bên trái tại $x=0$.<br><b>Kết luận:</b> Thay $x=0$ vào hàm số, ta có giá trị cực tiểu là $y=1$." },
+        { id: "d1_III_3", type: "short_answer", question: "Câu 3. Cho hàm số $y = \\frac{x^2 + x + 4}{x - 3}$. Tìm hoành độ điểm cực tiểu của đồ thị hàm số.", correct: "7", explanation: "<b>Bước 1:</b> Tính đạo hàm: $y' = \\frac{(2x+1)(x-3) - (x^2+x+4)}{(x-3)^2} = \\frac{x^2-6x-7}{(x-3)^2}$.<br><b>Bước 2:</b> Giải $y' = 0 \\Leftrightarrow x = -1$ hoặc $x = 7$.<br><b>Bước 3:</b> Đạo hàm chuyển dấu từ $(-)$ sang $(+)$ tại $x=7$ tạo thành thung lũng (cực tiểu).<br><b>Kết luận:</b> Hoành độ điểm cực tiểu là 7." },
+        { id: "d1_III_4", type: "short_answer", question: "Câu 4. Giả sử khoảng đồng biến của hàm số $y = -x^3 + 3x^2 + 9x + 2$ là khoảng $(a; b)$. Tính giá trị của biểu thức $S = a + b$.", correct: "2", explanation: "<b>Bước 1:</b> Tính $y' = -3x^2 + 6x + 9$. Để hàm đồng biến thì $y' > 0 \\Leftrightarrow -3x^2 + 6x + 9 > 0$.<br><b>Bước 2:</b> Chia hai vế cho $-3$ (đổi chiều): $x^2 - 2x - 3 < 0 \\Leftrightarrow -1 < x < 3$. Khoảng đồng biến là $(-1; 3)$.<br><b>Kết luận:</b> Xác định được $a = -1, b = 3$. Tổng $S = a + b = 2$." },
+        { id: "d1_III_5", type: "short_answer", question: "Câu 5. Hàm số $y = f(x)$ có đạo hàm $f'(x) = x^3 - 4x$. Hàm số $f(x)$ có bao nhiêu điểm cực đại?", correct: "1", explanation: "<b>Bước 1:</b> Giải $f'(x) = 0 \\Leftrightarrow x(x^2 - 4) = 0 \\Leftrightarrow x = -2, 0, 2$.<br><b>Bước 2:</b> Lập bảng xét dấu cho biểu thức $x^3-4x$. Đạo hàm đổi dấu từ $(+)$ sang $(-)$ (tạo thành đỉnh núi cực đại) chỉ duy nhất khi đi qua mốc $x = 0$.<br><b>Kết luận:</b> Hàm số chỉ có 1 cực đại." },
+        { id: "d1_III_6", type: "short_answer", question: "Câu 6. Sự lây lan của một loại virus ở một địa phương có thể được mô hình hóa bằng hàm số $N(t) = -t^3 + 12t^2$ (với $0 \\le t \\le 12$), trong đó $N$ là số người bị nhiễm bệnh (tính bằng trăm người) và $t$ là thời gian (tuần). Đạo hàm $N'(t)$ biểu thị tốc độ lây lan của virus. Hỏi virus sẽ lây lan nhanh nhất vào tuần thứ mấy?", correct: "4", explanation: "<b>Bước 1:</b> Hàm tốc độ lây lan là $v(t) = N'(t) = -3t^2 + 24t$. Mục tiêu là tìm giá trị lớn nhất của $v(t)$.<br><b>Bước 2:</b> Đạo hàm tiếp hàm vận tốc để tìm đỉnh: $v'(t) = -6t + 24$. Cho $v'(t) = 0 \\Leftrightarrow t = 4$.<br><b>Kết luận:</b> Đỉnh parabol quay xuống nằm tại $t=4$. Tốc độ bùng phát nhanh nhất vào tuần thứ 4." }
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1. Giả sử hàm số $y=f(x)$ có đạo hàm trên khoảng $K$. Mệnh đề nào sau đây là <b>đúng</b>?", options: ["A. Nếu $f'(x) \\ge 0$ với mọi $x \\in K$ và $f'(x) = 0$ chỉ tại một số hữu hạn điểm của $K$ thì hàm số đồng biến trên $K$.", "B. Nếu $f'(x) \\ge 0$ với mọi $x \\in K$ thì hàm số nghịch biến trên $K$.", "C. Nếu $f'(x) \\le 0$ với mọi $x \\in K$ và $f'(x) = 0$ chỉ tại một số hữu hạn điểm của $K$ thì hàm số đồng biến trên $K$.", "D. Nếu hàm số $f(x)$ đồng biến trên $K$ thì $f'(x) > 0$ với mọi $x \\in K$."], correct: 0, explanation: "<b>Lý thuyết:</b> Theo định lý mở rộng, hàm số đồng biến khi đạo hàm không âm trên khoảng K, và chỉ chạm mốc 0 tại một vài điểm rời rạc đếm được. Đáp án A phản ánh chuẩn xác tính chất này." },
+        { id: "d2_2", type: "single", question: "Câu 2. Cho hàm số $y = -x^3 + 3x^2 - 4$. Mệnh đề nào dưới đây đúng?", options: ["A. Hàm số đồng biến trên $(-\\infty; 2)$.", "B. Hàm số nghịch biến trên $(-\\infty; 0)$ và $(2; +\\infty)$.", "C. Hàm số đồng biến trên $(0; +\\infty)$.", "D. Hàm số nghịch biến trên $(0; 2)$."], correct: 1, explanation: "<b>Bước 1:</b> Tính $y' = -3x^2 + 6x$. $y' = 0 \\Leftrightarrow x = 0$ hoặc $x = 2$.<br><b>Bước 2:</b> Hệ số $a$ âm nên ngoài khoảng 2 nghiệm đạo hàm mang dấu âm. $y' < 0$ khi $x \\in (-\\infty; 0)$ hoặc $x \\in (2; +\\infty)$.<br><b>Kết luận:</b> Hàm số nghịch biến trên $(-\\infty; 0)$ và $(2; +\\infty)$." },
+        { id: "d2_3", type: "single", question: "Câu 3. Cho hàm số $y = \\frac{x+1}{x-1}$. Khẳng định nào sau đây là đúng về tính đơn điệu của hàm số?", options: ["A. Hàm số nghịch biến trên $\\mathbb{R} \\setminus \\{1\\}$.", "B. Hàm số đồng biến trên các khoảng $(-\\infty; 1)$ và $(1; +\\infty)$.", "C. Hàm số nghịch biến trên các khoảng $(-\\infty; 1)$ và $(1; +\\infty)$.", "D. Hàm số đồng biến trên $\\mathbb{R} \\setminus \\{1\\}$."], correct: 2, explanation: "<b>Bước 1:</b> Tính đạo hàm cực nhanh: $y' = \\frac{1\\times(-1) - 1\\times1}{(x-1)^2} = \\frac{-2}{(x-1)^2}$.<br><b>Bước 2:</b> Vì tử số âm và mẫu số dương với mọi $x \\neq 1$, $y' < 0$.<br><b>Kết luận:</b> Đồ thị đổ dốc xuống dưới, hàm số nghịch biến trên từng phân đoạn xác định $(-\\infty; 1)$ và $(1; +\\infty)$." },
+        { id: "d2_4", type: "single", question: "Câu 4. Cho hàm số $y = f(x)$ có đạo hàm $f'(x) = x^2(x-1)(x+3)$. Hàm số $f(x)$ đạt cực đại tại điểm nào dưới đây?", options: ["A. $x = 0$", "B. $x = 1$", "C. $x = -3$", "D. Hàm số không có cực đại."], correct: 2, explanation: "<b>Bước 1:</b> Nghiệm của đạo hàm: $x=0$ (bậc 2 chẵn, không đổi dấu), $x=1$ (lẻ), $x=-3$ (lẻ).<br><b>Bước 2:</b> Lập bảng xét dấu. Tại $x = -3$, đạo hàm đổi dấu từ $(+)$ sang $(-)$ tạo thành đỉnh núi nhô lên.<br><b>Kết luận:</b> Đạt cực đại tại $x = -3$." },
+        { id: "d2_5", type: "single", question: "Câu 5. Hàm số $y = \\frac{1}{3}x^3 - 2x^2 + 3x + 1$ nghịch biến trên khoảng nào sau đây?", options: ["A. $(1; 3)$", "B. $(-\\infty; 1)$", "C. $(3; +\\infty)$", "D. $(-\\infty; 3)$"], correct: 0, explanation: "<b>Bước 1:</b> Đạo hàm: $y' = x^2 - 4x + 3$.<br><b>Bước 2:</b> Để hàm số nghịch biến $\\Leftrightarrow y' < 0 \\Leftrightarrow x^2 - 4x + 3 < 0$.<br><b>Kết luận:</b> Bấm máy tính, nghiệm bất phương trình là $1 < x < 3$. Đáp án A." },
+        { id: "d2_6", type: "single", question: "Câu 6. Hàm số $y = x^4 + 2x^2 + 1$ có bao nhiêu điểm cực trị?", options: ["A. $0$", "B. $1$", "C. $2$", "D. $3$"], correct: 1, explanation: "<b>Bước 1:</b> Tính $y' = 4x^3 + 4x = 4x(x^2 + 1)$.<br><b>Bước 2:</b> Phương trình $y'=0$ chỉ có 1 nghiệm duy nhất là $x=0$ vì cụm $(x^2+1)$ luôn dương.<br><b>Kết luận:</b> Hàm trùng phương có 1 nghiệm đạo hàm thì có hình cái phễu (chữ U), chỉ duy nhất 1 điểm cực trị." },
+        { id: "d2_7", type: "single", question: "Câu 7. Cho hàm số $y = \\sqrt{4-x^2}$. Mệnh đề nào sau đây đúng?", options: ["A. Hàm số đồng biến trên khoảng $(-2; 2)$.", "B. Hàm số nghịch biến trên khoảng $(-2; 0)$.", "C. Hàm số đồng biến trên khoảng $(-2; 0)$.", "D. Hàm số nghịch biến trên khoảng $(-2; 2)$."], correct: 2, explanation: "<b>Bước 1:</b> Tập xác định $4-x^2 \\ge 0 \\Leftrightarrow -2 \\le x \\le 2$.<br><b>Bước 2:</b> Đạo hàm $y' = \\frac{-2x}{2\\sqrt{4-x^2}} = \\frac{-x}{\\sqrt{4-x^2}}$.<br><b>Bước 3:</b> Hàm đồng biến khi $y' > 0 \\Leftrightarrow -x > 0 \\Leftrightarrow x < 0$. Kết hợp vùng xác định, khoảng đồng biến là $(-2; 0)$." },
+        { id: "d2_8", type: "single", question: "Câu 8. Cho hàm số $y = \\frac{-x^2 + 2x - 1}{x + 2}$. Điểm cực đại của đồ thị hàm số có hoành độ là:", options: ["A. $x = -5$", "B. $x = 1$", "C. $x = -2$", "D. $x = 0$"], correct: 0, explanation: "<b>Bước 1:</b> Tính đạo hàm: $y' = \\frac{(-2x+2)(x+2) - (-x^2+2x-1)}{(x+2)^2} = \\frac{-x^2-4x+5}{(x+2)^2}$.<br><b>Bước 2:</b> Giải $y'=0 \\Leftrightarrow -x^2-4x+5 = 0 \\Leftrightarrow x=1$ hoặc $x=-5$.<br><b>Bước 3:</b> Hàm số đổi dấu từ $(+)$ sang $(-)$ khi đi qua $x=-5$.<br><b>Kết luận:</b> Cực đại nằm tại hoành độ $x = -5$." },
+        { id: "d2_9", type: "single", question: "Câu 9. Đồ thị hàm số $y = x^3 - 3x + 2$ có điểm cực tiểu là:", options: ["A. $(1; 0)$", "B. $(-1; 4)$", "C. $(0; 2)$", "D. $(1; -1)$"], correct: 0, explanation: "<b>Bước 1:</b> $y' = 3x^2 - 3 = 0 \\Leftrightarrow x = 1$ hoặc $x = -1$.<br><b>Bước 2:</b> Lập bảng biến thiên: Đồ thị vòng xuống chạm đáy cực tiểu tại $x = 1$.<br><b>Bước 3:</b> Thay $x=1$ vào hàm gốc: $y = 1^3 - 3(1) + 2 = 0$.<br><b>Kết luận:</b> Tọa độ cực tiểu là $(1; 0)$." },
+        { id: "d2_10", type: "single", question: "Câu 10. Xét một chất điểm chuyển động trên một trục số nằm ngang, chiều dương từ trái sang phải. Vị trí $s(t)$ (mét) của chất điểm tại thời điểm $t$ (giây) là $s(t) = t^3 - 9t^2 + 15t$. Trong khoảng thời gian nào dưới đây chất điểm chuyển động sang trái?", options: ["A. $(-\\infty; 1)$", "B. $(1; 5)$", "C. $(5; +\\infty)$", "D. $(0; 1)$"], correct: 1, explanation: "<b>Bước 1:</b> Chiều dương hướng phải. Chuyển động sang trái nghĩa là vận tốc bị lùi âm $v(t) < 0$.<br><b>Bước 2:</b> $v(t) = s'(t) = 3t^2 - 18t + 15$.<br><b>Bước 3:</b> Giải bất phương trình $3t^2 - 18t + 15 < 0 \\Leftrightarrow 1 < t < 5$.<br><b>Kết luận:</b> Khoảng thời gian lùi trái là $(1; 5)$ giây." },
+        { id: "d2_11", type: "single", question: "Câu 11. Cho hàm số $f(x)$ liên tục trên $\\mathbb{R}$ và có bảng xét dấu đạo hàm $f'(x)$ như sau:<br><div class='overflow-x-auto my-4 flex justify-center'><table class='w-full max-w-md text-center border-collapse border-2 border-gray-300 shadow-sm bg-white'><tr class='font-bold text-gray-800 bg-gray-50 border-b-2 border-gray-300'><td class='border border-gray-300 p-2 border-r-2'>$x$</td><td class='border border-gray-300 p-2'>$-\\infty$</td><td class='border border-gray-300 p-2'>$-2$</td><td class='border border-gray-300 p-2'>$ $</td><td class='border border-gray-300 p-2'>$1$</td><td class='border border-gray-300 p-2'>$+\\infty$</td></tr><tr class='font-bold text-blue-700'><td class='border border-gray-300 p-2 border-r-2 text-gray-800 bg-gray-50'>$f'(x)$</td><td class='border border-gray-300 p-2'>$+$</td><td class='border border-gray-300 p-2 text-red-600'>$0$</td><td class='border border-gray-300 p-2'>$-$</td><td class='border border-gray-300 p-2 text-red-600'>$0$</td><td class='border border-gray-300 p-2'>$-$</td></tr></table></div>Mệnh đề nào sau đây đúng?", options: ["A. Hàm số có 2 điểm cực trị.", "B. Hàm số đạt cực tiểu tại $x = 1$.", "C. Hàm số đạt cực đại tại $x = -2$.", "D. Hàm số nghịch biến trên $(-\\infty; 1)$."], correct: 2, explanation: "<b>Bước 1:</b> Tại $x=1$, đạo hàm bằng không nhưng không đổi chiều (tiếp tục đi xuống), do đó $x=1$ không phải cực trị.<br><b>Bước 2:</b> Tại $x=-2$, đồ thị đổi từ đi lên $(+)$ sang đi xuống $(-)$, tạo thành chóp núi.<br><b>Kết luận:</b> Đạt cực đại tại $x = -2$ là nhận định chính xác nhất." },
+        { id: "d2_12", type: "single", question: "Câu 12. Cho hàm số $y = \\frac{ax+b}{cx+d}$ có đạo hàm $y' > 0$ với mọi $x \\ne -\\frac{d}{c}$. Phát biểu nào sau đây đúng?", options: ["A. Hàm số không có cực trị.", "B. Hàm số có một cực đại và một cực tiểu.", "C. Hàm số đạt cực đại tại $x = -\\frac{d}{c}$.", "D. Hàm số đồng biến trên toàn bộ tập xác định $\\mathbb{R}$."], correct: 0, explanation: "<b>Lý thuyết:</b> Hàm phân thức cấu trúc bậc nhất trên bậc nhất sẽ có đồ thị gồm 2 đường cong hyperbol. Đạo hàm của nó luôn mang 1 dấu cố định, không bao giờ bằng 0 và không cắt trục hoành.<br><b>Kết luận:</b> Do đó hàm số tuyệt đối không bao giờ có thể tạo được đỉnh uốn cong (cực trị). Khẳng định A đúng." },
+        
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1. Cho hàm số $y = \\frac{1}{3}x^3 + 3x^2 + 5x + 2$.", items: [
+            { id: "a", text: "a) Tập xác định của hàm số là $D = \\mathbb{R}$.", correct: true, expl: "Hàm đa thức hoàn toàn không có điểm gãy (không mẫu, không căn) nên tập xác định trọn vẹn là trục số $\\mathbb{R}$." },
+            { id: "b", text: "b) Đạo hàm của hàm số bằng $0$ khi $x = -1$ hoặc $x = -5$.", correct: true, expl: "Tính đạo hàm: $y' = x^2 + 6x + 5$. Giải nghiệm bằng 0 ta thu được $x = -1, x = -5$." },
+            { id: "c", text: "c) Hàm số nghịch biến trên khoảng $(-5; -1)$.", correct: true, expl: "Bất phương trình $x^2 + 6x + 5 < 0$ kẹp nghiệm trong khoảng $(-5; -1)$. Hàm số cắm đầu xuống trong vùng này." },
+            { id: "d", text: "d) Hàm số đạt cực tiểu tại điểm $x = -5$.", correct: false, expl: "Qua mốc $x=-5$, đồ thị đổi hướng từ đi lên sang cắm xuống. Đây là đặc điểm của Cực Đại, không phải cực tiểu." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2. Cho hàm số $y = \\frac{-x^2 + 5x - 7}{x - 2}$.", items: [
+            { id: "a", text: "a) Đạo hàm của hàm số là $y' = \\frac{-x^2 + 4x - 3}{(x-2)^2}$.", correct: true, expl: "Áp dụng công thức đạo hàm phân thức phức tạp, kết quả rút gọn chính xác là $\\frac{-x^2 + 4x - 3}{(x-2)^2}$." },
+            { id: "b", text: "b) Hàm số có hai điểm cực trị là $x = 1$ và $x = 3$.", correct: true, expl: "Tử số của đạo hàm bằng 0 khi $-x^2+4x-3 = 0 \\Leftrightarrow x=1, x=3$. Hai điểm này phân biệt và làm đạo hàm đổi dấu." },
+            { id: "c", text: "c) Hàm số đồng biến trên khoảng $(1; 3)$.", correct: false, expl: "Nguyên tắc toán học cấm kỵ việc viết gộp khoảng đồng biến chạy xuyên qua điểm đứt gãy. Tại $x=2$ hàm không xác định. Phải viết tách ra là $(1; 2)$ và $(2; 3)$." },
+            { id: "d", text: "d) Giá trị cực tiểu của hàm số lớn hơn giá trị cực đại của hàm số.", correct: true, expl: "Thay số: $y_{CT} = y(3) = -1$; $y_{CĐ} = y(1) = -3$. Thật thú vị là cực tiểu (-1) lại vươn cao hơn cực đại (-3) do hàm số có hai nhánh cách biệt." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3. Cho hàm số $y = x^4 - 4x^2 + 2$.", items: [
+            { id: "a", text: "a) Hàm số có tập xác định là $D = \\mathbb{R}$.", correct: true, expl: "Hàm đa thức thuần túy luôn luôn xác định trên toàn miền $\\mathbb{R}$." },
+            { id: "b", text: "b) Hàm số đồng biến trên các khoảng $(-\\sqrt{2}; 0)$ và $(\\sqrt{2}; +\\infty)$.", correct: true, expl: "Đạo hàm $y' = 4x^3 - 8x = 4x(x^2 - 2)$. Giải dấu $(+) \\Rightarrow x \\in (-\\sqrt{2}; 0) \\cup (\\sqrt{2}; +\\infty)$." },
+            { id: "c", text: "c) Đồ thị hàm số có một điểm cực đại và hai điểm cực tiểu.", correct: true, expl: "Hình dáng hàm trùng phương có hệ số a dương, b âm tạo thành chữ W uốn lượn. Đỉnh nhô lên ở giữa (1 cực đại) và 2 đáy vực chìm xuống (2 cực tiểu)." },
+            { id: "d", text: "d) Điểm cực đại của đồ thị hàm số nằm trên trục hoành.", correct: false, expl: "Đỉnh cực đại rơi tại $x=0$. Thay vào hàm số ta được $y(0) = 2$. Tọa độ điểm là $(0;2)$. Nó đính chặt trên trục tung, chứ không hề chạm xuống trục hoành x." }
+        ]},
+        { id: "d2_II_4", type: "tf_cluster", context: "Câu 4. Một vật chuyển động theo phương trình $s(t) = -t^3 + 6t^2 + 15t$, trong đó $t$ được tính bằng giây và $s$ tính bằng mét. Gọi $v(t)$ là vận tốc của vật tại thời điểm $t$.", items: [
+            { id: "a", text: "a) Biểu thức vận tốc của vật là $v(t) = -3t^2 + 12t + 15$.", correct: true, expl: "Vận tốc là đạo hàm cấp 1 của độ dài quãng đường. Phẩy biểu thức trên ta thu được $v(t) = -3t^2 + 12t + 15$." },
+            { id: "b", text: "b) Vật đạt vận tốc bằng $0$ tại thời điểm $t = 5$ giây (xét $t>0$).", correct: true, expl: "Bấm máy giải hàm $v(t) = 0$, ta nhận nghiệm thời gian $t = 5$ giây." },
+            { id: "c", text: "c) Trong khoảng thời gian từ $t=0$ đến $t=5$, vật chuyển động lùi.", correct: false, expl: "Thử mốc thời gian t=2: $v(2) = 27$ m/s mang dấu dương. Vật thể đang phóng nhanh tiến về phía trước chứ không lùi lại." },
+            { id: "d", text: "d) Vật đạt gia tốc bằng $0$ tại thời điểm $t = 2$ giây.", correct: true, expl: "Gia tốc là nhát chém đạo hàm lần 2: $a(t) = v'(t) = -6t + 12$. Cảm biến báo gia tốc triệt tiêu $a=0$ khi $t = 2$." }
+        ]},
+        
+        { id: "d2_III_1", type: "short_answer", question: "Câu 1. Tìm số điểm cực trị của hàm số $y = 2x^3 - 9x^2 + 12x - 5$.", correct: "2", explanation: "<b>Bước 1:</b> Phẩy nhẹ hàm số lấy $y' = 6x^2 - 18x + 12$.<br><b>Bước 2:</b> Quăng hàm này bằng 0 để định vị mốc chuyển hướng: $x^2 - 3x + 2 = 0 \\Leftrightarrow x=1, x=2$.<br><b>Kết luận:</b> Hai nghiệm phân biệt tạo ra 2 lần bẻ cua ngoạn mục cho đồ thị. Tổng cộng có 2 điểm cực trị." },
+        { id: "d2_III_2", type: "short_answer", question: "Câu 2. Hàm số $y = -x^3 + 2x^2 - 5x + 3$ có bao nhiêu cực trị?", correct: "0", explanation: "<b>Bước 1:</b> Khảo sát $y' = -3x^2 + 4x - 5$.<br><b>Bước 2:</b> Tính hệ số kiểm duyệt $\\Delta' = 2^2 - (-3)(-5) = -11 < 0$. Cộng thêm việc hệ số $a=-3$ mang dấu âm, biểu thức đạo hàm này đắm chìm hoàn toàn vào cõi âm với mọi con số x.<br><b>Kết luận:</b> Vì đồ thị cắm đầu lao xuống không một lần ngóc dậy (không đổi dấu), nên nó thu về con số 0 cực trị." },
+        { id: "d2_III_3", type: "short_answer", question: "Câu 3. Cho hàm số $y = x^3 - 3x$. Tính hiệu số giữa giá trị cực đại và giá trị cực tiểu của hàm số (tức là tính $y_{CĐ} - y_{CT}$).", correct: "4", explanation: "<b>Bước 1:</b> Quét radar tìm đỉnh: $y' = 3x^2 - 3 = 0 \\Leftrightarrow x=1, x=-1$.<br><b>Bước 2:</b> Thay tọa độ để đo cao độ: Cực tiểu tại $x=1 \\Rightarrow y_{CT} = 1 - 3 = -2$. Cực đại tại $x=-1 \\Rightarrow y_{CĐ} = -1 + 3 = 2$.<br><b>Kết luận:</b> Kéo thước dây đo độ chênh lệch: $y_{CĐ} - y_{CT} = 2 - (-2) = 4$." },
+        { id: "d2_III_4", type: "short_answer", question: "Câu 4. Cho hàm số $y = \\frac{x^2+x+4}{x-3}$. Tìm giá trị cực tiểu của hàm số.", correct: "15", explanation: "<b>Bước 1:</b> Sục sạo tìm đạo hàm: $y' = \\frac{(2x+1)(x-3) - (x^2+x+4)}{(x-3)^2} = \\frac{x^2-6x-7}{(x-3)^2}$.<br><b>Bước 2:</b> Đâm lệnh dò đỉnh đáy: Tử số $x^2-6x-7 = 0 \\Rightarrow x=-1, x=7$.<br><b>Bước 3:</b> Xác thực: mốc $x=7$ là đáy vực thẳm do đạo hàm lượn vòng từ âm sang dương.<br><b>Kết luận:</b> Thay hoành độ vàng $x=7$ vào trạm gốc: $y = \\frac{49+7+4}{4} = \\frac{60}{4} = 15$." },
+        { id: "d2_III_5", type: "short_answer", question: "Câu 5. Giả sử số dân của một thị trấn sau $t$ năm (kể từ năm 2000) được mô tả bởi hàm số $N(t) = \\frac{25t+10}{t+5}$ ($N(t)$ tính bằng nghìn người). Tốc độ tăng trưởng dân số tại thời điểm $t$ chính là đạo hàm $N'(t)$. Tính tốc độ tăng trưởng dân số của thị trấn đó vào năm 2005 (tức $t=5$).", correct: "1.15", explanation: "<b>Bước 1:</b> Lập máy đo gia tốc dân số $N'(t) = \\frac{25 \\times 5 - 10 \\times 1}{(t+5)^2} = \\frac{115}{(t+5)^2}$.<br><b>Bước 2:</b> Phóng tọa độ $t=5$ vào cảm biến.<br><b>Kết luận:</b> $N'(5) = \\frac{115}{(5+5)^2} = \\frac{115}{100} = 1.15$. Mức tăng bật nhả đúng bằng con số này." },
+        { id: "d2_III_6", type: "short_answer", question: "Câu 6. Vận tốc chuyển động của một hạt là $v(t) = -t^2 + 4t + 5$ (m/s). Tìm thời điểm $t$ (giây) mà tại đó gia tốc của hạt bằng $0$.", correct: "2", explanation: "<b>Bước 1:</b> Gia tốc là cấp số nhân đạo hàm của vận tốc. $a(t) = v'(t) = -2t + 4$.<br><b>Bước 2:</b> Ép máy đẩy gia tốc về mo ($a=0$).<br><b>Kết luận:</b> Ta bắt thóp được hạt dừng gia tốc tại thời khắc: $-2t + 4 = 0 \\Rightarrow t = 2$." }
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(90 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.items.length;
+            else count += 1;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() {
+        return Object.keys(userAnswers).length;
+    }
+
+    window.handleShortAnswer = function(qId) {
+        const inputEl = document.getElementById('short_input_' + qId);
+        if(!inputEl) return;
+        const val = inputEl.value;
+        if(val.trim() === '') {
+            delete userAnswers[qId];
+        } else {
+            userAnswers[qId] = val;
+        }
+        window.updateProgress();
+    };
+
+    window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+            
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+        }
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            // Render Header Nêú đổi sang nhóm mới
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                if(currentType === 'short_answer') { headerText = 'TRẮC NGHIỆM TRẢ LỜI NGẮN'; roman = 'III'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-12 h-12 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            // --- MULTIPLE CHOICE ---
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg cursor-pointer hover:border-blue-300">
+                            <div class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            // --- TRUE / FALSE ---
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-4 rounded-xl font-bold mb-4 border-2 border-red-100 text-lg sm:text-xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-3 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-4 sm:p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-base sm:text-lg math-scroll">${item.text}</div>
+                        <div class="flex gap-2 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            // --- SHORT ANSWER ---
+            else if (q.type === 'short_answer') {
+                let ans = userAnswers[q.id] || "";
+                html += `<div class="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-900 p-5 rounded-2xl font-bold mb-6 border border-purple-100 shadow-sm text-lg sm:text-xl leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="mt-4 p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm">
+                     <p class="text-sm font-bold text-gray-500 mb-2 uppercase">NHẬP KẾT QUẢ CUỐI CÙNG CỦA BẠN VÀO ĐÂY:</p>
+                     <textarea id="short_input_${q.id}" oninput="window.handleShortAnswer('${q.id}')" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 font-bold text-xl outline-none transition-all text-center text-blue-700" rows="2" placeholder="Ví dụ: 12 hoặc -5.5">${ans}</textarea>
+                 </div>`;
+            }
+
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        window.updateProgress();
+
+        if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
+            MathJax.typesetPromise([container]).catch(err => console.error(err));
+        }
+    };
+
+    window.updateProgress = function() {
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    // HIỂN THỊ MODAL HỎI XÁC NHẬN NỘP BÀI
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    // NỘP BÀI THẬT
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'short_answer') {
+                let uVal = (userAnswers[q.id] || "").toString().trim().replace(',', '.');
+                let cVal = q.correct.toString().trim().replace(',', '.');
+                if (uVal === cVal) score += 0.5;
+            } else if (q.type === 'tf_cluster') {
+                let c = 0;
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) c++; });
+                if (c === 1) score += 0.1;
+                else if (c === 2) score += 0.25;
+                else if (c === 3) score += 0.5;
+                else if (c === 4) score += 1.0;
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString(), endTime: quizEndTime.toLocaleTimeString(),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại & Giải chi tiết</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-2">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-2xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-2xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3"><div class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                if (q.explanation) html += `<div class="review-explanation mt-4 pt-4 border-t-2 border-gray-200"><p class="text-sm font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết từng bước:</p><p class="text-black font-medium text-base leading-loose math-scroll">${q.explanation}</p></div>`;
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-indigo-800 mb-4 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isCorrect = uAns === item.correct;
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-4 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 math-scroll">${item.text}</div>
+                        <div class="mt-2 flex items-center justify-between border-b border-gray-100 pb-2">
+                            <span class="text-sm font-bold text-gray-500">Bạn chọn: <span class="${uAns === undefined ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${uAns === undefined ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-lg ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án chuẩn: ${ansText} ${iconHtml}</span>
+                        </div>
+                        <div class="review-explanation mt-2 pt-2 text-sm text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+            else if (q.type === 'short_answer') {
+                let uVal = (userAnswers[q.id] || "").toString().trim().replace(',', '.');
+                let cVal = q.correct.toString().trim().replace(',', '.');
+                let isCorrect = (uVal === cVal);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-purple-900 mb-4 math-scroll">${q.question}</div>`;
+                html += `<div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <div class="flex-1 p-3 bg-white border border-gray-200 rounded-xl min-w-0"><span class="block text-xs font-bold text-gray-400 uppercase mb-1">Bạn nhập:</span><span class="text-xl font-black ${isCorrect ? 'text-emerald-600' : 'text-red-600'} block break-words">${userAnswers[q.id] || '(Trống)'}</span></div>
+                    <div class="flex-1 p-3 bg-emerald-100 border border-emerald-300 rounded-xl min-w-0"><span class="block text-xs font-bold text-emerald-700 uppercase mb-1">ĐÁP ÁN CHUẨN LÀ:</span><span class="text-xl font-black text-emerald-800 block break-words">${q.correct}</span></div>
+                </div>`;
+                if (q.explanation) html += `<div class="review-explanation pt-4 border-t-2 border-gray-200"><p class="text-sm font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết từng bước:</p><p class="text-black font-medium text-base leading-loose math-scroll">${q.explanation}</p></div>`;
+                html += `</div>`;
+            }
+        });
+        container.innerHTML = html;
+        if (window.MathJax && typeof MathJax.typesetPromise === 'function') MathJax.typesetPromise([container]);
+    };
+
+    window.backToResult = function() { showSection('result'); };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (b.diem - a.diem));
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100"><td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td><td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td><td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td><td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td><td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td><td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td><td class="px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
+            <td class="px-4 py-4 text-right text-xs text-slate-500 font-bold">${s.thoiGian ? new Date(s.thoiGian).toLocaleDateString('vi-VN') : '--/--/----'}</td></tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
