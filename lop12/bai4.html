@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-3"> BÀI 4: GIAO THỨC MẠNG </h1>
+      <p class="text-sm font-semibold text-blue-600">Hành Trình Số - Mang tri thức đến mọi người</p>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-lg font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-lg" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-lg font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-lg" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-lg font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-sm font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-sm font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-base p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-base font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-sm text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ (Câu)</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-lg"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-lg shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-lg shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-lg shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-sm text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-sm sm:text-base whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            // Đã đổi reference sang bài 4 để điểm không bị lộn
+            scoresRef = database.ref('bxh_tin_12_4');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 4: GIAO THỨC MẠNG) - LỜI GIẢI CHUẨN KHOA HỌC MÁY TÍNH
+    =================================================================================================*/
+    const de1_data = [
+        // PHẦN I: TRẮC NGHIỆM ĐỀ 1
+        { id: "d1_1", type: "single", question: "Câu 1: Giao thức mạng (hay giao thức truyền thông) được hiểu là:", options: ["Tập hợp các quy định cách thức giao tiếp.", "Thiết bị phần cứng để nối mạng máy tính.", "Các phần mềm dùng để duyệt web mạng.", "Hệ điều hành quản lý mạng máy tính cục bộ."], correct: 0,
+          explanation: "Về mặt khoa học máy tính, giao thức mạng (Network Protocol) là một tập hợp các tiêu chuẩn và quy tắc kỹ thuật quy định cú pháp (syntax), ngữ nghĩa (semantics) và tính đồng bộ (synchronization) của quá trình truyền tải dữ liệu, đảm bảo các thiết bị có kiến trúc phần cứng và hệ điều hành khác nhau có thể tương tác đồng nhất." },
+        { id: "d1_2", type: "single", question: "Câu 2: Những quy định liên quan đến việc GỬI thư điện tử có tên là:", options: ["Giao thức truyền mạng POP3.", "Giao thức truyền mạng SMTP.", "Giao thức truyền mạng IMAP.", "Giao thức truyền mạng HTTP."], correct: 1,
+          explanation: "SMTP (Simple Mail Transfer Protocol) là giao thức thuộc tầng Ứng dụng (Application layer) của mô hình TCP/IP. SMTP sử dụng kết nối TCP qua cổng 25 (hoặc 587) với chức năng duy nhất là định tuyến và đẩy (push) thông điệp từ Mail Client của người gửi lên Mail Server hoặc giữa các Mail Server với nhau." },
+        { id: "d1_3", type: "single", question: "Câu 3: Những quy định về cách người nhận LẤY thư điện tử có tên là:", options: ["Giao thức TCP hoặc giao thức chuẩn IP.", "Giao thức SMTP hoặc giao thức HTTP.", "Giao thức POP3 hoặc giao thức IMAP.", "Giao thức DNS hoặc giao thức chuẩn MAC."], correct: 2,
+          explanation: "POP3 (Post Office Protocol version 3) và IMAP (Internet Message Access Protocol) là các giao thức tầng Ứng dụng được thiết kế chuyên biệt cho việc truy xuất (pull) dữ liệu thư điện tử từ Mail Server về thiết bị cục bộ của người nhận (Mail Client)." },
+        { id: "d1_4", type: "single", question: "Câu 4: Mỗi thiết bị tham gia mạng đều có một địa chỉ đi theo phần cứng gọi là:", options: ["Địa chỉ kiểm soát mạng HTTP.", "Địa chỉ kiểm soát mạng TCP.", "Địa chỉ kiểm soát mạng DNS.", "Địa chỉ kiểm soát mạng MAC."], correct: 3,
+          explanation: "Địa chỉ MAC (Media Access Control) là địa chỉ vật lý dài 48-bit (6 byte) hoạt động ở tầng Liên kết dữ liệu (Data Link layer). Địa chỉ này được mã hóa cứng vào bộ nhớ ROM của Network Interface Card (NIC) bởi nhà sản xuất, dùng để định danh duy nhất thiết bị trên một phân đoạn mạng cục bộ." },
+        { id: "d1_5", type: "single", question: "Câu 5: Dữ liệu chuyển đi trong mạng Ethernet luôn kèm theo mã kiểm tra để:", options: ["Phát hiện các lỗi khi truyền dữ liệu.", "Tăng tốc độ đường truyền mạng lên.", "Lưu trữ dữ liệu an toàn vào máy tính.", "Mã hóa bảo mật thông tin người dùng."], correct: 0,
+          explanation: "Khung dữ liệu (Frame) của chuẩn Ethernet chứa một trường FCS (Frame Check Sequence) ở cuối, sử dụng thuật toán CRC (Cyclic Redundancy Check). Tại máy nhận, hàm toán học này được tính toán lại để đối chiếu, qua đó phát hiện sự sai lệch bit (bit error) xảy ra trong quá trình truyền tải vật lý." },
+        { id: "d1_6", type: "single", question: "Câu 6: Việc truyền dữ liệu trong mạng cục bộ được thực hiện theo nguyên tắc nào?", options: ["Truyền lượng tin dài không hề có giới hạn.", "Truyền theo gói dữ liệu có độ dài xác định.", "Chỉ truyền tín hiệu bằng sóng vô tuyến điện.", "Luôn truyền theo một đường dây cáp cố định."], correct: 1,
+          explanation: "Mạng máy tính hiện đại vận hành dựa trên cơ chế chuyển mạch gói (Packet Switching). Dữ liệu gốc được phân mảnh (fragmentation) thành các đơn vị truyền tải định mức (Packet/Frame) tuân theo giới hạn MTU (Maximum Transmission Unit) nhằm tối ưu hóa băng thông, giảm độ trễ và tránh gây tắc nghẽn tài nguyên xử lý ở các nút mạng." },
+        { id: "d1_7", type: "single", question: "Câu 7: Trong giao thức mạng Internet, IP là viết tắt của cụm từ tiếng Anh nào?", options: ["Internet Control chuẩn.", "Internet Message chuẩn.", "Internet Protocol chuẩn.", "Internet Access chuẩn."], correct: 2,
+          explanation: "IP là viết tắt của Internet Protocol. Đây là giao thức cốt lõi thuộc tầng Mạng (Network layer), có nhiệm vụ thiết lập không gian địa chỉ logic (IP Addressing) và cung cấp cơ chế định tuyến (Routing) cho các Datagram truyền qua ranh giới các mạng con." },
+        { id: "d1_8", type: "single", question: "Câu 8: Mỗi địa chỉ IPv4 là một dãy số được lưu trữ với kích thước bao nhiêu?", options: ["Một dãy số có kích thước hai byte.", "Một dãy số có kích thước sáu byte.", "Một dãy số có kích thước tám byte.", "Một dãy số có kích thước bốn byte."], correct: 3,
+          explanation: "Kiến trúc địa chỉ IPv4 quy định không gian lưu trữ là 32 bit. Dựa trên cơ số lưu trữ tiêu chuẩn (1 byte = 8 bit), cấu trúc này tương đương 4 byte. Ký pháp chuẩn biểu diễn 4 byte này thành 4 octet hệ thập phân ngăn cách nhau bằng dấu chấm." },
+        { id: "d1_9", type: "single", question: "Câu 9: Trong giao thức mạng Internet, TCP là viết tắt của từ tiếng Anh nào?", options: ["Transmission Control Protocol.", "Transmission Message Protocol.", "Transmission Internet Protocol.", "Transmission Access Protocol."], correct: 0,
+          explanation: "TCP là Transmission Control Protocol. Khác với UDP, TCP là giao thức hướng kết nối (connection-oriented) thuộc tầng Giao vận (Transport layer), tích hợp các cơ chế kiểm soát lỗi, kiểm soát luồng (sliding window) và đảm bảo phân phối gói tin tuần tự, tin cậy." },
+        { id: "d1_10", type: "single", question: "Câu 10: Người ta thường coi Internet là mạng toàn cầu hoạt động theo chuẩn nào?", options: ["Hoạt động theo giao thức Ethernet.", "Hoạt động theo giao thức TCP/IP.", "Hoạt động theo giao thức IMAP.", "Hoạt động theo giao thức MAC."], correct: 1,
+          explanation: "Internet được xây dựng trên kiến trúc của bộ giao thức TCP/IP (TCP/IP Protocol Suite). Trong hệ sinh thái này, IP đảm nhiệm chức năng tìm đường ở tầng Mạng, trong khi TCP đảm bảo tính toàn vẹn của kết nối dữ liệu ở tầng Giao vận." },
+        { id: "d1_11", type: "single", question: "Câu 11: Lí do không thể truyền một lượng tin dài không giới hạn giữa hai máy tính là?", options: ["Dễ làm tốn dung lượng của ổ cứng máy tính.", "Sẽ làm cho tốc độ mạng máy tính chạy nhanh.", "Có thể làm quá tải máy tính của người nhận.", "Sẽ làm cho mạng máy tính không thể kết nối."], correct: 2,
+          explanation: "Việc truyền một khối lượng bit quá lớn trong một chu kì xung nhịp sẽ dẫn đến hiện tượng tràn bộ đệm (Buffer Overflow) tại thiết bị thu. Giao thức mạng yêu cầu chia nhỏ dữ liệu để thiết bị thu có đủ thời gian xử lý các tác vụ ngắt (Interrupt) và phân bổ bộ nhớ." },
+        { id: "d1_12", type: "single", question: "Câu 12: Khác biệt cơ bản giữa địa chỉ MAC và địa chỉ IP là gì?", options: ["MAC có thể thay đổi, IP cố định không đổi.", "MAC dùng mạng rộng, IP dùng mạng cục bộ.", "MAC là số thập phân, IP là dãy chữ cái dài.", "MAC đi theo phần cứng, IP gán khi kết nối."], correct: 3,
+          explanation: "Địa chỉ MAC là địa chỉ vật lý (Physical Address) mang tính định danh tĩnh của thiết bị phần cứng ở tầng Data Link. Trong khi đó, địa chỉ IP là địa chỉ logic (Logical Address) thuộc tầng Network, mang tính cấu trúc tô-pô mạng và thay đổi theo cơ chế cấp phát động (DHCP) khi thiết bị thay đổi điểm kết nối mạng." },
+        { id: "d1_13", type: "single", question: "Câu 13: Nội dung chính của việc định tuyến (chọn đường) chuyển dữ liệu là gì?", options: ["Cách thức chọn cổng Router gửi đi.", "Cách thức đặt tên miền cho web.", "Cách thức mã hóa dữ liệu trang web.", "Cách thức chia nhỏ các gói dữ liệu."], correct: 0,
+          explanation: "Định tuyến (Routing) là tiến trình thuật toán diễn ra tại bộ định tuyến (Router). Router đối chiếu địa chỉ IP đích của gói tin với Bảng định tuyến (Routing Table) để xác định giao diện mạng (Interface/Port) tối ưu nhất để chuyển tiếp (Forwarding) gói tin đó sang chặng tiếp theo (Next Hop)." },
+        { id: "d1_14", type: "single", question: "Câu 14: Bảng định tuyến của các Router hoạt động tương tự như khái niệm nào?", options: ["Bảng danh sách các gói tin nhận được.", "Bảng đường đi của các xe chuyển thư.", "Bảng điểm của các học sinh trong lớp.", "Bảng mã màu sắc của các trang web."], correct: 1,
+          explanation: "Về mặt thuật toán, Bảng định tuyến (Routing Table) chứa tập hợp các quy tắc định hướng cơ sở hạ tầng, bao gồm dải IP mạng đích (Destination Network), Subnet Mask và Next Hop (Gateway), tương tự như bản đồ mô hình hóa các tuyến đường vật lý trong hệ thống logistics." },
+        { id: "d1_15", type: "single", question: "Câu 15: Phương pháp định tuyến động (dynamic routing) mang lại đặc điểm gì?", options: ["Ngừng gửi dữ liệu khi gặp phải đường đứt.", "Luôn luôn chuyển đi theo một cổng cố định.", "Có thể thay đổi cổng gửi đi tùy điều kiện.", "Xóa bỏ hoàn toàn bảng định tuyến trên máy."], correct: 2,
+          explanation: "Định tuyến động (Dynamic Routing) sử dụng các giao thức (như OSPF, BGP, RIP) cho phép các Router tự động trao đổi thông tin trạng thái liên kết (Link-State) để cập nhật Bảng định tuyến theo thời gian thực. Điều này tạo ra khả năng định tuyến dự phòng (Failover) khi một phân đoạn mạng gặp sự cố." },
+        { id: "d1_16", type: "single", question: "Câu 16: Tại sao giao thức TCP phải cấp phát \"cổng ứng dụng\" cho các phần mềm?", options: ["Để chuyển đổi tên miền web thành địa chỉ IP.", "Để tăng cường tốc độ của đường truyền mạng.", "Để kết nối trực tiếp các máy tính với nhau.", "Để gói tin không lẫn lộn giữa các ứng dụng."], correct: 3,
+          explanation: "Ở tầng Giao vận, cơ chế ghép kênh/phân kênh (Multiplexing/Demultiplexing) sử dụng các định danh 16-bit gọi là Số cổng (Port Number). Kỹ thuật này giúp phân phối (dispatch) chính xác dòng byte dữ liệu thu được từ mạng lưới đến đúng tiến trình ứng dụng (Application Process) đang yêu cầu (Ví dụ: Web dùng port 80/443)." },
+        { id: "d1_17", type: "single", question: "Câu 17: Tại nơi gửi, giao thức TCP sẽ xử lí luồng dữ liệu truyền đi như thế nào?", options: ["Cắt thành nhiều gói tin có độ dài xác định.", "Nén tất cả thành một tập tin duy nhất gửi.", "Mã hóa thành dãy số nhị phân dài liên tục.", "Bắt buộc truyền đi toàn bộ trong một lần."], correct: 0,
+          explanation: "Quá trình Đóng gói (Encapsulation) tại TCP sẽ tiếp nhận luồng dữ liệu từ tầng Ứng dụng, sau đó phân mảnh (Segmentation) chúng thành các đoạn dữ liệu (Segments) có kích thước giới hạn MSS (Maximum Segment Size), gán Header chứa Sequence Number trước khi chuyển xuống tầng IP." },
+        { id: "d1_18", type: "single", question: "Câu 18: Giao thức HTTP (Hypertext Transmission Protocol) có vai trò chính là gì?", options: ["Cho phép dùng tên thay cho địa chỉ IP mạng.", "Quy định cách biểu diễn mã hóa trang web.", "Lựa chọn đường chuyển tiếp dữ liệu hợp lí.", "Kiểm tra lỗi truyền các gói tin bị thất lạc."], correct: 1,
+          explanation: "HTTP (Hypertext Transfer Protocol) định nghĩa mô hình Request-Response tại tầng Ứng dụng, chuyên giao tiếp tài nguyên siêu văn bản (HTML, CSS, JSON). Giao thức này cung cấp bộ từ vựng lệnh (GET, POST...) giúp trình duyệt thông dịch và kết xuất (rendering) giao diện người dùng chính xác." },
+        { id: "d1_19", type: "single", question: "Câu 19: Giao thức DNS (Domain Name System) mang lại lợi ích gì cho người dùng?", options: ["Truyền tải các thư điện tử có đính kèm tập tin.", "Dùng địa chỉ số mạng thay thế cho tên bằng chữ.", "Dùng tên hệ thống bằng chữ thay thế IP mạng.", "Biểu diễn nội dung của các trang web tin tức."], correct: 2,
+          explanation: "Hệ thống phân giải tên miền (DNS) hoạt động như một cơ sở dữ liệu phân tán. Nó thực hiện truy vấn ánh xạ (mapping) giữa các FQDN (Fully Qualified Domain Names) mang ngữ nghĩa con người sang các địa chỉ IP định dạng số học mà mô hình định tuyến mạng yêu cầu." },
+        { id: "d1_20", type: "single", question: "Câu 20: Dạng viết đúng của một địa chỉ IPv4 theo hệ thập phân là dạng nào?", options: ["Các số cách nhau bởi các dấu hai chấm.", "Các số cách nhau bởi các dấu phẩy nhỏ.", "Các số cách nhau bởi các dấu gạch ngang.", "Các số cách nhau bởi các dấu chấm nhỏ."], correct: 3,
+          explanation: "Quy ước chuẩn quốc tế IETF định nghĩa cấu trúc trình bày của không gian IPv4 là dạng Dotted-Decimal Notation. Bốn khối giá trị 8-bit (octet) được biểu thị bằng cơ số 10 và liên kết bởi ký tự dấu chấm." },
+        { id: "d1_21", type: "single", question: "Câu 21: Khi đang tải tài liệu mà mạng bị chập chờn, TCP sẽ thực hiện cơ chế nào?", options: ["Yêu cầu phía nơi gửi truyền lại gói tin lỗi.", "Bỏ qua gói tin lỗi và tải tiếp phần dữ liệu sau.", "Tự động sửa lỗi sai nội dung của gói tin mạng.", "Đóng hoàn toàn cổng ứng dụng của phần mềm."], correct: 0,
+          explanation: "TCP ứng dụng cơ chế ARQ (Automatic Repeat reQuest). Nếu bộ đếm thời gian (Retransmission Timer) cạn kiệt mà không nhận được tín hiệu ACK (Acknowledgment) tương ứng cho một Segment, máy phát sẽ kích hoạt quy trình tái truyền (Retransmission) mảnh dữ liệu đó để đảm bảo tính toàn vẹn (Reliability)." },
+        { id: "d1_22", type: "single", question: "Câu 22: Nếu bạn viết email xong, bấm nút \"Gửi\" nhưng báo lỗi kết nối, sự cố này liên quan đến:", options: ["Các lỗi liên quan đến giao thức POP3 lấy thư.", "Các lỗi liên quan đến giao thức SMTP gửi thư.", "Các lỗi liên quan đến giao thức IMAP lấy thư.", "Các lỗi liên quan đến giao thức HTTP duyệt web."], correct: 1,
+          explanation: "Trong kiến trúc hệ thống Mail, luồng dữ liệu Outbound (Gửi đi) được kiểm soát duy nhất bởi dịch vụ SMTP. Các rào cản kết nối tại thời điểm nạp thông điệp vào Mail Spooler phản ánh sự cố xảy ra tại giao thức SMTP hoặc cơ chế phân giải MX Record tương ứng." },
+        { id: "d1_23", type: "single", question: "Câu 23: Khi trình duyệt web báo lỗi \"Không thể hiển thị định dạng trang\", nó liên quan đến:", options: ["Vấn đề của giao thức nhận thư POP3 mạng.", "Vấn đề của giao thức gửi thư SMTP mạng.", "Vấn đề của giao thức mã hóa HTTP mạng.", "Vấn đề của giao thức nhận thư IMAP mạng."], correct: 2,
+          explanation: "Sự cố trong tiến trình kết xuất nội dung (Rendering Engine) hoặc lỗi thông dịch Header liên đới trực tiếp đến phiên làm việc HTTP/HTTPS giữa Client Browser và Web Server. Đây là các phản hồi mã trạng thái (HTTP Status Codes) thể hiện việc xử lí Request thất bại." },
+        { id: "d1_24", type: "single", question: "Câu 24: Khi người dùng gõ địa chỉ \"hanhtrinhso.io.vn\" vào trình duyệt, máy tính sẽ:", options: ["Dùng giao thức MAC để tìm ra địa chỉ IP.", "Dùng giao thức HTTP để tìm ra địa chỉ IP.", "Dùng giao thức SMTP để tìm ra địa chỉ IP.", "Dùng giao thức DNS để tìm ra địa chỉ IP."], correct: 3,
+          explanation: "Trước khi thiết lập bất kỳ kết nối TCP nào, hệ điều hành (thông qua DNS Resolver) sẽ khởi tạo một truy vấn UDP (thường ở Port 53) tới hệ thống cấp bậc DNS Server nhằm phân giải tên miền logic thành địa chỉ Host IP thực tế." },
+        { id: "d1_25", type: "single", question: "Câu 25: Hai máy tính trong cùng một phòng kết nối dây mạng với nhau để copy file sẽ căn cứ vào:", options: ["Dựa vào địa chỉ MAC của phần cứng thiết bị.", "Dựa vào tên miền DNS của trang web dữ liệu.", "Dựa vào cổng WAN của bộ định tuyến Router.", "Dựa vào đường truyền Internet viễn thông xa."], correct: 0,
+          explanation: "Trong môi trường chung miền quảng bá (Broadcast Domain) thuộc mạng cục bộ nội bộ, giao thức ARP (Address Resolution Protocol) sẽ ánh xạ IP thành MAC. Khung dữ liệu Layer 2 sẽ được chuyển giao ngang hàng hoàn toàn thông qua định danh địa chỉ vật lý MAC." },
+        { id: "d1_26", type: "single", question: "Câu 26: Để chặn một điện thoại không cho phép bắt Wi-Fi của nhà, ta nên dùng cách nào?", options: ["Chặn trực tiếp bằng địa chỉ IP của điện thoại.", "Chặn trực tiếp bằng địa chỉ MAC của điện thoại.", "Chặn trực tiếp bằng giao thức HTTP của trình duyệt.", "Chặn trực tiếp bằng giao thức DNS của nhà mạng."], correct: 1,
+          explanation: "Địa chỉ IP có tính chất cấp phát động (DHCP Lease) và dễ dàng thay đổi. Cơ chế kiểm soát truy cập L2 (MAC Filtering) trên Access Point áp dụng trực tiếp lên địa chỉ vật lý (MAC Address) của Card Wi-Fi, cung cấp khả năng khóa kết nối vĩnh viễn không phụ thuộc IP." },
+        { id: "d1_27", type: "single", question: "Câu 27: Mở YouTube và chơi game cùng lúc mà âm thanh không bị lẫn vào nhau là nhờ:", options: ["Nhờ địa chỉ phần cứng MAC của mạng LAN.", "Nhờ bảng định tuyến động của giao thức IP.", "Nhờ nhãn cổng ứng dụng của giao thức TCP.", "Nhờ giao thức gửi nhận thư của chuẩn SMTP."], correct: 2,
+          explanation: "TCP/UDP Header có chứa tham số Source Port và Destination Port. Cơ chế Socket (kết hợp giữa IP và Port) phân lập hoàn toàn môi trường dữ liệu, giúp hệ điều hành tiến hành phân kênh (Demultiplexing) luồng Packet vào chính xác vùng nhớ của từng Application Thread độc lập." },
+        { id: "d1_28", type: "single", question: "Câu 28: Một tin nhắn Zalo gửi từ điện thoại của bạn ra ngoài mạng Internet bắt buộc phải:", options: ["Đi qua mã kiểm tra lỗi của địa chỉ mạng MAC.", "Đi qua cổng kết nối LAN của bộ định tuyến.", "Đi qua sợi cáp đồng trục truyền tín hiệu mạng.", "Đi qua cổng kết nối WAN của bộ định tuyến."], correct: 3,
+          explanation: "Router giữ vai trò Gateway phân tách biên giới mạng. Mọi gói tin IP (IP Datagrams) có đích đến nằm ngoài Subnet Mask nội bộ đều buộc phải định tuyến thông qua giao diện WAN (Wide Area Network Interface) để tiến vào hạ tầng mạng Internet công cộng." },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI ĐỀ 1
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Kịch bản: Để thiết lập hệ thống thư điện tử nội bộ cho 50 giáo viên trong nhà trường, người quản trị mạng phải tiến hành cấu hình các giao thức liên quan đến việc gửi và nhận email trên máy chủ Server.", items: [
+            { id: "a", text: "a) SMTP là giao thức bắt buộc phải cấu hình để các giáo viên có thể gửi email đi.", correct: true, expl: "Chính xác. Kiến trúc E-mail yêu cầu cấu hình SMTP Service nhằm quản lý luồng dữ liệu Outgoing (MTA - Message Transfer Agent)." },
+            { id: "b", text: "b) Trường học có thể tùy chọn dùng giao thức POP3 hoặc IMAP để giáo viên đăng nhập lấy thư về máy.", correct: true, expl: "Chính xác. POP3 (tải offline) hoặc IMAP (đồng bộ hóa online) là các giao thức chuẩn hỗ trợ MUA (Mail User Agent) truy xuất hộp thư." },
+            { id: "c", text: "c) Để quản lí giao diện đồ họa của trang web trường học, người quản trị mạng cũng sẽ dùng giao thức SMTP.", correct: false, expl: "Sai. Việc giao tiếp và hiển thị cấu trúc tài nguyên Web yêu cầu giao thức truyền tải siêu văn bản HTTP/HTTPS ở tầng Application, không thuộc phạm vi của tập lệnh SMTP." },
+            { id: "d", text: "d) Giao thức IMAP có nhiệm vụ cấp phát địa chỉ phần cứng cho điện thoại của giáo viên khi bắt Wi-Fi.", correct: false, expl: "Sai. Giao thức IMAP hoạt động ở lớp Ứng dụng, chỉ xử lí Email. Việc gán/nhận diện thiết bị ở lớp vật lý và Data Link thuộc cơ chế kiểm soát địa chỉ MAC." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Kịch bản: Học sinh An ngồi ở nhà và dùng trình duyệt gõ tên miền \"google.com\" để tìm kiếm tài liệu. Đằng sau thao tác đơn giản này, máy tính của An phải thực hiện một loạt các giao thức trên Internet.", items: [
+            { id: "a", text: "a) Máy tính của An tham gia vào Internet nên bắt buộc phải được hệ thống cấp một địa chỉ IP.", correct: true, expl: "Đúng. Để truyền thông liên mạng (Internetworking), thiết bị cuối (End-host) bắt buộc phải sở hữu định danh logic duy nhất trên không gian mạng là IP Address." },
+            { id: "b", text: "b) Hệ thống sẽ tự động dùng giao thức DNS để phân giải tên miền chữ \"google.com\" thành một địa chỉ IP dạng số.", correct: true, expl: "Đúng. DNS (Domain Name System) thực thi tiến trình phân giải (Resolution) ánh xạ Name-to-IP trước khi TCP có thể thực hiện kết nối Socket." },
+            { id: "c", text: "c) Trình duyệt web của An sử dụng giao thức địa chỉ MAC để hiểu và hiển thị mã hóa trang web tìm kiếm.", correct: false, expl: "Sai. Địa chỉ MAC hoạt động ở Layer 2. Việc thông dịch ngữ nghĩa mã định dạng tài liệu Web do HTTP đảm nhận tại Layer 7 (Tầng ứng dụng)." },
+            { id: "d", text: "d) Nếu kết quả tìm kiếm là một file tài liệu rất lớn, dữ liệu đó sẽ được truyền về máy An thành một khối duy nhất không bị cắt nhỏ.", correct: false, expl: "Sai. Môi trường TCP/IP tuân thủ mô hình chuyển mạch gói (Packet Switching). Bất kì Payload nào lớn hơn giới hạn MSS/MTU đều sẽ bị phân mảnh (Segmentation) trước khi truyền đi." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Kịch bản: Phòng máy thực hành Tin học của trường có 30 máy tính kết nối với nhau thông qua mạng cục bộ (LAN) để giáo viên gửi bài tập và học sinh nộp bài thi.", items: [
+            { id: "a", text: "a) Việc trao đổi dữ liệu trong hệ thống mạng cục bộ của phòng máy này tuân thủ theo giao thức Ethernet.", correct: true, expl: "Đúng. Mô hình mạng LAN hữu tuyến được thiết kế và vận hành chuyên biệt theo bộ tiêu chuẩn IEEE 802.3 (Ethernet Protocol)." },
+            { id: "b", text: "b) Mỗi máy tính trong phòng máy đều được gán sẵn một địa chỉ MAC cố định đi theo phần cứng card mạng.", correct: true, expl: "Đúng. MAC là địa chỉ kiểm soát truy nhập môi trường, mã hóa tĩnh (Burned-in Address) vào NIC cung cấp cơ chế nhận dạng ở Layer 2." },
+            { id: "c", text: "c) Khi gửi bài thi, dữ liệu chuyển đi có kèm mã kiểm tra, nhờ đó máy tính giáo viên có thể phát hiện lỗi truyền để yêu cầu gửi lại.", correct: true, expl: "Đúng. Frame dữ liệu Layer 2 tích hợp trường kiểm tra lỗi CRC (Cyclic Redundancy Check). Các Frame hỏng (Corrupted) bị phát hiện sẽ bị drop và kích hoạt cơ chế báo lỗi." },
+            { id: "d", text: "d) Để tiết kiệm thời gian, giáo viên có thể gửi một tệp tin bài giảng cực lớn trong một khung truyền duy nhất mà không sợ bị xung đột tín hiệu.", correct: false, expl: "Sai. Ethernet Frame có giới hạn Payload (khoảng 1500 byte). Việc truyền liên tục không phân mảnh sẽ triệt tiêu cơ chế chia sẻ đường truyền CSMA/CD, gây xung đột (Collision) trầm trọng." }
+        ]}
+    ];
+
+    const de2_data = [
+        // PHẦN I: TRẮC NGHIỆM ĐỀ 2
+        { id: "d2_1", type: "single", question: "Câu 1: Khái niệm \"giao thức mạng\" được định nghĩa chính xác nhất là:", options: ["Các quy định về cách thức giao tiếp mạng.", "Các thiết bị phần cứng để truyền dẫn mạng.", "Các phần mềm dùng để duyệt trang web mạng.", "Các ứng dụng mạng dùng để gửi thư điện tử."], correct: 0,
+          explanation: "Giao thức mạng (Protocol) là hệ thống các đặc tả kỹ thuật tiêu chuẩn (Specifications) quy định logic, cú pháp và phương thức kiểm soát luồng giao tiếp dữ liệu giữa các node mạng, không phải là thực thể phần mềm hay thiết bị cơ học." },
+        { id: "d2_2", type: "single", question: "Câu 2: Giao thức SMTP có chức năng cơ bản là gì?", options: ["Quy định liên quan đến việc nhận thư về.", "Quy định liên quan đến việc gửi thư đi.", "Quy định liên quan đến hiển thị trang web.", "Quy định liên quan đến định tuyến dữ liệu."], correct: 1,
+          explanation: "Simple Mail Transfer Protocol (SMTP) quản lý khâu Outbound Routing. Giao thức này định tuyến và trung chuyển khối dữ liệu Email (MIME) hướng tới Mail Server đích." },
+        { id: "d2_3", type: "single", question: "Câu 3: Giao thức IMAP có chức năng cơ bản là gì?", options: ["Quy định về cách chia các gói dữ liệu.", "Quy định về cách định tuyến luồng mạng.", "Quy định về cách nhận lấy thư điện tử.", "Quy định về hệ thống tên miền các trang."], correct: 2,
+          explanation: "IMAP (Internet Message Access Protocol) kiểm soát luồng Inbound. Nó cho phép Mail Client đồng bộ hóa hai chiều trạng thái Message trực tiếp với Mail Server." },
+        { id: "d2_4", type: "single", question: "Câu 4: Tên viết tắt bằng tiếng Anh của địa chỉ MAC là gì?", options: ["Tên viết tắt là Media Internet Control.", "Tên viết tắt là Media Access Protocol.", "Tên viết tắt là Media Transfer Control.", "Tên viết tắt là Media Access Control."], correct: 3,
+          explanation: "MAC đại diện cho 'Media Access Control' - một phân tầng phụ (Sublayer) của Data Link Layer, chịu trách nhiệm định danh phần cứng thiết bị tham gia chia sẻ môi trường truyền dẫn vật lý." },
+        { id: "d2_5", type: "single", question: "Câu 5: Việc giao tiếp mạng LAN tuân thủ theo các quy định của:", options: ["Tuân thủ theo các quy định chuẩn Ethernet.", "Tuân thủ theo các quy định chuẩn của POP3.", "Tuân thủ theo các quy định chuẩn của SMTP.", "Tuân thủ theo các quy định chuẩn của HTTP."], correct: 0,
+          explanation: "Kiến trúc mạng LAN hữu tuyến tiêu chuẩn hiện nay tuân thủ giao thức Ethernet (theo tiêu chuẩn IEEE 802.3), định nghĩa cách Frame dữ liệu được đóng gói và đặt lên đường truyền." },
+        { id: "d2_6", type: "single", question: "Câu 6: Địa chỉ IP là chữ được viết tắt bởi cụm từ tiếng Anh nào?", options: ["Viết tắt của từ Internet Program mạng.", "Viết tắt của từ Internet Protocol mạng.", "Viết tắt của từ Intranet Protocol mạng.", "Viết tắt của từ Internet Provider mạng."], correct: 1,
+          explanation: "IP là viết tắt của 'Internet Protocol' (Giao thức Internet), giao thức hoạt động tại Layer 3 (Network Layer) chi phối toàn bộ mô hình định địa chỉ phi kết nối toàn cầu." },
+        { id: "d2_7", type: "single", question: "Câu 7: Một địa chỉ IPv4 được cấu tạo bởi mấy byte số liệu?", options: ["Cấu tạo bởi tám byte lưu trữ hệ thập phân.", "Cấu tạo bởi sáu byte lưu trữ hệ thập phân.", "Cấu tạo bởi bốn byte lưu trữ hệ thập phân.", "Cấu tạo bởi hai byte lưu trữ hệ thập phân."], correct: 2,
+          explanation: "Độ dài tiêu chuẩn của một khối địa chỉ logic IPv4 là 32 bit nhị phân. Về mặt tổ chức ô nhớ lưu trữ, 32 bit chuyển đổi quy mô đo lường tương đương chính xác 4 Bytes (Octets)." },
+        { id: "d2_8", type: "single", question: "Câu 8: Công việc chính của Router khi thực hiện định tuyến là gì?", options: ["Kiểm tra lỗi truyền của tất cả các gói tin.", "Mã hóa các dữ liệu số để truyền đi xa.", "Đặt tên miền bằng chữ cho một trang web.", "Chọn cổng kết nối thích hợp gửi gói tin."], correct: 3,
+          explanation: "Thuật toán định tuyến cốt lõi yêu cầu Router trích xuất địa chỉ Destination IP Header, so khớp tuyến đường dài nhất (Longest Prefix Match) trong Routing Table và Forward (Chuyển tiếp) Datagram đó ra Interface (cổng) đầu ra được chỉ định." },
+        { id: "d2_9", type: "single", question: "Câu 9: Chức năng kiểm soát việc truyền dữ liệu đáp ứng mục đích ổn định là của:", options: ["Thuộc về chức năng của giao thức TCP mạng.", "Thuộc về chức năng của giao thức mã hóa web.", "Thuộc về chức năng chuyển đổi tên miền số.", "Thuộc về chức năng kết nối cáp quang vào máy."], correct: 0,
+          explanation: "Tính tin cậy (Reliability) và ổn định (Flow Control/Congestion Control) là đặc tính độc quyền của giao thức TCP, giúp bù đắp tính chất truyền dẫn 'phi nỗ lực tối đa' (Best-effort delivery) của giao thức tầng dưới (IP)." },
+        { id: "d2_10", type: "single", question: "Câu 10: Quy định cách biểu diễn mã hóa các trang web là nhiệm vụ của giao thức:", options: ["Nhiệm vụ của giao thức định tuyến dữ liệu.", "Nhiệm vụ của giao thức mạng chuẩn HTTP.", "Nhiệm vụ của giao thức gửi nhận thư điện tử.", "Nhiệm vụ của giao thức chia nhỏ các gói tin."], correct: 1,
+          explanation: "HTTP (Hypertext Transfer Protocol) là chuẩn giao thức tầng 7, cung cấp bộ quy tắc định dạng và quản lý Header/Body để các Web Client kết xuất dữ liệu Markup (HTML) thành giao diện chuẩn hóa." },
+        { id: "d2_11", type: "single", question: "Câu 11: Trong mạng LAN, máy nhận dùng mã kiểm tra đi kèm dữ liệu để làm gì?", options: ["Dùng để hiển thị hình ảnh trang web mạng.", "Dùng để định tuyến đường đi nhanh chóng.", "Dùng để phát hiện lỗi khi truyền dữ liệu.", "Dùng để tự động tăng dung lượng máy tính."], correct: 2,
+          explanation: "Mã kiểm tra CRC tích hợp trong Trailer của Frame dữ liệu được dùng làm tham chiếu toán học. Sự bất đồng nhất kết quả checksum giữa thiết bị phát và thu giúp xác thực có nhiễu sóng từ trường làm suy biến bit (Data corruption) hay không." },
+        { id: "d2_12", type: "single", question: "Câu 12: Đặt độ dài xác định cho khung truyền dữ liệu có mục đích chính là:", options: ["Tự động sửa lỗi thư điện tử bị hỏng kết nối.", "Giảm tiền cước phí Internet đi hàng tháng.", "Tăng chất lượng hình ảnh hiển thị trên mạng.", "Tránh làm quá tải xử lí của các máy nhận."], correct: 3,
+          explanation: "Việc chuẩn hóa kích thước Frame/Packet ngăn chặn tình trạng độc chiếm băng thông (Bandwidth monopolization) và ngăn ngừa lỗi tràn bộ đệm (Buffer Overrun) tại hàng đợi xử lý phần cứng của thiết bị thu nhận." },
+        { id: "d2_13", type: "single", question: "Câu 13: Khi xảy ra xung đột tín hiệu trong mạng LAN, hệ thống sẽ:", options: ["Căn cứ quy định xử lí của chuẩn Ethernet.", "Căn cứ địa chỉ giao thức IP tự xóa dữ liệu.", "Căn cứ giao thức HTTP đóng ngay trình duyệt.", "Căn cứ giao thức DNS đổi sang tên miền mới."], correct: 0,
+          explanation: "Tình huống xung đột (Collision) trên đường truyền được xử lý bằng thuật toán kiểm soát đa truy nhập CSMA/CD của chuẩn Ethernet (IEEE 802.3), bao gồm việc phát tín hiệu Jam và chạy bộ đếm thời gian lùi (Backoff timer)." },
+        { id: "d2_14", type: "single", question: "Câu 14: Khi nhận được một gói dữ liệu gửi đi, bộ Router sẽ làm việc gì đầu tiên?", options: ["Tự động lưu toàn bộ dữ liệu vào ổ cứng thiết bị.", "Chọn cổng thích hợp ở Router để gửi nó tới đích.", "Tự động phát tán tín hiệu ra tất cả máy tính mạng.", "Chuyển đổi mã hóa gói dữ liệu thành tên miền chữ."], correct: 1,
+          explanation: "Trong tiến trình Data Forwarding, tác vụ ưu tiên cao nhất của Router là phân tích tham số Destination IP của Datagram đến, từ đó Look-up trong cơ sở dữ liệu định tuyến để ánh xạ ra Interface kế tiếp." },
+        { id: "d2_15", type: "single", question: "Câu 15: Trong mạng viễn thông, bảng định tuyến có vai trò tương đương với:", options: ["Bảng điểm môn tin học của các lớp máy tính.", "Bảng danh sách các lớp học sinh khối mười.", "Bảng đường đi của các xe chuyển tiếp thư.", "Bảng mã màu sắc thiết kế trang web internet."], correct: 2,
+          explanation: "Về mặt thuật toán, Bảng định tuyến (Routing Table) chứa tập hợp các quy tắc định hướng cơ sở hạ tầng, bao gồm dải IP mạng đích (Destination Network), Subnet Mask và Next Hop (Gateway), tương tự như bản đồ mô hình hóa các tuyến đường vật lý trong hệ thống logistics." },
+        { id: "d2_16", type: "single", question: "Câu 16: Tại sao giao thức TCP lại yêu cầu các gói dữ liệu phải được đánh số?", options: ["Để tự động chặn virus mạng xâm nhập vào hệ thống.", "Để hệ thống tìm địa chỉ IP mạng nhanh chóng hơn.", "Để thay thế tên miền trang web bằng chuỗi số học.", "Để tại nơi nhận, chúng được ráp lại đúng thứ tự."], correct: 3,
+          explanation: "Do tính chất chuyển mạch độc lập của IP Protocol, các Segment có thể truyền tải thông qua đa tuyến đường và đến sai trình tự thời gian (Out-of-order). Việc gán Sequence Number trên TCP Header đảm bảo quá trình tái hợp (Reassembly) Payload chính xác 100% tại phía nhận." },
+        { id: "d2_17", type: "single", question: "Câu 17: Cơ chế \"xác nhận\" của giao thức TCP mang lại ưu điểm gì cho việc truyền tải?", options: ["Giúp nơi gửi biết gói tin đến có bị thất lạc không.", "Giúp nơi gửi biết mã nguồn web được viết bằng gì.", "Giúp nơi nhận biết máy tính của hãng nào sản xuất.", "Giúp nơi nhận biết tên người đã gửi thư điện tử đi."], correct: 0,
+          explanation: "Cơ chế Acknowledgment (ACK) là đặc trưng của giao thức TCP, tạo thành mạch vòng kiểm soát tín hiệu xác minh phản hồi từ thiết bị đích, là tiền đề cung cấp cơ sở để tái truyền (Retransmit) nếu Packet bị Drop (rơi gói tin)." },
+        { id: "d2_18", type: "single", question: "Câu 18: Hệ thống tên miền (DNS) được phát triển nhằm mục đích giải quyết khó khăn gì?", options: ["Khắc phục việc địa chỉ IP bằng số bảo mật không tốt.", "Khắc phục việc địa chỉ IP bằng các số rất khó nhớ.", "Khắc phục việc địa chỉ IP bằng số có kích thước lớn.", "Khắc phục việc địa chỉ IP bằng số gây tốn kém cước."], correct: 1,
+          explanation: "Hệ thống phân giải DNS (Domain Name System) giải quyết bài toán giao diện con người. Nó thay thế việc nhập các số nguyên định dạng IPv4/IPv6 khó nhớ bằng cấu trúc chuỗi ký tự định hướng thân thiện với tư duy bộ nhớ của con người (FQDN)." },
+        { id: "d2_19", type: "single", question: "Câu 19: Khẳng định \"Internet là mạng toàn cầu hoạt động theo chuẩn TCP/IP\" vì:", options: ["Giao thức POP3 hỗ trợ gửi thư điện tử toàn cầu nhanh.", "Chuẩn Ethernet điều khiển toàn bộ hệ thống Internet.", "IP và TCP xác định cách kết nối đặc thù của Internet.", "Giao thức SMTP là giao thức duy nhất trên mạng lưới."], correct: 2,
+          explanation: "Sự phân tầng kiến trúc của TCP/IP đã định hình cấu trúc liên mạng toàn cầu. IP xử lý việc định danh và chuyển vùng vật lý (Inter-networking), trong khi TCP ảo hóa kết nối (Logical connection) tin cậy, hai yếu tố nền móng không thể thay thế." },
+        { id: "d2_20", type: "single", question: "Câu 20: Địa chỉ IP \"192.168.1.3\" được ghi trong sách giáo khoa là ví dụ đặc trưng của:", options: ["Hình thức cấu tạo của địa chỉ chuẩn tên miền DNS.", "Hình thức cấu tạo của địa chỉ chuẩn mạng IPv6.", "Hình thức cấu tạo của địa chỉ chuẩn phần cứng MAC.", "Hình thức cấu tạo của địa chỉ chuẩn mạng IPv4."], correct: 3,
+          explanation: "Cú pháp '192.168.1.3' là dạng thể hiện chuỗi cơ số 10 phân cách dấu chấm (Dotted-Decimal), định dạng chuẩn hóa đặc trưng tuyệt đối dành riêng cho cấu trúc IP phiên bản 4 (IPv4) 32-bit." },
+        { id: "d2_21", type: "single", question: "Câu 21: Trong thực tế, thiết bị nào đóng vai trò như các bưu cục chuyển tiếp bưu phẩm?", options: ["Bộ định tuyến Router của nhà mạng chuyển tiếp.", "Thiết bị Hub chia cổng cho nhiều hệ thống mạng.", "Sợi cáp quang truyền dẫn các tín hiệu quang học.", "Các máy tính cá nhân của người dùng tham gia mạng."], correct: 0,
+          explanation: "Nút định tuyến (Router Node) đóng vai trò trung gian Gateway, xử lý thuật toán chọn đường và thực hiện thao tác Switching (nhận, phân tích bảng lộ trình và tái đẩy đi), y hệt chức năng trung chuyển lưu lượng của một Node Hub viễn thông chuyên dụng." },
+        { id: "d2_22", type: "single", question: "Câu 22: Khi bạn đang tải một bộ phim bị đứt cáp nhưng sau đó vẫn tải nối tiếp được là nhờ:", options: ["Nhờ cơ chế phân giải tên miền trang web của chuẩn DNS.", "Nhờ cơ chế xác nhận và gửi lại lỗi của giao thức TCP.", "Nhờ tính năng mã hóa hiển thị web của giao thức HTTP.", "Nhờ cách thức xử lý nhận thư điện tử của giao thức POP3."], correct: 1,
+          explanation: "Việc Resume luồng Download được kiểm soát bởi thuộc tính Stateful của liên kết TCP. Nhờ theo dõi được Byte Offset thông qua các trường Sequence và ACK Number, máy chủ phát chỉ khôi phục gửi luồng Bit từ vị trí đánh dấu đứt đoạn." },
+        { id: "d2_23", type: "single", question: "Câu 23: Để quản lí các máy tính học sinh trong một phòng thực hành mạng LAN, giáo viên cần:", options: ["Quản lí và phân biệt thông qua giao thức chuẩn SMTP gửi thư.", "Quản lí và phân biệt thông qua địa chỉ chuẩn DNS trang web.", "Quản lí và phân biệt thông qua địa chỉ chuẩn MAC phần cứng.", "Quản lí và phân biệt thông qua giao thức chuẩn IMAP lấy thư."], correct: 2,
+          explanation: "Trong ranh giới vật lý của hệ thống Broadcast Domain (như Switch phòng LAN), việc định danh luồng Point-to-point Frame liên kết dữ liệu hoàn toàn căn cứ trên giá trị 48-bit tĩnh của địa chỉ vật lý MAC Address." },
+        { id: "d2_24", type: "single", question: "Câu 24: Học sinh gõ \"truonghoc.edu.vn\" nhưng máy tính báo \"Không thể phân giải địa chỉ\", sự cố do:", options: ["Hệ thống giao thức truyền thư SMTP bị hỏng bảng dữ liệu.", "Hệ thống giao thức nhận thư POP3 bị lỗi ngừng hoạt động.", "Địa chỉ phần cứng thiết bị MAC bị cấu hình sai mã lệnh.", "Hệ thống giao thức DNS đang bị sự cố ngừng hoạt động."], correct: 3,
+          explanation: "Ngoại lệ 'Cannot resolve host' phát sinh tại tầng Application khi Request Name-to-IP (truy vấn DNS) thất bại, nguyên nhân hệ thống do các chuỗi cấp bậc DNS Server (Root, TLD hoặc Authoritative Name Server) không thể cung cấp A-Record phản hồi." },
+        { id: "d2_25", type: "single", question: "Câu 25: Khi xem một video trên YouTube mạng yếu, độ phân giải video tự động mờ đi là do:", options: ["Giao thức TCP đang tự động điều chỉnh tốc độ dữ liệu truyền.", "Giao thức SMTP đang cố gắng gửi thư điện tử ra ngoài mạng.", "Giao thức POP3 đang đồng bộ hộp thư tải mục email mới về.", "Giao thức DNS đang tự động tìm kiếm địa chỉ IP dự phòng mới."], correct: 0,
+          explanation: "Hiện tượng Adaptive Bitrate là sự phối hợp của thuật toán quản trị tài nguyên TCP Congestion Control. Khi phát hiện Delay và tỷ lệ Drop tăng (nghẽn mạch), TCP tự động co hẹp Kích thước cửa sổ trượt (Sliding Window Size), giới hạn lượng Throughput băng thông, bắt buộc Application phải hạ mức chất lượng hiển thị." },
+        { id: "d2_26", type: "single", question: "Câu 26: Bạn vừa học Google Meet vừa nhắn tin Messenger mà dữ liệu không bị chuyển nhầm cửa sổ là do:", options: ["Các dữ liệu được phân tách nhãn bằng cổng bảo mật phần cứng MAC.", "Các dữ liệu được phân tách nhãn bằng cổng ứng dụng TCP.", "Các dữ liệu được phân tách nhãn bằng cổng mã hóa web HTTP.", "Các dữ liệu được phân tách nhãn bằng cổng địa chỉ chuẩn IPv4."], correct: 1,
+          explanation: "Luồng Multiplexing được định tuyến nội bộ Hệ điều hành nhờ tham số Port Number (Cổng) tích hợp trên Transport Header (TCP/UDP). Socket API kết hợp cặp IP+Port đảm bảo các dòng Byte Payload cô lập hoàn toàn giữa các Thread tiến trình." },
+        { id: "d2_27", type: "single", question: "Câu 27: Khi tuyến cáp quang AAG bị đứt, tín hiệu Internet Việt Nam tự động vòng qua tuyến APG. Việc này là do:", options: ["Bộ Router chuyển sang dùng cơ chế địa chỉ phần cứng MAC thay thế.", "Bộ Router tự động sửa chữa phần dây cáp quang đã bị đứt gãy.", "Bộ Router sử dụng tính năng định tuyến động đổi cổng kết nối.", "Bộ Router xóa bỏ toàn bộ dữ liệu đang chờ để giảm tải đường mạng."], correct: 2,
+          explanation: "Thuật toán định tuyến động (Dynamic Routing Protocols như BGP - Border Gateway Protocol) liên tục trao đổi bản tin Topology Update. Khi tuyến quang học mất Link, BGP Router tự động xóa Route lỗi và cập nhật Metric Routing Table để tái định tuyến (Reroute) traffic qua cáp dự phòng APG." },
+        { id: "d2_28", type: "single", question: "Câu 28: Một học sinh tải email về máy tính bằng phần mềm Outlook nhưng bị thiếu mất ảnh đính kèm, khả năng cao lỗi ở khâu:", options: ["Quá trình xử lý liên quan đến hệ thống phân giải tên miền DNS.", "Quá trình xử lý liên quan đến giao thức mã hóa web HTTP.", "Quá trình xử lý liên quan đến địa chỉ phần cứng thiết bị MAC.", "Quá trình xử lý liên quan đến giao thức POP3 hoặc IMAP."], correct: 3,
+          explanation: "Phần mềm Outlook (MUA Client) tương tác Inbound Email Database Server thông qua giao thức truy xuất lớp ứng dụng POP3 (Port 110/995) hoặc IMAP (Port 143/993). Bất kỳ tham số thiếu hụt tệp đính kèm nào (Attachment Parsing) đều quy xuất từ quá trình Fetch Data của giao thức này." },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI ĐỀ 2
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Kịch bản: Để xây dựng một website cung cấp tài liệu cho trường học, ban quản trị mạng phải mua một tên miền (domain) và đảm bảo học sinh có thể dùng trình duyệt web để truy cập.", items: [
+            { id: "a", text: "a) Nhờ giao thức DNS, học sinh chỉ cần gõ tên miền bằng chữ thay vì phải nhớ và gõ địa chỉ IP bằng số.", correct: true, expl: "Chính xác. Kiến trúc DNS cung cấp một Namespace Service phân tán toàn cầu, ánh xạ các định danh String (FQDN) của Web Resource sang định dạng 32-bit của IP Address." },
+            { id: "b", text: "b) Giao diện web của trường sẽ được biểu diễn và truyền tải đến trình duyệt thông qua giao thức HTTP.", correct: true, expl: "Chính xác. Giao thức HTTP (Port 80/443) đảm nhận việc vận chuyển tài liệu siêu văn bản (DOM Tree, CSS, JS Scripts) định dạng chuẩn hóa để Trình duyệt tiến hành Rendering." },
+            { id: "c", text: "c) Tên miền của trường học thực chất chính là một biến thể của địa chỉ MAC, gắn liền với máy chủ phần cứng vĩnh viễn.", correct: false, expl: "Sai cấu trúc hệ thống. Domain Record trỏ (Point to) Record A (địa chỉ logic IP Network), hoàn toàn tách biệt kiến trúc MAC (Định danh Vật lý tĩnh Layer 2)." },
+            { id: "d", text: "d) Nếu ban quản trị muốn gửi email thông báo có tài liệu mới đến hàng loạt học sinh, họ phải cấu hình bằng giao thức HTTP.", correct: false, expl: "Sai quy chuẩn Application Layer. HTTP xử lý cơ chế Web Request, trong khi Bulk-Emailing Outbound System phải được quản lý cấu hình bằng Message Transfer Agent theo tiêu chuẩn SMTP." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Kịch bản: Một công ti thiết kế tải một tập tin dữ liệu lớn 5GB từ máy chủ nước ngoài về Việt Nam thông qua Internet.", items: [
+            { id: "a", text: "a) Giao thức TCP tại máy chủ nước ngoài sẽ cắt tập tin 5GB này thành nhiều gói dữ liệu có độ dài xác định.", correct: true, expl: "Đúng. TCP sử dụng quá trình Phân mảnh (Segmentation), chia Byte-stream tổng 5GB thành các cấu trúc TCP Segments (chịu sự chi phối của tham số TCP MSS đàm phán khi mở kết nối)." },
+            { id: "b", text: "b) Các gói dữ liệu này được đánh số để khi về đến máy tính công ti, chúng sẽ được ráp lại đúng thứ tự thành tập tin gốc.", correct: true, expl: "Đúng. Trường 'Sequence Number' 32-bit chèn vào TCP Header giúp hệ điều hành nhận xác định Byte-offset để Reassemble luồng bit chính xác trình tự Logic ban đầu." },
+            { id: "c", text: "c) Nếu một gói tin bị thất lạc trong quá trình truyền, toàn bộ 5GB dữ liệu sẽ lập tức bị hủy bỏ và công ti phải bấm tải lại từ đầu.", correct: false, expl: "Sai. Cấu trúc TCP tích hợp kiểm soát sửa lỗi Fast Retransmit. Client chỉ phát tín hiệu TCP Duplicate ACK yêu cầu Server khôi phục lại duy nhất gói Segment thất lạc, bảo toàn Session State." },
+            { id: "d", text: "d) Việc tìm đường truyền và chọn cổng trên mạng viễn thông cho các gói tin đi từ nước ngoài về Việt Nam là nhiệm vụ cốt lõi của giao thức MAC.", correct: false, expl: "Sai. Quá trình chọn đường (Path Selection) liên quốc gia giữa các Autonomous System (AS) là vai trò chuyên biệt của Routing Protocol vận hành trên nền tảng Layer 3 IP Address." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Kịch bản: Bạn Mai đang kết nối mạng Wi-Fi của thư viện bằng máy tính xách tay. Cùng lúc, Mai mở một tab duyệt web đọc báo, một phần mềm nghe nhạc và một tab gửi email cho giáo viên.", items: [
+            { id: "a", text: "a) Do đang dùng kết nối không dây, máy tính xách tay của Mai không có địa chỉ MAC phần cứng.", correct: false, expl: "Sai nguyên lí gốc. Chuẩn mạng Wi-Fi (IEEE 802.11) và có dây (IEEE 802.3) đều là các biến thể liên kết dữ liệu, bắt buộc phải định danh Node thu/phát dựa trên BSSID/MAC Address." },
+            { id: "b", text: "b) Máy tính của Mai tham gia Internet nên hệ thống mạng bắt buộc phải gán cho nó một địa chỉ IP.", correct: true, expl: "Đúng. Kiến trúc TCP/IP định nghĩa IP Address là điều kiện tiên quyết (Prerequisite) để một End-device có khả năng Routing In/Outbound ra bên ngoài giới hạn Subnet (Default Gateway)." },
+            { id: "c", text: "c) Để các dữ liệu không bị gửi nhầm giữa tab đọc báo và phần mềm nghe nhạc, TCP sử dụng các nhãn \"cổng ứng dụng\" để phân biệt.", correct: true, expl: "Đúng. Kỹ thuật Socket Demultiplexing của TCP/UDP dùng số Port (ví dụ báo mạng TCP:443, Streaming UDP:1234) điều hướng các Stream Buffer cô lập vào các Context tiến trình phù hợp." },
+            { id: "d", text: "d) Khi Mai nhấn nút \"Gửi\" email cho giáo viên, thao tác đó được chi phối bởi giao thức SMTP.", correct: true, expl: "Đúng. Hàm lệnh thao tác 'Send/Push' trong mọi E-mail Client (MUA) cấu trúc Message Body và Header theo chuẩn MIME và chuyển giao tín hiệu cho quá trình SMTP Session Outbound." }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-lg font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-lg math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-lg ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-lg ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-lg">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-base font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-base text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-lg font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-base font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-base font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-base font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-base font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-lg math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200"><p class="text-base font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p><p class="text-black font-medium text-lg leading-loose math-scroll">${q.explanation}</p></div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-lg math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-base font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-lg text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+        
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-base">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-base">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-base">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-sm font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-sm">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-sm">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-sm">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-sm transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

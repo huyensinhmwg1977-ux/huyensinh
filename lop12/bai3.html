@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-3"> BÀI 3: MỘT SỐ THIẾT BỊ MẠNG THÔNG DỤNG </h1>
+      <p class="text-sm font-semibold text-blue-600">Hành Trình Số - Mang tri thức đến mọi người</p>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-lg font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-lg" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-lg font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-lg" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-lg font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-sm font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-sm font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-base p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-base font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-sm text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ (Câu)</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-lg"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-lg shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-lg shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-lg shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-sm text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-sm sm:text-base whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_3');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+  /*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 3: MỘT SỐ THIẾT BỊ MẠNG THÔNG DỤNG)
+      - ĐÃ KHÔI PHỤC LẠI a), b), c), d) CHO PHẦN TRẮC NGHIỆM ĐÚNG/SAI
+    =================================================================================================*/
+    const de1_data = [
+        // PHẦN I: TRẮC NGHIỆM
+        { id: "d1_1", type: "single", question: "Câu 1: Theo bài học, Hub và Switch có chức năng cơ bản là gì?", 
+          options: ["Biến tín hiệu số thành những tín hiệu tương tự.", "Chuyển đổi dữ liệu tương tự thành dạng số hóa.", "Kết nối các máy tính trong cùng mạng cục bộ.", "Kết nối hai mạng cục bộ ở khoảng cách rất xa."], 
+          correct: 2, explanation: "Hub và Switch là các thiết bị trung tâm thiết yếu, cung cấp các cổng cắm mạng giúp kết nối nhiều máy tính lại với nhau để tạo thành một mạng cục bộ (LAN)." },
+        { id: "d1_2", type: "single", question: "Câu 2: Khi gửi dữ liệu, Hub sẽ truyền tín hiệu theo cách nào?", 
+          options: ["Gửi tín hiệu đến tất cả các cổng còn lại.", "Gửi tín hiệu đến đúng một máy tính nhận.", "Gửi tín hiệu sang mạng của một quốc gia.", "Gửi tín hiệu đến đúng một cổng kết nối."], 
+          correct: 0, explanation: "Hub hoạt động rất máy móc theo cơ chế khuếch đại và phát tán. Bất kỳ tín hiệu nào đi vào một cổng sẽ lập tức bị sao chép và xả ra tất cả các cổng còn lại." },
+        { id: "d1_3", type: "single", question: "Câu 3: Khác biệt cốt lõi của Switch so với Hub khi truyền dữ liệu là gì?", 
+          options: ["Gây xung đột tín hiệu liên tục cho mọi máy.", "Chỉ truyền được tín hiệu khi có mạng Wi-Fi.", "Luôn làm mất dữ liệu của tất cả máy tính.", "Không gây xung đột tín hiệu giữa các luồng."], 
+          correct: 3, explanation: "Switch thông minh hơn Hub nhờ khả năng nhận dạng địa chỉ máy nhận để thiết lập một đường truyền riêng rẽ ảo, từ đó giúp nhiều máy giao tiếp cùng lúc mà không bị đụng độ tín hiệu." },
+        { id: "d1_4", type: "single", question: "Câu 4: Wi-Fi là chữ viết tắt của cụm từ tiếng Anh nào sau đây?", 
+          options: ["Windows Factory.", "Wireless Fidelity.", "Wireless Factory.", "Windows Fidelity."], 
+          correct: 1, explanation: "Wi-Fi (Wireless Fidelity) là tập hợp các tiêu chuẩn kỹ thuật truyền dẫn mạng bằng môi trường không dây (sóng vô tuyến)." },
+        { id: "d1_5", type: "single", question: "Câu 5: Thiết bị thu phát Wi-Fi (WAP) còn được gọi bằng tên nào khác?", 
+          options: ["Điểm định tuyến dữ liệu cáp.", "Trạm biến đổi tín hiệu tương tự.", "Trạm phát sóng vệ tinh quốc tế.", "Điểm truy cập không dây mạng."], 
+          correct: 3, explanation: "WAP (Wireless Access Point) dịch ra tiếng Việt chính là điểm truy cập không dây, đóng vai trò trạm biến đổi luồng dữ liệu LAN thành sóng Wi-Fi." },
+        { id: "d1_6", type: "single", question: "Câu 6: Bộ định tuyến (Router) được sử dụng nhằm mục đích chính nào?", 
+          options: ["Biến tín hiệu tương tự thành tín hiệu số hóa.", "Chuyển tiếp dữ liệu để nối các mạng LAN.", "Chuyển tín hiệu số thành tín hiệu tương tự.", "Chỉ kết nối các máy tính ở trong cùng phòng."], 
+          correct: 1, explanation: "Giống như người chỉ đường giao thông, Router làm nhiệm vụ tìm đường và điều hướng các gói tin nhằm kết nối những mạng LAN cách xa nhau lại thông qua Internet." },
+        { id: "d1_7", type: "single", question: "Câu 7: Một bộ định tuyến (Router) cơ bản thường có các loại cổng nào?", 
+          options: ["Cổng USB và các cổng LAN.", "Cổng LAN và các cổng COM.", "Cổng LAN và các cổng WAN.", "Cổng VGA và các cổng WAN."], 
+          correct: 2, explanation: "Router có các cổng LAN để kết nối với mạng nội bộ trong nhà, và cổng WAN (thường khác màu) để nối ra ngoài với nhà mạng Internet." },
+        { id: "d1_8", type: "single", question: "Câu 8: Tín hiệu truyền tải trong mạng nội bộ (LAN) là loại tín hiệu gì?", 
+          options: ["Tín hiệu quang (optical).", "Sóng điện từ (radio wave).", "Tín hiệu tương tự (analog).", "Tín hiệu số hóa (digital)."], 
+          correct: 3, explanation: "Máy tính xử lý thông tin dưới dạng mã nhị phân (bit 0 và 1), do đó luồng dữ liệu chạy bên trong hệ thống mạng LAN đều là tín hiệu số (digital)." },
+        { id: "d1_9", type: "single", question: "Câu 9: Modem thực hiện chức năng nào trong hệ thống mạng viễn thông?", 
+          options: ["Kết nối các máy tính trong cùng một mạng.", "Chuyển đổi qua lại tín hiệu số và tương tự.", "Mở rộng phạm vi địa lí của mạng Wi-Fi nhà.", "Chuyển tiếp dữ liệu giữa hai mạng cách xa."], 
+          correct: 1, explanation: "Modem đứng ở 'cửa ngõ', đóng vai trò phiên dịch: chuyển tín hiệu số của máy tính thành tín hiệu tương tự/quang học để truyền ra cáp ngoài đường và ngược lại." },
+        { id: "d1_10", type: "single", question: "Câu 10: Đâu là một trong các loại Modem thường gặp?", 
+          options: ["Modem ADSL, modem cáp quang.", "Modem LAN, thiết bị modem Switch.", "Modem Hub, thiết bị modem Router.", "Modem USB, thiết bị modem không dây."], 
+          correct: 0, explanation: "Để kết nối Internet, ta thường thấy Modem ADSL (dùng cáp đồng cũ), Modem cáp quang (phổ biến hiện nay) và Modem di động (dùng SIM 3G/4G)." },
+        { id: "d1_11", type: "single", question: "Câu 11: Tại sao dùng mạng Hub cho nhiều máy lại có nguy cơ xung đột tín hiệu cao?", 
+          options: ["Vì nó thiết lập kênh truyền tạm thời duy nhất.", "Vì nó phát tán tín hiệu ra tất cả các cổng.", "Vì nó không dùng cáp mạng mà dùng sóng ngắn.", "Vì nó biến đổi dữ liệu gốc thành loại dữ liệu mới."], 
+          correct: 1, explanation: "Càng nhiều máy nối vào Hub, lượng dữ liệu bị 'nhân bản' xả mù quáng ra các cổng càng dày đặc, khiến chúng đâm vào nhau gây rớt mạng." },
+        { id: "d1_12", type: "single", question: "Câu 12: Cơ chế truyền dữ liệu của thiết bị Switch diễn ra như thế nào?", 
+          options: ["Truyền tín hiệu đến mọi máy để tìm máy nhận.", "Chuyển đổi tín hiệu số sang tín hiệu tương tự.", "Tạo kênh truyền tạm thời rồi huỷ sau khi xong.", "Giữ nguyên kênh truyền vĩnh viễn cho hai máy."], 
+          correct: 2, explanation: "Switch nhận diện địa chỉ máy nhận, tạo ngay một 'ống dẫn' ảo riêng biệt cho hai máy nói chuyện, truyền xong luồng dữ liệu thì ngắt 'ống' đó." },
+        { id: "d1_13", type: "single", question: "Câu 13: Thiết bị Switch phù hợp nhất với hệ thống mạng có quy mô thế nào?", 
+          options: ["Có từ vài nghìn đến hàng triệu chiếc máy tính.", "Có từ vài chục đến hàng trăm chiếc máy tính.", "Chỉ có duy nhất từ hai đến ba chiếc máy tính.", "Chỉ có một máy tính duy nhất nối mạng toàn cầu."], 
+          correct: 1, explanation: "Nhờ giải quyết được xung đột dữ liệu và có băng thông ổn định, Switch là thiết bị bắt buộc cho mạng cục bộ quy mô vừa như công ty, trường học." },
+        { id: "d1_14", type: "single", question: "Câu 14: Việc sử dụng thiết bị WAP mang lại lợi ích thiết thực nào cho mạng LAN?", 
+          options: ["Thu hẹp phạm vi truy cập mạng bằng đường dây cáp.", "Chỉ dùng để chuyển tín hiệu quang thành dạng số hóa.", "Chỉ dùng để kết nối các máy in mạng nội bộ với nhau.", "Mở rộng phạm vi truy cập mạng mà không cần dây."], 
+          correct: 3, explanation: "Gắn thêm một WAP vào cáp mạng có sẵn sẽ tạo ra một vòm sóng Wi-Fi, cho phép điện thoại, laptop thoải mái kết nối mà không bị trói buộc bởi dây dẫn." },
+        { id: "d1_15", type: "single", question: "Câu 15: Dữ liệu chuyển từ LAN này sang LAN khác qua Router đi theo luồng nào?", 
+          options: ["Vào cổng WAN của Router rồi phát tán ra mọi máy tính.", "Vào cổng LAN của Router rồi chuyển ra ngoài cổng WAN.", "Đổi tín hiệu số sang sóng vô tuyến điện từ trên dây cáp.", "Hủy dữ liệu ngay lập tức nếu không cùng một mạng lưới."], 
+          correct: 1, explanation: "Các gói tin nội bộ chạy vào cổng LAN của Router, sau đó Router sẽ xem xét địa chỉ và tống gói tin đó ra môi trường Internet lớn hơn qua cổng WAN." },
+        { id: "d1_16", type: "single", question: "Câu 16: Tại sao Router của các mạng gia đình thường được gọi là Router Wi-Fi?", 
+          options: ["Vì nó tích hợp hệ thống Hub và có rất nhiều cổng cắm dây.", "Vì nó tích hợp chuyển mạch quang và có nhiều cổng WAN.", "Vì nó tích hợp thu phát Wi-Fi và chỉ có một cổng WAN.", "Vì nó tích hợp nhận dạng số và không có cổng nối mạng."], 
+          correct: 2, explanation: "Router nhà mạng cho mượn thường là một thiết bị lai All-in-one: Nó vừa là Router điều hướng (có 1 lỗ cắm WAN), vừa phát được Wi-Fi nhờ bộ phận WAP bên trong." },
+        { id: "d1_17", type: "single", question: "Câu 17: Modem tác động như thế nào đến luồng thông tin truyền qua nó?", 
+          options: ["Thay đổi toàn bộ nội dung dữ liệu nhưng giữ nguyên tín hiệu.", "Thay đổi hoàn toàn cấu trúc dữ liệu và cả dạng tín hiệu sóng.", "Không làm thay đổi tín hiệu, không thay đổi nội dung dữ liệu.", "Chỉ thay đổi dạng tín hiệu, không làm đổi dữ liệu mang theo."], 
+          correct: 3, explanation: "Modem hoạt động ở tầng vật lý, nó biến bit số thành chớp sáng (hoặc điện áp sóng) để truyền đi xa, nội dung của file hình ảnh, bài hát vẫn hoàn toàn nguyên vẹn." },
+        { id: "d1_18", type: "single", question: "Câu 18: Tín hiệu truyền bên ngoài mạng LAN (môi trường Internet) có đặc điểm gì?", 
+          options: ["Là tín hiệu số với các giá trị logic luôn bằng 0 và 1.", "Là tín hiệu tương tự như sóng quang hoặc là điện từ.", "Là tín hiệu không dây chỉ dùng trong một phạm vi hẹp.", "Là tín hiệu số truyền qua đường cáp đồng trục truyền thống."], 
+          correct: 1, explanation: "Để truyền dẫn trên quãng đường hàng vạn dặm mà không bị tiêu hao, đường truyền Internet xương sống phải sử dụng tín hiệu dạng sóng ánh sáng (cáp quang) hoặc vô tuyến." },
+        { id: "d1_19", type: "single", question: "Câu 19: Khác biệt chính giữa chức năng của Router và chức năng của Modem là gì?", 
+          options: ["Router chuyển đổi loại tín hiệu, Modem điều hướng luồng dữ liệu.", "Router làm thay đổi nội dung tin, Modem bảo toàn nội dung gốc.", "Router điều hướng luồng dữ liệu, Modem chuyển đổi loại tín hiệu.", "Router chỉ dùng cáp quang, Modem chỉ sử dụng công nghệ sóng 4G."], 
+          correct: 2, explanation: "Router đóng vai trò như bản đồ chỉ đường cho gói tin chạy đúng hướng, còn Modem là cỗ máy biến đổi vật lý loại tín hiệu để tương thích với đường cáp quang." },
+        { id: "d1_20", type: "single", question: "Câu 20: Nếu phòng trọ chỉ có 3 máy tính, giải pháp cáp mạng nào tiết kiệm nhất?", 
+          options: ["Mua một thiết bị Router định tuyến thông minh.", "Mua một thiết bị Hub để nối dây mạng nội bộ.", "Mua một hệ thống Modem quang học đắt tiền.", "Mua một thiết bị Switch hai mươi bốn cổng cắm."], 
+          correct: 1, explanation: "Vì nhu cầu quá ít máy và tốc độ truyền file nội bộ không khắt khe, việc chọn mua một thiết bị Hub cơ bản là giải pháp cực kỳ rẻ và đủ dùng." },
+        { id: "d1_21", type: "single", question: "Câu 21: Để nối 150 máy tính trong trường học tránh xung đột, giải pháp tốt nhất là:", 
+          options: ["Chỉ dùng đúng một Hub chia tín hiệu cho toàn bộ máy.", "Chỉ dùng bộ định tuyến cao cấp nối thẳng máy tính.", "Dùng nhiều Switch kết nối thành hệ thống nhiều tầng.", "Dùng sóng điện từ truyền trực tiếp không qua dây cáp."], 
+          correct: 2, explanation: "Sử dụng mô hình đấu nối Switch theo cấu trúc cây (phân tầng) sẽ đảm bảo 150 luồng dữ liệu máy tính luôn được điều phối mượt mà không bị nghẽn mạng." },
+        { id: "d1_22", type: "single", question: "Câu 22: Quán cafe muốn khách hàng truy cập mạng bằng điện thoại thì cần thiết bị gì?", 
+          options: ["Lắp đặt thêm một bộ Hub nhiều cổng cắm cáp mạng.", "Lắp đặt thêm một chiếc Switch loại chuyên dụng lớn.", "Lắp đặt cáp quang kéo trực tiếp đến từng chiếc bàn.", "Lắp đặt thêm một bộ thu phát không dây (WAP)."], 
+          correct: 3, explanation: "Điện thoại không có lỗ cắm cáp mạng LAN, do đó quán cần gắn thêm thiết bị WAP (điểm phát Wi-Fi) để phủ sóng vô tuyến kết nối thiết bị di động." },
+        { id: "d1_23", type: "single", question: "Câu 23: Để công ty mẹ ở Hà Nội gửi file qua công ty con ở Mỹ, thiết bị nào định hướng dữ liệu?", 
+          options: ["Dùng thiết bị Router thông qua nhà mạng viễn thông.", "Dùng thiết bị Hub bằng sợi cáp đồng xuyên đại dương.", "Dùng thiết bị Switch để nối thẳng mạng LAN hai nước.", "Dùng thiết bị WAP phát sóng Wi-Fi bao phủ toàn cầu."], 
+          correct: 0, explanation: "Hai mạng LAN cách xa nhau nửa vòng trái đất bắt buộc phải kết nối thông qua môi trường Internet, và bộ định tuyến Router sẽ nhận nhiệm vụ dò đường truyền dữ liệu này." },
+        { id: "d1_24", type: "single", question: "Câu 24: Nếu chỉ muốn 4 máy tính chơi game nội bộ (không có Internet), ta cần thiết bị gì?", 
+          options: ["Bắt buộc phải dùng Modem mạng quang mới nối được.", "Bắt buộc phải mua Router tích hợp mạng viễn thông.", "Chỉ cần dùng chiếc Switch hoặc Hub nối cáp các máy.", "Chỉ cần dùng bộ chuyển đổi tín hiệu tương tự vô tuyến."], 
+          correct: 2, explanation: "Khi không có nhu cầu ra khỏi mạng nội bộ để lướt web (không cần Internet), ta hoàn toàn không cần Modem hay Router. Chỉ một Switch/Hub là đủ để liên kết các máy lại." },
+        { id: "d1_25", type: "single", question: "Câu 25: Khi nhà mạng kéo cáp quang vào nhà bạn, thiết bị đầu tiên phải gắn vào là gì?", 
+          options: ["Lắp thiết bị Hub để biến tín hiệu quang thành dạng số.", "Lắp Modem quang chuyển tín hiệu quang sang chuẩn số.", "Lắp đặt WAP để biến đổi tín hiệu số sang tín hiệu quang.", "Lắp cáp đồng trục để chuyển tín hiệu quang vào máy tính."], 
+          correct: 1, explanation: "Sợi cáp ngoài đường dẫn ánh sáng. Để các thiết bị trong nhà xài được mạng, thiết bị hứng cáp đầu tiên bắt buộc là Modem quang (ONT) để chuyển ánh sáng thành bit nhị phân." },
+        { id: "d1_26", type: "single", question: "Câu 26: Đang trên xe khách, bạn dùng SIM 4G phát mạng cho laptop làm việc bằng thiết bị nào?", 
+          options: ["Sử dụng cáp mạng cắm thẳng vào mạch điện.", "Sử dụng đường truyền Modem ADSL cố định.", "Sử dụng cổng WAN của Router gia đình bạn.", "Sử dụng Modem GSM 4G để thu phát dữ liệu."], 
+          correct: 3, explanation: "Smartphone có gắn SIM bản chất chính là một trạm Modem 4G (chuẩn GSM di động) thu sóng từ nhà mạng để chuyển thành tín hiệu mạng cung cấp cho laptop." },
+        { id: "d1_27", type: "single", question: "Câu 27: Tại sao máy tính không đọc trực tiếp tín hiệu cáp quang mà phải qua Modem?", 
+          options: ["Máy tính hiểu tín hiệu quang, cáp mạng truyền tín hiệu dạng số.", "Máy tính hiểu tín hiệu số, cáp quang truyền tín hiệu tương tự.", "Cáp quang có tốc độ quá chậm so với bộ vi xử lý của máy tính.", "Máy tính không thể dùng Internet trên đường cáp quang điện."], 
+          correct: 1, explanation: "Tín hiệu bên trong vi mạch máy tính chỉ hoạt động với dòng điện 0 và 1 (tín hiệu số), nó không thể nhận diện được các dải sóng quang học liên tục (tín hiệu tương tự)." },
+        { id: "d1_28", type: "single", question: "Câu 28: Trong gia đình, thiết bị nào thường vừa phát Wi-Fi vừa kết nối Internet ra ngoài?", 
+          options: ["Thiết bị Switch loại hai mươi bốn cổng cắm đắt tiền nhất.", "Thiết bị Hub dùng để mở rộng sóng cho tòa nhà cao tầng.", "Thiết bị Router Wi-Fi do nhà cung cấp dịch vụ mạng cấp.", "Thiết bị Modem quay số dial-up kiểu đời cũ nối điện thoại."], 
+          correct: 2, explanation: "Cục 'Wi-Fi' phổ biến của các nhà mạng hiện nay đều là thiết bị đa chức năng, vừa là Modem, vừa là Router và tích hợp luôn trạm thu phát WAP." },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Việc lắp đặt hệ thống mạng LAN cho phòng thực hành Tin học của trường.", items: [
+            { id: "a", text: "a) Hub và Switch là hai thiết bị dùng để kết nối trực tiếp các máy tính trong cùng LAN qua cáp mạng.", correct: true, expl: "Cả hai đều đóng vai trò cổng trung tâm vật lý (tập trung dây mạng) để tạo nên hạ tầng mạng nội bộ có dây." },
+            { id: "b", text: "b) Switch hoạt động thông minh hơn Hub nhờ xác định cổng kết nối và thiết lập tạm thời kênh truyền riêng biệt.", correct: true, expl: "Switch 'nhớ' địa chỉ của từng máy tính cắm vào nó, giúp nó rẽ nhánh dữ liệu chuẩn xác thay vì vung vãi khắp nơi như Hub." },
+            { id: "c", text: "c) Để giảm xung đột tín hiệu tối đa cho 50 máy tính thực hành, nhà trường nên ưu tiên sử dụng thiết bị Hub thay vì Switch.", correct: false, expl: "Hub sẽ gây ra hiện tượng xung đột thảm họa nếu nối tới 50 máy tính cùng lúc. Bắt buộc phải dùng Switch." },
+            { id: "d", text: "d) Khi một học sinh tải file từ máy chủ bằng hệ thống Switch, tín hiệu luồng dữ liệu đó sẽ không bị phát tán làm ảnh hưởng đến đường truyền của các học sinh khác.", correct: true, expl: "Do Switch tạo đường hầm kết nối ảo độc lập, hai máy trao đổi dữ liệu sẽ không làm 'ồn ào' và chậm đường truyền của máy bên cạnh." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Các khái niệm cơ bản về Wi-Fi và ứng dụng truy cập không dây.", items: [
+            { id: "a", text: "a) Cụm từ Wi-Fi là chữ viết tắt của 'Wireless Fidelity', sử dụng sóng vô tuyến điện trong mạng cục bộ.", correct: true, expl: "Đây là định nghĩa chuẩn của chuẩn mạng không dây cực kỳ thông dụng hiện nay." },
+            { id: "b", text: "b) Cách đơn giản nhất để mở rộng mạng LAN cho thiết bị di động mà không cần đi dây là lắp đặt điểm truy cập không dây (WAP).", correct: true, expl: "Điểm truy cập WAP chính là thứ sinh ra các vạch sóng Wi-Fi cho điện thoại, máy tính bảng kết nối vào hạ tầng cáp LAN." },
+            { id: "c", text: "c) Bộ thu phát Wi-Fi (WAP) có chức năng định tuyến dữ liệu ra toàn cầu giống hệt một Router thông qua mạng viễn thông.", correct: false, expl: "WAP chỉ đơn thuần làm nhiệm vụ phủ sóng mạng không dây tại chỗ. Việc định tuyến (tìm đường ra Internet) là đặc quyền của Router." },
+            { id: "d", text: "d) Khi bạn dùng máy tính xách tay kết nối mạng tại quán trà sữa, thiết bị của bạn đang giao tiếp trực tiếp với một WAP.", correct: true, expl: "Hệ thống vòi phát sóng (ăng-ten) ở quán trà sữa chính là các Wireless Access Point đang kết nối tới card mạng của bạn." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Kết nối Internet qua nhà cung cấp dịch vụ viễn thông.", items: [
+            { id: "a", text: "a) Mạng viễn thông sử dụng các bộ định tuyến (router) để chuyển tiếp dữ liệu qua lại giữa các mạng LAN cách xa nhau.", correct: true, expl: "Hàng ngàn Router khổng lồ của các nhà mạng viễn thông nối tiếp nhau tạo nên mạng lưới chỉ đường khổng lồ trên Internet." },
+            { id: "b", text: "b) Tín hiệu bên trong mạng LAN là tín hiệu số (digital), còn truyền ra bên ngoài thường dùng tín hiệu tương tự (analog).", correct: true, expl: "Sự phân chia định dạng tín hiệu này là bắt buộc để phù hợp với cả thiết bị xử lý lõi (máy tính) và hạ tầng truyền tải chặng xa." },
+            { id: "c", text: "c) Khi truyền một bức ảnh qua Modem, Modem chỉ đổi dạng tín hiệu để truyền đi, hoàn toàn không làm sai lệch nội dung bức ảnh.", correct: true, expl: "Giống như bạn dịch một bức thư từ tiếng Việt sang tiếng Anh, hình thái văn bản thay đổi nhưng ý nghĩa nội dung thì bảo toàn." },
+            { id: "d", text: "d) Router của các mạng gia đình hiện nay bắt buộc phải dùng nhiều cổng WAN thì mới có thể kết nối Internet thành công.", correct: false, expl: "Router dân dụng thường chỉ trang bị duy nhất 1 cổng WAN để nối với cáp của nhà mạng là đã xài mượt mà rồi." }
+        ]}
+    ];
+
+    const de2_data = [
+        // PHẦN I: TRẮC NGHIỆM
+        { id: "d2_1", type: "single", question: "Câu 1: Trong mạng nội bộ, thiết bị Switch kết nối các máy tính qua môi trường nào?", 
+          options: ["Kết nối thông qua hệ thống dây cáp mạng.", "Kết nối thông qua đường cáp quang điện.", "Kết nối thông qua hệ sóng vô tuyến mạng.", "Kết nối thông qua hệ thống tia hồng ngoại."], 
+          correct: 0, explanation: "Đặc trưng vật lý của Switch là nó có rất nhiều cổng Ethernet (Port), chỉ kết nối các máy tính nội bộ thông qua đường dây cáp bằng đồng." },
+        { id: "d2_2", type: "single", question: "Câu 2: Khi nhận dữ liệu, thiết bị Hub sẽ xử lý đường đi của tín hiệu ra sao?", 
+          options: ["Đẩy tín hiệu ra đúng cổng của máy tính nhận.", "Đẩy tín hiệu ra cổng WAN để lên vùng Internet.", "Đẩy tín hiệu ra tất cả các cổng còn lại của nó.", "Đẩy tín hiệu ra cổng cáp quang của nhà mạng."], 
+          correct: 2, explanation: "Do không có tính năng lưu trữ hay nhận dạng địa chỉ đích, phương pháp duy nhất của Hub là copy luồng điện đó ra mọi ngóc ngách cắm dây." },
+        { id: "d2_3", type: "single", question: "Câu 3: Việc Switch xác định cổng kết nối sẽ giúp tạo ra loại kênh truyền nào?", 
+          options: ["Thiết lập một kênh truyền vĩnh viễn không đổi.", "Thiết lập một kênh truyền tạm thời luân chuyển.", "Thiết lập phát tán tín hiệu ra toàn bộ các cổng.", "Thiết lập thay đổi tín hiệu tương tự thành số."], 
+          correct: 1, explanation: "Kênh truyền giữa 2 máy trên Switch là dạng tạm thời ảo. Ngay khi luồng file chuyển xong, rãnh liên kết đó sẽ bị dập tắt để máy khác sử dụng băng thông." },
+        { id: "d2_4", type: "single", question: "Câu 4: Điểm truy cập không dây (WAP) truyền dữ liệu dựa trên tiêu chuẩn gì?", 
+          options: ["Sử dụng loại tia laser truyền tin qua sợi cáp quang.", "Sử dụng loại điện áp xoay chiều qua dây cáp đồng.", "Sử dụng loại sóng siêu âm tần số rất cao đặc biệt.", "Sử dụng loại sóng vô tuyến điện của chuẩn Wi-Fi."], 
+          correct: 3, explanation: "WAP hoạt động bằng cách phát ra dải tần bức xạ điện từ vô tuyến theo giao thức riêng biệt gọi là chuẩn kết nối Wi-Fi." },
+        { id: "d2_5", type: "single", question: "Câu 5: Để chuyển tiếp dữ liệu đi xa, mạng viễn thông phải sử dụng thiết bị gì?", 
+          options: ["Sử dụng bộ định tuyến tín hiệu (thiết bị Router).", "Sử dụng bộ phát sóng không dây (thiết bị WAP).", "Sử dụng thiết bị nối mạng nội bộ (thiết bị Hub).", "Sử dụng thiết bị chuyển mạch LAN (thiết bị Switch)."], 
+          correct: 0, explanation: "Internet thực chất là một mớ bòng bong các mạng LAN. Để dữ liệu nhảy được từ quốc gia này sang quốc gia khác cần tới những cỗ máy Router dẫn đường siêu mạnh." },
+        { id: "d2_6", type: "single", question: "Câu 6: Kết nối mạng LAN giữa hai quốc gia cần có yếu tố cốt lõi nào sau đây?", 
+          options: ["Dây cáp đồng cắm nối thẳng giữa hai máy tính.", "Dịch vụ truyền dữ liệu viễn thông của nhà mạng.", "Đường truyền sóng Bluetooth kết nối nội bộ gần.", "Đường điện sinh hoạt cung cấp năng lượng máy."], 
+          correct: 1, explanation: "Bạn không thể kéo một sợi cáp từ nhà bạn sang Mỹ. Mọi kết nối đường dài bắt buộc phải quá giang qua hệ thống cáp biển khổng lồ của các nhà cung cấp viễn thông." },
+        { id: "d2_7", type: "single", question: "Câu 7: Dữ liệu chạy qua lại bên trong một thiết bị Hub là thuộc dạng tín hiệu gì?", 
+          options: ["Tín hiệu tương tự (analog).", "Sóng truyền hình vô tuyến.", "Tín hiệu số (chuẩn digital).", "Sóng vệ tinh trên vũ trụ."], 
+          correct: 2, explanation: "Vì Hub được đặt hoàn toàn bên trong vùng mạng nội bộ (cạnh các máy tính), tín hiệu trao đổi qua Hub vẫn mang bản chất là các dải bit dạng số." },
+        { id: "d2_8", type: "single", question: "Câu 8: Tín hiệu số (digital) của mạng LAN được máy tính biểu diễn theo cách nào?", 
+          options: ["Thể hiện ở các dạng dải sóng hình sin liền mạch.", "Thể hiện ở các dạng giá trị chuẩn logic là 0 và 1.", "Thể hiện ở các mức độ sáng chớp của bóng đèn.", "Thể hiện ở các mức điện áp xoay chiều liên tục."], 
+          correct: 1, explanation: "Logic cốt lõi của nền tảng tin học là các trạng thái nhị phân. Mọi âm thanh, text đều được chuyển về dãy số 0, 1 (biểu thị mức điện áp cao thấp) ở mạng LAN." },
+        { id: "d2_9", type: "single", question: "Câu 9: Thiết bị nào đóng vai trò chuyển đổi qua lại hai dạng tín hiệu số và tương tự?", 
+          options: ["Thiết bị Switch (Bộ chuyển mạch mạng cục bộ).", "Thiết bị Hub (Bộ tập trung luồng mạng cục bộ).", "Thiết bị Modem (Bộ điều chế và giải điều chế).", "Thiết bị Router (Bộ định tuyến dữ liệu cục bộ)."], 
+          correct: 2, explanation: "Từ nguyên gốc Modulator (điều chế) - Demodulator (giải điều chế) chỉ ra chính Modem là cỗ máy biến đổi hình dạng vật lý của luồng tín hiệu mạng." },
+        { id: "d2_10", type: "single", question: "Câu 10: Khi dùng điện thoại truy cập mạng di động, ta đang sử dụng loại Modem nào?", 
+          options: ["Hệ thống Modem cáp quang của máy tính bàn.", "Hệ thống Modem chuẩn GSM 3G, 4G hoặc 5G.", "Hệ thống Modem quay số điện thoại chuẩn cũ.", "Hệ thống Switch nối mạng LAN bằng đường cáp."], 
+          correct: 1, explanation: "Chip nhận sóng mạng gắn trong smartphone chính là một mạch vi xử lý Modem chuyên bắt và dịch tín hiệu sóng viễn thông 4G, 5G từ tháp ăng ten." },
+        { id: "d2_11", type: "single", question: "Câu 11: Tại sao dùng Hub cho mạng lưới lớn lại gây suy giảm tốc độ đường truyền?", 
+          options: ["Vì không thể cắm được loại dây cáp mạng chuẩn.", "Vì tự ý thay đổi hoàn toàn nội dung dữ liệu gốc.", "Vì phát tán tín hiệu mọi cổng gây xung đột mạng.", "Vì tự động chuyển tín hiệu LAN thành dạng quang."], 
+          correct: 2, explanation: "Nếu mạng có 100 máy cắm qua Hub, bất kỳ ai nhắn tin, gói dữ liệu đều bị ném mù quáng tới 99 máy còn lại, tạo ra một 'mớ hỗn độn' va chạm nghẽn mạng nghiêm trọng." },
+        { id: "d2_12", type: "single", question: "Câu 12: Switch sẽ thực hiện hành động gì ngay sau khi truyền xong một luồng dữ liệu?", 
+          options: ["Nó tự động lưu kênh truyền đó thành vĩnh viễn.", "Nó tự động khởi động lại toàn bộ hệ thống mạng.", "Nó tự động huỷ bỏ kênh truyền kết nối tạm thời.", "Nó tự động khóa tất cả các cổng máy tính khác."], 
+          correct: 2, explanation: "Khả năng phân giải và thu hồi các đường hầm kết nối ngay tức khắc giúp Switch quản trị tài nguyên băng thông cáp cực kỳ thông minh." },
+        { id: "d2_13", type: "single", question: "Câu 13: Lợi thế lớn nhất khiến Hub vẫn được sử dụng ở các hệ thống mạng gia đình là?", 
+          options: ["Tốc độ truyền của Hub luôn nhanh gấp đôi Switch.", "Tính năng bảo mật của Hub an toàn tuyệt đối hơn.", "Khả năng phát sóng vô tuyến của Hub rất mạnh mẽ.", "Mức chi phí mua Hub rẻ hơn rất nhiều so với Switch."], 
+          correct: 3, explanation: "Hub không sở hữu chip xử lý thông minh, cấu tạo vật lý vô cùng thô sơ nên chi phí linh kiện để sản xuất một thiết bị Hub chia cổng cáp là cực kỳ thấp." },
+        { id: "d2_14", type: "single", question: "Câu 14: Khi gắn thêm một điểm WAP vào mạng cáp LAN hiện tại, ta sẽ được lợi ích gì?", 
+          options: ["Kết nối thêm được nhiều thiết bị di động không dây.", "Biến tín hiệu mạng vô tuyến thành tín hiệu quang.", "Định tuyến được dữ liệu sang các quốc gia khác.", "Hạn chế điện thoại thông minh truy cập vào mạng."], 
+          correct: 0, explanation: "WAP phá bỏ giới hạn của sợi cáp, chuyển mạng LAN thành vùng không gian bức xạ vô tuyến, cho phép điện thoại tự do kết nối vào mạng từ xa." },
+        { id: "d2_15", type: "single", question: "Câu 15: Trong Router, dữ liệu đi ra môi trường mạng Internet sẽ thoát qua cổng nào?", 
+          options: ["Dữ liệu bắt buộc phải được phát ra qua các cổng LAN.", "Dữ liệu bắt buộc bị hủy nếu không gửi qua sóng Wi-Fi.", "Dữ liệu bắt buộc phải được chuyển qua đầu cổng WAN.", "Dữ liệu bắt buộc phải biến đổi thành dạng sóng quang."], 
+          correct: 2, explanation: "Cổng WAN (Wide Area Network) dịch ra là mạng diện rộng, là lỗ cắm đặc chủng trên Router dành riêng để xả gói tin ra các trạm trung chuyển thế giới." },
+        { id: "d2_16", type: "single", question: "Câu 16: Lí do chính khiến Router gia đình không cần cơ chế định tuyến quá phức tạp?", 
+          options: ["Vì nó có hàng trăm cổng WAN kết nối mạng viễn thông.", "Vì nó chỉ có duy nhất một cổng WAN ra nhà cung cấp.", "Vì nhà mạng viễn thông yêu cầu chặn mọi luồng định tuyến.", "Vì tín hiệu LAN không thể đi qua cổng kết nối định tuyến."], 
+          correct: 1, explanation: "Do gia đình thường chỉ thuê một line mạng cáp quang duy nhất (như Viettel), dữ liệu không có đường nào khác ngoài việc chạy thẳng qua cổng WAN đó nên chẳng cần thuật toán rẽ nhánh rối rắm." },
+        { id: "d2_17", type: "single", question: "Câu 17: Khẳng định nào sau đây diễn tả ĐÚNG NHẤT về cơ chế làm việc của Modem?", 
+          options: ["Giữ nguyên dạng tín hiệu nhưng thay đổi nội dung dữ liệu.", "Thay đổi cả dạng tín hiệu và làm biến dạng luôn dữ liệu.", "Thay đổi dạng tín hiệu nhưng giữ nguyên nội dung dữ liệu.", "Hoàn toàn không thay đổi cả tín hiệu lẫn nội dung dữ liệu."], 
+          correct: 2, explanation: "Modem thực hiện việc điều chế vật lý ở 'vỏ bọc' của luồng tin thành sóng, nhưng 'hàng hóa' bên trong (như một bài hát MP3) vẫn được bảo mật không mất đi 1 kb nào." },
+        { id: "d2_18", type: "single", question: "Câu 18: Tín hiệu sóng mang của hệ thống điện thoại công cộng thuộc loại tín hiệu gì?", 
+          options: ["Nó là một hình thức truyền tải của dải tín hiệu số (digital).", "Nó là một hình thức truyền tải của tín hiệu tương tự (analog).", "Nó là một dạng dữ liệu chưa qua bất kì bước điều chế nào.", "Nó là tín hiệu chỉ dùng truyền từ máy in sang máy tính nội."], 
+          correct: 1, explanation: "Hệ thống cáp đồng thoại đời cũ truyền dữ liệu bằng các bước sóng dạng đồ thị hình sin thay đổi liên tục, và đó là tính chất của dòng tín hiệu analog." },
+        { id: "d2_19", type: "single", question: "Câu 19: Khi bộ định tuyến (Router) nối với nhà mạng Internet, vai trò của Modem là gì?", 
+          options: ["Nhận nhiệm vụ chia nhỏ địa chỉ IP cho tất cả điện thoại.", "Nhận nhiệm vụ chuyển đổi luồng tín hiệu hai chiều qua lại.", "Nhận nhiệm vụ tăng cường tính bảo mật dữ liệu cấp quốc gia.", "Nhận nhiệm vụ biến dữ liệu số thành hệ thống mạng LAN con."], 
+          correct: 1, explanation: "Vì Router chỉ biết đọc dữ liệu digital, Modem phải đứng ngay trước nó để dịch các xung ánh sáng của nhà mạng viễn thông thành digital và đổ vào Router." },
+        { id: "d2_20", type: "single", question: "Câu 20: Gia đình bạn dùng mạng cáp quang, thiết bị trực tiếp cắm cáp quang ngoài đường vào là:", 
+          options: ["Thiết bị Hub nối cáp dây nhiều cổng mạng.", "Thiết bị Switch mở rộng hạ tầng cục bộ.", "Thiết bị Modem quang học giải mã tín hiệu.", "Điểm truy cập WAP phát sóng không dây."], 
+          correct: 2, explanation: "Sợi quang vàng chóe kéo vào nhà mang theo xung ánh sáng (tín hiệu quang). Chỉ có Modem quang chuyên biệt mới đọc được chúng." },
+        { id: "d2_21", type: "single", question: "Câu 21: Một tòa nhà văn phòng có 200 nhân viên, kiến trúc hạ tầng mạng tốt nhất là:", 
+          options: ["Chỉ sử dụng duy nhất một bộ Hub cắm nối hai trăm dây.", "Chỉ dùng đường sóng vô tuyến trực tiếp nối mọi máy tính.", "Dùng thiết bị Modem quay số chia riêng cho mỗi phòng.", "Sử dụng nhiều thiết bị Switch đấu nối theo nhiều tầng."], 
+          correct: 3, explanation: "Để chịu tải đường truyền LAN cỡ lớn, hệ thống phải được phân chia thành Switch tổng nối xuống các Switch nhánh, tạo cấu trúc cây chia sẻ băng thông." },
+        { id: "d2_22", type: "single", question: "Câu 22: Để kết nối mạng nội bộ giữa trụ sở chính tại Việt Nam và chi nhánh ở Pháp, ta dùng:", 
+          options: ["Bộ thiết bị Router qua mạng viễn thông nhà cung cấp.", "Bộ thiết bị Hub khuếch đại kéo dây mạng dưới đáy biển.", "Bộ thiết bị Switch loại công suất cực lớn nối thẳng hai nơi.", "Bộ thiết bị Access Point phát sóng vô tuyến xuyên quốc gia."], 
+          correct: 0, explanation: "Khoảng cách xa như vậy vượt quá sức chịu đựng của Hub/Switch. Bắt buộc phải gói ghém dữ liệu và mượn đường cáp quang quốc tế qua bộ Router." },
+        { id: "d2_23", type: "single", question: "Câu 23: Cảnh sát giao thông dùng bộ đàm 4G phát mạng Wi-Fi cho máy tính bảng, đây là ứng dụng của:", 
+          options: ["Thiết bị Hub nối mạng dùng hệ thống cáp đồng trục cũ.", "Thiết bị cáp quang chuyên dụng chống đứt tín hiệu xa.", "Thiết bị tích hợp Modem GSM chuẩn 4G phát mạng WAP.", "Thiết bị Switch nối mạch chia cổng dữ liệu trong đô thị."], 
+          correct: 2, explanation: "Thiết bị đó thu sóng viễn thông bằng module Modem di động và đồng thời phát chia sẻ kết nối ra xung quanh bằng module WAP siêu nhỏ tích hợp bên trong." },
+        { id: "d2_24", type: "single", question: "Câu 24: Một học sinh gửi thư điện tử. Dữ liệu thư không bị lỗi chữ khi tới máy nhận chứng tỏ điều gì về Modem?", 
+          options: ["Modem tự sửa lỗi chính tả trước khi truyền ra vùng Internet.", "Modem dịch văn bản sang mã vạch quang học cực thông minh.", "Modem không tham gia vào quá trình truyền gửi văn bản nội.", "Modem chỉ đổi sóng tín hiệu, đảm bảo toàn vẹn dữ liệu thư."], 
+          correct: 3, explanation: "Thao tác của Modem hoàn toàn vô hình với nội dung tệp tin, nó chỉ bọc vỏ điện áp/quang học bên ngoài. Nhờ đó, bài tập hay thư từ của bạn được giữ nguyên hiện trạng." },
+        { id: "d2_25", type: "single", question: "Câu 25: Tại nhà bạn, một chiếc hộp nhựa nhỏ có 4 râu ăng-ten cắm dây cáp Internet vào được gọi chính xác là gì?", 
+          options: ["Thiết bị Hub loại hai mươi bốn cổng dành cho máy chủ.", "Thiết bị chuyển đổi tia hồng ngoại thu âm sóng vô tuyến.", "Thiết bị điểm truy cập cáp đồng băng thông rất tốc độ.", "Thiết bị Router tích hợp công nghệ phát Wi-Fi cực mạnh."], 
+          correct: 3, explanation: "Hình dạng các râu ăng-ten hướng lên không trung là để phát tín hiệu vô tuyến Wi-Fi. Đây là thiết bị mạng dân dụng lai đa năng." },
+        { id: "d2_26", type: "single", question: "Câu 26: Nếu muốn chia sẻ máy in nội bộ trong phòng họp mà không dùng dây cáp, văn phòng nên lắp đặt:", 
+          options: ["Thiết bị bộ chuyển mạch thông minh nhiều cổng cáp quang.", "Thiết bị điểm thu phát vô tuyến (Wireless Access Point).", "Thiết bị định tuyến tín hiệu ra hệ thống mạng xuyên quốc gia.", "Thiết bị khuếch đại điện áp xoay chiều của hệ thống điện."], 
+          correct: 1, explanation: "Đưa máy in lên môi trường sóng không dây thì bắt buộc phòng họp phải có điểm phát WAP (hoặc cục Wi-Fi) làm cầu nối liên kết các laptop đến máy in đó." },
+        { id: "d2_27", type: "single", question: "Câu 27: Một Router công ty lớn có 3 cổng WAN cắm 3 đường mạng khác nhau, tính năng quan trọng nhất của nó là gì?", 
+          options: ["Bắt buộc phải nhân bản một tập tin thành ba bản gửi ra mọi cổng WAN.", "Tự động ngắt điện hệ thống mạng cáp khi có dữ liệu lạ xuất hiện.", "Tự động tính toán chọn cổng WAN tốc độ tốt nhất để chuyển số liệu.", "Chuyển dòng tín hiệu số thành hệ thống tín hiệu truyền hình vô tuyến."], 
+          correct: 2, explanation: "Khả năng cao cấp của bộ định tuyến là thuật toán tối ưu. Nếu WAN 1 đang bị đứt cáp biển nghẽn mạch, nó sẽ nhạy bén bẻ luồng dữ liệu sang WAN 2." },
+        { id: "d2_28", type: "single", question: "Câu 28: Khi gửi file giữa 2 máy tính nội bộ chung phòng, yếu tố nào KHÔNG bao giờ tham gia?", 
+          options: ["Sự xuất hiện của luồng tín hiệu số hóa (tín hiệu logic điện áp).", "Sự tham gia của dây cáp nối hoặc sóng vô tuyến điện nội bộ.", "Sự tham gia của các phần mềm nhận và phản hồi dữ liệu.", "Sự xuất hiện của loại tín hiệu tương tự (tín hiệu analog mạng ngoài)."], 
+          correct: 3, explanation: "Giao tiếp nội mạng LAN hoàn toàn làm việc trên mã 0 và 1 (tín hiệu số digital). Vì không ra khỏi nhà nên tín hiệu sẽ không phải chuyển qua Modem thành sóng tương tự." },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Phân biệt Hub và Switch trong thiết lập hạ tầng mạng máy tính nội bộ (LAN).", items: [
+            { id: "a", text: "a) Theo định nghĩa, cả Hub và Switch đều dùng để kết nối các máy tính trong cùng LAN trực tiếp qua một hệ thống cáp mạng.", correct: true, expl: "Cả hai thiết bị đều là trung tâm chia rẽ nhánh đường cáp vật lý bằng đồng của mạng cục bộ." },
+            { id: "b", text: "b) Điểm yếu của Hub là khi có dữ liệu đi vào một cổng, nó sẽ sao chép và tự động phát tán tín hiệu đó ra toàn bộ các cổng khác.", correct: true, expl: "Sự phát tán mù quáng này gây lãng phí trầm trọng sức mạnh đường truyền và làm chậm hệ thống." },
+            { id: "c", text: "c) Trong một công ty có hơn 100 nhân viên đang làm việc, việc dùng Hub làm trung tâm kết nối sẽ giúp hệ thống bảo mật thông tin nội bộ cực kì an toàn.", correct: false, expl: "Chính vì cơ chế xả gói tin mù quáng ra mọi cổng, bất kỳ nhân viên nào cũng có thể 'bắt' được tin nhắn của người khác, bảo mật của Hub cực kỳ kém." },
+            { id: "d", text: "d) Cơ chế thiết lập kênh truyền tạm thời của Switch giúp nhiều cặp máy tính có thể giao tiếp đồng thời mà không sợ bị xung đột tín hiệu (va chạm dữ liệu).", correct: true, expl: "Đây là điểm đáng đồng tiền bát gạo nhất của Switch, thiết lập các 'ống' ảo cách ly các luồng gửi file." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Công nghệ không dây và đặc tính của Wireless Access Point (WAP).", items: [
+            { id: "a", text: "a) Thuật ngữ Wi-Fi thực chất là bộ tiêu chuẩn kĩ thuật truyền dẫn dữ liệu mạng cục bộ thông qua môi trường không dây (sóng vô tuyến điện).", correct: true, expl: "Wi-Fi đóng vai trò như 'ngôn ngữ chung' để các nhà sản xuất làm phần cứng thu phát không bị lệch pha." },
+            { id: "b", text: "b) Nhiệm vụ chính của một Access Point (WAP) là chuyển đổi các gói tin LAN sang dạng tín hiệu cáp quang để truyền dưới đáy biển.", correct: false, expl: "WAP chỉ là cái hộp phát sóng radio vô tuyến. Việc truyền cáp quang dưới biển là việc của Modem và hạ tầng Internet." },
+            { id: "c", text: "c) Nếu nhà bạn đã có mạng LAN cắm dây nhưng muốn dùng thêm điện thoại lướt web, bạn chỉ cần mua và cắm một thiết bị WAP vào mạng LAN hiện tại.", correct: true, expl: "Thiết bị WAP cắm chung vào mạng có dây sẽ tạo ra các trường vô tuyến điện, cho phép điện thoại kết nối không cần cắm cáp." },
+            { id: "d", text: "d) Nhờ WAP, một giảng viên đại học có thể ôm laptop đi dọc hành lang lớp học mà máy tính vẫn luôn giữ kết nối liên tục với hệ thống điểm danh của nhà trường.", correct: true, expl: "Đặc tính di động linh hoạt (Mobility) là ứng dụng quan trọng bậc nhất của môi trường mạng sử dụng WAP." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Vai trò của Router và Modem trong mạng toàn cầu (Internet).", items: [
+            { id: "a", text: "a) Router (bộ định tuyến) là thiết bị chuyên trách giúp hướng luồng dữ liệu từ một mạng LAN này sang một mạng LAN khác thông qua Internet.", correct: true, expl: "Router đứng đầu mạng lưới với khả năng phân tích đường đi và chuyển tiếp dữ liệu vượt biên giới địa lý." },
+            { id: "b", text: "b) Máy tính giao tiếp bằng tín hiệu số, nhưng hạ tầng mạng cáp quang ngoài đường truyền tín hiệu quang, do đó bắt buộc phải sử dụng Modem quang ở giữa.", correct: true, expl: "Tín hiệu ánh sáng (quang) và tín hiệu logic số (digital) là hai định dạng vật lý đối nghịch, nên cần Modem làm thông dịch viên." },
+            { id: "c", text: "c) Một đoạn video nặng 5GB, khi đi qua Modem để truyền ra Internet sẽ bị biến thành 2GB vì bản chất của Modem là tự nén và làm giảm chất lượng dữ liệu đi.", correct: false, expl: "Modem chỉ thay đổi dạng thức vật lý của sóng (như đóng gói hàng vào một lớp vỏ mới) chứ không làm biến dạng nội dung gốc dung lượng 5GB." },
+            { id: "d", text: "d) Khái niệm Router Wi-Fi thực chất là một thiết bị lai, kết hợp chức năng của bộ định tuyến nội bộ và một trạm phát sóng điểm truy cập không dây (WAP).", correct: true, expl: "Thay vì mua 2 cục hộp tốn diện tích, các nhà sản xuất tích hợp cả chip định tuyến và bộ phát Wi-Fi chung một hộp, gọi là Router Wi-Fi." }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-lg font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-lg math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-lg ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-lg ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-lg">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-base font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-base text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-lg font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-base font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-base font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-base font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-base font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-lg math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200"><p class="text-base font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p><p class="text-black font-medium text-lg leading-loose math-scroll">${q.explanation}</p></div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-lg math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-base font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-lg text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+        
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-base">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-base">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-base">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-sm font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-sm">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-sm">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-sm">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-sm transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
