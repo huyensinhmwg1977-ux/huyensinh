@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    /* KHẮC PHỤC LỖI CHẬM KHI CLICK TRÊN MOBILE */
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; /* Khử độ trễ 300ms trên điện thoại */
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    /* Giao diện nút lớn và dễ nhìn trên mobile */
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-3"> BÀI 2: TRÍ TUỆ NHÂN TẠO TRONG KHOA HỌC VÀ ĐỜI SỐNG </h1>
+     
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-lg font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-lg" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-lg font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-lg" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-lg font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-sm font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-sm font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-base p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-base font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-sm text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ (Câu)</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-lg"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-lg shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-lg shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-lg shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-sm text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-sm sm:text-base whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_ai');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    /*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI MỚI (BÀI 2: TRÍ TUỆ NHÂN TẠO TRONG KHOA HỌC VÀ ĐỜI SỐNG)
+      ĐÃ ĐƯỢC XÁO TRỘN ĐÁP ÁN ĐỀU NHAU (A, B, C, D) VÀ THÊM GIẢI THÍCH CHI TIẾT
+    =================================================================================================*/
+    const de1_data = [
+        // PHẦN I: TRẮC NGHIỆM
+        { 
+            id: "d1_1", type: "single", question: "Câu 1: Trong lĩnh vực y học, AI được sử dụng để làm gì đối với hình ảnh y tế?", 
+            options: ["A. Sản xuất thiết bị chụp X-quang.", "B. Thay thế bác sĩ phẫu thuật.", "C. Làm nổi bật những cấu trúc bất thường bên trong cơ thể.", "D. Xóa bỏ hoàn toàn hình ảnh y tế."], 
+            correct: 2, 
+            explanation: "AI hỗ trợ quét ảnh y tế (như X-quang, MRI) để tìm ra và làm nổi bật các khối u hoặc dấu hiệu bất thường mà mắt thường có thể bỏ sót." 
+        },
+        { 
+            id: "d1_2", type: "single", question: "Câu 2: Việc phát triển các phương tiện tự lái và quản lí giao thông thông minh là ứng dụng của AI trong lĩnh vực nào?", 
+            options: ["A. Sản xuất công nghiệp.", "B. Giao thông vận tải.", "C. Tài chính, ngân hàng.", "D. Nông nghiệp."], 
+            correct: 1, 
+            explanation: "Xe tự lái và hệ thống điều tiết đèn tín hiệu chống kẹt xe là những ứng dụng tiêu biểu nhất của AI trong Giao thông vận tải." 
+        },
+        { 
+            id: "d1_3", type: "single", question: "Câu 3: Trong tài chính - ngân hàng, AI hỗ trợ tự động hoá công việc nào sau đây?", 
+            options: ["A. Cập nhật chứng từ, hoá đơn vào cơ sở dữ liệu.", "B. Chế tạo linh kiện điện tử.", "C. Trồng cây nông nghiệp.", "D. Điều khiển phương tiện giao thông."], 
+            correct: 0, 
+            explanation: "Ngân hàng dùng AI (nhận dạng chữ viết, xử lý ảnh) để tự động đọc thông tin trên hóa đơn, giấy tờ và cập nhật vào hệ thống thay vì nhập thủ công." 
+        },
+        { 
+            id: "d1_4", type: "single", question: "Câu 4: Trong nông nghiệp, AI giúp người nông dân tối ưu hoá quy trình nào?", 
+            options: ["A. Phân tích thị trường chứng khoán.", "B. Lắp ráp máy kéo.", "C. Quản lí chuỗi cung ứng công nghiệp.", "D. Chăm sóc vật nuôi và cây trồng."], 
+            correct: 3, 
+            explanation: "AI phân tích dữ liệu đất đai, thời tiết để giúp nông dân tưới nước, bón phân tự động, từ đó tối ưu hóa việc chăm sóc cây trồng, vật nuôi." 
+        },
+        { 
+            id: "d1_5", type: "single", question: "Câu 5: Theo bài học, các thành tựu hiện tại của AI vẫn chỉ hạn chế trong phạm vi nào?", 
+            options: ["A. Trí tuệ nhân tạo hẹp / Trí tuệ nhân tạo yếu.", "B. Trí tuệ nhân tạo mạnh.", "C. Trí tuệ nhân tạo tổng quát.", "D. Siêu trí tuệ nhân tạo."], 
+            correct: 0, 
+            explanation: "Dù rất tiên tiến, AI hiện nay (kể cả ChatGPT) vẫn chỉ là AI hẹp vì chúng chỉ giỏi trong những nhiệm vụ cụ thể được huấn luyện, chưa có tư duy tổng quát." 
+        },
+        { 
+            id: "d1_6", type: "single", question: "Câu 6: Mục tiêu dài hạn trong nghiên cứu và phát triển AI là xây dựng thành công loại hình AI nào?", 
+            options: ["A. Trí tuệ nhân tạo yếu.", "B. Trí tuệ nhân tạo hẹp.", "C. Trí tuệ nhân tạo tổng quát / Trí tuệ nhân tạo mạnh.", "D. Trợ lí ảo cơ bản."], 
+            correct: 2, 
+            explanation: "Đích đến cuối cùng của khoa học máy tính là tạo ra Trí tuệ nhân tạo tổng quát (AI mạnh) - một hệ thống có năng lực trí tuệ đa năng như con người." 
+        },
+        { 
+            id: "d1_7", type: "single", question: "Câu 7: Lĩnh vực nghiên cứu tập trung vào xây dựng các thuật toán tự động tạo ra nội dung (hình ảnh, âm thanh, văn bản) được gọi là gì?", 
+            options: ["A. Trí tuệ nhân tạo mạnh.", "B. AI tạo sinh.", "C. Internet vạn vật (IoT).", "D. Xử lí ngôn ngữ tự nhiên."], 
+            correct: 1, 
+            explanation: "AI tạo sinh (Generative AI) là loại AI chuyên dùng để sáng tạo ra nội dung mới như viết văn, vẽ tranh, soạn nhạc." 
+        },
+        { 
+            id: "d1_8", type: "single", question: "Câu 8: Nguy cơ nào xảy ra khi AI có khả năng tự động hoá nhiều công việc của con người?", 
+            options: ["A. Tăng diện tích đất nông nghiệp.", "B. Giảm tốc độ đường truyền mạng.", "C. Cải thiện quyền riêng tư.", "D. Áp lực thất nghiệp."], 
+            correct: 3, 
+            explanation: "Vì AI có thể làm việc không biết mệt, nhanh và chính xác nên rất nhiều công nhân, nhân viên văn phòng phải đối mặt với nguy cơ bị máy móc thay thế." 
+        },
+        { 
+            id: "d1_9", type: "single", question: "Câu 9: Việc các ứng dụng AI hiện nay phần lớn là các 'hộp đen' gây ra cảnh báo nào sau đây?", 
+            options: ["A. Khả năng thiếu minh bạch, khó giải trình.", "B. Tăng nguy cơ quyền riêng tư bị lạm dụng.", "C. Áp lực thất nghiệp.", "D. Rủi ro về an ninh vũ trang."], 
+            correct: 0, 
+            explanation: "'Hộp đen' nghĩa là chúng ta thấy đầu vào và đầu ra, nhưng không hiểu được quá trình AI suy luận bên trong, dẫn đến việc thiếu minh bạch khi cần giải trình." 
+        },
+        { 
+            id: "d1_10", type: "single", question: "Câu 10: Sự kết hợp giữa AI và IoT (Internet vạn vật) được ứng dụng chủ yếu để làm gì?", 
+            options: ["A. Giám sát môi trường, theo dõi biến đổi khí hậu.", "B. Sáng tác âm nhạc.", "C. Mô phỏng hiện tượng xã hội.", "D. Cá nhân hoá nền tảng học tập."], 
+            correct: 0, 
+            explanation: "IoT thu thập dữ liệu từ hàng ngàn cảm biến ngoài môi trường, sau đó chuyển cho AI phân tích để dự báo thời tiết, cháy rừng hoặc ô nhiễm." 
+        },
+        { 
+            id: "d1_11", type: "single", question: "Câu 11: Nhờ sự phát triển của công nghệ Học máy, nhiều hệ chuyên gia hiện nay có khả năng làm gì?", 
+            options: ["A. Chỉ hoạt động theo các luật do con người lập trình cứng.", "B. Ngừng hoạt động khi gặp dữ liệu mới.", "C. Tự học từ dữ liệu để tự hình thành các luật và tri thức.", "D. Tự động chuyển đổi thành robot hình người."], 
+            correct: 2, 
+            explanation: "Thay vì con người phải nạp từng quy tắc thủ công, Machine Learning (Học máy) giúp AI tự động rút ra các quy luật từ đống dữ liệu khổng lồ." 
+        },
+        { 
+            id: "d1_12", type: "single", question: "Câu 12: Trong giáo dục, làm thế nào AI giúp các nền tảng học trực tuyến hỗ trợ người học tốt hơn?", 
+            options: ["A. Bắt buộc mọi học sinh học cùng một lộ trình.", "B. Theo dõi và đề xuất nội dung phù hợp (cá nhân hoá) cho người học.", "C. Tự động làm bài thi hộ học sinh.", "D. Xóa bỏ vai trò của giáo viên trên lớp."], 
+            correct: 1, 
+            explanation: "AI có khả năng phân tích điểm mạnh, điểm yếu của từng em để đưa ra bài tập, bài giảng thiết kế riêng (cá nhân hóa) cho vừa sức." 
+        },
+        { 
+            id: "d1_13", type: "single", question: "Câu 13: Tại sao nhiều ứng dụng AI lại làm tăng nguy cơ xâm phạm quyền riêng tư?", 
+            options: ["A. Vì chúng hoạt động dựa vào việc thu thập một lượng lớn dữ liệu cá nhân.", "B. Vì chúng luôn công khai mọi dữ liệu lên mạng.", "C. Vì chúng không có khả năng bảo mật phần cứng.", "D. Vì chúng là Trí tuệ nhân tạo hẹp."], 
+            correct: 0, 
+            explanation: "Để AI 'thông minh', các nhà phát triển phải liên tục 'cho nó ăn' dữ liệu (hình ảnh, giọng nói, thói quen lướt web...), dẫn đến rủi ro lộ thông tin cá nhân." 
+        },
+        { 
+            id: "d1_14", type: "single", question: "Câu 14: Hậu quả nghiêm trọng nhất của việc AI đưa ra quyết định không chính xác trong lĩnh vực y tế là gì?", 
+            options: ["A. Lãng phí giấy mực in ấn.", "B. Máy tính bị nhiễm virus.", "C. Không thể phân tích dữ liệu thị trường.", "D. Chẩn đoán sai về tình trạng bệnh tật, gây nguy hại cho con người."], 
+            correct: 3, 
+            explanation: "Trong y tế, tính mạng con người là quan trọng nhất. Nếu AI phân tích ảnh và kết luận sai bệnh, hậu quả sẽ cực kỳ nghiêm trọng." 
+        },
+        { 
+            id: "d1_15", type: "single", question: "Câu 15: Trong tài chính ngân hàng, việc AI phân tích và xử lí dữ liệu hiệu quả có mục đích chính là gì?", 
+            options: ["A. Lái xe chở tiền tự động.", "B. Sáng tác nhạc chờ cho tổng đài.", "C. Hỗ trợ quyết định đầu tư, phát triển và ngăn chặn gian lận.", "D. Thiết kế đồ hoạ 3D cho ngân hàng."], 
+            correct: 2, 
+            explanation: "AI quét hàng triệu giao dịch mỗi giây để phát hiện kẻ gian đánh cắp thẻ, đồng thời tư vấn xu hướng thị trường cho nhà đầu tư." 
+        },
+        { 
+            id: "d1_16", type: "single", question: "Câu 16: Theo bài học, các mô hình AI tạo sinh thường được ứng dụng rộng rãi trong những lĩnh vực nào?", 
+            options: ["A. Nghệ thuật, giải trí, quảng cáo và trò chơi.", "B. Phẫu thuật tim mạch.", "C. Điều khiển không lưu.", "D. Sản xuất linh kiện ô tô."], 
+            correct: 0, 
+            explanation: "AI tạo sinh (như Midjourney, ChatGPT) rất giỏi trong việc tạo ra kịch bản, hình ảnh, bài hát, nên đặc biệt được ưa chuộng trong ngành giải trí, truyền thông." 
+        },
+        { 
+            id: "d1_17", type: "single", question: "Câu 17: Đặc điểm cốt lõi nào giúp phân biệt Trí tuệ nhân tạo mạnh (tổng quát) với Trí tuệ nhân tạo hẹp?", 
+            options: ["A. Không cần sử dụng điện năng.", "B. Có năng lực trí tuệ như con người, biết áp dụng tri thức chéo lĩnh vực.", "C. Chỉ có thể chơi cờ.", "D. Chỉ xử lí được văn bản, không xử lí được hình ảnh."], 
+            correct: 1, 
+            explanation: "AI mạnh có thể tự học cách đánh đàn rồi dùng tư duy logic đó để giải quyết một bài toán vật lý, tức là khả năng suy nghĩ đa năng như con người." 
+        },
+        { 
+            id: "d1_18", type: "single", question: "Câu 18: Xử lí ngôn ngữ tự nhiên và thị giác máy tính góp phần phát triển ứng dụng nào sau đây?", 
+            options: ["A. Cập nhật chứng từ ngân hàng.", "B. Lắp ráp dây chuyền tự động.", "C. Dự đoán mùa vụ nông nghiệp.", "D. Dịch thuật tự động và hỗ trợ khách hàng."], 
+            correct: 3, 
+            explanation: "NLP (Xử lí ngôn ngữ tự nhiên) là công nghệ lõi để máy tính nghe, hiểu và nói chuyện lại với con người (như Chatbot, Google Dịch)." 
+        },
+        { 
+            id: "d1_19", type: "single", question: "Câu 19: Trong công nghiệp, vai trò của AI là gì?", 
+            options: ["A. Đánh giá kết quả học tập của công nhân.", "B. Tự động hóa quá trình từ chế tạo, lắp ráp đến quản lí chuỗi cung ứng.", "C. Trồng trọt và chăn nuôi tự động.", "D. Mô hình hóa hiện tượng nhân học."], 
+            correct: 1, 
+            explanation: "AI điều khiển các cánh tay robot trong nhà máy, đồng thời tính toán số lượng nguyên vật liệu cần mua để việc sản xuất không bị gián đoạn." 
+        },
+        { 
+            id: "d1_20", type: "single", question: "Câu 20: Một bệnh viện sử dụng phần mềm quét ảnh X-quang để tự động khoanh đỏ các vùng có khối u nhỏ mà mắt thường dễ bỏ sót. Đây là ứng dụng AI trong lĩnh vực nào?", 
+            options: ["A. Giáo dục.", "B. Sản xuất.", "C. Y học và chăm sóc sức khoẻ.", "D. Nông nghiệp."], 
+            correct: 2, 
+            explanation: "Đây là ví dụ kinh điển của việc dùng Thị giác máy tính phân tích hình ảnh lâm sàng, thuộc về lĩnh vực Y tế." 
+        },
+        { 
+            id: "d1_21", type: "single", question: "Câu 21: Bạn tải một hóa đơn định dạng ảnh lên ứng dụng ngân hàng, ứng dụng tự động điền số tiền và số tài khoản để bạn chuyển khoản. Công nghệ nào đang được áp dụng?", 
+            options: ["A. Tự động hoá cập nhật chứng từ trong tài chính.", "B. Quản lí chuỗi cung ứng.", "C. Hệ thống định tuyến giao thông.", "D. IoT giám sát môi trường."], 
+            correct: 0, 
+            explanation: "App ngân hàng dùng AI để trích xuất văn bản (OCR) từ hình ảnh hóa đơn, giúp tự động hóa khâu điền số liệu chuyển khoản." 
+        },
+        { 
+            id: "d1_22", type: "single", question: "Câu 22: Học sinh thường xuyên sai các bài Toán phân số. Hệ thống tự động tạo ra một lộ trình ôn tập riêng với video hướng dẫn lại phần phân số cho học sinh này. Hệ thống đang áp dụng AI trong lĩnh vực:", 
+            options: ["A. Giáo dục (nền tảng học tập cá nhân hoá).", "B. Tài chính (hỗ trợ quyết định đầu tư).", "C. AI tạo sinh (vẽ tranh).", "D. Giao thông (định tuyến phương tiện)."], 
+            correct: 0, 
+            explanation: "Cung cấp bài học phù hợp với đúng điểm yếu của từng cá nhân chính là tính năng 'Học tập cá nhân hóa' trong Giáo dục." 
+        },
+        { 
+            id: "d1_23", type: "single", question: "Câu 23: Trang trại bác An lắp hệ thống tự động phân tích độ ẩm đất, thời tiết để tưới nước vào lúc 5 giờ sáng với lượng nước vừa đủ. Bác An đang ứng dụng AI trong lĩnh vực nào?", 
+            options: ["A. Sản xuất công nghiệp.", "B. Nông nghiệp.", "C. Tài chính ngân hàng.", "D. Mô phỏng xã hội học."], 
+            correct: 1, 
+            explanation: "Hệ thống tưới tiêu thông minh dựa trên cảm biến đất đai và dự báo thời tiết là ứng dụng tuyệt vời để tối ưu hóa Nông nghiệp." 
+        },
+        { 
+            id: "d1_24", type: "single", question: "Câu 24: Một công ty quảng cáo sử dụng Midjourney và ChatGPT để tự động viết kịch bản và vẽ hình minh họa cho chiến dịch marketing mới. Công ty đang sử dụng công nghệ nào?", 
+            options: ["A. Internet vạn vật (IoT).", "B. Quản lí chuỗi cung ứng.", "C. Trí tuệ nhân tạo tổng quát.", "D. AI tạo sinh."], 
+            correct: 3, 
+            explanation: "Cứ phần mềm nào tự động 'sáng tác' ra nội dung mới tinh (văn bản, ảnh, nhạc) thì đều được xếp vào AI tạo sinh (Generative AI)." 
+        },
+        { 
+            id: "d1_25", type: "single", question: "Câu 25: Hệ thống đèn giao thông tại ngã tư tự động kéo dài thời gian đèn xanh khi camera nhận thấy hướng đó đang ùn tắc. Đây là ví dụ về:", 
+            options: ["A. Quản lí giao thông thông minh.", "B. Định tuyến phương tiện cá nhân.", "C. Trí tuệ nhân tạo mạnh.", "D. IoT giám sát khí hậu."], 
+            correct: 0, 
+            explanation: "Camera quan sát lưu lượng xe và AI điều chỉnh nhịp đèn linh hoạt giúp đường phố thông thoáng hơn, đó là Quản lí giao thông thông minh." 
+        },
+        { 
+            id: "d1_26", type: "single", question: "Câu 26: Một hệ thống AI chẩn đoán bệnh đã nhận diện sai nốt ruồi lành tính thành khối u ác tính, khiến bệnh nhân phải phẫu thuật oan. Tình huống phản ánh cảnh báo nào của AI?", 
+            options: ["A. Áp lực thất nghiệp.", "B. Ảnh hưởng quyền riêng tư.", "C. Rủi ro về an toàn do quyết định không chính xác.", "D. Đạt đến mức siêu trí tuệ."], 
+            correct: 2, 
+            explanation: "Lỗi nhận diện của máy móc khi áp dụng vào thực tế y tế/giao thông sẽ trực tiếp gây rủi ro về mặt an toàn cho con người." 
+        },
+        { 
+            id: "d1_27", type: "single", question: "Câu 27: Nhà máy dệt may đưa vào sử dụng robot AI để cắt vải và đóng gói, dẫn đến việc cắt giảm 200 công nhân thủ công. Đây là minh chứng cho cảnh báo nào?", 
+            options: ["A. Áp lực thất nghiệp.", "B. Khả năng thiếu minh bạch.", "C. Ảnh hưởng quyền riêng tư.", "D. Hệ thống là 'hộp đen'."], 
+            correct: 0, 
+            explanation: "Máy móc thông minh thay thế sức lao động chân tay khiến người lao động mất việc làm, tạo ra áp lực thất nghiệp lớn." 
+        },
+        { 
+            id: "d1_28", type: "single", question: "Câu 28: Phần mềm ngân hàng từ chối hồ sơ vay vốn, nhưng nhân viên kiểm tra không thể biết được phần mềm đã dựa vào tiêu chí nào để từ chối. Đây là ví dụ cho cảnh báo nào?", 
+            options: ["A. Quyền riêng tư bị lạm dụng.", "B. Khả năng thiếu minh bạch (hộp đen).", "C. Rủi ro an ninh vũ trang.", "D. Trí tuệ nhân tạo mạnh."], 
+            correct: 1, 
+            explanation: "Thuật toán quyết định phức tạp đến mức con người không hiểu tại sao nó lại chọn kết quả đó, đây chính là định nghĩa của 'Hộp đen' (Black Box)." 
+        },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Việc ứng dụng AI trong Y tế và Giáo dục đang mang lại những thay đổi lớn lao.", items: [
+            { id: "a", text: "a)  AI được sử dụng để cải thiện chất lượng hình ảnh y tế và đo đạc các chỉ số lâm sàng.", correct: true, expl: "Chính xác, AI dùng thị giác máy để làm rõ nét ảnh X-quang, MRI." },
+            { id: "b", text: "b)  Trong giáo dục, các trợ lí ảo ứng dụng AI không thể trả lời câu hỏi của học sinh mà chỉ dùng để điểm danh.", correct: false, expl: "Trợ lí ảo trong giáo dục được thiết kế để hỏi đáp, giảng bài và cung cấp tài liệu cho học sinh." },
+            { id: "c", text: "c)  Việc một trường học triển khai hệ thống học trực tuyến có khả năng theo dõi tiến độ và gợi ý bài tập nâng cao cho học sinh giỏi là ứng dụng cá nhân hóa học tập của AI.", correct: true, expl: "Hệ thống tự nhận diện học sinh giỏi và giao bài phù hợp là tính năng cốt lõi của học tập cá nhân hóa." },
+            { id: "d", text: "d)  Dù phát triển mạnh, AI trong y tế vẫn tiềm ẩn rủi ro an toàn nếu phần mềm đưa ra chẩn đoán sai về tình trạng bệnh tật của bệnh nhân.", correct: true, expl: "Lỗi thuật toán trong y khoa luôn tiềm ẩn nguy cơ gây nguy hiểm cho sức khỏe con người." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Công nghệ AI tạo sinh (Generative AI) và ứng dụng thực tế.", items: [
+            { id: "a", text: "a)  AI tạo sinh là lĩnh vực tập trung vào việc tạo ra nội dung như hình ảnh, âm thanh, văn bản một cách tự động.", correct: true, expl: "Đúng định nghĩa của AI tạo sinh." },
+            { id: "b", text: "b)  Các mô hình AI hiện tại không thể sáng tác âm nhạc hay hội họa theo các phong cách khác nhau.", correct: false, expl: "AI hiện tại vẽ tranh và soạn nhạc cực kỳ xuất sắc theo vô số phong cách nghệ thuật khác nhau." },
+            { id: "c", text: "c)  Một nhóm phát triển game sử dụng AI để tự động tạo ra giọng nói cho các nhân vật NPC trong trò chơi là một ứng dụng của AI tạo sinh.", correct: true, expl: "Việc 'tạo ra' giọng nói mới hoàn toàn chính là ứng dụng đặc thù của AI tạo sinh âm thanh." },
+            { id: "d", text: "d)  Vì AI tạo sinh có khả năng sáng tạo ra các bức tranh tuyệt đẹp, nên nó đã được xếp vào loại Trí tuệ nhân tạo tổng quát (mạnh).", correct: false, expl: "Midjourney hay ChatGPT dù sáng tạo giỏi nhưng chỉ làm được đúng nhiệm vụ của nó, nên vẫn thuộc nhóm AI hẹp." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Những cảnh báo và nguy cơ khi phát triển Trí tuệ nhân tạo.", items: [
+            { id: "a", text: "a)  Một trong những nguy cơ lớn của AI là gây ra áp lực thất nghiệp do tự động hóa nhiều công việc.", correct: true, expl: "Tự động hóa thay thế sức người là nguy cơ rõ rệt nhất hiện nay." },
+            { id: "b", text: "b)  Thuật ngữ 'hộp đen' trong AI chỉ việc các phần cứng máy tính được sơn màu đen để bảo mật.", correct: false, expl: "Hộp đen nghĩa là thuật toán bên trong quá phức tạp, con người không thể hiểu rõ quá trình suy luận của nó, chứ không liên quan đến màu sơn." },
+            { id: "c", text: "c)  Một ứng dụng mạng xã hội bí mật thu thập dữ liệu lịch sử tìm kiếm, ghi âm cuộc gọi của người dùng để huấn luyện AI mà không xin phép là ví dụ về nguy cơ lạm dụng quyền riêng tư.", correct: true, expl: "Việc thu thập dữ liệu không xin phép vi phạm nghiêm trọng luật bảo vệ quyền riêng tư cá nhân." },
+            { id: "d", text: "d)  Việc một hệ thống vũ khí tự động nhận diện sai mục tiêu và tấn công nhầm vào khu dân sự là minh chứng rõ nhất cho rủi ro về an ninh, an toàn của AI.", correct: true, expl: "Lỗi nhận diện của vũ khí tự động sẽ mang lại hậu quả thảm khốc về an toàn sinh mạng." }
+        ]}
+    ];
+
+    const de2_data = [
+        // PHẦN I: TRẮC NGHIỆM
+        { 
+            id: "d2_1", type: "single", question: "Câu 1: Theo bài học, AI được sử dụng để mô phỏng và mô hình hoá hiện tượng trong lĩnh vực nào?", 
+            options: ["A. Y tế lâm sàng.", "B. Công nghiệp nặng.", "C. Xã hội và nhân học.", "D. Khai thác khoáng sản."], 
+            correct: 2, 
+            explanation: "Các nhà khoa học dùng AI để chạy các mô hình giả lập, dự đoán hành vi đám đông hoặc các hiện tượng trong Xã hội học và Nhân học." 
+        },
+        { 
+            id: "d2_2", type: "single", question: "Câu 2: Việc tự động tạo ra hình ảnh, âm thanh, văn bản là chức năng cốt lõi của loại hình AI nào?", 
+            options: ["A. Hệ chuyên gia y tế.", "B. AI tổng quát.", "C. Internet vạn vật.", "D. AI tạo sinh."], 
+            correct: 3, 
+            explanation: "Sinh ra nội dung mới là điểm mạnh lớn nhất của công nghệ Generative AI (AI tạo sinh)." 
+        },
+        { 
+            id: "d2_3", type: "single", question: "Câu 3: Trong sản xuất, AI hỗ trợ tối ưu hóa quy trình trồng trọt, tưới tiêu thuộc phân nhánh nào?", 
+            options: ["A. Nông nghiệp.", "B. Tài chính.", "C. Công nghiệp.", "D. Giao thông."], 
+            correct: 0, 
+            explanation: "Trồng trọt, chăn nuôi, tưới tiêu bằng công nghệ cao luôn thuộc về lĩnh vực Nông nghiệp thông minh." 
+        },
+        { 
+            id: "d2_4", type: "single", question: "Câu 4: AI mạnh / AI tổng quát có năng lực trí tuệ tương đương với đối tượng nào?", 
+            options: ["A. Hệ thống động cơ ô tô.", "B. Con người.", "C. Siêu máy tính thời tiết.", "D. Thực vật."], 
+            correct: 1, 
+            explanation: "Mục tiêu của AI mạnh là có thể nhận thức, suy luận và học hỏi mọi thứ tương đương với bộ não con người." 
+        },
+        { 
+            id: "d2_5", type: "single", question: "Câu 5: Hai công nghệ nào kết hợp với nhau để giám sát môi trường và theo dõi biến đổi khí hậu?", 
+            options: ["A. NLP và hệ chuyên gia.", "B. Thị giác máy và Tài chính.", "C. IoT và AI.", "D. AI tạo sinh và Y tế."], 
+            correct: 2, 
+            explanation: "Mạng lưới cảm biến Internet vạn vật (IoT) thu thập số liệu, còn AI sẽ làm nhiệm vụ phân tích các số liệu đó để đưa ra dự báo." 
+        },
+        { 
+            id: "d2_6", type: "single", question: "Câu 6: Hệ thống AI định tuyến phương tiện vận tải thuộc lĩnh vực ứng dụng nào?", 
+            options: ["A. Giao thông vận tải.", "B. Y học.", "C. Nông nghiệp.", "D. Giáo dục."], 
+            correct: 0, 
+            explanation: "Chỉ đường, tìm đường đi ngắn nhất, tránh kẹt xe... là bài toán định tuyến trong Giao thông vận tải." 
+        },
+        { 
+            id: "d2_7", type: "single", question: "Câu 7: Việc nhiều ứng dụng AI thu thập lượng lớn dữ liệu cá nhân dẫn đến nguy cơ cảnh báo nào?", 
+            options: ["A. Thiếu minh bạch (hộp đen).", "B. Tình trạng thất nghiệp.", "C. Chẩn đoán sai bệnh tật.", "D. Ảnh hưởng quyền riêng tư."], 
+            correct: 3, 
+            explanation: "Khi dữ liệu hình ảnh, giọng nói, tin nhắn của bạn bị AI thu thập để huấn luyện, quyền riêng tư của bạn đang bị đe dọa trực tiếp." 
+        },
+        { 
+            id: "d2_8", type: "single", question: "Câu 8: Cảnh báo 'Quyết định đưa ra có thể không chính xác dẫn đến tấn công mục tiêu dân sự' thuộc về rủi ro nào?", 
+            options: ["A. Rủi ro về an ninh, an toàn.", "B. Rủi ro mất việc làm.", "C. Rủi ro lạm dụng dữ liệu.", "D. Rủi ro hộp đen."], 
+            correct: 0, 
+            explanation: "Khi AI được áp dụng vào vũ khí quân sự, một quyết định sai lầm sẽ trực tiếp đe dọa sự sống, tức là rủi ro về an ninh và an toàn." 
+        },
+        { 
+            id: "d2_9", type: "single", question: "Câu 9: Trong công nghiệp, AI giúp tự động hóa quá trình chế tạo, lắp ráp đến khâu nào?", 
+            options: ["A. Quản lí chuỗi cung ứng.", "B. Phân tích tài chính.", "C. Chăm sóc vật nuôi.", "D. Ra đề thi trực tuyến."], 
+            correct: 0, 
+            explanation: "Tại nhà máy, AI điều khiển cánh tay robot lắp ráp và tính toán lượng nguyên liệu xuất nhập kho, tạo thành quy trình quản lý chuỗi cung ứng khép kín." 
+        },
+        { 
+            id: "d2_10", type: "single", question: "Câu 10: Các trợ lí ảo trong lĩnh vực Giáo dục có vai trò gì?", 
+            options: ["A. Cấp bằng tốt nghiệp tự động.", "B. Hỗ trợ học sinh, giáo viên trả lời câu hỏi và cung cấp tài liệu.", "C. Ép buộc học sinh học theo một giáo trình duy nhất.", "D. Tự động chấm điểm mọi môn học mà không cần giáo viên."], 
+            correct: 1, 
+            explanation: "Trợ lí ảo đóng vai trò như một gia sư 24/7, giúp giải đáp thắc mắc và gợi ý tài liệu học tập ngay lập tức cho các em." 
+        },
+        { 
+            id: "d2_11", type: "single", question: "Câu 11: Trong lĩnh vực ngân hàng, vì sao hệ thống AI có khả năng ngăn chặn gian lận tốt?", 
+            options: ["A. Vì nó tự động khóa mọi thẻ tín dụng.", "B. Vì khả năng phân tích, xử lí dữ liệu khổng lồ một cách hiệu quả để tìm ra bất thường.", "C. Vì nó kết nối với camera giao thông.", "D. Vì hệ thống không bao giờ cho khách hàng vay tiền."], 
+            correct: 1, 
+            explanation: "Nhờ sức mạnh điện toán, AI có thể quét hàng triệu giao dịch mỗi giây và ngay lập tức nhận ra một giao dịch có dấu hiệu bất thường để chặn lại." 
+        },
+        { 
+            id: "d2_12", type: "single", question: "Câu 12: Khái niệm 'hộp đen' trong AI được hiểu đúng nhất là gì?", 
+            options: ["A. Thiết bị lưu trữ dữ liệu máy bay.", "B. Khó khăn trong việc hiểu các quyết định của AI được đưa ra như thế nào.", "C. Phần mềm không có giao diện đồ họa.", "D. Khả năng bảo mật thông tin tuyệt đối của AI."], 
+            correct: 1, 
+            explanation: "Các mạng nơ-ron nhân tạo của AI quá phức tạp, đến mức các lập trình viên cũng không thể giải thích cặn kẽ tại sao AI lại cho ra một kết quả cụ thể." 
+        },
+        { 
+            id: "d2_13", type: "single", question: "Câu 13: Sự thay đổi lớn của Hệ chuyên gia hiện đại nhờ vào công nghệ Học máy (Machine Learning) là gì?", 
+            options: ["A. Giảm bớt số lượng luật suy diễn.", "B. Có khả năng tự học từ dữ liệu để tự hình thành luật và tri thức.", "C. Không cần sử dụng dữ liệu để chạy.", "D. Chỉ hoạt động trong lĩnh vực nông nghiệp."], 
+            correct: 1, 
+            explanation: "Các hệ chuyên gia cũ phải nạp luật bằng tay, còn hệ chuyên gia thế hệ mới nhờ Học máy có thể tự động rút ra quy luật từ kho dữ liệu." 
+        },
+        { 
+            id: "d2_14", type: "single", question: "Câu 14: Việc áp dụng tri thức từ lĩnh vực này sang lĩnh vực khác một cách linh hoạt là đặc điểm của:", 
+            options: ["A. AI hẹp (Narrow AI).", "B. AI mạnh (General AI).", "C. AI tạo sinh (Generative AI).", "D. Hệ chuyên gia y học."], 
+            correct: 1, 
+            explanation: "Đây là đặc điểm tư duy bậc cao, chỉ có Trí tuệ nhân tạo tổng quát (mạnh) mới có khả năng làm được." 
+        },
+        { 
+            id: "d2_15", type: "single", question: "Câu 15: Ứng dụng 'hỗ trợ khách hàng bằng ngôn ngữ tự nhiên' (Chatbot chăm sóc khách hàng) là thành tựu của công nghệ nào?", 
+            options: ["A. IoT giám sát môi trường.", "B. Phân tích chuỗi cung ứng.", "C. Xử lí ngôn ngữ tự nhiên (NLP).", "D. Mô hình hóa xã hội học."], 
+            correct: 2, 
+            explanation: "Chatbot muốn nhắn tin, đối đáp với khách hàng như người thật thì phải dùng công nghệ Xử lí ngôn ngữ tự nhiên (Natural Language Processing)." 
+        },
+        { 
+            id: "d2_16", type: "single", question: "Câu 16: AI gây ra áp lực thất nghiệp chủ yếu vì lí do nào?", 
+            options: ["A. Nó tự động khóa tài khoản máy tính của nhân viên.", "B. AI đòi hỏi nhân viên phải học lập trình nâng cao.", "C. Tiêu thụ quá nhiều điện năng trong nhà máy.", "D. Khả năng tự động hóa thay thế nhiều công việc của con người."], 
+            correct: 3, 
+            explanation: "Máy móc có thể làm thay các công việc lặp đi lặp lại hoặc văn phòng cơ bản nhanh hơn, rẻ hơn, khiến con người mất lợi thế cạnh tranh." 
+        },
+        { 
+            id: "d2_17", type: "single", question: "Câu 17: Khẳng định nào sau đây là ĐÚNG về thực trạng phát triển AI hiện nay?", 
+            options: ["A. Đã hoàn toàn đạt đến mức AI tổng quát.", "B. Vẫn chỉ hạn chế trong phạm vi AI hẹp/yếu.", "C. Đã giải quyết được hoàn toàn vấn đề hộp đen.", "D. Không mang lại bất kì rủi ro an toàn nào."], 
+            correct: 1, 
+            explanation: "Hiện tại, nhân loại chưa chế tạo được AI mạnh. Mọi AI từ xe tự lái đến ChatGPT đều là AI hẹp, chỉ xuất sắc trong một lĩnh vực cụ thể." 
+        },
+        { 
+            id: "d2_18", type: "single", question: "Câu 18: AI cải thiện Y tế bằng cách nào?", 
+            options: ["A. Tự động thanh toán viện phí bằng nhận dạng khuôn mặt.", "B. Chỉ chuyên về phẫu thuật thẩm mĩ.", "C. Hỗ trợ đưa ra các chẩn đoán và hướng điều trị chính xác.", "D. Ngăn chặn bác sĩ tiếp xúc với bệnh nhân."], 
+            correct: 2, 
+            explanation: "Phân tích dữ liệu y khoa, đọc ảnh X-quang để gợi ý chẩn đoán là đóng góp to lớn nhất của AI cho y học hiện nay." 
+        },
+        { 
+            id: "d2_19", type: "single", question: "Câu 19: Ứng dụng AI tạo sinh có thể dùng để làm gì trong lĩnh vực giải trí?", 
+            options: ["A. Tính toán doanh thu phòng vé.", "B. Lắp ráp đạo cụ sân khấu.", "C. Tự động lái xe đưa đón diễn viên.", "D. Sáng tác âm nhạc, hội họa tự động."], 
+            correct: 3, 
+            explanation: "Các ứng dụng AI tạo sinh có thể tự động viết kịch bản phim, vẽ nhân vật truyện tranh hoặc phổ nhạc dựa trên yêu cầu của người dùng." 
+        },
+        { 
+            id: "d2_20", type: "single", question: "Câu 20: Máy chủ ngân hàng phát hiện giao dịch thẻ ở nước ngoài lúc 2 giờ sáng và đóng băng thẻ vì nghi ngờ bị hack. Ứng dụng AI này nằm trong lĩnh vực:", 
+            options: ["A. Quản lí giao thông.", "B. Tài chính, ngân hàng.", "C. Sản xuất công nghiệp.", "D. Giáo dục đào tạo."], 
+            correct: 1, 
+            explanation: "Phát hiện giao dịch lạ và chống gian lận là nghiệp vụ đặc thù của khối Tài chính - Ngân hàng." 
+        },
+        { 
+            id: "d2_21", type: "single", question: "Câu 21: Một nhóm nghiên cứu dùng cảm biến đo nhiệt độ, khói tại rừng và truyền dữ liệu về hệ thống AI để dự báo cháy rừng. Họ đang sử dụng kết hợp công nghệ nào?", 
+            options: ["A. IoT và AI.", "B. AI và thị giác máy tính.", "C. AI tạo sinh và NLP.", "D. Hệ chuyên gia và chuỗi cung ứng."], 
+            correct: 0, 
+            explanation: "Cảm biến đo nhiệt độ, khói tạo thành mạng lưới Internet vạn vật (IoT), cung cấp dữ liệu đầu vào cho AI phân tích." 
+        },
+        { 
+            id: "d2_22", type: "single", question: "Câu 22: Gõ vào ô chat: 'Xin cho biết lịch thi học kì 1', ngay lập tức bot trả lời kèm file PDF. Đây là ứng dụng:", 
+            options: ["A. AI tạo sinh hình ảnh.", "B. Trợ lí ảo trong Giáo dục.", "C. Định tuyến phương tiện.", "D. Phân tích tài chính."], 
+            correct: 1, 
+            explanation: "Chatbot (trợ lí ảo) trên web trường học sử dụng AI xử lý ngôn ngữ để tự động trả lời các thắc mắc của học sinh." 
+        },
+        { 
+            id: "d2_23", type: "single", question: "Câu 23: Camera trên dây chuyền đóng gói chai nước lọc tự động chụp ảnh và gạt bỏ những chai đóng nắp bị lệch. Đây là ứng dụng AI trong:", 
+            options: ["A. Công nghiệp (kiểm tra chất lượng).", "B. Nông nghiệp (tối ưu hóa).", "C. Y học (hình ảnh bất thường).", "D. Giao thông (quản lí thông minh)."], 
+            correct: 0, 
+            explanation: "Sử dụng camera thị giác máy để soi lỗi sản phẩm trên băng chuyền là khâu kiểm soát chất lượng tự động trong nhà máy công nghiệp." 
+        },
+        { 
+            id: "d2_24", type: "single", question: "Câu 24: Ứng dụng Grab/Gojek sử dụng AI để tính toán đường đi tránh kẹt xe và chỉ định tài xế gần nhất cho khách. Đây là ví dụ của:", 
+            options: ["A. AI tạo sinh.", "B. Định tuyến phương tiện vận tải.", "C. Thiết kế hình ảnh giao thông.", "D. Mô hình xã hội học."], 
+            correct: 1, 
+            explanation: "Xác định đường đi ngắn nhất, rẻ nhất và phân công xe chính là bài toán Định tuyến phương tiện vận tải." 
+        },
+        { 
+            id: "d2_25", type: "single", question: "Câu 25: Để làm clip TikTok, Nam dùng AI viết bài thơ, sau đó dùng AI khác tạo giọng đọc diễn cảm bài thơ đó. Nam đang tận dụng thành tựu của:", 
+            options: ["A. AI hẹp lĩnh vực giao thông.", "B. Internet vạn vật (IoT).", "C. AI tạo sinh (văn bản và âm thanh).", "D. Trí tuệ nhân tạo mạnh."], 
+            correct: 2, 
+            explanation: "AI viết thơ (tạo văn bản) và AI lồng tiếng (tạo âm thanh) đều là những nhánh tiêu biểu của Trí tuệ nhân tạo tạo sinh." 
+        },
+        { 
+            id: "d2_26", type: "single", question: "Câu 26: Công ty phần mềm yêu cầu bạn nhập vân tay, khuôn mặt và ghi âm giọng nói để sử dụng ứng dụng giải trí. Việc này trực tiếp gây ra cảnh báo gì?", 
+            options: ["A. Áp lực thất nghiệp gia tăng.", "B. Rủi ro về quyết định tấn công dân sự.", "C. Nguy cơ quyền riêng tư bị lạm dụng.", "D. Ứng dụng là hộp đen không giải trình được."], 
+            correct: 2, 
+            explanation: "Việc thu thập quá nhiều dữ liệu sinh trắc học nhạy cảm tiềm ẩn nguy cơ dữ liệu cá nhân bị bán, rò rỉ hoặc lợi dụng vào mục đích xấu." 
+        },
+        { 
+            id: "d2_27", type: "single", question: "Câu 27: Phần mềm AI gợi ý bác sĩ tiêm thuốc A, nhưng phần mềm không có chức năng giải thích lí do suy luận. Đây là biểu hiện của rủi ro:", 
+            options: ["A. Khả năng thiếu minh bạch (hộp đen).", "B. Áp lực thất nghiệp.", "C. Lạm dụng quyền riêng tư.", "D. Tự động hóa chuỗi cung ứng."], 
+            correct: 0, 
+            explanation: "Khi hệ thống đưa ra kết quả nhưng không thể truy xuất ngược lại quá trình logic đã dẫn đến kết quả đó, nó được coi là một 'hộp đen' thiếu minh bạch." 
+        },
+        { 
+            id: "d2_28", type: "single", question: "Câu 28: Xe ô tô tự lái nhận diện sai một người đạp xe thành một chiếc nilon bay trên đường nên không giảm tốc độ, gây tai nạn. Đây là nguy cơ:", 
+            options: ["A. Xâm phạm quyền riêng tư.", "B. Áp lực thất nghiệp công nhân lái xe.", "C. AI đã có cảm xúc như con người.", "D. Rủi ro về an toàn do quyết định không chính xác."], 
+            correct: 3, 
+            explanation: "Sự cố thị giác máy tính nhận diện sai vật thể trên đường cao tốc là lỗi hệ thống đe dọa trực tiếp tới an toàn tính mạng." 
+        },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Trí tuệ nhân tạo có sự can thiệp mạnh mẽ vào Tài chính và Giao thông vận tải.", items: [
+            { id: "a", text: "a)  AI được sử dụng để phát triển các phương tiện tự lái và định tuyến phương tiện vận tải.", correct: true, expl: "Đây là 2 ứng dụng nền tảng của AI giúp thay đổi diện mạo ngành giao thông." },
+            { id: "b", text: "b)  Trong lĩnh vực ngân hàng, AI không có khả năng phân tích dữ liệu mà chỉ làm nhiệm vụ nhập liệu thủ công.", correct: false, expl: "AI ở ngân hàng cực kì mạnh mẽ trong việc phân tích biểu đồ tài chính, dự đoán rủi ro và ngăn chặn lừa đảo." },
+            { id: "c", text: "c)  Ứng dụng bản đồ trên điện thoại gợi ý cho bạn tuyến đường ít kẹt xe nhất để đi làm là một ví dụ về quản lí giao thông thông minh và định tuyến.", correct: true, expl: "Google Maps dùng AI phân tích mật độ xe cộ thời gian thực để liên tục vẽ lại đường đi tối ưu cho bạn." },
+            { id: "d", text: "d)  Việc hệ thống chấm điểm tín dụng AI đánh trượt hồ sơ vay vốn mà không đưa ra được tiêu chí rõ ràng là một ví dụ về rủi ro 'hộp đen'.", correct: true, expl: "Khi máy từ chối hồ sơ nhưng không giải thích được vì sao (như điểm nào thấp, tiêu chí nào trượt), nó thể hiện sự thiếu minh bạch của hộp đen." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Sản xuất, Nông nghiệp và xu hướng AI tạo sinh.", items: [
+            { id: "a", text: "a)  Trong công nghiệp, AI giúp tự động hóa quá trình chế tạo, lắp ráp và quản lí chuỗi cung ứng.", correct: true, expl: "Chính xác, các nhà máy thông minh hiện nay dựa hoàn toàn vào hệ sinh thái AI kết hợp robot." },
+            { id: "b", text: "b)  Lĩnh vực AI tạo sinh chỉ tập trung vào việc tính toán số liệu thống kê thu hoạch trong nông nghiệp.", correct: false, expl: "AI tạo sinh (Generative AI) chuyên tạo ra nội dung sáng tạo (văn bản, ảnh, video), không liên quan đến việc tính toán thống kê đơn thuần." },
+            { id: "c", text: "c)  Việc nhà kính trồng rau lắp đặt hệ thống tự động phân tích thời tiết và quyết định mở mái che, bật máy phun sương là ứng dụng AI trong nông nghiệp.", correct: true, expl: "AI giúp nhà kính phản ứng linh hoạt với điều kiện môi trường bên ngoài để bảo vệ rau củ." },
+            { id: "d", text: "d)  Một doanh nghiệp sử dụng AI tạo sinh để tự thiết kế poster quảng cáo và viết bài đăng Facebook là ứng dụng chính xác của công nghệ này.", correct: true, expl: "Các công cụ như Midjourney (vẽ) và ChatGPT (viết) đã giúp bộ phận Marketing tiết kiệm được vô số thời gian." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Mục tiêu phát triển AI và các rủi ro an toàn.", items: [
+            { id: "a", text: "a)  Các thành tựu hiện tại của AI đã vượt qua mức Trí tuệ nhân tạo hẹp và chính thức đạt đến Trí tuệ nhân tạo mạnh (tổng quát).", correct: false, expl: "Chúng ta hiện nay vẫn chỉ dừng lại ở kỉ nguyên của Trí tuệ nhân tạo hẹp, chưa có cỗ máy nào thực sự đạt được trí tuệ đa năng như con người." },
+            { id: "b", text: "b)  Một trong những rủi ro an toàn của AI là đưa ra quyết định sai lầm gây nguy hại trực tiếp cho con người.", correct: true, expl: "Lỗi chẩn đoán y tế, lỗi xe tự lái là những rủi ro hiện hữu rất đáng lo ngại." },
+            { id: "c", text: "c)  Một drone quân sự tự động nhận diện sai xe cứu thương thành phương tiện vũ trang và tấn công là minh chứng cho rủi ro an ninh của AI.", correct: true, expl: "Giao quyền ra quyết định sinh sát cho máy móc là một bài toán nhức nhối về đạo đức và an ninh." },
+            { id: "d", text: "d)  Để đạt được AI tổng quát nhanh chóng, các công ty công nghệ nên được quyền thu thập toàn bộ dữ liệu cá nhân của người dùng trên toàn cầu mà không cần bận tâm đến quyền riêng tư.", correct: false, expl: "Đạo đức AI quy định rõ việc phát triển công nghệ không bao giờ được phép chà đạp lên quyền riêng tư và thông tin cá nhân của người dùng." }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; // Trả về chuẩn 31 câu
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; // Tính là 1 câu đã làm khi chọn đủ 4 ý
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        // Khắc phục triệt để lỗi trễ trên máy tính: 
+        // Dùng requestAnimationFrame để đổi màu UI ngay lập tức trước khi đếm số câu.
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    // Sử dụng onchange cho input radio để đảm bảo máy tính nhận click ngay lập tức
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-lg font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-lg math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-lg ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-lg ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-lg">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-base font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-base text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-lg font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-base font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-base font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-base font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-base font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-lg math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200"><p class="text-base font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p><p class="text-black font-medium text-lg leading-loose math-scroll">${q.explanation}</p></div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-lg math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-base font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-lg text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+        
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-base">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-base">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-base">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-sm font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-sm">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-sm">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-sm">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-sm transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
