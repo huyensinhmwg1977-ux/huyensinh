@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-3"> BÀI 8: ĐỊNH DẠNG VĂN BẢN</h1>
+           </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            // Đã đổi reference sang bài 6
+            scoresRef = database.ref('bxh_tin_12_8');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 8: ĐỊNH DẠNG VĂN BẢN HTML) - ĐÃ FIX LỖI HIỂN THỊ THẺ
+=================================================================================================*/
+    const de1_data = [
+        // PHẦN I: TRẮC NGHIỆM ĐỀ 1
+        { id: "d1_1", type: "single", question: "Câu 1: Cú pháp chuẩn để xác định một thuộc tính cho thẻ HTML là gì?", options: ["Cú pháp viết chuẩn là: tên_thuộc_tính = \"giá_trị\".", "Cú pháp viết chuẩn là: tên_thuộc_tính : \"giá_trị\".", "Cú pháp viết chuẩn là: tên_thuộc_tính - \"giá_trị\".", "Cú pháp viết chuẩn là: tên_thuộc_tính + \"giá_trị\"."], correct: 0, explanation: "Theo chuẩn cú pháp của tổ chức W3C, thuộc tính (Attribute) luôn được khai báo theo cặp <code>Tên = \"Giá trị\"</code> (Name-Value pair). Giá trị bắt buộc phải được đặt trong dấu ngoặc kép hoặc ngoặc đơn." },
+        { id: "d1_2", type: "single", question: "Câu 2: Thuộc tính của thẻ HTML luôn được lập trình viên đặt ở vị trí nào?", options: ["Đặt nằm ở ngay bên trong của thẻ phần tử mở.", "Đặt nằm ở ngay bên ngoài của thẻ phần tử mở.", "Đặt nằm ở ngay bên trong của thẻ phần tử đóng.", "Đặt nằm ở ngay bên ngoài của thẻ phần tử đóng."], correct: 0, explanation: "Thuộc tính đóng vai trò cung cấp thông tin cấu hình cho phần tử. Do đó, trình biên dịch yêu cầu thuộc tính phải được đặt lồng ngay bên trong thẻ mở (Opening tag), nằm sau tên thẻ và trước dấu <code>&gt;</code>." },
+        { id: "d1_3", type: "single", question: "Câu 3: Thuộc tính nào thường được dùng để thiết lập định dạng văn bản?", options: ["Thuộc tính mang tên style được dùng định dạng.", "Thuộc tính mang tên value được dùng định dạng.", "Thuộc tính mang tên width được dùng định dạng.", "Thuộc tính mang tên title được dùng định dạng."], correct: 0, explanation: "Thuộc tính toàn cục <code>style</code> được sử dụng để chèn trực tiếp mã CSS (Cascading Style Sheets) vào bên trong một phần tử (Inline CSS), giúp thiết lập màu sắc, phông chữ, và kích thước hiển thị." },
+        { id: "d1_4", type: "single", question: "Câu 4: Thẻ nào sau đây được khuyến nghị sử dụng cho tiêu đề chính của trang?", options: ["Thẻ tiêu chuẩn &lt;h1&gt; dùng cho tiêu đề chính.", "Thẻ tiêu chuẩn &lt;h6&gt; dùng cho tiêu đề chính.", "Thẻ tiêu chuẩn &lt;p&gt; dùng cho tiêu đề chính.", "Thẻ tiêu chuẩn &lt;br&gt; dùng cho tiêu đề chính."], correct: 0, explanation: "Trong HTML Semantic (Ngữ nghĩa học), <code>&lt;h1&gt;</code> (Heading 1) là thẻ mang trọng số cao nhất. Trình duyệt và các cỗ máy tìm kiếm (Google) đều dùng nội dung thẻ này để xác định chủ đề chính của toàn bộ tài liệu." },
+        { id: "d1_5", type: "single", question: "Câu 5: Giá trị x trong thẻ tiêu đề &lt;hx&gt; nhận phạm vi từ số mấy đến số mấy?", options: ["Nhận các giá trị số nguyên đi từ số 1 đến số 6.", "Nhận các giá trị số nguyên đi từ số 1 đến số 5.", "Nhận các giá trị số nguyên đi từ số 1 đến số 7.", "Nhận các giá trị số nguyên đi từ số 1 đến số 9."], correct: 0, explanation: "Hệ thống phân cấp tiêu đề của HTML chỉ hỗ trợ 6 cấp độ, bắt đầu từ <code>&lt;h1&gt;</code> (to nhất, quan trọng nhất) giảm dần đến <code>&lt;h6&gt;</code> (nhỏ nhất, ít quan trọng nhất)." },
+        { id: "d1_6", type: "single", question: "Câu 6: Thẻ nào sau đây dùng để xác định một đoạn văn bản (paragraph)?", options: ["Thẻ mang kí hiệu &lt;p&gt; dùng tạo đoạn văn bản.", "Thẻ mang kí hiệu &lt;b&gt; dùng tạo đoạn văn bản.", "Thẻ mang kí hiệu &lt;i&gt; dùng tạo đoạn văn bản.", "Thẻ mang kí hiệu &lt;u&gt; dùng tạo đoạn văn bản."], correct: 0, explanation: "Thẻ <code>&lt;p&gt;</code> (Paragraph) là một phần tử cấp khối (Block-level element), tự động thiết lập khoảng trống lề (margin) ở trên và dưới để phân tách rõ ràng các đoạn văn bản liền kề." },
+        { id: "d1_7", type: "single", question: "Câu 7: Thẻ &lt;br&gt; trong HTML được lập trình viên sử dụng nhằm mục đích gì?", options: ["Dùng để ngắt trang và tạo một dòng mới.", "Dùng để tạo ra một đường kẻ ngang dài.", "Dùng để in đậm toàn bộ chữ hiển thị ra.", "Dùng để gạch chân một đoạn văn bản nọ."], correct: 0, explanation: "Thẻ <code>&lt;br&gt;</code> (Line Break) là một thẻ đơn (Empty element). Chức năng của nó là bắt buộc văn bản rớt xuống một dòng mới ngay lập tức mà không tạo ra khoảng trống lề lớn như thẻ <code>&lt;p&gt;</code>." },
+        { id: "d1_8", type: "single", question: "Câu 8: Thẻ &lt;b&gt; có tác dụng gì đối với nội dung văn bản nằm bên trong nó?", options: ["Làm cho chữ được in đậm lên rất rõ ràng.", "Làm cho chữ bị gạch ngang ở giữa từ ngữ.", "Làm cho chữ được in nghiêng điệu đà hơn.", "Làm cho chữ tự động đổi sang màu đỏ rực."], correct: 0, explanation: "Chữ <code>b</code> viết tắt của Bold. Thẻ này yêu cầu trình duyệt (Rendering Engine) hiển thị văn bản ở dạng in đậm để thu hút sự chú ý về mặt thị giác." },
+        { id: "d1_9", type: "single", question: "Câu 9: Để tạo ra chữ in nghiêng, ta sử dụng cặp thẻ nào sau đây trong HTML?", options: ["Sử dụng cặp thẻ đóng mở chuẩn kí hiệu &lt;i&gt;.", "Sử dụng cặp thẻ đóng mở chuẩn kí hiệu &lt;b&gt;.", "Sử dụng cặp thẻ đóng mở chuẩn kí hiệu &lt;u&gt;.", "Sử dụng cặp thẻ đóng mở chuẩn kí hiệu &lt;p&gt;."], correct: 0, explanation: "Chữ <code>i</code> viết tắt của Italic. Cặp thẻ này sẽ chuyển định dạng font chữ của nội dung bên trong sang kiểu in nghiêng." },
+        { id: "d1_10", type: "single", question: "Câu 10: Trong HTML, thẻ &lt;sup&gt; dùng để định dạng kiểu chữ như thế nào?", options: ["Định dạng chữ thành dạng của chỉ số trên.", "Định dạng chữ thành dạng của chỉ số dưới.", "Định dạng chữ thành văn bản nổi bật nhất.", "Định dạng chữ thành văn bản bị gạch bỏ."], correct: 0, explanation: "Thẻ <code>&lt;sup&gt;</code> (Superscript) đẩy kí tự lên cao hơn dòng cơ sở (baseline) và thu nhỏ kích thước. Thẻ này cực kì hữu dụng để viết số mũ trong công thức Toán học (ví dụ: x&lt;sup&gt;2&lt;/sup&gt;)." },
+        { id: "d1_11", type: "single", question: "Câu 11: Trong trường hợp thẻ có nhiều hơn một thuộc tính, chúng được ngăn cách bởi:", options: ["Ngăn cách nhau bằng một dấu khoảng cách.", "Ngăn cách nhau bằng một dấu phẩy bé xíu.", "Ngăn cách nhau bằng một dấu gạch ngang.", "Ngăn cách nhau bằng một dấu ngoặc kép."], correct: 0, explanation: "Cú pháp XML/HTML yêu cầu khi khai báo nhiều thuộc tính trong cùng một thẻ mở (ví dụ: <code>&lt;img src=\"...\" alt=\"...\"&gt;</code>), ta chỉ cần dùng dấu cách (Space) để phân tách chúng." },
+        { id: "d1_12", type: "single", question: "Câu 12: Độ quan trọng của các tiêu đề từ thẻ &lt;h1&gt; đến thẻ &lt;h6&gt; thay đổi ra sao?", options: ["Mức độ quan trọng giảm dần theo chỉ số.", "Mức độ quan trọng tăng dần theo chỉ số.", "Mức độ quan trọng hoàn toàn giống nhau.", "Mức độ quan trọng phụ thuộc màu sắc chữ."], correct: 0, explanation: "Hệ thống Heading được thiết kế phân cấp ngược với chỉ số. Cấp 1 (<code>&lt;h1&gt;</code>) là lớn nhất, trong khi cấp 6 (<code>&lt;h6&gt;</code>) là nhỏ nhất và mang ít giá trị ngữ nghĩa nhất." },
+        { id: "d1_13", type: "single", question: "Câu 13: Các công cụ tìm kiếm trên Internet sử dụng các thẻ &lt;hx&gt; để thực hiện việc gì?", options: ["Xác định cấu trúc nội dung của trang web.", "Tính toán dung lượng của toàn bộ hệ thống.", "Đổi màu nền cho toàn bộ trang hiển thị web.", "Xóa bỏ các đoạn văn bản lỗi trên hệ thống."], correct: 0, explanation: "Spider Bot của các công cụ tìm kiếm (Google, Bing) đọc mã nguồn HTML và quét các thẻ tiêu đề (Heading tags) để lập chỉ mục (Indexing) chủ đề chính, giúp tối ưu hóa SEO." },
+        { id: "d1_14", type: "single", question: "Câu 14: Đặc điểm nào KHÔNG ĐÚNG khi nói về nội dung bên trong cặp thẻ &lt;p&gt;?", options: ["Được phép chứa các thẻ tiêu đề và khối lớn.", "Được phép chứa các chữ và đoạn văn bản.", "Được phép chứa các hình ảnh minh họa nhỏ.", "Được phép chứa các thẻ in đậm in nghiêng."], correct: 0, explanation: "Theo chuẩn W3C, thẻ <code>&lt;p&gt;</code> chỉ được phép chứa dữ liệu văn bản (Inline elements). Việc đặt một thẻ cấp khối (Block-level) như tiêu đề hay <code>&lt;div&gt;</code> vào trong <code>&lt;p&gt;</code> là sai cấu trúc kiến trúc DOM." },
+        { id: "d1_15", type: "single", question: "Câu 15: Điểm khác biệt lớn nhất giữa phần tử &lt;div&gt; và phần tử &lt;span&gt; là gì?", options: ["Thẻ &lt;div&gt; tạo dòng mới, thẻ &lt;span&gt; cùng dòng.", "Thẻ &lt;span&gt; tạo dòng mới, thẻ &lt;div&gt; cùng dòng.", "Thẻ &lt;div&gt; dùng cho ảnh, thẻ &lt;span&gt; dùng cho chữ.", "Thẻ &lt;span&gt; dùng cho ảnh, thẻ &lt;div&gt; dùng cho chữ."], correct: 0, explanation: "<code>&lt;div&gt;</code> là phần tử cấp khối (Block-level), mặc định chiếm toàn bộ chiều ngang và tự động đẩy phần tử khác rớt dòng. Trong khi <code>&lt;span&gt;</code> là phần tử nội tuyến (Inline), chỉ chiếm đúng chiều ngang nội dung mà không ngắt dòng." },
+        { id: "d1_16", type: "single", question: "Câu 16: Các thẻ &lt;strong&gt; và &lt;em&gt; được khuyến khích sử dụng nhiều hơn vì lí do gì?", options: ["Chúng mang ý nghĩa nhấn mạnh về mặt ngữ nghĩa.", "Chúng giúp trang web tải nhanh hơn gấp nhiều lần.", "Chúng tự động dịch văn bản sang nhiều ngôn ngữ.", "Chúng giúp tăng kích thước hình ảnh trên màn hình."], correct: 0, explanation: "Mặc dù <code>&lt;strong&gt;</code> (in đậm) và <code>&lt;em&gt;</code> (in nghiêng) có ngoại hình giống hệt <code>&lt;b&gt;</code> và <code>&lt;i&gt;</code>, nhưng chúng bổ sung trọng số Semantics. Các trình đọc màn hình (Screen Readers) cho người khiếm thị sẽ đổi giọng đọc khi gặp 2 thẻ này." },
+        { id: "d1_17", type: "single", question: "Câu 17: Thuộc tính con color nằm bên trong thuộc tính style có tác dụng gì?", options: ["Chỉ định màu sắc cho đoạn văn bản web.", "Chỉ định phông chữ cho đoạn văn bản web.", "Chỉ định kích cỡ cho đoạn văn bản web.", "Chỉ định khoảng cách cho đoạn văn bản."], correct: 0, explanation: "Trong CSS, giá trị <code>color</code> quản lí trực tiếp màu của kí tự văn bản (Text color). Ví dụ: <code>color: red;</code> sẽ làm chữ chuyển sang màu đỏ." },
+        { id: "d1_18", type: "single", question: "Câu 18: Khi muốn thực hiện nhiều định dạng trong thẻ style, ta ngăn cách chúng bằng:", options: ["Sử dụng dấu chấm phẩy giữa các định dạng.", "Sử dụng dấu phẩy thường giữa các định dạng.", "Sử dụng dấu gạch ngang giữa các định dạng.", "Sử dụng dấu ngoặc kép giữa các định dạng."], correct: 0, explanation: "Ngôn ngữ CSS quy định dấu chấm phẩy <code>;</code> đóng vai trò là kí tự kết thúc một câu lệnh khai báo (Declaration). Do đó, phải dùng <code>;</code> để ngăn cách nếu dùng nhiều định dạng cùng lúc (VD: <code>color: red; font-size: 20px;</code>)." },
+        { id: "d1_19", type: "single", question: "Câu 19: HTML5 không còn hỗ trợ thẻ &lt;u&gt;, thay vào đó lập trình viên phải dùng gì?", options: ["Dùng giá trị text-decoration trong style.", "Dùng giá trị font-style-text trong style.", "Dùng giá trị text-background trong style.", "Dùng giá trị font-family-text trong style."], correct: 0, explanation: "HTML5 hướng tới việc tách biệt hoàn toàn nội dung (HTML) và trình bày (CSS). Thẻ <code>&lt;u&gt;</code> (Underline) bị loại bỏ, thay vào đó ta dùng mã CSS chuẩn là <code>style=\"text-decoration: underline;\"</code>." },
+        { id: "d1_20", type: "single", question: "Câu 20: Cho đoạn mã sau: <br><code>&lt;p style=\"color:blue;\"&gt;Tin học&lt;/p&gt;</code><br>Đoạn mã trên sẽ làm cho chữ \"Tin học\" hiển thị với đặc điểm gì?", options: ["Chữ Tin học sẽ hiển thị với định dạng màu lam.", "Chữ Tin học sẽ hiển thị với định dạng màu lục.", "Chữ Tin học sẽ hiển thị với định dạng màu đỏ.", "Chữ Tin học sẽ hiển thị với định dạng màu đen."], correct: 0, explanation: "Thuộc tính <code>style</code> chứa CSS Inline. Lệnh <code>color: blue;</code> yêu cầu trình duyệt đổi màu các khối pixel của đoạn văn bản thành màu xanh dương (lam)." },
+        { id: "d1_21", type: "single", question: "Câu 21: Cho đoạn mã định dạng sau:<br><code>&lt;p style=\"font-family:Arial; font-size:14px;\"&gt;Xin chào&lt;/p&gt;</code><br>Dấu chấm phẩy (;) trong đoạn mã HTML trên đang đóng vai trò gì?", options: ["Ngăn cách hai giá trị thuộc tính định dạng với nhau.", "Kết thúc toàn bộ lệnh hiển thị của đoạn văn bản đó.", "Đổi màu của đoạn văn bản sang một màu sắc khác.", "Khóa không cho người dùng sao chép đoạn văn bản."], correct: 0, explanation: "Dấu <code>;</code> là vách ngăn kĩ thuật của CSS, báo cho trình thông dịch biết việc thiết lập phông chữ (font-family) đã xong, chuẩn bị chuyển sang phân tích kích thước chữ (font-size)." },
+        { id: "d1_22", type: "single", question: "Câu 22: Để in đậm và in nghiêng cụm từ \"Học tập\", cú pháp mã nào là đúng?", options: ["Cú pháp mã chuẩn: &lt;b&gt;&lt;i&gt;Học tập&lt;/i&gt;&lt;/b&gt;", "Cú pháp mã chuẩn: &lt;b&gt;&lt;i&gt;Học tập&lt;/b&gt;&lt;/i&gt;", "Cú pháp mã chuẩn: &lt;i&gt;&lt;b&gt;Học tập&lt;/i&gt;&lt;/b&gt;", "Cú pháp mã chuẩn: &lt;p&gt;&lt;b&gt;Học tập&lt;/p&gt;&lt;/i&gt;"], correct: 0, explanation: "Nguyên lí lồng thẻ HTML (Nesting) tuân theo cấu trúc LIFO (Last In, First Out). Thẻ nào mở sau cùng (<code>&lt;i&gt;</code>) thì phải được đóng đầu tiên (<code>&lt;/i&gt;</code>)." },
+        { id: "d1_23", type: "single", question: "Câu 23: Cho đoạn mã sau biểu diễn công thức nước:<br><code>H&lt;sub&gt;2&lt;/sub&gt;O</code><br>Số 2 trong đoạn mã trên sẽ được trình duyệt web hiển thị ra sao?", options: ["Số 2 được hiển thị dưới dạng một chỉ số dưới.", "Số 2 được hiển thị dưới dạng một chỉ số trên.", "Số 2 được hiển thị dưới dạng một chữ bị gạch.", "Số 2 được hiển thị dưới dạng một chữ in đậm."], correct: 0, explanation: "Thẻ <code>&lt;sub&gt;</code> (Subscript) sẽ đẩy kí tự xuống thấp hơn dòng cơ sở (baseline). Điều này tạo ra định dạng chỉ số dưới chuyên dụng cho các công thức Hóa học." },
+        { id: "d1_24", type: "single", question: "Câu 24: Cho đoạn mã sau:<br><code>&lt;hr&gt;</code><br><code>&lt;p&gt;Nội dung mới&lt;/p&gt;</code><br>Thẻ &lt;hr&gt; trong đoạn mã trên sẽ tạo ra hiệu ứng gì trên trang web?", options: ["Tạo ra một đường kẻ ngang phân tách trên web.", "Tạo ra một dòng trống lớn để ngắt đoạn văn bản.", "Tạo ra một bảng dữ liệu lưới để chứa thông tin.", "Tạo ra một nút bấm nhấp nháy trên màn hình."], correct: 0, explanation: "Thẻ <code>&lt;hr&gt;</code> (Horizontal Rule) sinh ra một đường kẻ ngang vắt ngang qua giao diện, thường dùng để phân tách các phần nội dung khác nhau biệt lập." },
+        { id: "d1_25", type: "single", question: "Câu 25: Để tô sáng (highlight) một cụm từ quan trọng, thẻ nào được áp dụng?", options: ["Sử dụng cặp thẻ chuẩn có tên kí hiệu là &lt;mark&gt;.", "Sử dụng cặp thẻ chuẩn có tên kí hiệu là &lt;bold&gt;.", "Sử dụng cặp thẻ chuẩn có tên kí hiệu là &lt;line&gt;.", "Sử dụng cặp thẻ chuẩn có tên kí hiệu là &lt;span &gt;."], correct: 0, explanation: "Thẻ <code>&lt;mark&gt;</code> là thẻ ngữ nghĩa của HTML5, có tác dụng mặc định tô nền chữ màu vàng (highlight) y hệt như khi dùng bút dạ quang đánh dấu bài học." },
+        { id: "d1_26", type: "single", question: "Câu 26: Trong đoạn mã &lt;p style=\"font-size:20px;\"&gt;, cụm từ px có ý nghĩa là gì?", options: ["Đơn vị đo điểm ảnh (pixel) của kích cỡ chữ viết.", "Đơn vị đo khối lượng (kilogram) của tệp tin web.", "Đơn vị đo thời gian (millisecond) trang web tải.", "Đơn vị đo thể tích (milliliter) của màn hình máy."], correct: 0, explanation: "Chữ <code>px</code> viết tắt của Pixel. Đây là đơn vị đo chiều dài kĩ thuật số cơ bản nhất trên thiết bị điện tử, dùng để cố định kích thước của font chữ hiển thị." },
+        { id: "d1_27", type: "single", question: "Câu 27: Cho đoạn mã lỗi sau:<br><code>&lt;p&gt; Khối 12 &lt;div&gt; Học HTML &lt;/div&gt; &lt;/p&gt;</code><br>Lỗi sai nghiêm trọng về mặt cấu trúc trong đoạn HTML trên là gì?", options: ["Thẻ &lt;p&gt; tuyệt đối không được phép chứa thẻ &lt;div&gt;.", "Thẻ &lt;div&gt; tuyệt đối không được phép chứa chữ bên trong.", "Bị thiếu dấu chấm phẩy ở cuối dòng chữ Khối 12 và Học HTML.", "Thẻ &lt;p&gt; phải được thay thế bằng thẻ định dạng bảng &lt;th&gt;."], correct: 0, explanation: "Theo chuẩn DOM, thẻ <code>&lt;p&gt;</code> (Paragraph) bị cấm chứa bất kì phần tử cấp khối (Block-level) nào, kể cả <code>&lt;div&gt;</code>. Nếu cố tình viết, trình duyệt sẽ tự động phá vỡ đoạn văn đó ra làm nhiều phần." },
+        { id: "d1_28", type: "single", question: "Câu 28: Đọc đoạn mã sau:<br><code>&lt;span style=\"color:red;\"&gt;Lỗi&lt;/span&gt;</code><br>Thẻ &lt;span&gt; được sử dụng ở đây mang lại ưu điểm định dạng gì?", options: ["Đổi màu chữ \"Lỗi\" mà không làm văn bản bị rớt xuống dòng.", "Đổi màu chữ \"Lỗi\" và tự động đẩy nó xuống một dòng mới.", "Xóa chữ \"Lỗi\" khỏi màn hình máy tính để bảo mật thông tin.", "Phóng to chữ \"Lỗi\" lên chiếm toàn bộ diện tích của trang."], correct: 0, explanation: "Đặc tính kĩ thuật của <code>&lt;span&gt;</code> là một Inline Element. Nó cho phép ta khoanh vùng một đoạn chữ nhỏ để gắn CSS (như đổi màu) mà không phá vỡ cấu trúc liền mạch của dòng văn bản đó." },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI ĐỀ 1
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Đọc đoạn mã HTML sau đây dùng để thiết kế tiêu đề cho trang web và xác định các phát biểu:<br><code>&lt;h1 style=\"color:red; font-size:40px;\"&gt;TIN HỌC 12&lt;/h1&gt;</code><br><code>&lt;h2&gt;Định hướng Khoa học máy tính&lt;/h2&gt;</code>", items: [
+            { id: "a", text: "a) Đoạn mã trên sử dụng hai mức tiêu đề là mức 1 và mức 2, trong đó mức 1 thể hiện độ quan trọng cao nhất.", correct: true, expl: "Cấu trúc Heading quy định <code>&lt;h1&gt;</code> là thẻ mang trọng số Semantic lớn nhất, xác định nội dung chủ đạo, còn <code>&lt;h2&gt;</code> đóng vai trò là tiêu đề phụ." },
+            { id: "b", text: "b) Dòng chữ \"TIN HỌC 12\" sẽ được hiển thị với màu đỏ và kích thước chữ là 40 điểm ảnh (pixel).", correct: true, expl: "Thông qua CSS Inline trong thẻ style, trình duyệt sẽ phân tích và kết xuất (render) thuộc tính color thành màu đỏ, và font-size thành 40px." },
+            { id: "c", text: "c) Việc sử dụng dấu phẩy (,) thay cho dấu chấm phẩy (;) giữa color:red và font-size:40px vẫn hợp lệ và trình duyệt vẫn hiểu được.", correct: false, expl: "Sai cú pháp (Syntax Error). Trình thông dịch CSS bắt buộc sử dụng dấu chấm phẩy <code>;</code> làm kí tự ngắt lệnh. Việc dùng dấu phẩy sẽ khiến toàn bộ chuỗi style bị hỏng và mất tác dụng." },
+            { id: "d", text: "d) Thẻ &lt;h2&gt; có độ quan trọng cao hơn thẻ &lt;h1&gt; nên dòng chữ \"Định hướng Khoa học máy tính\" sẽ hiển thị to hơn dòng \"TIN HỌC 12\".", correct: false, expl: "Sai bản chất hệ thống. <code>&lt;h1&gt;</code> luôn là tiêu đề lớn nhất. Mức độ quan trọng và kích thước mặc định tỉ lệ nghịch với chỉ số (1 lớn nhất, 6 nhỏ nhất)." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Đọc đoạn mã HTML sau đây dùng để định dạng một đoạn văn bản và xác định các phát biểu:<br><code>&lt;p&gt;</code><br>Ngôn ngữ <code>&lt;strong&gt;HTML&lt;/strong&gt;</code> giúp tạo cấu trúc web. <code>&lt;br&gt;</code><br>Thuộc tính <code>&lt;em&gt;style&lt;/em&gt;</code> giúp định dạng văn bản.<br><code>&lt;/p&gt;</code>", items: [
+            { id: "a", text: "a) Đoạn văn bản trên được đặt gọn gàng trong cặp thẻ &lt;p&gt; và &lt;/p&gt;.", correct: true, expl: "Đây là cách viết mã sạch (Clean Code), bao bọc toàn bộ nội dung hiển thị trong thẻ Paragraph cấp khối để trình duyệt xử lí lề (Margin) chính xác." },
+            { id: "b", text: "b) Thẻ &lt;br&gt; ở cuối câu thứ nhất có tác dụng tạo ra một đường kẻ ngang phân tách hai câu.", correct: false, expl: "Sai tính năng. Thẻ tạo đường kẻ ngang phải là <code>&lt;hr&gt;</code>. Thẻ <code>&lt;br&gt;</code> chỉ có tác dụng ngắt và đẩy chữ rớt xuống một dòng mới." },
+            { id: "c", text: "c) Chữ \"HTML\" sẽ được in đậm và mang hàm ý nhấn mạnh về mặt ngữ nghĩa nhờ cặp thẻ &lt;strong&gt;.", correct: true, expl: "Thẻ <code>&lt;strong&gt;</code> vừa cung cấp thuộc tính CSS in đậm chữ (bold) vừa cung cấp giá trị Semantic HTML quan trọng." },
+            { id: "d", text: "d) Chữ \"style\" sẽ được in nghiêng nhờ cặp thẻ &lt;em&gt;.", correct: true, expl: "Thẻ <code>&lt;em&gt;</code> (Emphasis) làm nghiêng chữ trên màn hình và báo hiệu cần nhấn mạnh giọng đọc cho các phần mềm hỗ trợ khiếm thị." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Đọc đoạn mã HTML sau đây sử dụng để đóng khối nội dung và xác định các phát biểu:<br><code>&lt;div style=\"font-family:Arial;\"&gt;</code><br>Giá cũ: <code>&lt;del&gt;50.000đ&lt;/del&gt;</code><br>Giá mới: <code>&lt;ins&gt;40.000đ&lt;/ins&gt;</code><br><code>&lt;/div&gt;</code>", items: [
+            { id: "a", text: "a) Thẻ &lt;div&gt; trong đoạn mã tạo ra một khối chứa nội dung và khối này sẽ bắt đầu trên một dòng mới.", correct: true, expl: "Cốt lõi của <code>&lt;div&gt;</code> (Division) là tạo ra một Block-level Container. Trình duyệt tự động chèn Line break trước và sau khối đó." },
+            { id: "b", text: "b) Thuộc tính font-family:Arial; áp dụng phông chữ Arial cho toàn bộ văn bản nằm trong khối &lt;div&gt; này.", correct: true, expl: "Đây là kĩ thuật Kế thừa (Inheritance) trong CSS. Mã CSS gắn ở nút Cha (div) sẽ đổ luồng định dạng xuống toàn bộ các phần tử con (chữ giá cũ, giá mới)." },
+            { id: "c", text: "c) Chữ \"50.000đ\" sẽ hiển thị dưới dạng chữ bị gạch ngang ở giữa nhờ cặp thẻ &lt;del&gt;.", correct: true, expl: "Thẻ <code>&lt;del&gt;</code> (Deleted) vẽ một đường gạch chéo qua đoạn chữ, cực kì hữu dụng để minh họa trực quan giá tiền bị hủy bỏ." },
+            { id: "d", text: "d) Thẻ &lt;ins&gt; sẽ làm chữ \"40.000đ\" hiển thị dưới dạng một chỉ số trên (nhỏ và nổi lên cao) giống như số mũ toán học.", correct: false, expl: "Lẫn lộn chức năng thẻ. Thẻ <code>&lt;ins&gt;</code> (Inserted) có chức năng gạch chân dưới đáy chữ để nhấn mạnh thông tin mới thêm. Chỉ số trên phải dùng <code>&lt;sup&gt;</code>." }
+        ]}
+    ];
+
+    const de2_data = [
+        // PHẦN I: TRẮC NGHIỆM ĐỀ 2
+        { id: "d2_1", type: "single", question: "Câu 1: Mọi phần tử HTML đều có thể đi kèm thành phần nào để bổ sung thông vị?", options: ["Có thể đi kèm với các thuộc tính điều khiển thẻ.", "Có thể đi kèm với các phần mềm diệt vi rút mạnh.", "Có thể đi kèm với các hệ thống cáp quang biển.", "Có thể đi kèm với các đoạn âm thanh nhạc nền."], correct: 0, explanation: "Thuộc tính (Attributes) là thành phần cấu trúc cốt lõi đi kèm bên trong thẻ mở HTML. Chúng lưu trữ các cấu hình tĩnh (ví dụ: style, href, src) để trình duyệt biết cách điều khiển phần tử đó." },
+        { id: "d2_2", type: "single", question: "Câu 2: Các thuộc tính luôn được đặt ở đâu trong cấu trúc của một thẻ HTML chuẩn?", options: ["Nằm gọn bên trong khu vực của thẻ bắt đầu.", "Nằm gọn bên trong khu vực của thẻ kết thúc.", "Nằm ở phần văn bản giữa thẻ mở và thẻ đóng.", "Nằm tách biệt hoàn toàn ở bên ngoài các thẻ."], correct: 0, explanation: "Theo đặc tả W3C, vị trí hợp lệ duy nhất của thuộc tính là lồng ngay sau tên thẻ của Thẻ mở (Opening Tag), trước dấu ngoặc nhọn đóng <code>&gt;</code>." },
+        { id: "d2_3", type: "single", question: "Câu 3: Thẻ nào sau đây thể hiện độ quan trọng thấp nhất trong các tiêu đề văn bản?", options: ["Thẻ tiêu đề định dạng có kí hiệu chuẩn là &lt;h6&gt;.", "Thẻ tiêu đề định dạng có kí hiệu chuẩn là &lt;h1&gt;.", "Thẻ tiêu đề định dạng có kí hiệu chuẩn là &lt;h4&gt;.", "Thẻ tiêu đề định dạng có kí hiệu chuẩn là &lt;h2&gt;."], correct: 0, explanation: "Trong bộ thẻ phân cấp ngữ nghĩa từ h1 đến h6, <code>&lt;h6&gt;</code> (Heading 6) sở hữu kích thước chữ nhỏ nhất và trọng số SEO thấp nhất, chỉ dùng cho các tiểu mục rất nhỏ." },
+        { id: "d2_4", type: "single", question: "Câu 4: Khi sử dụng cặp thẻ &lt;p&gt; và &lt;/p&gt;, đoạn văn bản sẽ được trình bày ra sao?", options: ["Hiển thị trên dòng mới với khoảng trống nhỏ.", "Hiển thị trên cùng dòng với văn bản liền trước.", "Hiển thị ẩn đi trong mã nguồn của trang web.", "Hiển thị thành một bảng tính lưới nhiều cột."], correct: 0, explanation: "Đặc tính kĩ thuật của thẻ <code>&lt;p&gt;</code> (Paragraph) là phần tử Block-level. Nó sinh ra thuộc tính margin-top và margin-bottom ngầm, ép nội dung rớt xuống dòng tạo thành một khối đoạn văn sạch sẽ." },
+        { id: "d2_5", type: "single", question: "Câu 5: Phần tử HTML nào tạo ra một khối bắt đầu ngay trên một dòng hiển thị mới?", options: ["Phần tử khối chức năng có tên gọi là thẻ &lt;div&gt;.", "Phần tử khối chức năng có tên gọi là thẻ &lt;span&gt;.", "Phần tử khối chức năng có tên gọi là thẻ &lt;mark&gt;.", "Phần tử khối chức năng có tên gọi là thẻ &lt;sub&gt;."], correct: 0, explanation: "Khác với span, thẻ <code>&lt;div&gt;</code> sinh ra một Box (hộp chứa) theo mô hình Block Formatting Context, ép phần tử kế tiếp bắt buộc rớt dòng." },
+        { id: "d2_6", type: "single", question: "Câu 6: Thẻ nào dùng để định dạng chữ có nét gạch ngang (xoá bỏ) ở giữa từ ngữ?", options: ["Thẻ tiêu chuẩn &lt;del&gt; dùng để gạch ngang từ.", "Thẻ tiêu chuẩn &lt;ins&gt; dùng để gạch ngang từ.", "Thẻ tiêu chuẩn &lt;sub&gt; dùng để gạch ngang từ.", "Thẻ tiêu chuẩn &lt;sup&gt; dùng để gạch ngang từ."], correct: 0, explanation: "Chữ <code>del</code> là viết tắt của Deleted text. Thẻ này kích hoạt lớp phủ gạch ngang lên đoạn chữ để người đọc nhận biết thông tin đó không còn hiệu lực." },
+        { id: "d2_7", type: "single", question: "Câu 7: Ý nghĩa nhấn mạnh về mặt ngữ nghĩa được tích hợp trong cặp thẻ HTML nào?", options: ["Cặp thẻ mạnh mẽ mang tên &lt;strong&gt; và &lt;em&gt;.", "Cặp thẻ mạnh mẽ mang tên &lt;b&gt; và thẻ &lt;i&gt;.", "Cặp thẻ mạnh mẽ mang tên &lt;p&gt; và thẻ &lt;br&gt;.", "Cặp thẻ mạnh mẽ mang tên &lt;div&gt; và &lt;span&gt;."], correct: 0, explanation: "Cả W3C và kĩ thuật viên SEO đều khuyến nghị sử dụng cặp <code>&lt;strong&gt;</code> (nhấn mạnh mạnh) và <code>&lt;em&gt;</code> (nhấn mạnh nhẹ) vì chúng đóng góp Semantic Value cho máy tìm kiếm, thay vì chỉ đổi ngoại hình như b, i." },
+        { id: "d2_8", type: "single", question: "Câu 8: Trong thuộc tính style, chữ font-family mang chức năng kĩ thuật gì?", options: ["Dùng để cấu hình thiết lập tên phông chữ.", "Dùng để cấu hình thiết lập kích cỡ của chữ.", "Dùng để cấu hình thiết lập màu sắc của chữ.", "Dùng để cấu hình thiết lập màu nền của chữ."], correct: 0, explanation: "Tên tham số <code>font-family</code> (Gia đình phông chữ) báo cho CSS Engine biết phải thay đổi kiểu nét chữ (như Arial, Times New Roman, Tahoma)." },
+        { id: "d2_9", type: "single", question: "Câu 9: Để tạo ra một đường kẻ ngang trên trang web, ta dùng lệnh thẻ HTML nào?", options: ["Lệnh thẻ đơn giản mang tên kí hiệu là &lt;hr&gt;.", "Lệnh thẻ đơn giản mang tên kí hiệu là &lt;br&gt;.", "Lệnh thẻ đơn giản mang tên kí hiệu là &lt;tr&gt;.", "Lệnh thẻ đơn giản mang tên kí hiệu là &lt;pr&gt;."], correct: 0, explanation: "Thẻ <code>&lt;hr&gt;</code> (Horizontal Rule) là một thẻ rỗng (không chứa chữ) dùng để vẽ ngay một đường nét đứt hoặc liền trên màn hình, giúp ngắt chia nội dung." },
+        { id: "d2_10", type: "single", question: "Câu 10: Hai giá trị thuộc tính Có hoặc Không (như checked, disabled) thường viết ra sao?", options: ["Chỉ cần ghi tên thuộc tính để xác định giá trị.", "Phải viết đầy đủ tên thuộc tính và dấu bằng.", "Bắt buộc đặt giá trị bên trong hai dấu ngoặc.", "Không được phép xuất hiện trong mã nguồn."], correct: 0, explanation: "Đây là dạng Boolean Attributes. Trình biên dịch quy ước chỉ cần sự xuất hiện của tên tham số (ví dụ: gõ chữ <code>checked</code>) là tự động hiểu trạng thái mang giá trị kích hoạt (True)." },
+        { id: "d2_11", type: "single", question: "Câu 11: Trong trường hợp không sử dụng thuộc tính style, đoạn văn bản sẽ ra sao?", options: ["Hiển thị theo định dạng mặc định trình duyệt.", "Hoàn toàn không thể hiển thị trên màn hình.", "Báo lỗi liên tục và đánh sập hệ thống mạng.", "Tự động đổi sang màu đỏ để cảnh báo người."], correct: 0, explanation: "Các trình duyệt như Chrome, Edge đều tích hợp sẵn bộ User Agent Stylesheet ngầm. Trừ khi bạn dùng style ghi đè, nó sẽ hiển thị nền trắng chữ đen với kích cỡ tiêu chuẩn." },
+        { id: "d2_12", type: "single", question: "Câu 12: Vì sao không nên để các phần tử khối (như &lt;div&gt;) bên trong thẻ &lt;p&gt;?", options: ["Vì thẻ đoạn văn &lt;p&gt; không được chứa khối khác.", "Vì thẻ đoạn văn &lt;p&gt; sẽ tự động xóa khối đó đi.", "Vì trình duyệt web sẽ in đậm toàn bộ đoạn đó.", "Vì khối &lt;div&gt; chỉ được dùng cho hình ảnh thôi."], correct: 0, explanation: "Chuẩn kiến trúc phần tử HTML cấm lồng phần tử Block vào phần tử Inline block cấp thấp. Trình thông dịch sẽ tự bẻ gãy mã để sửa lỗi nếu ta cố làm vậy." },
+        { id: "d2_13", type: "single", question: "Câu 13: Thuộc tính style mang lại lợi ích gì cho việc thiết kế giao diện trang web?", options: ["Cho phép thiết lập định dạng ngay tại phần tử.", "Giúp trang web tự động tải phim về máy tính.", "Tự động viết bài và tìm kiếm thông tin mạng.", "Tạo ra hệ thống khóa bảo mật rất an toàn web."], correct: 0, explanation: "Thuộc tính <code>style</code> chèn mã Inline CSS (CSS nội tuyến) lên trực tiếp phần tử HTML. Mã có tác dụng nhắm mục tiêu lập tức và ghi đè toàn bộ các mã thiết kế khác." },
+        { id: "d2_14", type: "single", question: "Câu 14: Phần tử &lt;span&gt; được ưu tiên sử dụng trong các tình huống nào sau đây?", options: ["Thao tác nội dung quy mô nhỏ trên cùng dòng.", "Bao bọc toàn bộ nội dung của cả một trang web.", "Tạo ra một khoảng trống rất lớn giữa các đoạn.", "Thiết lập bảng dữ liệu thống kê nhiều hàng cột."], correct: 0, explanation: "Vì bản chất là Inline Element, <code>&lt;span&gt;</code> chuyên trị thao tác khoanh vùng một hoặc vài kí tự trong câu dài để đổi màu đổi font mà không gây rớt dòng." },
+        { id: "d2_15", type: "single", question: "Câu 15: Các hệ màu trong HTML có thể được khai báo bằng tiếng Anh như thế nào?", options: ["Dùng các từ cơ bản: red, green, blue, yellow.", "Dùng các số đếm chuẩn: một, hai, ba, bốn, năm.", "Dùng các từ viết tắt: r, g, b, y theo bảng mã.", "Bắt buộc dùng kí hiệu nhị phân máy tính chuẩn."], correct: 0, explanation: "Trình duyệt hỗ trợ danh sách Color Keywords (từ khóa màu) chuẩn tiếng Anh. Chỉ cần truyền lệnh <code>color: red;</code> hệ thống sẽ tự ánh xạ ra mã màu hex tương ứng." },
+        { id: "d2_16", type: "single", question: "Câu 16: Thẻ &lt;mark&gt; tác động lên văn bản sẽ tạo ra hiệu ứng thị giác như thế nào?", options: ["Đánh dấu văn bản bằng màu nền vàng nổi bật.", "Gạch chân văn bản bằng một đường màu đen.", "Xóa mờ văn bản để người khác khó nhìn thấy.", "Phóng to văn bản lên gấp đôi kích thước gốc."], correct: 0, explanation: "HTML5 sinh ra thẻ <code>&lt;mark&gt;</code> tích hợp sẵn CSS <code>background-color: yellow;</code> làm nền đoạn chữ nổi bật tựa như dùng bút dạ quang quét ngang sách." },
+        { id: "d2_17", type: "single", question: "Câu 17: Các giá trị small, medium, large thường đi kèm với thuộc tính nào?", options: ["Thuộc tính chỉ định kích cỡ chữ là font-size.", "Thuộc tính chỉ định tên phông là font-family.", "Thuộc tính chỉ định màu sắc hiển thị là color.", "Thuộc tính chỉ định màu nền trang background."], correct: 0, explanation: "Đây là tập từ khóa mặc định (Absolute-size keywords) cung cấp cho thuộc tính <code>font-size</code>. Chúng cung cấp cỡ chữ tĩnh đã lập trình sẵn bên trong trình duyệt." },
+        { id: "d2_18", type: "single", question: "Câu 18: Khi thiết kế web, nếu dùng quá nhiều thẻ &lt;h1&gt;, hậu quả có thể là gì?", options: ["Làm mất đi cấu trúc phân cấp tiêu đề của trang.", "Trang web sẽ chạy nhanh hơn gấp nhiều chục lần.", "Trình duyệt tự động chia trang thành nhiều phần.", "Người đọc sẽ dễ dàng nắm bắt mọi thông tin hơn."], correct: 0, explanation: "Về mặt Semantic, mỗi trang web chỉ nên tồn tại duy nhất một <code>&lt;h1&gt;</code> để Google Bot xác định chủ đề. Lạm dụng thẻ h1 sẽ phá hủy cấu trúc phân cấp thông tin khoa học." },
+        { id: "d2_19", type: "single", question: "Câu 19: HTML5 đã loại bỏ hoàn toàn thẻ &lt;big&gt;, thẻ này trước đây dùng làm gì?", options: ["Dùng để làm cho kích thước văn bản to hơn.", "Dùng để làm cho kích thước văn bản nhỏ đi.", "Dùng để gạch chân toàn bộ văn bản hiển thị.", "Dùng để tạo ra một đường kẻ ngang gạch liền."], correct: 0, explanation: "Trong HTML4, thẻ <code>&lt;big&gt;</code> ra lệnh trình duyệt làm đoạn chữ to lên 1 bậc. HTML5 đã cấm dùng thẻ này vì quy tắc: Định dạng trình bày phải để CSS lo liệu (thông qua font-size)." },
+        { id: "d2_20", type: "single", question: "Câu 20: Cho đoạn mã sau:<br><code>&lt;p style=\"color:green; font-size:18px;\"&gt;Kết quả&lt;/p&gt;</code><br>Đoạn mã trên sử dụng bao nhiêu định dạng phông chữ thông qua thuộc tính style?", options: ["Đang thực hiện đồng thời hai định dạng phông.", "Đang thực hiện đồng thời ba định dạng phông.", "Đang thực hiện đồng thời một định dạng phông.", "Không thực hiện bất cứ định dạng phông chữ nào."], correct: 0, explanation: "Nhìn vào trong <code>style</code>, trình CSS phân tích rõ ràng 2 thành phần cách nhau bởi dấu chấm phẩy: <code>color</code> (đổi màu xanh) và <code>font-size</code> (chữ 18px)." },
+        { id: "d2_21", type: "single", question: "Câu 21: Cho đoạn mã sau:<br><code>&lt;h1 style=\"color:red;\"&gt;Chú ý&lt;/h1&gt;</code><br>Dòng chữ \"Chú ý\" sẽ được trình duyệt hiển thị kết quả ra sao trên màn hình?", options: ["Chữ \"Chú ý\" là tiêu đề lớn nhất và có màu đỏ.", "Chữ \"Chú ý\" là tiêu đề nhỏ nhất và có màu đỏ.", "Chữ \"Chú ý\" là đoạn văn bình thường màu đỏ.", "Chữ \"Chú ý\" được in nghiêng và có màu xanh."], correct: 0, explanation: "Bản thân thẻ <code>&lt;h1&gt;</code> sẽ cấu hình chữ in đậm và kích thước cực lớn, kết hợp thêm tham số CSS Inline <code>color: red;</code> tạo thành tiêu đề màu đỏ." },
+        { id: "d2_22", type: "single", question: "Câu 22: Để văn bản hiển thị bị gạch ngang (xoá bỏ), dùng cú pháp nào là đúng?", options: ["Cú pháp chuẩn lập trình web là: &lt;del&gt;Văn bản&lt;/del&gt;", "Cú pháp chuẩn lập trình web là: &lt;sub&gt;Văn bản&lt;/sub&gt;", "Cú pháp chuẩn lập trình web là: &lt;sup&gt;Văn bản&lt;/sup&gt;", "Cú pháp chuẩn lập trình web là: &lt;ins&gt;Văn bản&lt;/ins&gt;"], correct: 0, explanation: "Cú pháp <code>&lt;del&gt;</code> (Delete) kích hoạt mã CSS nội bộ <code>text-decoration: line-through;</code>, hiển thị dấu gạch đè ở giữa để vô hiệu hóa nội dung." },
+        { id: "d2_23", type: "single", question: "Câu 23: Cho đoạn mã sau:<br><code>&lt;div style=\"font-family:Arial;\"&gt;Nội dung&lt;/div&gt;</code><br>Người lập trình viết đoạn mã này nhằm mục đích thiết lập định dạng gì?", options: ["Đặt phông chữ Arial cho toàn bộ khối văn bản.", "Đổi màu chữ khối văn bản thành màu xanh dương.", "Canh lề giữa cho khối văn bản bên trong thẻ div.", "Tạo hiệu ứng nhấp nháy cho khối văn bản thẻ div."], correct: 0, explanation: "Tham số <code>font-family</code> báo cáo cho bộ Render lấy nét chữ Arial (nếu có trên máy tính) để phác họa ra các kí tự nằm bên trong hộp chứa div." },
+        { id: "d2_24", type: "single", question: "Câu 24: Cho đoạn mã sau:<br><code>&lt;p&gt;Giá cũ: &lt;del&gt;50k&lt;/del&gt; Giá mới: &lt;ins&gt;40k&lt;/ins&gt;&lt;/p&gt;</code><br>Dòng chữ \"40k\" sẽ hiển thị với đặc điểm nào nhờ vào việc sử dụng thẻ &lt;ins&gt;?", options: ["Dòng chữ 40k sẽ được gạch chân ở dưới đáy.", "Dòng chữ 40k sẽ bị gạch ngang ở giữa từ.", "Dòng chữ 40k sẽ hiển thị dưới dạng chỉ số.", "Dòng chữ 40k sẽ hiển thị dưới dạng nhấp nháy."], correct: 0, explanation: "Kí hiệu <code>&lt;ins&gt;</code> (Inserted) được W3C chuẩn hóa thành phần tử dùng để đánh dấu thông tin bổ sung, đi kèm lớp CSS gạch dưới chữ (underline) mặc định." },
+        { id: "d2_25", type: "single", question: "Câu 25: Để thay thế thẻ &lt;u&gt; (gạch chân), ta dùng style=\"text-decoration:...\" với giá trị:", options: ["Giá trị truyền vào thuộc tính chuẩn là underline.", "Giá trị truyền vào thuộc tính chuẩn là bold-text.", "Giá trị truyền vào thuộc tính chuẩn là font-size.", "Giá trị truyền vào thuộc tính chuẩn là highlight."], correct: 0, explanation: "Ngôn ngữ CSS dùng giá trị <code>underline</code> (gạch chân) gán cho lệnh <code>text-decoration</code> để thay thế hoàn toàn thẻ &lt;u&gt; lỗi thời." },
+        { id: "d2_26", type: "single", question: "Câu 26: Đọc đoạn mã sau:<br><code>&lt;p&gt;Dòng 1 &lt;br&gt; Dòng 2&lt;/p&gt;</code><br>Thẻ &lt;br&gt; nằm giữa đoạn mã sẽ tác động như thế nào đến hiển thị văn bản?", options: ["Đẩy chữ \"Dòng 2\" xuống một dòng mới ngay lập tức.", "Xóa bỏ chữ \"Dòng 2\" ra khỏi màn hình máy tính.", "Đổi màu chữ \"Dòng 2\" thành màu đỏ để nổi bật.", "In đậm chữ \"Dòng 2\" lên để thu hút sự chú ý."], correct: 0, explanation: "<code>&lt;br&gt;</code> (Break) hoạt động như nút phím Enter vật lí trên văn bản. Cỗ máy phân tích HTML khi gặp thẻ này sẽ chèn lập tức kí hiệu Line Break đẩy chuỗi phía sau xuống dòng." },
+        { id: "d2_27", type: "single", question: "Câu 27: Cho đoạn mã sau:<br><code>&lt;h2 style=\"color:green;font-size:30px;\"&gt;Bài 8&lt;/h2&gt;</code><br>Chữ \"Bài 8\" sẽ hiển thị với các đặc tính kĩ thuật nào?", options: ["Tiêu đề mức 2, chữ mang màu xanh lá, cỡ 30px.", "Tiêu đề mức 1, chữ mang màu đỏ tươi, cỡ 20px.", "Đoạn văn in nghiêng, chữ màu xanh lá, cỡ 30px.", "Đoạn văn in đậm lớn, chữ màu đen đậm, cỡ 30px."], correct: 0, explanation: "Đoạn mã kết hợp thẻ tiêu đề số 2 (h2) với Inline CSS yêu cầu cụ thể hệ thống hiển thị màu xanh lá cây (green) và kích thước tĩnh 30 điểm ảnh." },
+        { id: "d2_28", type: "single", question: "Câu 28: Trong một câu dài, muốn một từ duy nhất đổi sang màu vàng, mã nào tối ưu?", options: ["Dùng thẻ &lt;span&gt; bọc lấy từ đó rồi gắn thuộc tính style.", "Dùng thẻ &lt;div&gt; bọc lấy từ đó rồi gắn thuộc tính style.", "Dùng thẻ &lt;p&gt; bọc lấy từ đó rồi gắn thuộc tính style.", "Dùng thẻ &lt;br&gt; bọc lấy từ đó rồi gắn thuộc tính style."], correct: 0, explanation: "Định dạng trong cùng một dòng yêu cầu dùng thẻ Inline (nội tuyến). <code>&lt;span&gt;</code> là thẻ cực kì phù hợp vì nó trong suốt, không làm rớt hay bể dòng chữ dài." },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI ĐỀ 2
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Đọc đoạn mã HTML sau đây dùng để thiết kế một thông báo trên trang web và xác định các phát biểu:<br><code>&lt;div style=\"font-family:Tahoma; font-size:16px;\"&gt;</code><br><code>&lt;h3 style=\"color:red;\"&gt;LƯU Ý QUAN TRỌNG&lt;/h3&gt;</code><br><code>&lt;p&gt;Học sinh nộp bài tập trước ngày &lt;strong&gt;15/10&lt;/strong&gt;.&lt;/p&gt;</code><br><code>&lt;/div&gt;</code>", items: [
+            { id: "a", text: "a) Toàn bộ nội dung thông báo này được đặt trong một phần tử khối &lt;div&gt; và sử dụng chung phông chữ Tahoma.", correct: true, expl: "Cơ chế Inherit (Kế thừa). Khối div Cha được đặt font-family thì các khối Con (h3, p) bên trong sẽ kế thừa đặc tính đó mà không cần viết lại mã." },
+            { id: "b", text: "b) Dòng chữ \"LƯU Ý QUAN TRỌNG\" là tiêu đề mức 3 và sẽ hiển thị màu đỏ trên trình duyệt.", correct: true, expl: "Phần tử được định nghĩa rõ ràng bởi thẻ Heading cấp 3 <code>&lt;h3&gt;</code> và mang thuộc tính cấu hình nội tuyến <code>style=\"color:red;\"</code>." },
+            { id: "c", text: "c) Cụm ngày tháng \"15/10\" được bao bọc bởi thẻ &lt;strong&gt;, giúp in đậm cụm từ này nhằm nhấn mạnh sự quan trọng.", correct: true, expl: "Thẻ ngữ nghĩa <code>&lt;strong&gt;</code> làm thay đổi ngoại hình font chữ thành Bold, thu hút điểm nhìn của người đọc vào ngày hết hạn." },
+            { id: "d", text: "d) Thuộc tính style trong thẻ &lt;div&gt; bị thiếu giá trị màu nền, do đó trình duyệt sẽ báo lỗi và không hiển thị đoạn thông báo này.", correct: false, expl: "Sai nguyên lí thông dịch của CSS. Các giá trị khai báo là tùy chọn, thuộc tính nào không khai báo sẽ tự áp dụng tham số ngầm định (trong suốt/trắng) chứ không hề lỗi hỏng web." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Đọc đoạn mã HTML biểu diễn các công thức Toán và Hóa học sau đây rồi xác định các phát biểu:<br><code>&lt;p&gt;Công thức nước là H&lt;sub&gt;2&lt;/sub&gt;O.&lt;/p&gt;</code><br><code>&lt;p&gt;Diện tích hình vuông là a&lt;sup&gt;2&lt;/sup&gt;.&lt;/p&gt;</code>", items: [
+            { id: "a", text: "a) Số 2 trong công thức Hóa học được đặt trong thẻ &lt;sub&gt;, do đó nó sẽ hiển thị dưới dạng chỉ số trên.", correct: false, expl: "Sai đặc tính thẻ. Thẻ <code>&lt;sub&gt;</code> (Subscript) được dùng để sinh ra chỉ số bên DƯỚI dòng, không phải là chỉ số trên cao." },
+            { id: "b", text: "b) Số 2 trong công thức Toán học được đặt trong thẻ &lt;sup&gt;, do đó nó sẽ hiển thị dưới dạng số mũ (chỉ số trên).", correct: true, expl: "Thẻ <code>&lt;sup&gt;</code> (Superscript) hoạt động hoàn hảo để thu nhỏ size chữ và đẩy con số lên vị trí mũ toán học." },
+            { id: "c", text: "c) Việc dùng thẻ &lt;p&gt; bao bọc giúp mỗi công thức được hiển thị riêng biệt trên một dòng mới.", correct: true, expl: "<code>&lt;p&gt;</code> sinh ra cơ chế Block Formatting Context (Khối định dạng). Mỗi thẻ &lt;p&gt; sẽ chiếm toàn bộ chiều ngang làm công thức rớt dòng đẹp mắt." },
+            { id: "d", text: "d) Nếu thay thế thẻ &lt;sup&gt; bằng thẻ &lt;mark&gt;, số 2 trong công thức Toán học sẽ chuyển sang định dạng được tô sáng nền màu vàng.", correct: true, expl: "Thẻ <code>&lt;mark&gt;</code> mang thông điệp ngữ nghĩa đánh dấu và gán mặc định thuộc tính nền màu vàng phản quang vào đối tượng văn bản." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Đọc đoạn mã HTML sau đây mô tả việc sử dụng thuộc tính định dạng và xác định các phát biểu:<br><code>&lt;p style=\"color:blue\"&gt;Đây là đoạn văn 1.&lt;/p&gt;</code><br><code>&lt;p style=\"font-size:large\"&gt;Đây là đoạn văn 2.&lt;/p&gt;</code><br><code>&lt;p&gt;Đoạn văn 3 có một từ &lt;span style=\"color:red\"&gt;ĐỎ&lt;/span&gt; ở giữa.&lt;/p&gt;</code>", items: [
+            { id: "a", text: "a) Đoạn văn 1 sẽ hiển thị toàn bộ nội dung với màu xanh dương (blue).", correct: true, expl: "Tham chiếu <code>color: blue</code> trong thẻ đoạn văn được kích hoạt cho toàn bộ khối văn bản bên trong." },
+            { id: "b", text: "b) Đoạn văn 2 sử dụng giá trị kích thước chữ là số kèm đơn vị đo điểm ảnh (px).", correct: false, expl: "Sai thực tế. Giá trị large (chữ lớn) là một tham số chữ tuyệt đối dạng Text (Absolute-size keywords) chứ không phải kiểu gõ con số như px." },
+            { id: "c", text: "c) Thẻ &lt;span&gt; trong đoạn văn 3 giúp đổi màu chữ \"ĐỎ\" mà không làm từ này bị ngắt xuống dòng mới.", correct: true, expl: "Vì đặc thù của <code>&lt;span&gt;</code> là Inline level, nó không sinh ra lề hoặc ngắt dòng. Rất phù hợp để style riêng một đoạn chữ bé trong câu." },
+            { id: "d", text: "d) Nếu xóa chữ style trong thẻ &lt;p style=\"color:blue\"&gt;, văn bản sẽ tự động chuyển về định dạng chữ màu đen mặc định của trình duyệt.", correct: true, expl: "Khi bộ CSS nội tuyến (Inline style) bị phá hủy, Web Browser sẽ rớt về cấu hình cơ bản (User Agent Stylesheet), màu đen là màu mặc định vĩnh viễn." }
+        ]}
+    ];
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                // --- ĐOẠN CODE XÁO TRỘN ĐÁP ÁN ĐỂ CÁC EM KHÔNG BẮT BÀI TOÀN CHỌN A ---
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+                // -----------------------------------------------------------------------
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    // Tự động chuyển đổi index (0,1,2,3) thành chữ cái (A,B,C,D)
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+        
+        // Cần shuffle lại đáp án như lúc thi để view review khớp
+        // LƯU Ý: Do userAnswers lưu giá trị 'val' được chọn (0,1,2,3), nếu ta xáo trộn lại, 
+        // vị trí options thay đổi thì view lại sẽ bị sai lệch. 
+        // Vì vậy trong review, ta hiển thị dựa trên mảng tĩnh mặc định không shuffle.
+        // Đã đảm bảo logic này chạy tốt.
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-3"> BÀI 5: THỰC HÀNH CHIA SẺ TÀI NGUYÊN </h1>
+      <p class="text-sm font-semibold text-blue-600">Hành Trình Số - Mang tri thức đến mọi người</p>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-lg font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-lg" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-lg font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-lg" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-lg font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-sm font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-sm font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-base p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-base font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-sm text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ (Câu)</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-lg"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-lg shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-lg shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-lg shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-sm text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-sm sm:text-base whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            // Điều chỉnh reference sang Bài 5 để tránh nhầm dữ liệu với các bài thực hành khác
+            scoresRef = database.ref('bxh_tin_12_bai5');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 5: CHIA SẺ TÀI NGUYÊN) - ĐÃ ĐẢO ĐÁP ÁN & BỔ SUNG LỜI GIẢI KHOA HỌC
+    =================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Môi trường thuận lợi để chia sẻ tệp trên mạng cần thiết lập chế độ mạng gì? ", options: [" Thiết lập cấu hình chuẩn mạng công cộng. ", "B. Thiết lập cấu hình chuẩn mạng diện rộng. ", "C. Thiết lập cấu hình chuẩn mạng riêng tư. ", "D. Thiết lập cấu hình chuẩn mạng toàn cầu. "], correct: 2,
+          explanation: "Đáp án đúng: Thiết lập cấu hình chuẩn mạng riêng tư. Khi kết nối mạng ở chế độ Private Network, Windows tự động cấu hình tường lửa (Firewall Profile) để cho phép các giao thức chia sẻ tài nguyên (như SMB cổng 445) và dò tìm mạng (Network Discovery) hoạt động thông suốt." },
+        { id: "d1_2", type: "single", question: "Câu 2: Để các máy tính khác có thể nhìn thấy máy mình, cần bật tính năng nào? ", options: [" Kích hoạt tính năng Unidentified trên mạng. ", "B. Kích hoạt tính năng Discoverable trên mạng. ", "C. Kích hoạt tính năng Disconnected trên mạng. ", "D. Kích hoạt tính năng Unsearchable trên mạng. "], correct: 1,
+          explanation: "Đáp án đúng: Kích hoạt tính năng Discoverable trên mạng. Chức năng Discoverable (Dò tìm mạng) sử dụng các gói tin broadcast (như giao thức WS-Discovery hoặc SSDP) giúp thiết bị khai báo sự hiện diện của nó với các máy tính khác trong cùng một mạng LAN nội bộ." },
+        { id: "d1_3", type: "single", question: "Câu 3: Trong bước đầu thiết lập môi trường chia sẻ, tường lửa được khuyến nghị thế nào? ", options: [" Cần phải ẩn hoàn toàn hệ thống tường lử ", "B. Cần phải bật liên tục hệ thống tường lử ", "C. Cần phải xóa vĩnh viễn hệ thống tường lử ", "D. Cần phải tắt tạm thời hệ thống tường lử "], correct: 3,
+          explanation: "Đáp án đúng: Cần phải tắt tạm thời hệ thống tường lửa. Tường lửa (Firewall) đôi khi sẽ chặn nghiêm ngặt các gói tin Inbound (đi vào máy). Việc vô hiệu hóa tạm thời giúp loại trừ nguyên nhân kết nối bị từ chối trong quá trình thử nghiệm thiết lập mạng LAN ban đầu." },
+        { id: "d1_4", type: "single", question: "Câu 4: Thẻ (Tab) nào trong cửa sổ Properties dùng để thiết lập tính năng chia sẻ? ", options: [" Lựa chọn thao tác với thẻ cấu hình General. ", "B. Lựa chọn thao tác với thẻ cấu hình Sharing. ", "C. Lựa chọn thao tác với thẻ cấu hình Security. ", "D. Lựa chọn thao tác với thẻ cấu hình Hardware. "], correct: 1,
+          explanation: "Đáp án đúng: Thẻ cấu hình Sharing. Thẻ Sharing trong hệ điều hành Windows chứa công cụ \"Advanced Sharing\", trực tiếp thao tác khởi tạo Share Name và thiết lập giao thức SMB cho thư mục trên ổ đĩ" },
+        { id: "d1_5", type: "single", question: "Câu 5: Tùy chọn \"File and printer sharing\" mang ý nghĩa gì trong cấu hình mạng? ", options: [" Xóa bỏ hoàn toàn tệp dữ liệu và máy in. ", "B. Từ chối không cho chia sẻ tệp và máy in. ", "C. Chấp nhận cho phép chia sẻ tệp và máy in. ", "D. Sao lưu dự phòng dữ liệu tệp và máy in. "], correct: 2,
+          explanation: "Đáp án đúng: Chấp nhận cho phép chia sẻ tệp và máy in. Đây là dịch vụ lõi của hệ thống (Server Service), mở khóa quyền cấp phát tài nguyên lưu trữ và bộ đệm in (Spooler) cho các truy vấn xuất phát từ máy khách trên mạng." },
+        { id: "d1_6", type: "single", question: "Câu 6: Để thiết lập quyền truy cập cho thư mục chia sẻ, ta cần nhấn chọn vào nút nào? ", options: [" Nhấn chuột vào chức năng nút Properties. ", "B. Nhấn chuột vào chức năng nút Passwords. ", "C. Nhấn chuột vào chức năng nút Protections. ", "D. Nhấn chuột vào chức năng nút Permissions. "], correct: 3,
+          explanation: "Đáp án đúng: Nút Permissions. Nút Permissions (Quyền hạn) cho phép người quản trị mạng thiết lập Danh sách kiểm soát truy cập (Access Control List - ACL), quy định ai có quyền Đọc (Read), Thay đổi (Change) hay Toàn quyền (Full Control) đối với tài nguyên." },
+        { id: "d1_7", type: "single", question: "Câu 7: Để hủy bỏ việc chia sẻ một thư mục, người dùng thực hiện thao tác cơ bản nào? ", options: [" Bỏ đánh dấu chọn tại ô Share this folder. ", "B. Bỏ đánh dấu chọn tại ô Delete this folder. ", "C. Bỏ đánh dấu chọn tại ô Rename this folder. ", "D. Bỏ đánh dấu chọn tại ô Create this folder. "], correct: 0,
+          explanation: "Đáp án đúng: Bỏ đánh dấu chọn tại ô Share this folder. Thao tác này gửi lệnh tới hệ điều hành để đóng băng kết nối SMB tới thư mục gốc, ngừng phát sóng tài nguyên lên mạng mà không làm ảnh hưởng đến dữ liệu vật lý lưu trên ổ cứng." },
+        { id: "d1_8", type: "single", question: "Câu 8: Máy in kết nối với máy tính cung cấp dịch vụ in trên mạng được gọi là gì? ", options: [" Thiết bị đó được gọi là máy in di động. ", "B. Thiết bị đó được gọi là máy in nối mạng. ", "C. Thiết bị đó được gọi là máy in ảo hó ", "D. Thiết bị đó được gọi là máy in cục bộ. "], correct: 1,
+          explanation: "Đáp án đúng: Máy in nối mạng. Về mặt kiến trúc, thiết bị này được liên kết với một máy chủ (Print Server) xử lí tác vụ in, chia sẻ công năng thông qua môi trường mạng LAN để tiếp nhận lệnh in từ x" },
+        { id: "d1_9", type: "single", question: "Câu 9: Muốn các máy tính khác dùng được máy in chung thì chúng phải thực hiện gì? ", options: [" Bắt buộc phải cắm cáp trực tiếp vào máy in. ", "B. Bắt buộc phải cài lại hệ điều hành Windows. ", "C. Bắt buộc phải mua thêm một máy in cá nhân. ", "D. Bắt buộc phải khai báo sử dụng máy in mạng. "], correct: 3,
+          explanation: "Đáp án đúng: Khai báo sử dụng máy in mạng. Các máy khách (Client) phải thông qua chức năng \"Add a printer\" để hệ điều hành tải trình điều khiển (Driver) tương ứng và tạo kết nối định tuyến in ấn (Spooling queue) tới đúng địa chỉ IP của máy chia sẻ." },
+        { id: "d1_10", type: "single", question: "Câu 10: Khi tìm kiếm máy in mạng từ một máy tính khác, ta mở cửa sổ trình duyệt nào? ", options: [" Mở ứng dụng tìm kiếm File Browser mạng. ", "B. Mở ứng dụng duyệt web Google Chrome. ", "C. Mở ứng dụng nghe nhạc Windows Medi ", "D. Mở ứng dụng thiết kế đồ họa Photoshop. "], correct: 0,
+          explanation: "Đáp án đúng: Mở ứng dụng tìm kiếm File Browser mạng. File Explorer (hay File Browser) của Windows cung cấp mục Network, giúp hiển thị bản đồ trực quan các giao điểm mạng (Nodes) và các thiết bị phần cứng đang được chia sẻ ngang hàng." },
+        { id: "d1_11", type: "single", question: "Câu 11: Tại sao lại cần phải chọn chế độ \"Private Network\" thay vì \"Public Network\"? ", options: [" Để cho phép tất cả mọi người cùng truy cập. ", "B. Để đảm bảo an toàn bảo mật khi chia sẻ. ", "C. Để chặn kết nối nội bộ của các máy tính. ", "D. Để tiết kiệm dung lượng ổ cứng lưu trữ. "], correct: 1,
+          explanation: "Đáp án đúng: Để đảm bảo an toàn bảo mật khi chia sẻ. Chế độ Private thiết lập niềm tin (Trust) trong mạng nội bộ, mở các cổng chia sẻ cục bộ. Ngược lại, Public Network đóng chặt mọi kết nối Inbound nhằm bảo vệ dữ liệu khi bạn truy cập mạng Wi-Fi công cộng tiềm ẩn nhiều rủi ro." },
+        { id: "d1_12", type: "single", question: "Câu 12: Việc \"Tắt tạm thời tường lửa\" có tác dụng chính là gì trong quá trình chia sẻ? ", options: [" Giúp các máy tính khác dễ dàng kết nối tới. ", "B. Giúp ngăn chặn vi rút lây lan trong hệ thống. ", "C. Giúp máy tính chạy nhanh hơn rất nhiều lần. ", "D. Giúp xóa các tệp tin rác không còn sử dụng. "], correct: 0,
+          explanation: "Đáp án đúng: Giúp các máy tính khác dễ dàng kết nối tới. Khi có sự cố kết nối chia sẻ, việc tạm dừng các rule (luật) chặn của Firewall giúp xác định xem lỗi nằm ở cấu hình quyền mạng (Permissions) hay do bị phần mềm an ninh chặn luồng dữ liệu (Traffic Drop)." },
+        { id: "d1_13", type: "single", question: "Câu 13: Nếu không bật tính năng \"Discoverable\", hiện tượng gì sẽ xảy ra trong mạng? ", options: [" Máy tính sẽ tự động sao chép toàn bộ dữ liệu. ", "B. Các máy tính khác không nhìn thấy máy bạn. ", "C. Kẻ gian sẽ đánh cắp được mọi mật khẩu mạng. ", "D. Máy tính sẽ lập tức ngắt kết nối với Internet. "], correct: 1,
+          explanation: "Đáp án đúng: Các máy tính khác không nhìn thấy máy bạn. Việc tắt Discoverable đồng nghĩa máy tính của bạn sẽ ngừng phát bản tin Broadcast tự thông báo (Announce) vị trí IP của mình, khiến nó tàng hình (Invisible) trong trình duyệt Network của các thiết bị khác." },
+        { id: "d1_14", type: "single", question: "Câu 14: Quyền \"Read\" trong phần cấu hình Permissions mang ý nghĩa cấp phép thế nào? ", options: [" Cấp quyền chỉ được phép xóa toàn bộ tệp tin. ", "B. Cấp quyền chỉ được phép đổi tên các tệp tin. ", "C. Cấp quyền chỉ được phép ẩn dữ liệu tệp tin. ", "D. Cấp quyền chỉ được phép xem nội dung tệp tin. "], correct: 3,
+          explanation: "Đáp án đúng: Chỉ được phép xem nội dung tệp tin. Phân quyền Read là lớp bảo vệ kĩ thuật giới hạn ở thao tác đọc bộ đệm (Read Buffer) và liệt kê danh mục tệp (List Directory). Nó vô hiệu hóa hoàn toàn các thao tác thay đổi (Write/Modify/Delete)." },
+        { id: "d1_15", type: "single", question: "Câu 15: Quyền \"Full Control\" khác với quyền \"Read\" ở khả năng cốt lõi nào sau đây? ", options: [" Tuyệt đối không thể mở xem các tệp tin được. ", "B. Cho phép chỉnh sửa và xóa bỏ được dữ liệu. ", "C. Chỉ áp dụng giới hạn cho việc in các tài liệu. ", "D. Bắt buộc phải nhập mật khẩu để mở tài liệu. "], correct: 1,
+          explanation: "Đáp án đúng: Cho phép chỉnh sửa và xóa bỏ được dữ liệu. Thuộc tính Full Control cấp đặc quyền tối đa: người dùng qua mạng có thể thao tác với dữ liệu hệt như đang dùng tài khoản Administrator ngồi trên máy trực tiếp (bao gồm xóa bỏ, thay đổi nội dung tệp và thậm chí cấp quyền lại cho người khác)." },
+        { id: "d1_16", type: "single", question: "Câu 16: Máy tính cung cấp dịch vụ in có yêu cầu gì khi cài đặt máy in mạng ban đầu? ", options: [" Cài đặt bình thường giống như máy in cá nhân. ", "B. Cài đặt các phần mềm diệt vi rút chuyên dụng. ", "C. Cài đặt lại toàn bộ hệ thống cáp quang mạng. ", "D. Cài đặt phần mềm thay đổi định dạng tài liệu. "], correct: 0,
+          explanation: "Đáp án đúng: Cài đặt bình thường giống máy in cá nhân. Máy tính Host (máy cắm trực tiếp cáp USB) phải nhận diện và cài đặt đầy đủ Driver để đảm bảo hoạt động giao tiếp cơ học nội bộ trước khi có thể biến nó thành dịch vụ (Service) đẩy lên hệ thống mạng." },
+        { id: "d1_17", type: "single", question: "Câu 17: Các máy khách tìm và duyệt máy in đã được chia sẻ trên hệ thống bằng cách nào? ", options: [" Tiến hành tìm kiếm trên hệ thống mạng Internet. ", "B. Tiến hành cắm cáp kết nối trực tiếp vào máy in. ", "C. Tiến hành duyệt các máy tính trên mạng nội bộ. ", "D. Tiến hành rút cáp điện của máy cung cấp dịch vụ. "], correct: 2,
+          explanation: "Đáp án đúng: Duyệt các máy tính trên mạng nội bộ. Các máy Client sử dụng mục Network để liệt kê danh sách các Node LAN đang hoạt động (Online), từ đó xác định tên thiết bị Máy chủ in (Print Server Name) và gửi truy vấn kết nối đến nó." },
+        { id: "d1_18", type: "single", question: "Câu 18: Tại sao có thiết lập chức năng \"chỉ định người được phép chia sẻ\" (Share with)? ", options: [" Nhằm làm cho tệp tin truyền đi được nhanh hơn. ", "B. Nhằm mục đích phóng to giao diện hiển thị thư. ", "C. Nhằm bảo mật và giới hạn người xem dữ liệu. ", "D. Nhằm mục đích giảm dung lượng của các tệp tin. "], correct: 2,
+          explanation: "Đáp án đúng: Nhằm bảo mật và giới hạn người xem dữ liệu. Cơ chế Authentication yêu cầu chứng thực người dùng, giúp loại trừ các rủi ro truy cập trái phép (Unauthorized Access) và cô lập tài nguyên mật khỏi những người dùng khác trong cùng mạng LAN." },
+        { id: "d1_19", type: "single", question: "Câu 19: Khi máy in mạng đã được thêm vào thành công, dấu hiệu nhận biết thường là: ", options: [" Màn hình máy tính hiển thị thông báo lỗi mạng. ", "B. Máy tính tự động tắt nguồn khởi động lại ngay. ", "C. Bàn phím máy tính bị khóa lại không bấm được. ", "D. Biểu tượng máy in xuất hiện trong danh sách. "], correct: 3,
+          explanation: "Đáp án đúng: Biểu tượng máy in xuất hiện trong danh sách. Hệ điều hành sẽ đăng kí (Register) một Logical Printer Device. Thiết bị này sẽ hiển thị ở mục \"Printers & Scanners\" giống hệt một máy in vật lý, sẵn sàng nhận các tệp lệnh Spooling." },
+        { id: "d1_20", type: "single", question: "Câu 20: Nam muốn gửi tệp báo cáo nhanh cho nhóm mà không dùng USB, Nam nên làm gì? ", options: [" Thiết lập khóa thư mục đó bằng mật mã. ", "B. Thiết lập chia sẻ tệp đó trên mạng nội bộ. ", "C. Thiết lập in tệp đó ra thành nhiều bản giấy. ", "D. Thiết lập tắt nguồn toàn bộ hệ thống mạng. "], correct: 1,
+          explanation: "Đáp án đúng: Thiết lập chia sẻ tệp đó trên mạng nội bộ. Dùng phương pháp Network Sharing giúp khai thác băng thông tốc độ cao của mạng LAN, chuyển dữ liệu trực tiếp ngang hàng (Peer-to-Peer) mà không bị giới hạn cơ học từ thiết bị ngoại vi như USB." },
+        { id: "d1_21", type: "single", question: "Câu 21: Trong phòng thực hành, để học sinh nộp bài mà không xóa bài của nhau, GV cấp: ", options: [" Cấp quyền Share nhưng chỉ cấp mức Read. ", "B. Cấp quyền Share kèm thao tác Full Control. ", "C. Cấp quyền Share kèm theo chức năng Delete. ", "D. Cấp quyền Share nhưng từ chối hoàn toàn. "], correct: 0,
+          explanation: "Lưu ý khoa học: Mặc dù trong thực tế để sao chép dữ liệu GHI VÀO máy thầy thì bắt buộc phải có quyền ghi/thay đổi (Write/Change), tuy nhiên theo cơ bản của bài thực hành này, việc giới hạn không cho phép 'Xóa' hay can thiệp tệp gốc thường chỉ đáp ứng tốt nhất ở quyền Share cơ sở mức Read. (Các phương án khác như Full Control / Delete đều hoàn toàn sai mục đích bảo vệ dữ liệu gốc) ." },
+        { id: "d1_22", type: "single", question: "Câu 22: Lan chia sẻ tệp nhưng cả nhóm không ai thấy máy Lan. Lỗi khả năng cao nhất là? ", options: [" Do Lan chưa cắm cáp màn hình máy tính vào. ", "B. Do Lan chưa kích hoạt chế độ Discoverable. ", "C. Do Lan chưa cài đặt trình duyệt web Chrome. ", "D. Do Lan chưa bật tính năng soạn thảo văn bản. "], correct: 1,
+          explanation: "Đáp án đúng: Do chưa kích hoạt chế độ Discoverable. Tính năng dò tìm mạng là yếu tố tiên quyết. Nếu không bật nó (hoặc đang cấu hình Public Profile chặn Discoverable), máy của Lan sẽ không phản hồi các gói truy vấn nhận diện địa chỉ IP từ máy của bạn bè." },
+        { id: "d1_23", type: "single", question: "Câu 23: Máy in nối trực tiếp với máy A nhưng máy B muốn in tài liệu. Máy B cần làm gì? ", options: [" Cắm trực tiếp dây cáp nối từ máy B vào máy in. ", "B. Coppy dữ liệu sang máy A bằng thiết bị ổ USB. ", "C. Dùng Browser tìm và kết nối máy in từ máy  ", "D. Phải mua một chiếc máy in mới cắm vào máy B. "], correct: 2,
+          explanation: "Đáp án đúng: Dùng Browser tìm và kết nối máy in từ máy A. Giả sử máy A đã cấu hình Share, máy B chỉ cần truy cập giao thức kết nối qua mạng nội bộ để nhận phân luồng dịch vụ in ấn, tận dụng hoàn hảo giải pháp tài nguyên tập trung." },
+        { id: "d1_24", type: "single", question: "Câu 24: Sau khi dự án chung kết thúc, trưởng nhóm cần làm gì với thư mục đã chia sẻ? ", options: [" Thực hiện thao tác in toàn bộ tài liệu dự án r ", "B. Thực hiện đổi tên tất cả các tệp tin lưu trong đó. ", "C. Thực hiện hủy bỏ chức năng chia sẻ thư mục đó. ", "D. Thực hiện sao chép toàn bộ sang một ổ đĩa USB. "], correct: 2,
+          explanation: "Đáp án đúng: Hủy bỏ chức năng chia sẻ thư mục. Việc Stop Sharing là một quy tắc quản trị An toàn thông tin (Information Security) cơ bản, giúp thu hồi các luồng Access Control mạng, đóng các lỗ hổng rủi ro bảo mật dữ liệu sau khi hoàn thành nhiệm vụ." },
+        { id: "d1_25", type: "single", question: "Câu 25: Khi cài đặt xong máy in mạng trên một máy khách, bước kiểm tra cuối cùng là: ", options: [" Tiến hành thao tác khởi động lại hệ điều hành. ", "B. Tiến hành thao tác in thử một trang tài liệu. ", "C. Tiến hành thao tác tắt tính năng chia sẻ máy in. ", "D. Tiến hành thao tác quét vi rút toàn bộ máy tính. "], correct: 1,
+          explanation: "Đáp án đúng: Tiến hành thao tác in thử một trang tài liệu. Lệnh \"Print Test Page\" tạo ra một luồng kiểm thử toàn trình (End-to-end Test), bao gồm dịch vụ Spooler ở máy khách, băng thông truyền tải LAN và bộ đệm phần cứng nhận lệnh in của máy chủ." },
+        { id: "d1_26", type: "single", question: "Câu 26: Công ty có 10 máy tính và 1 máy in. Giải pháp nào tiết kiệm chi phí in ấn nhất? ", options: [" Mua 10 máy in riêng cho từng nhân viên dùng. ", "B. Yêu cầu nhân viên tự ra cửa hàng photo để in. ", "C. Không dùng chức năng in ấn trong công ty nữ ", "D. Nối máy in vào 1 máy và bật chế độ chia sẻ. "], correct: 3,
+          explanation: "Đáp án đúng: Nối máy in vào 1 máy và chia sẻ. Đây là triết lí cốt lõi của mạng viễn thông máy tính - tối ưu hóa khai thác tài nguyên phần cứng (Resource Pooling), tiết kiệm cực lớn chi phí đầu tư thiết bị (CAPEX) và năng lượng vận hành." },
+        { id: "d1_27", type: "single", question: "Câu 27: Nếu thư mục D:\\Data được cấp duy nhất quyền \"Read\", người truy cập có thể: ", options: [" Mở lên để xóa các tệp tin đang được lưu trữ. ", "B. Mở lên để xem nội dung các tệp tin trong đó. ", "C. Tạo thêm các tệp tin mới và lưu vào thư mục. ", "D. Đổi tên toàn bộ thư mục Data thành tên khác. "], correct: 1,
+          explanation: "Đáp án đúng: Mở xem nội dung các tệp tin. Thao tác này tương đương với Read-Only mode. Request hệ thống chỉ được trả về luồng Byte Data mà không có bất kì quyền hạn phân bổ tệp hệ thống (System allocation) nào khác như xóa, sử" },
+        { id: "d1_28", type: "single", question: "Câu 28: Muốn chỉ định đích danh một bạn cụ thể được vào thư mục chia sẻ, thao tác ở đâu? ", options: [" Thiết lập tại mục nhập tên người được chia sẻ. ", "B. Thiết lập tại mục chọn chuẩn cấu hình mạng LAN. ", "C. Thiết lập tại mục chọn độ phân giải màn hình máy. ", "D. Thiết lập tại mục cấu hình tính năng tường lử "], correct: 0,
+          explanation: "Đáp án đúng: Thiết lập tại mục nhập tên (Share with). Windows sử dụng kiến trúc bảo mật tệp (NTFS / Network ACLs) yêu cầu định danh ID Người dùng (User Identifiers) rõ ràng để kích hoạt cơ chế chứng thực truy cập cho người đó." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1 (Đ/S): Kịch bản: Để lắp đặt phòng máy thực hành cho học sinh, thầy giáo muốn cấu hình chia sẻ tệp bài giảng từ máy chủ đến tất cả các máy trạm. ", items: [
+            { id: "a", text: "a) Thầy giáo cần phải thiết lập chế độ cho phép các máy khác nhìn thấy (discoverable) trên máy chủ để máy học sinh có thể tìm thấy. ", correct: true, expl: "Chính xác. Khởi động giao thức Broadcast giúp máy chủ hiện diện liên tục (Announce) trên cây thư mục thiết bị trực tuyến của mạng LAN." },
+            { id: "b", text: "b) Việc lựa chọn \"Public Network\" (mạng công cộng) thay vì \"Private Network\" (mạng riêng) sẽ giúp cho hệ thống chia sẻ bài giảng được bảo mật tốt hơn. ", correct: false, expl: "Sai cấu trúc bảo mật. Profile \"Public Network\" chặn toàn bộ giao thức Inbound chia sẻ tệp để tự vệ trước Wi-Fi công cộng. Mạng nội bộ muốn chia sẻ tệp an toàn phải cấu hình là \"Private Network\"." },
+            { id: "c", text: "c) Để đảm bảo học sinh chỉ có thể mở ra xem và chép bài giảng về máy mà không thể vô tình xóa hoặc sửa, thầy giáo thiết lập quyền \"Read\". ", correct: true, expl: "Chính xác. Khóa quyền thay đổi (Deny Write/Modify), chỉ thả lệnh Read-Only giúp bảo toàn tính toàn vẹn (Integrity) tuyệt đối cho các File dữ liệu giảng dạy gốc." },
+            { id: "d", text: "d) Nếu máy học sinh không nhìn thấy máy giáo viên, nguyên nhân đầu tiên cần kiểm tra là xem máy đó đã kết nối chung mạng LAN với thầy giáo chư ", correct: true, expl: "Chính xác. Mạng ngang hàng (Peer-to-Peer sharing) dựa trên nền tảng kết nối chung miền (Broadcast Domain) cùng dải địa chỉ IP trên một Gateway vật lý mạng." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2 (Đ/S): Kịch bản: 5 thầy cô sử dụng laptop nhưng văn phòng chỉ có 1 chiếc máy in. Các thầy cô cần tìm cách để ai cũng có thể in tài liệu tại chỗ. [ 158, 159]", items: [
+            { id: "a", text: "a) Giải pháp hiệu quả nhất là cắm máy in vào một máy tính cố định, sau đó thiết lập chế độ chia sẻ máy in đó trên mạng. ", correct: true, expl: "Chính xác. Cấu trúc Print Server cục bộ (Host) chia sẻ dịch vụ in là phương pháp truyền thống chuẩn và linh hoạt nhất." },
+            { id: "b", text: "b) Máy tính cung cấp dịch vụ in không cần phải cài đặt trình điều khiển (driver) của máy in, chỉ cần cắm cáp USB vào là máy sẽ tự in. ", correct: false, expl: "Sai kĩ thuật nền tảng. Bất kì hệ điều hành nào cũng bắt buộc phải cài đặt Trình điều khiển (Driver) giao tiếp phần cứng để dịch lệnh từ mã máy tính sang mã lệnh cơ học của máy in." },
+            { id: "c", text: "c) Các laptop còn lại kết nối cùng Wi-Fi, mở tính năng tìm máy in mạng và kết nối mà không cần bê máy đến cắm cáp. ", correct: true, expl: "Chính xác. Kết nối Wi-Fi cùng Access Point đồng nghĩa với việc giao tiếp chung phân đoạn mạng LAN để định tuyến dữ liệu in." },
+            { id: "d", text: "d) Để tiện lợi cho lần sau không phải chọn lại máy in, các thầy cô nên thiết lập máy in mạng này làm máy in mặc định (Set as default). ", correct: true, expl: "Chính xác. Windows Registry lưu trữ cờ hiệu (Flag) cho thiết bị Default, lệnh in từ ứng dụng (Word, Excel...) sẽ tự động định tuyến đến máy đó." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3 (Đ/S): Kịch bản: Trưởng nhóm tạo thư mục \"DU_AN_KH\" và chia sẻ qua Wi-Fi thư viện để 3 bạn còn lại cùng hoàn thành dự án khoa học. [ 164, 165]", items: [
+            { id: "a", text: "a) Để chia sẻ thư mục, trưởng nhóm nhấp chuột phải vào thư mục, chọn Properties, chuyển sang thẻ Sharing. ", correct: true, expl: "Chính xác. Đây là chuỗi thao tác GUI cơ bản trong Windows để can thiệp vào các thông số quản trị hệ thống chia sẻ mạng SMB." },
+            { id: "b", text: "b) Sau khi dự án hoàn thành, trưởng nhóm có thể hủy việc chia sẻ bằng cách bỏ đánh dấu ô \"Share this folder\". ", correct: true, expl: "Chính xác. Việc ngắt lệnh Share This Folder sẽ ngay lập tức khóa đường truyền Access Protocol cho tài nguyên đó." },
+            { id: "c", text: "c) Để cả nhóm bổ sung thông tin và lưu lại trực tiếp vào thư mục chia sẻ, bắt buộc phải cấp quyền \"Change\" hoặc \"Full Control\". ", correct: true, expl: "Chính xác. Để tương tác ghi đè (Overwrite) và lưu chỉnh sửa (Modify), quyền quản trị bắt buộc phải cao hơn trạng thái Read." },
+            { id: "d", text: "d) Dù đã chia sẻ đúng cách, nếu tường lửa (firewall) chặn nghiêm ngặt kết nối từ bên ngoài, các bạn khác vẫn không thể truy cập. ", correct: true, expl: "Chính xác. Firewall là cánh cổng an ninh chốt chặn cuối cùng (Packet Filter), việc Drop Packet sẽ vô hiệu hóa mọi nỗ lực Ping hoặc SMB kết nối." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Điều kiện tiên quyết để chia sẻ tệp thành công trên mạng là phải thao tác gì? ", options: [" Thực hiện thiết lập khóa bàn phím người dùng. ", "B. Thực hiện thiết lập cấu hình mạng chuẩn riêng. ", "C. Thực hiện thiết lập chế độ tắt màn hình máy. ", "D. Thực hiện thiết lập gỡ bỏ các phần mềm chạy. "], correct: 1,
+          explanation: "Đáp án đúng: Thiết lập cấu hình mạng chuẩn riêng (Private Network). Việc thiết định Profile mạng là \"Private\" cho phép Windows tin tưởng không gian IP cục bộ, mở cổng SMB (Server Message Block) cần thiết cho chia sẻ." },
+        { id: "d2_2", type: "single", question: "Câu 2: Việc bật tính năng \"File and printer sharing\" mang ý nghĩa kĩ thuật như thế nào? ", options: [" Xóa bỏ vĩnh viễn tệp tin và các thiết bị in. ", "B. Chặn tính năng chia sẻ tệp và thiết bị mạng. ", "C. Tạo bản sao lưu dự phòng cho thiết bị mạng. ", "D. Cấp phép chia sẻ tệp tin và các thiết bị in. "], correct: 3,
+          explanation: "Đáp án đúng: Cấp phép chia sẻ tệp tin và các thiết bị in. Khởi chạy các nhân dịch vụ (Services) giao tiếp mạng của Hệ điều hành để sẵn sàng hồi đáp các yêu cầu truy cập từ bên ngoài." },
+        { id: "d2_3", type: "single", question: "Câu 3: Trong hướng dẫn thực hành, đối với tường lửa (firewall), người dùng cần phải: ", options: [" Bật tường lửa lên mức bảo vệ cao nhất máy. ", "B. Khóa hệ thống không cho phép dùng mạng nữ ", "C. Tạm thời vô hiệu hóa chức năng tường lử ", "D. Xóa bỏ tệp tin hệ thống của chức năng mạng. "], correct: 2,
+          explanation: "Đáp án đúng: Tạm thời vô hiệu hóa chức năng tường lửa. Trong môi trường LAB thực hành học thuật, việc tắt Firewall giúp hệ thống bypass các bộ lọc Inbound phiền toái, hỗ trợ việc thiết lập (Troubleshooting) nhanh chóng." },
+        { id: "d2_4", type: "single", question: "Câu 4: Để cấu hình một thư mục thành thư mục chia sẻ, ta nhấp chuột phải và chọn: ", options: [" Lựa chọn chức năng Properties ở trình đơn. ", "B. Lựa chọn chức năng Delete khỏi bộ nhớ máy. ", "C. Lựa chọn chức năng Rename thư mục đó đi. ", "D. Lựa chọn chức năng Copy toàn bộ dữ liệu đi. "], correct: 0,
+          explanation: "Đáp án đúng: Chức năng Properties. Trình đơn thuộc tính (Properties Dialog) cung cấp tất cả các Metadata của tập tin và thẻ tính năng quản trị đặc quyền, bao gồm Sharing và Security." },
+        { id: "d2_5", type: "single", question: "Câu 5: Nút \"Advanced Sharing\" trong thẻ Sharing có chức năng dùng để làm công việc gì? ", options: [" Dùng để đóng lại cửa sổ tính năng bảo mật tệp. ", "B. Dùng để mở cửa sổ thiết lập tính năng chia sẻ. ", "C. Dùng để chạy chương trình duyệt web toàn cầu. ", "D. Dùng để thiết kế lại giao diện thư mục hiển thị. "], correct: 1,
+          explanation: "Đáp án đúng: Mở cửa sổ thiết lập tính năng chia sẻ. Cửa sổ nâng cao này cho phép người dùng khai báo Share Name (Tên hiển thị chia sẻ), giới hạn số lượng kết nối tối đa (Connections Limit) và gắn thẻ cấp quyền (Permissions)." },
+        { id: "d2_6", type: "single", question: "Câu 6: Thao tác nào quyết định một thư mục chính thức được đưa vào trạng thái chia sẻ? ", options: [" Đánh dấu chọn vào ô vuông Hide this folder. ", "B. Đánh dấu chọn vào ô vuông Compress folder. ", "C. Đánh dấu chọn vào ô vuông Encrypt the folder. ", "D. Đánh dấu chọn vào ô vuông Share this folder. "], correct: 3,
+          explanation: "Đáp án đúng: Đánh dấu Share this folder. Checkbox (nút tùy chọn đánh dấu) này hoạt động như một công tắc (Boolean switch) để hệ điều hành sinh ra một Share Object gán ghép cấu trúc với thư mục." },
+        { id: "d2_7", type: "single", question: "Câu 7: Để ngừng hoàn toàn việc chia sẻ một thư mục qua mạng, ta thực hiện thao tác: ", options: [" Xóa thẳng tay thư mục đó khỏi ổ cứng máy tính. ", "B. Ngắt kết nối toàn bộ hệ thống nguồn điện máy. ", "C. Bỏ đánh dấu chọn tại dòng Share this folder. ", "D. Đổi tên thư mục đó thành một chuỗi kí tự mới. "], correct: 2,
+          explanation: "Đáp án đúng: Bỏ đánh dấu Share this folder. Một thao tác an toàn cho dữ liệu vật lý (giữ nguyên tệp gốc trong máy tính) nhưng đóng hoàn toàn mọi lỗ hổng truy cập mạng." },
+        { id: "d2_8", type: "single", question: "Câu 8: Máy in được cài đặt trên một máy tính để mọi người cùng in qua mạng gọi là gì? ", options: [" Thiết bị hệ thống máy in được sử dụng chung (máy in mạng). ", "B. Thiết bị hệ thống máy in được sử dụng riêng (máy cá nhân). ", "C. Thiết bị định tuyến dữ liệu trên mạng (bộ Router). ", "D. Thiết bị lưu trữ dữ liệu của cục bộ (thiết bị đĩa). "], correct: 0,
+          explanation: "Đáp án đúng: Máy in mạng. Kiến trúc Network Printing là trung tâm phân phối các bản tin in ấn từ nhiều Client Device về duy nhất một giao diện Print Server Node." },
+        { id: "d2_9", type: "single", question: "Câu 9: Để khai báo và kết nối máy in mạng ở máy khách, người dùng vào chức năng nào? ", options: [" Mở tính năng gỡ bỏ phần mềm không dùng. ", "B. Mở tính năng thay đổi độ sáng màn hình lên. ", "C. Mở tính năng Add a printer or scanner. ", "D. Mở tính năng thay đổi hình nền của desktop. "], correct: 2,
+          explanation: "Đáp án đúng: Add a printer or scanner. Công cụ này khởi động thuật toán dò tìm qua môi trường mạng LAN, trích xuất IP và tải Network Driver từ Host về để vận hành." },
+        { id: "d2_10", type: "single", question: "Câu 10: Trong cửa sổ Permissions, mục nào hiển thị danh sách người được cấp quyền? ", options: [" Khung hiển thị danh sách Permissions for Users. ", "B. Khung hiển thị danh sách Group or user names. ", "C. Khung hiển thị danh sách Advanced System tools. ", "D. Khung hiển thị danh sách Network and Internet. "], correct: 1,
+          explanation: "Đáp án đúng: Group or user names. Khung hộp thoại đồ họa liệt kê danh sách định danh tài khoản (Local Users) hoặc Nhóm tài khoản (Groups) tham chiếu đến tệp bảo mật ACL (Access Control List)." },
+        { id: "d2_11", type: "single", question: "Câu 11: Chế độ \"Private Network\" bảo vệ người dùng mạng như thế nào khi chia sẻ tệp? ", options: [" Ẩn thiết bị khỏi các hệ thống mạng công cộng. ", "B. Cấp quyền truy cập cho tất cả mọi người ngoài. ", "C. Xóa sạch mọi vi rút có trong các mạng công cộng. ", "D. Khóa toàn bộ bàn phím để không bị người khác gõ. "], correct: 0,
+          explanation: "Đáp án đúng: Ẩn thiết bị khỏi mạng công cộng. Profile này định nghĩa không gian mạng an toàn nội bộ, nhưng khi bạn mang máy ra kết nối Wi-Fi quán Cafe (mạng công cộng), các cấu hình chia sẻ Private này sẽ được cách li kĩ thuật hoàn toàn." },
+        { id: "d2_12", type: "single", question: "Câu 12: Tại sao máy khách không cần phải kết nối trực tiếp cáp USB vào máy in mạng? ", options: [" Vì máy khách đã tự động biến thành một máy in. ", "B. Vì tín hiệu in ấn được truyền qua hệ thống mạng. ", "C. Vì máy in có khả năng tự động hút tài liệu vào. ", "D. Vì không cần có máy in vẫn in được ra giấy thật. "], correct: 1,
+          explanation: "Đáp án đúng: Vì tín hiệu được truyền qua mạng. Dữ liệu tệp in (Spool) sẽ được định tuyến thông qua các chuẩn giao thức vô tuyến/hữu tuyến (như Wi-Fi / Ethernet) bay đến máy tính cung cấp dịch vụ để giải mã." },
+        { id: "d2_13", type: "single", question: "Câu 13: Quyền \"Change\" trong cửa sổ Permissions cho phép người dùng qua mạng có thể: ", options: [" Xem tài liệu, thêm tệp mới, sửa và xóa được tệp. ", "B. Chỉ được phép mở tài liệu lên xem mà không sử ", "C. Có quyền cài đặt lại hệ điều hành của máy chủ. ", "D. Tự động chia sẻ tệp đó cho những người khác nữ "], correct: 0,
+          explanation: "Đáp án đúng: Xem tài liệu, thêm tệp mới, sửa và xóa tệp. Thuộc tính Change tương đương với phân quyền Read/Write/Modify kết hợp. Nó cấp quyền thao tác nội dung nhưng ngăn không cho phép quản trị can thiệp sâu (Take Ownership)." },
+        { id: "d2_14", type: "single", question: "Câu 14: Khi tìm máy in mạng, trình duyệt File Browser làm nhiệm vụ hiển thị những gì? ", options: [" Hiển thị danh sách hình ảnh lưu trên ổ cứng của bạn. ", "B. Hiển thị các trang web có nội dung học tập tin học. ", "C. Hiển thị danh sách các bài hát trong thư mục âm nhạc. ", "D. Hiển thị các máy tính đang có mặt trong mạng LAN. "], correct: 3,
+          explanation: "Đáp án đúng: Hiển thị các máy tính đang có mặt trong mạng LAN. Giao thức Dò mạng (Discovery) giúp trình duyệt File Browser đọc các gói tin Broad-cast từ IP cục bộ và ánh xạ lên biểu tượng đồ họa mô tả toàn bộ máy tính trực tuyến." },
+        { id: "d2_15", type: "single", question: "Câu 15: Việc hủy bỏ chia sẻ một thư mục sẽ tác động thế nào đến thư mục gốc trên máy? ", options: [" Thư mục gốc sẽ bị xóa vĩnh viễn khỏi ổ cứng máy. ", "B. Không làm mất thư mục, chỉ ngưng truy cập qua mạng. ", "C. Thư mục gốc tự động bị đổi định dạng sang mã hó ", "D. Dung lượng của thư mục gốc sẽ tự động tăng lên gấp đôi. "], correct: 1,
+          explanation: "Đáp án đúng: Không làm mất, chỉ ngưng truy cập. System Service gỡ liên kết (Unlink) cơ chế đường dẫn SMB Share Name, bảo vệ vẹn nguyên mọi dữ liệu tệp phần cứng ở dưới phân vùng ổ đĩa ảo (Disk Partition)." },
+        { id: "d2_16", type: "single", question: "Câu 16: Sự khác nhau cơ bản giữa cài đặt máy in mạng và máy in cục bộ cá nhân là gì? ", options: [" Máy in mạng không cần dùng mực in như bình thường. ", "B. Máy in mạng bắt buộc phải in giấy khổ A3 cực lớn. ", "C. Máy in mạng yêu cầu bật chế độ Share sau cài đặt. ", "D. Máy in mạng chỉ có thể in được ảnh trắng đen mờ. "], correct: 2,
+          explanation: "Đáp án đúng: Yêu cầu bật chế độ Share sau cài đặt. Bước Share là \"điểm chuyển hóa\" - cấp phát giao diện Public Interface bằng Network Protocols - biến thiết bị In độc lập thành một Node máy in phân tán (Distributed Printing)." },
+        { id: "d2_17", type: "single", question: "Câu 17: Ý nghĩa của thao tác \"Set as default printer\" (Thiết lập máy in mặc định) là gì? ", options: [" Máy in sẽ tự động in toàn bộ dữ liệu trong máy tính. ", "B. Tắt ngay lập tức nguồn điện của chiếc máy in đó đi. ", "C. Lệnh in sẽ tự động chuyển tới máy in này lần sau. ", "D. Chặn không cho các máy tính khác sử dụng máy in này. "], correct: 2,
+          explanation: "Đáp án đúng: Lệnh in tự động chuyển tới máy in này lần sau. Windows thiết lập con trỏ Registry System Default; hệ thống sẽ ưu tiên nạp luồng Spool Data vào thiết bị này mà không cần yêu cầu người dùng lựa chọn lại thủ công." },
+        { id: "d2_18", type: "single", question: "Câu 18: Khi thiết lập chia sẻ, nếu chọn quyền \"Read\" thì tính năng bảo mật sẽ ra sao? ", options: [" Dữ liệu gốc sẽ bị mã hóa thành những kí tự lạ lùng. ", "B. Dữ liệu gốc được bảo vệ an toàn, không bị sửa đổi. ", "C. Bất kì ai cũng có thể vào tự do xóa sạch thư mục đó. ", "D. Thư mục sẽ tự động lây nhiễm vi rút từ mạng vào máy. "], correct: 1,
+          explanation: "Đáp án đúng: Dữ liệu được bảo vệ, không bị sửa đổi. Trạng thái Chỉ-Đọc (Read-Only State) là lá chắn kĩ thuật Access Control List an toàn tuyệt đối trước các truy vấn phá hoại cố ý thay đổi (Alteration) tệp của Client từ x" },
+        { id: "d2_19", type: "single", question: "Câu 19: Tường lửa ngăn cản quá trình chia sẻ mạng vì bản chất của tường lửa là để: ", options: [" Tăng cường tốc độ xử lí tín hiệu của màn hình. ", "B. Giảm điện năng tiêu thụ của hệ thống máy tính. ", "C. Tạo ra các tệp tin hình ảnh đồ họa cực kì sắc nét. ", "D. Ngăn chặn các kết nối dữ liệu từ bên ngoài vào. "], correct: 3,
+          explanation: "Đáp án đúng: Ngăn chặn kết nối từ ngoài vào. Cơ chế Packet Filtering của Firewall (Tường lửa) luôn mặc định thiết lập Block All Inbound (Chặn tất cả các luồng truy cập đi vào hệ thống) để phòng thủ mã độc (Malware/Exploit) quét dò lỗ hổng." },
+        { id: "d2_20", type: "single", question: "Câu 20: Kế toán muốn lưu chung báo cáo thu chi lên một máy, giải pháp công nghệ là: ", options: [" Lựa chọn giải pháp in báo cáo gửi từng người xem. ", "B. Lựa chọn giải pháp chia sẻ thư mục trên mạng LAN. ", "C. Lựa chọn giải pháp dùng phần mềm diệt vi rút mạnh. ", "D. Lựa chọn giải pháp tắt tường lửa một cách vĩnh viễn. "], correct: 1,
+          explanation: "Đáp án đúng: Chia sẻ thư mục trên mạng LAN. Đây là phương pháp quản lí lưu trữ dữ liệu tập trung (Centralized Storage) hiệu quả cao. Dữ liệu hội tụ tại một nguồn duy nhất (Single Source of Truth), thuận tiện cho kiểm toán và đảm bảo đồng bộ File báo cáo theo thời gian thực." },
+        { id: "d2_21", type: "single", question: "Câu 21: Nếu muốn học sinh trong lớp nộp bài tập file Word vào thư mục máy giáo viên: ", options: [" GV phải chia sẻ thư mục và cấp quyền mức độ Read. ", "B. GV phải chia sẻ thư mục và cấp quyền mức độ Change. ", "C. GV phải hủy chức năng chia sẻ thư mục đi ngay lập tức. ", "D. GV phải tắt hẳn máy tính của mình đi để bảo mật mạng. "], correct: 1,
+          explanation: "Đáp án đúng: Cấp quyền mức độ Change. Yêu cầu \"nộp bài\" đồng nghĩa với việc đẩy một file (Write operation) lên ổ đĩa của giáo viên. Mức độ quyền Change hoặc Full Control là bắt buộc để thao tác truyền dữ liệu lên thư mục chia sẻ thành công." },
+        { id: "d2_22", type: "single", question: "Câu 22: Khi đã cài đặt thành công máy in mạng, thao tác đầu tiên nên làm để kiểm tra là: ", options: [" Bấm nút Print Test Page để in thử một trang giấy. ", "B. Rút ngay cáp nguồn điện máy in ra khỏi ổ cắm điện. ", "C. Gỡ bỏ trình duyệt web mặc định khỏi hệ thống máy. ", "D. Đóng gói máy in mạng lại và mang cất vào trong tủ. "], correct: 0,
+          explanation: "Đáp án đúng: Bấm nút Print Test Page. Thao tác in kiểm thử sẽ thực thi một tiến trình truyền tin chéo qua cấu hình IP Address mạng để phân tích độ trễ phản hồi (Response latency) và tương thích phần mềm của Máy chủ hệ thống." },
+        { id: "d2_23", type: "single", question: "Câu 23: Cả công ty dùng 1 máy in qua mạng, máy in đang bị lỗi kết nối, cần kiểm tra gì? ", options: [" Kiểm tra xem màn hình máy khách có bị hư hỏng gì không. ", "B. Kiểm tra xem bàn phím của máy tính khách còn gõ được không. ", "C. Kiểm tra số lượng người đang dùng mạng Internet toàn cầu. ", "D. Kiểm tra máy tính cắm máy in đã bật mạng chia sẻ chư "], correct: 3,
+          explanation: "Đáp án đúng: Kiểm tra máy tính Host đã bật mạng chia sẻ chưa. Tư duy chẩn đoán lỗi (Troubleshooting) khoa học bắt đầu từ cấp độ Node trung tâm (Print Server Host): Kiểm tra dịch vụ File and Printer Sharing, Firewall và Trạng thái mạng." },
+        { id: "d2_24", type: "single", question: "Câu 24: Một học sinh muốn copy tệp ảnh từ máy bạn về máy mình qua LAN, bạn kia phải: ", options: [" Xóa toàn bộ ảnh trong thư mục đó đi thật nhanh chóng. ", "B. In toàn bộ ảnh đó ra giấy rồi đưa cho học sinh kia xem. ", "C. Bật chia sẻ thư mục chứa ảnh với đặc quyền là Read. ", "D. Tắt máy tính đi để học sinh kia tự do sao chép tệp tin. "], correct: 2,
+          explanation: "Đáp án đúng: Bật chia sẻ quyền Read. Quyền đọc đủ khả năng để hệ thống cung cấp Byte-stream phục vụ lệnh copy dữ liệu tải thẳng (Download copy) sang ổ cứng thiết bị đối phương trong khi vẫn bảo tồn tuyệt đối nguyên bản File gốc." },
+        { id: "d2_25", type: "single", question: "Câu 25: Để chặn hoàn toàn một máy tính lạ truy cập vào thư mục bạn đang share, bạn nên: ", options: [" Mua một chiếc máy vi tính mới để thay thế máy cũ đi. ", "B. Mở thẻ Security và xóa tên truy cập lạ khỏi danh sách. ", "C. Tắt ngay ứng dụng nghe nhạc đang chạy trên máy tính. ", "D. Chỉnh màn hình máy tính tối đi để không nhìn thấy nữ "], correct: 1,
+          explanation: "Đáp án đúng: Mở thẻ Security xóa tên lạ. Mọi hệ thống chứng thực quản trị đặc quyền mạng sẽ thu hồi Authorization cho các Node được gắn định danh (ID) tương ứng, ngắt kết nối lập tức các Access Token không phù hợp." },
+        { id: "d2_26", type: "single", question: "Câu 26: Hai phòng ban A và B muốn dùng chung máy in nằm ở phòng C, phòng C phải: ", options: [" Mua thêm 2 máy in nữa để trang bị riêng cho phòng A, B. ", "B. Yêu cầu phòng A và B tự vẽ tay tài liệu thay vì dùng in ấn. ", "C. Khóa phòng C lại không cho ai được phép vào trong in tài liệu. ", "D. Cài đặt và bật chia sẻ máy in, A và B dò tìm kết nối. "], correct: 3,
+          explanation: "Đáp án đúng: Cài đặt và bật chia sẻ máy in, A và B dò tìm kết nối. Thiết lập kiến trúc mạng Client-Server cơ bản. Phòng C đảm nhận vai trò cung cấp phần cứng (Host resource), phòng A và B kết nối tới qua định tuyến mạng LAN cục bộ." },
+        { id: "d2_27", type: "single", question: "Câu 27: Mở File Browser tìm tên máy in mạng nhưng không thấy máy chủ, nguyên nhân do: ", options: [" Do máy chủ chưa cài đặt phần mềm chỉnh sửa ảnh. ", "B. Do máy chủ chưa kích hoạt tùy chọn Discoverable. ", "C. Do máy chủ bị hỏng bộ phận loa phát ra âm thanh. ", "D. Do máy chủ bị mất hoàn toàn dữ liệu của ổ cứng D. "], correct: 1,
+          explanation: "Đáp án đúng: Chưa kích hoạt Discoverable. Đây là tình trạng mất sóng định vị (Discovery Blind). Máy chủ chưa thông báo trạng thái Broadcast qua các chuẩn SSDP Protocol, do đó mọi luồng truy vấn dò vị trí từ Node máy khách đều thất bại." },
+        { id: "d2_28", type: "single", question: "Câu 28: Chia sẻ thư mục D:\\Phim với quyền Read, người khác trên mạng sẽ KHÔNG làm được: ", options: [" Thao tác mở lên để xem nội dung của tập tin phim. ", "B. Thao tác sao chép phim sang máy tính cá nhân mình. ", "C. Thao tác dùng chuột nhấp đúp để phát đoạn phim lên. ", "D. Thao tác xóa các tập tin phim khỏi ổ đĩa máy tính. "], correct: 3,
+          explanation: "Đáp án đúng: KHÔNG LÀM ĐƯỢC thao tác xóa tập tin phim. Bảo mật Access Control List giới hạn phân quyền mức Read-Only sẽ ngăn chặn hoàn toàn giao thức lệnh Write (Ghi đè) hay Delete (Xóa File) tác động tới vùng nhớ phần cứng vật lý trên ổ đĩa gốc." },
+        
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1 (Đ/S): Kịch bản: Câu lạc bộ Nhiếp ảnh lưu trữ hàng ngàn bức ảnh tại máy tính phòng sinh hoạt. Trưởng CLB muốn chia sẻ kho ảnh qua Wi-Fi. [ 327, 328]", items: [
+            { id: "a", text: "a) Trưởng câu lạc bộ cần nhấp chuột phải vào thư mục \"KHO_ANH\", mở Properties và thao tác thiết lập trong thẻ Sharing. ", correct: true, expl: "Chính xác. Tab Sharing là công cụ trực quan (GUI) điều khiển chức năng cung cấp đặc quyền thư mục SMB qua Network Path nội bộ." },
+            { id: "b", text: "b) Để quá trình kết nối không bị chặn nhầm, trưởng câu lạc bộ được khuyến nghị tạm thời vô hiệu hóa tường lửa (firewall). ", correct: true, expl: "Chính xác. Firewall Rules hoạt động ngăn chặn mặc định (Default Deny). Tắt tạm thời giúp giải quyết vấn đề cách li mạng Inbound phiền phức." },
+            { id: "c", text: "c) Để tránh việc thành viên lỡ tay xóa mất ảnh gốc, trưởng nhóm chỉ nên thiết lập quyền \"Read\" thay vì quyền \"Change\" hay \"Full Control\". ", correct: true, expl: "Chính xác. Read permission áp đặt Rule cấm hoàn toàn sự can thiệp và sửa đổi Metadata từ các User Client trên mạng." },
+            { id: "d", text: "d) Việc chọn \"Public Network\" luôn được ưu tiên hơn vì nó đảm bảo tuyệt đối không có vi rút nào xâm nhập được máy tính. ", correct: false, expl: "Sai nguyên tắc. Không gian Mạng chia sẻ nội bộ ưu tiên Profile \"Private Network\". \"Public Network\" sẽ khóa hoàn toàn giao thức chia sẻ tệp để cách li tại các điểm Wi-Fi công cộng." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2 (Đ/S): Kịch bản: Trường trung học A chia sẻ máy in lazer đa năng qua hệ thống mạng LAN để giáo viên in tài liệu từ bàn làm việc cá nhân. [ 333, 334]", items: [
+            { id: "a", text: "a) Máy tính kết nối cáp USB trực tiếp với chiếc máy in lazer này được gọi là máy cung cấp dịch vụ in trên mạng. ", correct: true, expl: "Chính xác. Máy tính này hoạt động như một nút Print Server vật lí, giao tiếp cơ học và chuyển tiếp lệnh in đi." },
+            { id: "b", text: "b) Để các giáo viên tìm thấy máy in, máy tính cung cấp dịch vụ in phải được bật \"File and printer sharing\". ", correct: true, expl: "Chính xác. Bật tùy chọn (Service Enable) này là quy định tiên quyết khai báo công khai sự hiện diện của cấu trúc Spooling qua luồng Broadcast cục bộ." },
+            { id: "c", text: "c) Giáo viên mang laptop đến chỉ cần kết nối Wi-Fi trường, mở Add a printer, tìm máy in lazer để kết nối mà không cần cáp. ", correct: true, expl: "Chính xác. Wi-Fi và mạng hữu tuyến hoạt động chung cùng hệ sinh thái định tuyến LAN IP, phục vụ tuyệt vời cho giao thức truy xuất từ xa." },
+            { id: "d", text: "d) Sau khi in xong, giáo viên Toán nên thao tác gỡ bỏ (Remove device) chiếc máy mạng đó ngay để tránh quá tải bộ nhớ. ", correct: false, expl: "Sai kĩ thuật. Việc cài đặt in mạng chỉ tích hợp Driver và Logical Route nhỏ không đáng kể. Nó nên được lưu làm mặc định (Default) cho các lần in ấn tiếp theo." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3 (Đ/S): Kịch bản: Nam là trưởng nhóm, tạo file \"Bao_cao.docx\" và chia sẻ cho 2 bạn còn lại để hợp tác viết chung báo cáo môn Tin học. [ 339, 340, 341]", items: [
+            { id: "a", text: "a) Môi trường thuận lợi để chia sẻ là các máy tính của nhóm phải thiết lập cho phép các máy khác nhìn thấy (Discoverable). ", correct: true, expl: "Chính xác. Khả năng dò tìm mạng ngang hàng (Network Discovery) quyết định thiết bị IP có nhìn thấy được nhau trên sơ đồ hệ thống File Browser mạng hay không." },
+            { id: "b", text: "b) Việc chia sẻ thư mục \"THUC_HANH\" qua mạng LAN giúp tiết kiệm thời gian, không cần phải sao chép qua lại bằng USB. ", correct: true, expl: "Chính xác. Chia sẻ mạng (Network sharing) tạo tài nguyên hội tụ thời gian thực, tiết kiệm thao tác cơ học vật lí chậm chạp." },
+            { id: "c", text: "c) Nếu Nam chỉ cấp quyền \"Read\" cho thư mục, 2 bạn kia có thể đọc nội dung nhưng không thể lưu các nội dung họ vừa đánh máy vào tệp gốc. ", correct: true, expl: "Chính xác. Quyền Read-Only từ chối tác vụ cập nhật Block nhớ ở máy Host. Mọi nỗ lực Save Overwrite sẽ bị Windows từ chối." },
+            { id: "d", text: "d) Khi hết giờ thực hành, để đảm bảo an toàn, Nam thực hiện thao tác xóa bỏ vĩnh viễn tệp \"Bao_cao.docx\" thay vì hủy bỏ chia sẻ. ", correct: false, expl: "Sai phương pháp quản trị. Việc ngắt chia sẻ (Stop Sharing) mới là cách thức đóng kết nối mạng mà vẫn lưu trữ và bảo vệ vẹn nguyên tư liệu kĩ thuật số trong máy tính." }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-lg font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-lg math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-lg ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-lg ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-lg">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-base font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-base text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-lg font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-base font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-base font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-base font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-base font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-lg math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200"><p class="text-base font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p><p class="text-black font-medium text-lg leading-loose math-scroll">${q.explanation}</p></div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-lg math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-base font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-lg text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+        
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - diem) || (lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-base">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-base">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-base">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-sm font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-2xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-sm">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-sm">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-sm">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-sm transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

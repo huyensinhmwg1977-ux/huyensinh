@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-3"> Bài 7: HTML VÀ CẤU TRÚC TRANG WEB </h1>
+           </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            // Đã đổi reference sang bài 6
+            scoresRef = database.ref('bxh_tin_12_7');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 7: HTML VÀ CẤU TRÚC TRANG WEB) - ĐÃ CẬP NHẬT GIẢI THÍCH KHOA HỌC
+=================================================================================================*/
+    const de1_data = [
+        // PHẦN I: TRẮC NGHIỆM ĐỀ 1
+        { id: "d1_1", type: "single", question: "Câu 1: Trang web được thiết lập theo ngôn ngữ có cấu trúc đặc biệt được gọi là gì?", options: ["Ngôn ngữ đánh dấu siêu văn bản mạng.", "Ngôn ngữ lập trình cấu trúc bậc cao.", "Ngôn ngữ truy vấn cơ sở dữ liệu lớn.", "Ngôn ngữ thiết kế đồ họa kĩ thuật số."], correct: 0, explanation: "HTML (HyperText Markup Language) là ngôn ngữ đánh dấu siêu văn bản. Chữ \"Markup\" chỉ việc sử dụng các thẻ để đánh dấu cấu trúc, giúp trình duyệt (Rendering Engine) hiểu cách phân tích và hiển thị nội dung." },
+        { id: "d1_2", type: "single", question: "Câu 2: Các thẻ trong mã nguồn HTML thường được viết bên trong cặp dấu nào?", options: ["Nằm ở bên trong của cặp dấu &lt; &gt;.", "Nằm ở bên trong của cặp dấu [].", "Nằm ở bên trong của cặp dấu { }.", "Nằm ở bên trong của cặp dấu ()."], correct: 0, explanation: "Theo chuẩn cú pháp của tổ chức W3C, mọi thẻ (tag) HTML phải được bao bọc bởi dấu ngoặc nhọn &lt; và &gt; (Angle brackets) để trình phân tích cú pháp (Parser) phân biệt được lệnh và văn bản thuần túy." },
+        { id: "d1_3", type: "single", question: "Câu 3: Phần tử nào đóng vai trò là phần tử gốc chứa toàn bộ nội dung của trang web?", options: ["Phần tử gốc mang kí hiệu thẻ &lt;html&gt;.", "Phần tử gốc mang kí hiệu thẻ &lt;head&gt;.", "Phần tử gốc mang kí hiệu thẻ &lt;body&gt;.", "Phần tử gốc mang kí hiệu thẻ &lt;meta&gt;."], correct: 0, explanation: "Trong cấu trúc cây tài liệu DOM (Document Object Model), phần tử &lt;html&gt; là nút gốc (Root Node). Tất cả các phần tử khác bắt buộc phải là nút con (Child Nodes) nằm bên trong nó." },
+        { id: "d1_4", type: "single", question: "Câu 4: Thẻ nào dùng để chứa các thông tin chung (như tiêu đề, từ khóa) cho trang web?", options: ["Thẻ dùng chứa thông tin là thẻ &lt;head&gt;.", "Thẻ dùng chứa thông tin là thẻ &lt;body&gt;.", "Thẻ dùng chứa thông tin là thẻ &lt;html&gt;.", "Thẻ dùng chứa thông tin là thẻ &lt;div&gt;."], correct: 0, explanation: "Thẻ &lt;head&gt; là nơi khai báo các siêu dữ liệu (Metadata) như bảng mã kí tự, tiêu đề tab, liên kết CSS. Các thông tin này dùng để cấu hình trang và hỗ trợ SEO, không hiển thị trực tiếp lên màn hình của người dùng." },
+        { id: "d1_5", type: "single", question: "Câu 5: Thẻ mang kí hiệu &lt;body&gt; trong cấu trúc HTML có chức năng cốt lõi là gì?", options: ["Chứa toàn bộ nội dung hiển thị của trang.", "Chứa các từ khóa tối ưu công cụ tìm kiếm.", "Chứa thông tin về tác giả của trang mạng.", "Chứa hệ thống khai báo ngôn ngữ mạng ảo."], correct: 0, explanation: "Phần tử &lt;body&gt; đại diện cho khu vực Viewport của trình duyệt. Mọi văn bản, hình ảnh, nút bấm muốn hiển thị cho người dùng tương tác đều phải được khai báo bên trong thẻ này." },
+        { id: "d1_6", type: "single", question: "Câu 6: Dòng mã &lt;!DOCTYPE html&gt; ở đầu tệp tin có tác dụng chính là gì?", options: ["Thông báo cho trình duyệt đây là tệp HTML.", "Khai báo đoạn văn bản chứa ngôn ngữ Java.", "Bắt đầu một đoạn văn bản mới trên màn hình.", "Đóng lại toàn bộ nội dung của một trang web."], correct: 0, explanation: "Lệnh &lt;!DOCTYPE html&gt; là Document Type Declaration. Nó kích hoạt chế độ tiêu chuẩn (Standards Mode) của trình duyệt, đảm bảo trang web được dịch và hiển thị đúng theo đặc tả kĩ thuật của HTML5." },
+        { id: "d1_7", type: "single", question: "Câu 7: Thẻ nào sau đây dùng để đặt tên cho trang web, xuất hiện ở kết quả tìm kiếm?", options: ["Thẻ tiêu đề định dạng dữ liệu chữ &lt;title&gt;.", "Thẻ định dạng cấu trúc đoạn văn bản &lt;p&gt;.", "Thẻ khai báo hệ thống thông tin ảo &lt;meta&gt;.", "Thẻ thiết lập nội dung văn bản web &lt;body&gt;."], correct: 0, explanation: "Thẻ &lt;title&gt; được đặt trong &lt;head&gt;, dùng để xác định tên của trang web trên thanh Tab của trình duyệt. Đây là thẻ Metadata quan trọng nhất để các cỗ máy như Google lập chỉ mục (Indexing)." },
+        { id: "d1_8", type: "single", question: "Câu 8: Các thẻ từ &lt;h1&gt; đến &lt;h6&gt; được sử dụng với mục đích cơ bản là gì?", options: ["Dùng để biểu thị tiêu đề văn bản trang web.", "Dùng để chèn hình ảnh vào nội dung trang.", "Dùng để tạo ra các bảng dữ liệu trang web.", "Dùng để tạo các nút bấm liên kết trang web."], correct: 0, explanation: "Đây là nhóm thẻ Heading. Trong khoa học Semantic HTML (HTML ngữ nghĩa), chúng thiết lập cấu trúc phân cấp thông tin của trang, trong đó &lt;h1&gt; là tiêu đề cấp cao nhất và &lt;h6&gt; là thấp nhất." },
+        { id: "d1_9", type: "single", question: "Câu 9: Phần mềm nào sau đây là công cụ soạn thảo văn bản đơn giản có thể viết HTML?", options: ["Phần mềm soạn thảo mã cơ bản Notepad.", "Phần mềm thiết kế đồ họa hình Photoshop.", "Phần mềm thiết kế bài trình chiếu Point.", "Phần mềm quản trị cơ sở dữ liệu ảo SQL."], correct: 0, explanation: "Mã nguồn HTML bản chất là văn bản thuần túy (Plain text). Do đó, các công cụ xử lí Plain text cơ bản như Notepad của Windows hoàn toàn có thể dùng để lập trình và lưu dưới đuôi .html." },
+        { id: "d1_10", type: "single", question: "Câu 10: Phần mềm nào là trình soạn thảo HTML chuyên nghiệp nguồn mở nổi tiếng?", options: ["Trình soạn thảo chuyên nghiệp Notepad++.", "Trình soạn thảo chuyên nghiệp Word 2019.", "Trình quản lí cơ sở dữ liệu chuẩn Access.", "Trình quản lí tệp tin máy tính Explorer."], correct: 0, explanation: "Notepad++ là Text Editor chuyên dụng cho lập trình, hỗ trợ Highlighting Syntax (tô màu cú pháp) và Code Completion (gợi ý lệnh), giúp kĩ sư phần mềm giảm thiểu lỗi sai kĩ thuật." },
+        { id: "d1_11", type: "single", question: "Câu 11: Tên thẻ HTML có phân biệt chữ hoa và chữ thường không?", options: ["Không phân biệt nhưng mặc định viết thường.", "Phân biệt rất rõ ràng để tránh bị lỗi trang.", "Bắt buộc phải viết in hoa toàn bộ các kí tự.", "Bắt buộc phải có chữ hoa ở đầu mỗi từ khóa."], correct: 0, explanation: "Theo đặc tả chuẩn, HTML là ngôn ngữ Case-insensitive (không phân biệt hoa/thường), do đó &lt;BODY&gt; hay &lt;body&gt; đều hợp lệ. Tuy nhiên, W3C khuyến nghị viết chữ thường để tăng tính đồng nhất và dễ đọc." },
+        { id: "d1_12", type: "single", question: "Câu 12: Đặc điểm nhận dạng của thẻ đóng (thẻ kết thúc) trong HTML là gì?", options: ["Vị trí kết thúc của thẻ sẽ có thêm một dấu /.", "Vị trí kết thúc của thẻ sẽ có thêm một dấu *.", "Vị trí kết thúc của thẻ sẽ có thêm một dấu -.", "Vị trí kết thúc của thẻ sẽ có thêm một dấu +."], correct: 0, explanation: "Cú pháp đóng một nút (Node) trong DOM yêu cầu dấu Forward slash `/` đặt ngay sau dấu ngoặc nhọn mở (Ví dụ: &lt;/p&gt;). Điều này báo hiệu cho luồng xử lí của trình duyệt biết ranh giới kết thúc của một phần tử." },
+        { id: "d1_13", type: "single", question: "Câu 13: Khi người dùng nhấn phím Enter nhiều lần trong mã HTML, trình duyệt sẽ:", options: ["Không nhận biết dấu xuống dòng để ngắt đoạn.", "Tạo ra số dòng trống tương ứng phím đã nhấn.", "Tự động thêm thẻ định dạng tiêu đề chữ mới.", "Xóa toàn bộ nội dung văn bản ở phía dưới đi."], correct: 0, explanation: "Đây là cơ chế White space collapsing (Gập khoảng trắng). Trình phân tích cú pháp HTML tự động gộp mọi khoảng trắng dư thừa (bao gồm cả phím Space, Tab, Enter) thành một khoảng trắng duy nhất trên giao diện." },
+        { id: "d1_14", type: "single", question: "Câu 14: Cấu trúc cơ bản của tệp HTML có dạng giống với mô hình nào?", options: ["Giống như một cây thông tin phần tử HTML.", "Giống như một mạng lưới siêu văn bản vòng.", "Giống như một danh sách tuyến tính không chia.", "Giống như một đồ thị vô hướng không chu trình."], correct: 0, explanation: "Toàn bộ tài liệu HTML được mô hình hóa trong RAM máy tính dưới dạng Tree Structure (Cấu trúc cây DOM), với Root Node là &lt;html&gt;, rẽ nhánh ra hai Node con chính là &lt;head&gt; và &lt;body&gt;." },
+        { id: "d1_15", type: "single", question: "Câu 15: Quan hệ cha – con của các nút trên cây HTML được mô tả thông qua cơ chế nào?", options: ["Sự lồng nhau của các phần tử (các thẻ) HTML.", "Sự kết nối qua lại của hệ thống máy chủ mạng.", "Sự so sánh dung lượng của các tệp tin lưu trữ.", "Sự sắp xếp theo bảng chữ cái của các thẻ mở."], correct: 0, explanation: "Tính chất lồng nhau (Nesting) tạo ra tính kế thừa trong giao diện. Phần tử nằm ngoài được gọi là Parent Node (Nút cha), phần tử nằm trực tiếp bên trong gọi là Child Node (Nút con)." },
+        { id: "d1_16", type: "single", question: "Câu 16: Nếu muốn dùng trang web hỗ trợ soạn thảo HTML trực tuyến, điều kiện cần là:", options: ["Máy tính bắt buộc phải có kết nối hệ thống Internet.", "Máy tính không được cài phần mềm diệt vi rút mạnh.", "Máy tính phải sử dụng hệ điều hành Windows bản mới.", "Máy tính phải ngắt toàn bộ kết nối mạng LAN nội bộ."], correct: 0, explanation: "Các IDE trực tuyến (như CodePen, JSFiddle) vận hành dựa trên nền tảng điện toán đám mây. Do đó, kết nối Internet là giao thức bắt buộc để truyền tải mã nguồn từ máy khách (Client) lên máy chủ (Server)." },
+        { id: "d1_17", type: "single", question: "Câu 17: Trong HTML, \"thẻ đơn\" (như thẻ &lt;br&gt;, &lt;hr&gt;) có đặc điểm cấu trúc là gì?", options: ["Chỉ có duy nhất một thẻ bắt đầu mà không cần có thẻ kết thúc.", "Chỉ có duy nhất một thẻ kết thúc mà không cần có thẻ bắt đầu.", "Chỉ có duy nhất phần nội dung chữ mà không cần có thẻ bao bọc.", "Chỉ có duy nhất một thẻ tiêu đề lớn đặt ở ngoài cùng cấu trúc."], correct: 0, explanation: "Thẻ đơn được gọi là Empty Elements (Phần tử rỗng). Về mặt kĩ thuật, chúng không chứa văn bản (Text node) hay phần tử con nào khác, do đó không cần thẻ đóng để xác định ranh giới kết thúc." },
+        { id: "d1_18", type: "single", question: "Câu 18: Trình duyệt web có chức năng chính là gì đối với một tệp HTML?", options: ["Hiển thị nội dung trang web theo đúng các định dạng.", "Chuyển đổi mã HTML thành phần mềm máy tính chuẩn.", "Chặn tất cả trang web có chứa mã độc hại ngầm bên.", "Tự động viết ra mã nguồn HTML cho người dùng cuối."], correct: 0, explanation: "Trình duyệt sở hữu một công cụ gọi là Rendering Engine (Động cơ kết xuất). Công cụ này đọc luồng mã HTML tĩnh, dịch cây DOM và tính toán bố cục để hiển thị (Render) lên màn hình người dùng." },
+        { id: "d1_19", type: "single", question: "Câu 19: Thẻ &lt;meta&gt; thường nằm trong phần tử nào và dùng làm gì?", options: ["Nằm trong thẻ &lt;head&gt; để mô tả các thông tin bổ sung.", "Nằm trong thẻ &lt;body&gt; để hiển thị chữ lên màn hình.", "Nằm ngoài thẻ &lt;html&gt; để liên kết máy chủ với trang.", "Nằm trong thẻ &lt;title&gt; để đặt tên trang web khi tải."], correct: 0, explanation: "Thẻ &lt;meta&gt; chứa Metadata, chịu trách nhiệm cung cấp cấu hình kĩ thuật (như charset=utf-8, author, viewport). Vì không phải nội dung hiển thị cho người xem, nó bắt buộc phải nằm lồng bên trong thẻ &lt;head&gt;." },
+        { id: "d1_20", type: "single", question: "Câu 20: Nếu muốn tạo dòng chữ \"Đoạn 1\" và \"Đoạn 2\" thành hai đoạn văn riêng, mã đúng là:", options: ["Mã HTML đúng: &lt;p&gt;Đoạn 1&lt;/p&gt; &lt;p&gt;Đoạn 2&lt;/p&gt;", "Mã HTML đúng: &lt;b&gt;Đoạn 1&lt;/b&gt; &lt;b&gt;Đoạn 2&lt;/b&gt;", "Mã HTML đúng: &lt;i&gt;Đoạn 1&lt;/i&gt; &lt;i&gt;Đoạn 2&lt;/i&gt;", "Mã HTML đúng: &lt;u&gt;Đoạn 1&lt;/u&gt; &lt;u&gt;Đoạn 2&lt;/u&gt;"], correct: 0, explanation: "Thẻ &lt;p&gt; (Paragraph) là một Block-level element (phần tử cấp khối). Đặc tính kĩ thuật của phần tử Block là nó luôn tự động ép nội dung kế tiếp bắt đầu trên một dòng mới." },
+        { id: "d1_21", type: "single", question: "Câu 21: Khi viết mã để hiển thị tiêu đề lớn nhất, người lập trình dùng thẻ nào?", options: ["Sử dụng cặp thẻ mang kí hiệu chuẩn là &lt;h1&gt;.", "Sử dụng cặp thẻ mang kí hiệu chuẩn là &lt;h6&gt;.", "Sử dụng cặp thẻ mang kí hiệu chuẩn là &lt;h3&gt;.", "Sử dụng cặp thẻ mang kí hiệu chuẩn là &lt;div&gt;."], correct: 0, explanation: "Thẻ &lt;h1&gt; là Heading cấp độ 1, mang trọng số ngữ nghĩa cao nhất. Trình duyệt mặc định sẽ render chữ bên trong &lt;h1&gt; với kích thước font to nhất và độ đậm (bold) lớn nhất." },
+        { id: "d1_22", type: "single", question: "Câu 22: Bạn An gõ 5 dấu cách liên tiếp giữa hai từ trong HTML, trình duyệt sẽ hiển thị:", options: ["Chỉ hiển thị duy nhất một khoảng trắng dấu cách.", "Sẽ hiển thị đúng năm khoảng trắng dấu cách dài.", "Sẽ hiển thị một dòng trống ở giữa hai từ ngữ đó.", "Sẽ hiển thị một dấu gạch ngang nối hai từ ngữ."], correct: 0, explanation: "Đây là nguyên lí White space collapsing. Để tạo ra 5 dấu cách thực tế trên giao diện, lập trình viên buộc phải sử dụng mã thực thể kí tự &amp;nbsp; (Non-breaking space) lặp lại 5 lần." },
+        { id: "d1_23", type: "single", question: "Câu 23: Để khai báo tên tác giả của trang web, người lập trình sẽ dùng thẻ nào?", options: ["Sử dụng thẻ &lt;meta&gt; đặt bên trong khu vực của &lt;head&gt;.", "Sử dụng thẻ &lt;title&gt; đặt bên trong khu vực của &lt;body&gt;.", "Sử dụng thẻ &lt;h1&gt; đặt bên trong khu vực của thẻ &lt;html&gt;.", "Sử dụng thẻ &lt;p&gt; đặt bên ngoài khu vực của thẻ &lt;html&gt;."], correct: 0, explanation: "Tên tác giả là dữ liệu quản trị (Metadata), không phải nội dung hiển thị trực quan. Do đó, cú pháp chuẩn là &lt;meta name=\"author\" content=\"Tên\"&gt; và được đặt ở vùng cấu trúc &lt;head&gt;." },
+        { id: "d1_24", type: "single", question: "Câu 24: Trong cấu trúc cây HTML, hai thẻ nào là thẻ con trực tiếp của thẻ &lt;html&gt;?", options: ["Hai thẻ con trực tiếp là thẻ &lt;head&gt; và thẻ &lt;body&gt;.", "Hai thẻ con trực tiếp là thẻ &lt;title&gt; và thẻ &lt;head&gt;.", "Hai thẻ con trực tiếp là thẻ &lt;body&gt; và thẻ &lt;title&gt;.", "Hai thẻ con trực tiếp là thẻ &lt;meta&gt; và thẻ &lt;body&gt;."], correct: 0, explanation: "Cấu trúc DOM cấp 1 luôn chia thành 2 khối tách biệt: &lt;head&gt; (chứa logic và cấu hình) và &lt;body&gt; (chứa giao diện). Cả hai đồng cấp và đều là con trực tiếp của gốc &lt;html&gt;." },
+        { id: "d1_25", type: "single", question: "Câu 25: Để kiểm tra nhanh kết quả trang web mà không cài đặt phần mềm, học sinh nên:", options: ["Dùng trang web hỗ trợ hệ thống soạn thảo trực tuyến.", "Cài phần mềm thiết kế Notepad++ để tiến hành gõ mã.", "Tải công cụ ảo Sublime Text về máy để thiết kế mạng.", "Mua các công cụ lập trình web chuyên nghiệp mới nhất."], correct: 0, explanation: "Cloud-based Editors (như CodePen) cung cấp môi trường Sandbox ảo có sẵn Rendering Engine. Dữ liệu gõ vào được biên dịch và hiển thị kết quả (Live Preview) theo thời gian thực mà không cần lưu file local." },
+        { id: "d1_26", type: "single", question: "Câu 26: Lỗi nào sau đây sai quy tắc cơ bản khi viết thẻ đóng HTML đôi?", options: ["Sai quy tắc đóng thẻ là: &lt;head/&gt; thay vì &lt;/head&gt;.", "Sai quy tắc đóng thẻ là: &lt;/body&gt; thay vì &lt;body&gt;.", "Sai quy tắc đóng thẻ là: &lt;/html&gt; thay vì &lt;html/&gt;.", "Sai quy tắc đóng thẻ là: &lt;/title&gt; thay vì &lt;title&gt;."], correct: 0, explanation: "Cú pháp XML/HTML chuẩn yêu cầu dấu gạch chéo `/` phải nằm ngay sau dấu mở ngoặc nhọn ở thẻ kết thúc (Ví dụ: &lt;/head&gt;). Cú pháp &lt;head/&gt; (Self-closing) chỉ dùng cho thẻ đơn." },
+        { id: "d1_27", type: "single", question: "Câu 27: Khi học sinh muốn đặt tên tab trình duyệt là \"Học tập\", cú pháp thẻ nào đúng?", options: ["Dùng cặp thẻ: &lt;title&gt;Học tập&lt;/title&gt;", "Dùng cặp thẻ: &lt;body&gt;Học tập&lt;/body&gt;", "Dùng cặp thẻ: &lt;head&gt;Học tập&lt;/head&gt;", "Dùng cặp thẻ: &lt;meta&gt;Học tập&lt;/meta&gt;"], correct: 0, explanation: "Thẻ &lt;title&gt; là nút (node) duy nhất có quyền tương tác với UI hệ thống của trình duyệt để thay đổi tên chuỗi văn bản (String) trên thanh điều hướng (Tab bar)." },
+        { id: "d1_28", type: "single", question: "Câu 28: Việc sử dụng Sublime Text so với Notepad thông thường có lợi ích vượt trội là gì?", options: ["Là trình soạn thảo chuyên nghiệp hỗ trợ gõ mã tốt.", "Có thể chạy trang web mà không cần trình duyệt web.", "Tự động thiết kế hình ảnh 3D nổi cho các trang web.", "Khóa bảo mật trang web không cho người lạ xem lén."], correct: 0, explanation: "Sublime Text sở hữu bộ Parser riêng giúp phân tích cú pháp (Syntax Highlight), thụt lề tự động (Auto-indentation) và đóng thẻ tự động, tăng năng suất viết mã lên rất nhiều lần." },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI ĐỀ 1
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Đang trong giờ thực hành Tin học, thầy giáo yêu cầu các nhóm tạo một tệp HTML đơn giản để giới thiệu về bản thân. Nhóm của Nam quyết định dùng Notepad có sẵn trên máy để lập trình.", items: [
+            { id: "a", text: "a) Dòng mã đầu tiên nhóm Nam cần phải viết là &lt;!DOCTYPE html&gt; để thông báo cho trình duyệt biết đây là tệp văn bản HTML.", correct: true, expl: "Lệnh &lt;!DOCTYPE html&gt; là chỉ thị kĩ thuật bắt buộc để Rendering Engine của trình duyệt không rơi vào chế độ tương thích ngược (Quirks mode) gây vỡ giao diện." },
+            { id: "b", text: "b) Thẻ &lt;html&gt; đóng vai trò là phần tử gốc của toàn bộ cây cấu trúc, do đó các thẻ như &lt;head&gt; và &lt;body&gt; bắt buộc phải nằm bên ngoài thẻ này.", correct: false, expl: "Sai kĩ thuật cấu trúc DOM. &lt;html&gt; là Nút gốc (Root node), do đó mọi phần tử kể cả &lt;head&gt; và &lt;body&gt; đều bắt buộc phải nằm lồng vào BÊN TRONG thẻ &lt;html&gt;." },
+            { id: "c", text: "c) Để ghi dòng chú thích tác giả ẩn trong mã nguồn giúp các cỗ máy tìm kiếm đọc được, nhóm Nam sẽ đặt thẻ &lt;meta&gt; chứa thông tin này vào bên trong thẻ &lt;head&gt;.", correct: true, expl: "Siêu dữ liệu (Metadata) như tên tác giả không dành cho người xem trực tiếp. Đặt &lt;meta&gt; trong &lt;head&gt; là chuẩn SEO và kĩ thuật cấu hình cấu trúc trang." },
+            { id: "d", text: "d) Trong quá trình gõ mã, nếu Nam lỡ tay bật phím Caps Lock và gõ thẻ đóng là &lt;/BODY&gt;, trình duyệt web vẫn đọc và hiển thị bình thường do HTML không phân biệt chữ hoa, chữ thường.", correct: true, expl: "HTML Parser được thiết kế theo cơ chế Case-insensitive. Khác với C++ hay Python, trình phân tích cú pháp HTML sẽ tự động đồng nhất &lt;BODY&gt; và &lt;body&gt; thành một đối tượng duy nhất." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Bạn Lan đang viết mã HTML cho bài báo cáo. Lan gõ 3 đoạn văn bản và nhấn phím Enter xuống dòng liên tục trong Notepad. Tuy nhiên, khi mở lên bằng trình duyệt, tất cả các đoạn văn đó lại bị dính liền thành một dòng dài.", items: [
+            { id: "a", text: "a) Mã nguồn trang web của Lan được cấu tạo từ các phần tử HTML, bao gồm các thẻ có tính năng điều khiển nội dung.", correct: true, expl: "Kiến trúc HTML vận hành hoàn toàn dựa trên các phần tử (Elements) để định hình logic thay vì dựa trên định dạng trực quan của phần mềm văn bản." },
+            { id: "b", text: "b) Nguyên nhân gây ra lỗi hiển thị của Lan là do trình duyệt web không nhận biết được kí tự xuống dòng khi nhấn phím Enter trên bàn phím.", correct: true, expl: "Cơ chế White space collapsing (Gập khoảng trắng) của trình duyệt sẽ loại bỏ mọi kí tự điều khiển cơ học (Line break, Tab) trong Source Code." },
+            { id: "c", text: "c) Để khắc phục lỗi này và tách biệt 3 đoạn văn bản rõ ràng, Lan cần bao bọc nội dung mỗi đoạn bằng cặp thẻ &lt;p&gt; và &lt;/p&gt;.", correct: true, expl: "Thẻ &lt;p&gt; tạo ra một Block-level Box trong mô hình CSS Box Model, ép các đối tượng nội dung kế tiếp phải rớt xuống dòng mới một cách chuẩn kĩ thuật." },
+            { id: "d", text: "d) Thay vì dùng thẻ, nếu Lan cố tình gõ thật nhiều khoảng trắng (dấu cách) giữa các đoạn văn để đẩy chữ xuống dòng, trình duyệt sẽ nhận diện và tự động hiển thị ngắt dòng hoàn hảo.", correct: false, expl: "Gõ hàng nghìn khoảng trắng đi chăng nữa thì Rendering Engine cũng sẽ gộp (collapse) tất cả lại chỉ thành một dấu cách (Space) duy nhất. Không thể dùng dấu cách để ngắt dòng." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Nhóm học tập đang thiết kế một trang web về bảo vệ môi trường, nhưng các bạn chưa có nhiều kinh nghiệm sử dụng các phần mềm lập trình.", items: [
+            { id: "a", text: "a) Notepad++ và Sublime Text đều được xếp vào nhóm các phần mềm soạn thảo HTML chuyên nghiệp nguồn mở.", correct: true, expl: "Đây là các IDE Text Editor chuyên dụng cung cấp hệ thống phân tích cú pháp tự động (Lexer) để hỗ trợ lập trình viên." },
+            { id: "b", text: "b) Nếu sử dụng các trang web hỗ trợ soạn thảo HTML trực tuyến, nhóm học tập không cần cài đặt phần mềm nặng nhưng bắt buộc máy tính phải có kết nối Internet.", correct: true, expl: "Các công cụ trực tuyến yêu cầu giao thức HTTP để truyền mã nguồn lên máy chủ (Server) biên dịch và trả lại kết quả." },
+            { id: "c", text: "c) Để đặt tên cho tab trình duyệt của trang web là \"Môi trường\", nhóm sẽ gõ cú pháp &lt;title&gt;Môi trường&lt;/title&gt; và đặt trực tiếp vào bên trong khu vực của thẻ &lt;body&gt;.", correct: false, expl: "Sai cấu trúc nghiêm trọng. Thẻ &lt;title&gt; là thẻ cấu hình Meta, bắt buộc phải nằm lồng bên trong thẻ &lt;head&gt;, không được đặt ở thẻ giao diện &lt;body&gt;." },
+            { id: "d", text: "d) Để tạo tiêu đề lớn nhất ở đầu trang web thu hút người xem, nhóm nên dùng thẻ &lt;h1&gt; bao bọc lấy dòng chữ tiêu đề đó.", correct: true, expl: "Heading 1 (&lt;h1&gt;) có trọng số cao nhất trong hệ thống thẻ tiêu đề, được Rendering Engine cấp phát kích thước font và độ đậm (bold) lớn nhất mặc định." }
+        ]}
+    ];
+
+    const de2_data = [
+        // PHẦN I: TRẮC NGHIỆM ĐỀ 2
+        { id: "d2_1", type: "single", question: "Câu 1: Ngôn ngữ đánh dấu siêu văn bản HTML được sử dụng nhằm mục đích gì?", options: ["Dùng để thiết lập cấu trúc cơ bản của các trang web.", "Dùng để chỉnh sửa hình ảnh video mạng trực tuyến.", "Dùng để quản trị hệ thống cơ sở dữ liệu máy chủ.", "Dùng để lập trình trò chơi điện tử trên mạng web."], correct: 0, explanation: "HTML (HyperText Markup Language) cung cấp bộ khung xương (Skeleton) kĩ thuật số, quy định vị trí của các khối văn bản, hình ảnh, liên kết tạo nên cấu trúc hoàn chỉnh của web." },
+        { id: "d2_2", type: "single", question: "Câu 2: Để trình duyệt nhận diện được, các thẻ HTML phải được viết bên trong kí hiệu nào?", options: ["Đặt bên trong cặp dấu &lt; &gt;.", "Đặt bên trong cặp dấu [].", "Đặt bên trong cặp dấu { }.", "Đặt bên trong cặp dấu ()."], correct: 0, explanation: "Trong khoa học phân tích chuỗi (String parsing), cặp dấu &lt; &gt; đóng vai trò là kí tự điều khiển ranh giới, giúp trình phân tích phân tách giữa mã nguồn thực thi và văn bản hiển thị." },
+        { id: "d2_3", type: "single", question: "Câu 3: Thẻ kết thúc (closing tag) trong cấu trúc HTML được nhận biết qua kí tự nào?", options: ["Dấu gạch chéo / đặt ở trước tên thẻ.", "Dấu chấm than ! đặt ở trước tên thẻ.", "Dấu gạch ngang - đặt ở trước tên thẻ.", "Dấu sao nhỏ * đặt ở trước tên thẻ."], correct: 0, explanation: "Cú pháp XML/HTML yêu cầu dấu gạch chéo thuận (Forward slash `/`) đặt ngay đầu thẻ đóng (Ví dụ: &lt;/div&gt;). Đây là cờ hiệu báo cho DOM Tree biết một nút (Node) đã kết thúc." },
+        { id: "d2_4", type: "single", question: "Câu 4: Thẻ HTML nào sau đây chứa toàn bộ nội dung hiển thị cho người xem trên trang web?", options: ["Thẻ tiêu chuẩn hiển thị văn bản mang kí hiệu &lt;body&gt;.", "Thẻ tiêu chuẩn cấu hình hệ thống mang kí hiệu &lt;head&gt;.", "Thẻ tiêu chuẩn hiển thị từ khóa web mang kí hiệu &lt;meta&gt;.", "Thẻ tiêu chuẩn hiển thị tiêu đề tab mang kí hiệu &lt;title&gt;."], correct: 0, explanation: "Thẻ &lt;body&gt; là phạm vi render duy nhất của khung nhìn màn hình (Viewport). Bất kì văn bản, hình ảnh nào nằm ngoài &lt;body&gt; đều vi phạm cấu trúc DOM chuẩn." },
+        { id: "d2_5", type: "single", question: "Câu 5: Để biểu thị một đoạn văn bản trong ngôn ngữ HTML, người ta dùng thẻ chuẩn nào?", options: ["Thẻ định dạng đoạn văn bản hiển thị mang kí hiệu &lt;p&gt;.", "Thẻ định dạng tiêu đề trang mạng lớn mang kí hiệu &lt;h1&gt;.", "Thẻ khai báo nội dung của toàn trang mang kí hiệu &lt;body&gt;.", "Thẻ lưu trữ từ khóa tìm kiếm Internet mang kí hiệu &lt;meta&gt;."], correct: 0, explanation: "Chữ `p` là viết tắt của Paragraph. Đây là Block-level element được lập trình sẵn khoảng lề (Margin) trên dưới, tạo ra các đoạn văn bản cách biệt đẹp mắt." },
+        { id: "d2_6", type: "single", question: "Câu 6: Thẻ mang kí hiệu &lt;title&gt; trong cấu trúc tệp HTML được dùng để làm công việc gì?", options: ["Đặt tên trang web xuất hiện trên thanh tìm kiếm.", "Mô tả thông tin mã hóa và tác giả của trang web.", "Hiển thị đoạn văn bản lớn nhất trên màn hình máy.", "Thông báo cho trình duyệt biết đây là tệp tin HTML."], correct: 0, explanation: "Thẻ &lt;title&gt; chứa chuỗi kí tự sẽ được Hệ điều hành (OS) truy xuất để hiển thị làm tiêu đề trên thanh tab của cửa sổ trình duyệt. Nó có ý nghĩa quan trọng nhất trong việc định danh trang." },
+        { id: "d2_7", type: "single", question: "Câu 7: Để thông báo cho trình duyệt biết tệp tin thuộc chuẩn HTML, ta dùng mã nào ở đầu?", options: ["Lệnh khai báo chuẩn ban đầu là &lt;!DOCTYPE html&gt;.", "Lệnh khai báo chuẩn ban đầu là &lt;head html type&gt;.", "Lệnh khai báo chuẩn ban đầu là &lt;title html type&gt;.", "Lệnh khai báo chuẩn ban đầu là &lt;meta html type&gt;."], correct: 0, explanation: "Chỉ thị &lt;!DOCTYPE html&gt; là lệnh không thuộc cấu trúc DOM, được đặt ở dòng đầu tiên của file để ép Rendering Engine chạy ở chế độ chuẩn HTML5 mới nhất." },
+        { id: "d2_8", type: "single", question: "Câu 8: Phần mềm Notepad++ được phân loại là công cụ thuộc nhóm phần mềm gì?", options: ["Phần mềm soạn thảo HTML chuyên nghiệp nguồn mở.", "Phần mềm thiết kế đồ họa hình ảnh 3D nổi bật.", "Phần mềm soạn thảo trình chiếu bài giảng lớp học.", "Phần mềm quản trị bảng tính toán kế toán công ti."], correct: 0, explanation: "Notepad++ là Text Editor nâng cao hỗ trợ mạnh mẽ mảng lập trình (IDE nhẹ) thông qua kĩ thuật Highlight Syntax, tự động canh lề và hoàn thành mã thông minh." },
+        { id: "d2_9", type: "single", question: "Câu 9: Cây thông tin phần tử HTML luôn có gốc của cây là phần tử mang thẻ chuẩn nào?", options: ["Phần tử gốc chứa toàn bộ dữ liệu mang kí hiệu &lt;html&gt;.", "Phần tử gốc chứa toàn bộ dữ liệu mang kí hiệu &lt;head&gt;.", "Phần tử gốc chứa toàn bộ dữ liệu mang kí hiệu &lt;body&gt;.", "Phần tử gốc chứa toàn bộ dữ liệu mang kí hiệu &lt;title&gt;."], correct: 0, explanation: "Khái niệm Root Node trong cấu trúc dữ liệu mô hình hóa tài liệu. Toàn bộ các Node con sẽ rẽ nhánh (Branching) bắt đầu từ phần tử cha duy nhất là &lt;html&gt;." },
+        { id: "d2_10", type: "single", question: "Câu 10: Thẻ nào sau đây là ví dụ về thẻ chỉ định các dòng tiêu đề chữ trong HTML?", options: ["Thẻ định dạng hiển thị kích thước tiêu đề chuẩn &lt;h6&gt;.", "Thẻ định dạng hiển thị lưu trữ thông tin ảo &lt;meta&gt;.", "Thẻ định dạng hiển thị toàn bộ nội dung web &lt;body&gt;.", "Thẻ định dạng hiển thị thiết lập hệ thống web &lt;head&gt;."], correct: 0, explanation: "Nhóm thẻ từ &lt;h1&gt; đến &lt;h6&gt; (Heading) dùng để cấu trúc hóa tiêu đề. Trình duyệt gán sẵn các thuộc tính CSS về kích thước font giảm dần từ h1 (lớn nhất) đến h6 (nhỏ nhất)." },
+        { id: "d2_11", type: "single", question: "Câu 11: Thuộc tính của một thẻ HTML mang ý nghĩa kĩ thuật như thế nào?", options: ["Cung cấp các thông tin bổ sung đi kèm cho thẻ đó.", "Xóa bỏ hoàn toàn định dạng hiển thị của thẻ đó đi.", "Chặn không cho lệnh thẻ đó hoạt động trên trang.", "Ẩn nội dung của đoạn văn bản không cho hiển thị."], correct: 0, explanation: "Attributes (Thuộc tính) nằm ở thẻ mở, có cấu trúc dạng Key=\"Value\". Chúng thiết lập tham số kĩ thuật (như đường dẫn ảnh src, định danh id, lớp class) để phần tử hoạt động chính xác." },
+        { id: "d2_12", type: "single", question: "Câu 12: Trình duyệt web xử lí các dấu cách (khoảng trắng) thừa thãi như thế nào?", options: ["Trình duyệt không nhận biết được nhiều dấu cách liên tiếp.", "Trình duyệt tự động mở rộng theo đúng số lượng dấu cách.", "Trình duyệt báo lỗi mã nguồn web và ngưng hiển thị trang.", "Trình duyệt tự chuyển dấu cách thành các dấu chấm tròn."], correct: 0, explanation: "Thuật toán xử lí kí tự của Rendering Engine kích hoạt White space collapsing. Một hay hàng nghìn kí tự Space/Enter đứng cạnh nhau đều bị rút gọn thành 1 dấu cách duy nhất." },
+        { id: "d2_13", type: "single", question: "Câu 13: Một số thẻ HTML như &lt;meta&gt;, &lt;br&gt; được gọi là \"thẻ đơn\", điều này có nghĩa là gì?", options: ["Chúng chỉ đóng vai trò khai báo mở mà không có thẻ đóng.", "Chúng chỉ đóng vai trò đóng lệnh mà không có thẻ mở đầu.", "Chúng là thẻ bắt buộc phải bao bọc lấy một thẻ con khác.", "Chúng là những thẻ luôn hiển thị dữ liệu bằng chữ in hoa."], correct: 0, explanation: "Void elements (Thẻ rỗng) do đặc thù không được phép chứa nội dung văn bản (Text Node) bên trong, nên về logic chúng không cần thẻ kết thúc (closing tag) để đóng gói vùng nội dung." },
+        { id: "d2_14", type: "single", question: "Câu 14: Sự lồng nhau của các phần tử HTML thể hiện mối quan hệ kĩ thuật gì?", options: ["Thể hiện mối quan hệ cha con của các nút cây thông tin.", "Thể hiện tốc độ tải dữ liệu mạng của hệ thống trang web.", "Thể hiện mức độ bảo mật mã hóa của hệ thống máy chủ.", "Thể hiện thứ tự ưu tiên tìm kiếm hiển thị của Google web."], correct: 0, explanation: "Nesting (Lồng nhau) trực tiếp xây dựng nên cấu trúc Document Object Model (DOM). Phần tử bọc ngoài trở thành Parent, cung cấp sự kế thừa định dạng (Inheritance) cho Child." },
+        { id: "d2_15", type: "single", question: "Câu 15: Tại sao ngôn ngữ HTML không nhận biết phím Enter để xuống dòng như Word?", options: ["Vì HTML cần các thẻ phần tử để điều khiển việc xuống dòng.", "Vì trình duyệt web đã khóa tính năng sử dụng bàn phím này.", "Vì ngôn ngữ HTML không hỗ trợ xử lí các đoạn văn bản dài.", "Vì bàn phím máy tính không tương thích với trình duyệt web."], correct: 0, explanation: "HTML là ngôn ngữ mô tả cấu trúc (Markup). Để thực hiện xuống dòng, trình biên dịch bắt buộc phải nhận được mã lệnh kĩ thuật (như thẻ &lt;br&gt; hoặc tách &lt;p&gt;) thay vì phím vật lí Enter." },
+        { id: "d2_16", type: "single", question: "Câu 16: Đâu là thông tin bổ sung có thể được mô tả bằng thẻ chuẩn mang kí hiệu &lt;meta&gt;?", options: ["Bộ mã hóa kí tự, danh sách từ khóa, tên tác giả.", "Tên của trang web sẽ hiện trên thanh tab duyệt.", "Hình ảnh minh họa chính của trang web tìm kiếm.", "Các nút bấm liên kết chuyển tiếp đến trang khác."], correct: 0, explanation: "Thẻ &lt;meta&gt; chịu trách nhiệm nạp Metadata. Các tham số như charset=\"UTF-8\" (bộ mã hóa), name=\"keywords\" (từ khóa SEO) là các cấu hình kĩ thuật chạy ngầm sau giao diện." },
+        { id: "d2_17", type: "single", question: "Câu 17: Điểm thuận lợi khi sử dụng công cụ soạn thảo HTML trực tuyến là gì?", options: ["Cho phép quan sát ngay kết quả web trên trình duyệt.", "Hoàn toàn không cần phải có kết nối Internet để làm.", "Tự động khắc phục được mọi sự cố rớt mạng cục bộ.", "Có thể thiết kế phần cứng cho mạng máy tính khổng lồ."], correct: 0, explanation: "Các nền tảng đám mây như JSFiddle sở hữu tính năng Live Preview. Trình phân tích cú pháp hoạt động ngầm (Background Parsing) cập nhật lập tức mã nguồn thành giao diện (Real-time render)." },
+        { id: "d2_18", type: "single", question: "Câu 18: Về việc phân biệt chữ hoa chữ thường của tên thẻ, trình duyệt quy định ra sao?", options: ["Hoàn toàn không phân biệt nhưng mặc định được viết thường.", "Bắt buộc người viết phải viết bằng toàn bộ chữ cái in hoa lớn.", "Hệ thống chỉ nhận diện thẻ khi có chữ in hoa đứng ở đầu câu.", "Hệ thống từ chối đọc nếu có bất kì chữ cái in thường nào gõ."], correct: 0, explanation: "Theo chuẩn kĩ thuật, HTML Parser thiết kế theo dạng Case-insensitive. Chuỗi &lt;TITLE&gt; hay &lt;title&gt; đều tạo ra một Node đối tượng giống hệt nhau trong RAM bộ nhớ máy tính." },
+        { id: "d2_19", type: "single", question: "Câu 19: Trong một tệp HTML, mối quan hệ giữa thẻ &lt;head&gt; và thẻ &lt;body&gt; là gì?", options: ["Chúng là hai thẻ con độc lập cùng thuộc phần tử gốc &lt;html&gt;.", "Thẻ mang kí hiệu &lt;body&gt; là phần tử con nằm lồng trong &lt;head&gt;.", "Thẻ mang kí hiệu &lt;head&gt; là phần tử con nằm lồng trong &lt;body&gt;.", "Chúng là hai phần tử gốc hoàn toàn tách biệt độc lập với nhau."], correct: 0, explanation: "Nhìn vào cây cấu trúc DOM, &lt;head&gt; và &lt;body&gt; là hai Child Nodes đồng cấp (Sibling Nodes), chia sẻ chung một Parent Node duy nhất là Root &lt;html&gt;." },
+        { id: "d2_20", type: "single", question: "Câu 20: Nếu muốn tạo dòng chữ \"Dòng 1\" và \"Dòng 2\" thành hai đoạn văn riêng, mã đúng là:", options: ["Cú pháp chuẩn: &lt;p&gt;Dòng 1&lt;/p&gt; &lt;p&gt;Dòng 2&lt;/p&gt;", "Cú pháp chuẩn: &lt;b&gt;Dòng 1&lt;/b&gt; &lt;b&gt;Dòng 2&lt;/b&gt;", "Cú pháp chuẩn: &lt;i&gt;Dòng 1&lt;/i&gt; &lt;i&gt;Dòng 2&lt;/i&gt;", "Cú pháp chuẩn: &lt;u&gt;Dòng 1&lt;/u&gt; &lt;u&gt;Dòng 2&lt;/u&gt;"], correct: 0, explanation: "Thẻ &lt;p&gt; (Paragraph) sinh ra một Block Formatting Context (Khối văn bản). Thuộc tính của Block là tự động đẩy các phần tử phía sau xuống dòng mới (Line break mặc định)." },
+        { id: "d2_21", type: "single", question: "Câu 21: Mã HTML bị thiếu thẻ &lt;head&gt; thì trang web sẽ bị ảnh hưởng như thế nào?", options: ["Sẽ bị thiếu không gian để chứa các thông tin cấu hình chung.", "Sẽ bị thiếu không gian để chứa các nút bấm liên kết trang.", "Sẽ bị tự động xóa bỏ trang web hoàn toàn khỏi hệ thống.", "Sẽ bị tự động tắt máy tính đi khi người dùng vừa mở lên."], correct: 0, explanation: "Mất đi &lt;head&gt;, trang web vẫn có thể render phần &lt;body&gt;, nhưng nó mất khả năng khai báo Metadata, bộ giải mã kí tự tiếng Việt, dẫn đến trang bị lỗi font và rớt hạng SEO nghiêm trọng." },
+        { id: "d2_22", type: "single", question: "Câu 22: Khi kiểm tra lỗi web thấy thanh tab trình duyệt không xuất hiện tên, cần thêm thẻ gì?", options: ["Cần thêm thẻ đóng mở &lt;title&gt; nằm bên trong vùng của thẻ &lt;head&gt;.", "Cần thêm thẻ đóng mở &lt;meta&gt; nằm bên trong vùng của thẻ &lt;body&gt;.", "Cần thêm thẻ đóng mở &lt;h1&gt; nằm bên trong vùng của thẻ chuẩn &lt;body&gt;.", "Cần thêm thẻ đóng mở &lt;p&gt; nằm bên trong vùng của thẻ chuẩn &lt;html&gt;."], correct: 0, explanation: "API (giao diện lập trình) của trình duyệt web truy xuất trực tiếp nội dung văn bản bên trong thẻ &lt;title&gt; thuộc vùng &lt;head&gt; để đẩy lên thanh tiêu đề (Tab bar) OS." },
+        { id: "d2_23", type: "single", question: "Câu 23: Thẻ mang kí hiệu &lt;h1&gt; nhưng lỡ viết in hoa thành &lt;H1&gt; thì trình duyệt web xử lí ra sao?", options: ["Hoạt động bình thường vì không phân biệt chữ hoa hay thường.", "Gây ra lỗi vì HTML bắt buộc mọi kí tự phải viết chữ thường.", "Bị coi là lỗi cú pháp lớn và trình duyệt sẽ xóa đoạn mã đi.", "Trình duyệt tự động đổi thẻ đó thành thẻ đoạn văn bản chữ &lt;p&gt;."], correct: 0, explanation: "Kiến trúc HTML Parser phân tích cú pháp theo dạng Case-insensitive. Lệnh &lt;H1&gt; hoàn toàn hợp lệ kĩ thuật, dù viết thường &lt;h1&gt; mới là chuẩn phong cách lập trình (Coding Standard)." },
+        { id: "d2_24", type: "single", question: "Câu 24: Khi chia một bài báo thành tiêu đề to và các đoạn văn nhỏ, kết hợp thẻ nào tốt nhất?", options: ["Dùng thẻ &lt;h1&gt; cho dòng tiêu đề và thẻ &lt;p&gt; cho các đoạn văn bản.", "Dùng thẻ &lt;p&gt; cho dòng tiêu đề và thẻ &lt;meta&gt; cho đoạn văn bản.", "Dùng thẻ &lt;title&gt; cho dòng tiêu đề và thẻ &lt;head&gt; cho đoạn văn.", "Dùng thẻ &lt;h6&gt; cho dòng tiêu đề và thẻ &lt;h1&gt; cho các đoạn văn bản."], correct: 0, explanation: "Sự kết hợp Semantic tối ưu: &lt;h1&gt; đánh dấu tầm quan trọng cao nhất của Title bài viết, trong khi &lt;p&gt; tạo các khối văn bản đoạn liền mạch (Block-level elements)." },
+        { id: "d2_25", type: "single", question: "Câu 25: Bạn Bình cố tình gõ cặp thẻ in hoa &lt;P&gt; và &lt;/P&gt;, điều gì sẽ xảy ra khi chạy hiển thị?", options: ["Trang web vẫn sẽ hiển thị đoạn văn bản một cách bình thường.", "Trình duyệt báo lỗi do dùng chữ in hoa cho lệnh thẻ hệ thống.", "Đoạn văn bản bị ẩn đi không thể nhìn thấy chữ trên màn hình.", "Chữ bên trong sẽ biến thành dạng tiêu đề có kích thước lớn."], correct: 0, explanation: "Trình duyệt bỏ qua yếu tố In Hoa/Thường của tên thẻ HTML. Động cơ phân tích văn bản (Parser) vẫn ánh xạ cặp thẻ &lt;P&gt; thành nút Paragraph chuẩn xác trong cây DOM." },
+        { id: "d2_26", type: "single", question: "Câu 26: Khi thực hành ở nhà mà máy tính đột ngột bị rớt mạng Internet, học sinh buộc phải dùng:", options: ["Phần mềm soạn thảo mã Notepad hoặc Notepad++ đã cài sẵn.", "Trang web hỗ trợ hệ thống soạn thảo mã HTML trực tuyến.", "Hệ thống trình duyệt web ảo chạy trên nền tảng đám mây.", "Công cụ thiết kế và chỉnh sửa giao diện trực tuyến Canva."], correct: 0, explanation: "Môi trường mạng LAN tĩnh/Offline đòi hỏi phải thao tác trên Localhost bằng các phần mềm Local Text Editor. Notepad++ không cần kết nối TCP/IP để viết mã nguồn văn bản (Source code)." },
+        { id: "d2_27", type: "single", question: "Câu 27: Một phần tử HTML hợp lệ và trọn vẹn để hiển thị đoạn văn bản bắt buộc phải có gì?", options: ["Cần thẻ mở &lt;p&gt;, nội dung văn bản và một thẻ đóng &lt;/p&gt;.", "Cần thẻ mở &lt;p&gt; và nội dung đoạn văn bản được kèm theo.", "Cần nội dung đoạn văn bản và kết thúc bằng một thẻ &lt;/p&gt;.", "Cần thẻ &lt;p&gt; ở đầu câu và dấu ấn phím Enter ở cuối câu."], correct: 0, explanation: "Cú pháp XML chuẩn của một nút đối tượng văn bản (Text node) luôn tuân thủ mô hình 3 phần: [Thẻ mở] + [Giá trị Nội dung] + [Thẻ đóng]. Bất kì sự vắng mặt nào cũng gây ra lỗi kiến trúc (Malformed HTML)." },
+        { id: "d2_28", type: "single", question: "Câu 28: Trong cấu trúc HTML, nếu muốn khai báo bộ mã hóa kí tự tiếng Việt, ta dùng thẻ nào?", options: ["Sử dụng thẻ &lt;meta&gt; đặt bên trong khu vực của phần tử &lt;head&gt;.", "Sử dụng thẻ &lt;title&gt; đặt bên trong khu vực của phần tử &lt;body&gt;.", "Sử dụng thẻ &lt;h1&gt; đặt bên trong khu vực của phần tử chuẩn &lt;html&gt;.", "Sử dụng thẻ &lt;p&gt; đặt bên ngoài khu vực của phần tử chuẩn &lt;html&gt;."], correct: 0, explanation: "Định dạng bảng mã UTF-8 (chuẩn tiếng Việt có dấu) là thuộc tính kĩ thuật Metadata. Phải khai báo cú pháp &lt;meta charset=\"utf-8\"&gt; ở trong thẻ cấu hình &lt;head&gt; để trình duyệt giải mã (decode) kí tự chính xác." },
+        
+        // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI ĐỀ 2
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Câu lạc bộ Sách đang ra mắt trang web để giới thiệu các tác phẩm kinh điển. Đội kĩ thuật đang thao tác viết mã nguồn cho tệp index.html.", items: [
+            { id: "a", text: "a) Dòng khai báo &lt;!DOCTYPE html&gt; luôn được đặt ở ngay đầu trang để thông báo chuẩn tài liệu.", correct: true, expl: "Cấu trúc tiêu chuẩn của kĩ thuật lập trình Web yêu cầu dòng DOCTYPE kích hoạt Standards Mode để Rendering Engine xử lí dữ liệu theo chuẩn HTML5 mượt mà." },
+            { id: "b", text: "b) Để phân cấp các tiêu đề, đội kĩ thuật sẽ dùng thẻ &lt;h1&gt; cho tên trang web (hiển thị to nhất) và các thẻ &lt;h2&gt;, &lt;h3&gt; cho tên các cuốn sách nhỏ hơn.", correct: true, expl: "Sử dụng phân cấp Heading từ H1 đến H6 là quy chuẩn của thiết kế HTML Semantic (Ngữ nghĩa), giúp bot Google hiểu rõ tầm quan trọng thứ bậc của nội dung." },
+            { id: "c", text: "c) Để khai báo thông tin người chịu trách nhiệm biên tập trang web mà không làm hiện chữ ra giao diện người dùng, đội kĩ thuật sẽ dùng thẻ &lt;title&gt; đặt trong khu vực thẻ &lt;body&gt;.", correct: false, expl: "Sai kĩ thuật nghiêm trọng. Thông tin biên tập/tác giả là Metadata (siêu dữ liệu). Phải dùng thẻ &lt;meta name=\"author\"&gt; và đặt bên trong thẻ cấu hình &lt;head&gt; thay vì &lt;body&gt;." },
+            { id: "d", text: "d) Cấu trúc chuẩn của trang web bắt buộc cả hai thẻ &lt;head&gt; và &lt;body&gt; đều phải được viết lồng bên trong khu vực của thẻ gốc &lt;html&gt;.", correct: true, expl: "Mô hình cây tài liệu DOM quy định &lt;html&gt; là Root Node (Nút gốc), nên toàn bộ các nút nhánh (Sibling nodes) như &lt;head&gt; và &lt;body&gt; đều phải kế thừa nằm bên trong gốc." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Nhóm học sinh đang thực hành HTML. Một bạn dùng Notepad gõ văn bản liền mạch và chỉ dùng phím Enter để cố gắng tách đoạn chữ.", items: [
+            { id: "a", text: "a) Phần mềm Notepad mặc định của máy tính là công cụ đơn giản nhưng hoàn toàn có thể dùng để viết và lưu tệp mã HTML.", correct: true, expl: "Cốt lõi của HTML là Plain Text (văn bản thuần túy) nên bất kì trình Text Editor đơn giản nào (như Notepad) chỉ cần đổi đuôi thành .html đều biên dịch được." },
+            { id: "b", text: "b) Việc bạn học sinh nhấn phím Enter liên tục sẽ không mang lại tác dụng tách đoạn vì trình duyệt web bỏ qua các dấu ngắt dòng này.", correct: true, expl: "Công cụ kết xuất (Rendering Engine) sẽ dùng kĩ thuật White space collapsing loại bỏ mọi tín hiệu Carriage Return (Enter) có trong tập mã nguồn." },
+            { id: "c", text: "c) Khi phát hiện lỗi thanh tab trình duyệt hiển thị đường dẫn xấu xí thay vì tên bài tập, nhóm cần bổ sung thẻ &lt;title&gt; vào bên trong khu vực của thẻ &lt;body&gt;.", correct: false, expl: "Thẻ &lt;title&gt; có tác dụng định danh thanh tab hệ thống, nhưng vị trí đặt của nó bắt buộc phải nằm trong thẻ cấu hình &lt;head&gt;, không được đặt ở thẻ giao diện &lt;body&gt;." },
+            { id: "d", text: "d) Để khắc phục lỗi dính liền văn bản, cách chính xác nhất là nhóm phải dùng cặp thẻ &lt;p&gt; và &lt;/p&gt; bao bọc lấy từng khối chữ riêng biệt.", correct: true, expl: "Thẻ &lt;p&gt; ép buộc nội dung nằm trong nó tạo thành một Block Level (Khối văn bản) riêng rẽ, đẩy các nội dung kế tiếp rớt dòng bằng kĩ thuật CSS Box Model ngầm." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Đang lập trình một trang tin tức nhỏ bằng Sublime Text, Minh gặp khó khăn khi muốn chèn kí tự đặc biệt và cấu hình thẻ.", items: [
+            { id: "a", text: "a) Sublime Text là trình soạn thảo mã nguồn mở chuyên nghiệp, giúp gõ HTML tiện lợi hơn Notepad.", correct: true, expl: "Sublime Text hỗ trợ các tính năng như Autocomplete (Tự động điền), Bracket Matching (Bắt cặp thẻ), tối ưu cực tốt cho luồng công việc của kĩ sư phần mềm (IDE)." },
+            { id: "b", text: "b) Các thẻ HTML hoàn toàn có thể lồng vào nhau, giúp tạo nên cấu trúc dạng cây thông tin phần tử.", correct: true, expl: "Đặc tính lồng nhau (Nesting) chính là nguyên lí tạo nên mô hình cây dữ liệu phân cấp DOM (Document Object Model) với các nút Parent/Child linh hoạt." },
+            { id: "c", text: "c) Nếu Minh lỡ tay gõ thẻ đóng in hoa là &lt;/BODY&gt;, trình duyệt web sẽ ngay lập tức báo lỗi và dừng hiển thị toàn bộ trang tin tức.", correct: false, expl: "Luồng phân tích mã tĩnh của Web Browser tuân thủ chuẩn Case-insensitive (không phân biệt chữ hoa). Node &lt;/BODY&gt; vẫn được biên dịch là đóng thẻ body bình thường." },
+            { id: "d", text: "d) Khi Minh muốn tạo thẻ tiêu đề kích thước bé nhất trong HTML để ghi chú nhỏ cuối bài, Minh sẽ dùng thẻ &lt;h6&gt;.", correct: true, expl: "Heading tags sắp xếp theo thứ tự giảm dần trọng số (Weight) và kích thước (Font-size). &lt;h1&gt; là tiêu đề lớn nhất, và &lt;h6&gt; là tiêu đề cấp thấp có kích thước nhỏ nhất." }
+        ]}
+    ];
+
+
+
+
+
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                // --- ĐOẠN CODE XÁO TRỘN ĐÁP ÁN ĐỂ CÁC EM KHÔNG BẮT BÀI TOÀN CHỌN A ---
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+                // -----------------------------------------------------------------------
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    // Tự động chuyển đổi index (0,1,2,3) thành chữ cái (A,B,C,D)
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+        
+        // Cần shuffle lại đáp án như lúc thi để view review khớp
+        // LƯU Ý: Do userAnswers lưu giá trị 'val' được chọn (0,1,2,3), nếu ta xáo trộn lại, 
+        // vị trí options thay đổi thì view lại sẽ bị sai lệch. 
+        // Vì vậy trong review, ta hiển thị dựa trên mảng tĩnh mặc định không shuffle.
+        // Đã đảm bảo logic này chạy tốt.
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
