@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Tiếng Anh - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #4f46e5, #ec4899, #06b6d4, #10b981);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    .review-explanation {
+        color: #059669 !important;
+        font-weight: 700 !important;
+    }
+
+    .btn-tf { transition: all 0.2s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):hover { background-color: #f3f4f6; }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-indigo-600 mb-3">HIỆN TẠI ĐƠN  <br><span class="text-xl text-gray-600">Đề Khảo Sát Chất Lượng</span></h1>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold" placeholder="9A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-pink-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="flex flex-col gap-4">
+              <label class="cursor-pointer block w-full relative">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow flex-shrink-0">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide flex-1">MÃ ĐỀ 01<br><span class="text-xs font-medium text-gray-500">40 Ý - 10 Điểm</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer block w-full relative">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow flex-shrink-0">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide flex-1">MÃ ĐỀ 02<br><span class="text-xs font-medium text-gray-500">40 Ý - 10 Điểm</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-indigo-600 font-extrabold hover:text-indigo-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-indigo-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100" id="progress-container">
+       <div class="text-xs text-indigo-500 font-bold uppercase tracking-wider mb-1">Tiến độ (ý)</div>
+       <div id="progress-text" class="text-xl font-black text-indigo-700">0/40</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">90:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-2xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp bài</h3>
+           <p class="text-gray-600 mb-6 font-medium text-base">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-lg">0</span>/<span id="confirm-total" class="font-black text-lg">40</span> thao tác. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-3 bg-gray-100 text-gray-800 font-extrabold rounded-xl hover:bg-gray-200 transition-colors border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-3 bg-emerald-600 text-white font-extrabold rounded-xl hover:bg-emerald-700 transition-colors shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-cyan-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-cyan-50 text-cyan-700 rounded-xl font-bold hover:bg-cyan-100 transition-colors shadow-sm border border-cyan-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-blue-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Hành động</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_eng_test_t1'); 
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    const de1_data = [
+        // --- PHẦN 1: NGỮ ÂM ---
+        { id: "e1_1", type: "single", question: "Question 1. Choose the odd one out:", options: ["A. bite", "B. min", "C. big", "D. pig"], correct: 0, explanation: "Giải thích nhé: Chữ 'i' trong từ 'bite' đọc là âm /aɪ/ (ai), còn trong các từ 'min', 'big', 'pig' đều đọc là âm /ɪ/ (i ngắn). Vậy 'bite' là từ khác biệt nha!" },
+        { id: "e1_2", type: "single", question: "Question 2. Choose the odd one out:", options: ["A. like", "B. ride", "C. bike", "D. fish"], correct: 3, explanation: "Giải thích nhé: Chữ 'i' trong từ 'fish' đọc là /ɪ/ (i ngắn), còn 'like', 'ride', 'bike' đều đọc là /aɪ/ (ai)." },
+        { id: "e1_3", type: "single", question: "Question 3. Choose the odd one out:", options: ["A. nine", "B. five", "C. kite", "D. pink"], correct: 3, explanation: "Giải thích nhé: Chữ 'i' trong từ 'pink' đọc là /ɪ/ (i ngắn), các từ còn lại 'nine', 'five', 'kite' đều đọc là /aɪ/ (ai)." },
+        { id: "e1_4", type: "single", question: "Question 4. Choose the odd one out:", options: ["A. milk", "B. hide", "C. sit", "D. will"], correct: 1, explanation: "Giải thích nhé: Chỉ có từ 'hide' đọc là /aɪ/ (ai), 3 từ 'milk', 'sit', 'will' đều đọc âm /ɪ/ (i ngắn)." },
+        { id: "e1_5", type: "single", question: "Question 5. Choose the odd one out:", options: ["A. high", "B. mine", "C. fin", "D. line"], correct: 2, explanation: "Giải thích nhé: Từ 'fin' có chữ 'i' đọc là /ɪ/ (i ngắn), các từ 'high', 'mine', 'line' đọc là /aɪ/ (ai)." },
+        { id: "e1_6", type: "single", question: "Question 6. Choose the odd one out:", options: ["A. lip", "B. time", "C. dip", "D. tip"], correct: 1, explanation: "Giải thích nhé: Chữ 'i' trong 'time' đọc là /aɪ/ (ai), khác với 'lip', 'dip', 'tip' đều đọc là /ɪ/ (i ngắn)." },
+        { id: "e1_7", type: "single", question: "Question 7. Choose the odd one out:", options: ["A. dine", "B. fine", "C. wine", "D. wind"], correct: 3, explanation: "Giải thích nhé: Từ 'wind' (cơn gió) đọc là /ɪ/ (i ngắn), còn 'dine', 'fine', 'wine' đọc là /aɪ/ (ai)." },
+        { id: "e1_8", type: "single", question: "Question 8. Choose the odd one out:", options: ["A. fill", "B. bite", "C. dig", "D. bill"], correct: 1, explanation: "Giải thích nhé: Từ 'bite' đọc là /aɪ/ (ai), các từ 'fill', 'dig', 'bill' đọc là /ɪ/ (i ngắn)." },
+        { id: "e1_9", type: "single", question: "Question 9. Choose the odd one out:", options: ["A. hide", "B. pile", "C. kill", "D. mile"], correct: 2, explanation: "Giải thích nhé: Từ 'kill' đọc là /ɪ/ (i ngắn), còn 'hide', 'pile', 'mile' đọc là /aɪ/ (ai)." },
+        { id: "e1_10", type: "single", question: "Question 10. Choose the odd one out:", options: ["A. wish", "B. dive", "C. list", "D. pit"], correct: 1, explanation: "Giải thích nhé: Chữ 'i' trong từ 'dive' đọc là /aɪ/ (ai), các từ 'wish', 'list', 'pit' đọc là /ɪ/ (i ngắn) các em nhé." },
+
+        // --- PHẦN 2: SẮP XẾP TỪ (REORDER) ---
+        { id: "e1_11", type: "short_answer", question: "Question 11. Reorder the words: school / do / go / you / to / how / ?", correct: "how do you go to school?", explanation: "Giải thích nhé: Câu hỏi bằng phương tiện gì bắt đầu bằng từ để hỏi 'How' + trợ động từ 'do' + chủ ngữ 'you' + động từ chính 'go' + 'to school?'." },
+        { id: "e1_12", type: "short_answer", question: "Question 12. Reorder the words: is / library / the / big / .", correct: "the library is big.", explanation: "Giải thích nhé: Chủ ngữ là 'The library' (thư viện) + động từ to be 'is' + tính từ 'big' (to lớn)." },
+        { id: "e1_13", type: "short_answer", question: "Question 13. Reorder the words: English / have / I / Monday / on / .", correct: "i have english on monday.", explanation: "Giải thích nhé: Chủ ngữ 'I' + động từ 'have' + môn học 'English' + cụm từ chỉ thời gian đứng cuối câu 'on Monday'." },
+        { id: "e1_14", type: "short_answer", question: "Question 14. Reorder the words: subject / your / what / is / favorite / ?", correct: "what is your favorite subject?", explanation: "Giải thích nhé: Đây là mẫu câu hỏi môn học yêu thích quen thuộc: 'What is your favorite subject?'." },
+        { id: "e1_15", type: "short_answer", question: "Question 15. Reorder the words: playing / they / are / badminton / .", correct: "they are playing badminton.", explanation: "Giải thích nhé: Thì hiện tại tiếp diễn gồm Chủ ngữ 'They' + to be 'are' + V-ing 'playing' + môn thể thao 'badminton'." },
+        { id: "e1_16", type: "short_answer", question: "Question 16. Reorder the words: he / does / want / milk / some / ?", correct: "does he want some milk?", explanation: "Giải thích nhé: Câu hỏi Yes/No với động từ thường bắt đầu bằng trợ động từ 'Does' + chủ ngữ 'he' + động từ 'want' + 'some milk?'." },
+        { id: "e1_17", type: "short_answer", question: "Question 17. Reorder the words: time / what / is / it / ?", correct: "what time is it?", explanation: "Giải thích nhé: Để hỏi giờ, chúng ta luôn dùng mẫu câu ngắn gọn 'What time is it?' (Bây giờ là mấy giờ?)." },
+        { id: "e1_18", type: "short_answer", question: "Question 18. Reorder the words: mother / my / is / a / teacher / .", correct: "my mother is a teacher.", explanation: "Giải thích nhé: Chủ ngữ 'My mother' (mẹ của tôi) + to be 'is' + nghề nghiệp 'a teacher' (một giáo viên)." },
+        { id: "e1_19", type: "short_answer", question: "Question 19. Reorder the words: to / like / do / you / listen / music / ?", correct: "do you like to listen to music?", explanation: "Giải thích nhé: Câu hỏi sở thích bắt đầu bằng 'Do you like' + động từ có 'to' (to listen) + 'to music?'." },
+        { id: "e1_20", type: "short_answer", question: "Question 20. Reorder the words: we / go / to / zoo / the / Sunday / on / .", correct: "we go to the zoo on sunday.", explanation: "Giải thích nhé: Chủ ngữ 'We' + cụm động từ 'go to the zoo' (đi sở thú) + thời gian 'on Sunday' (vào Chủ nhật)." },
+
+        // --- PHẦN 3: DỊCH SANG TIẾNG VIỆT ---
+        { id: "e1_21", type: "short_answer", question: "Question 21. Translate to Vietnamese: My favorite subject is English.", correct: "môn học yêu thích của tôi là tiếng anh", explanation: "Giải thích nhé: 'My favorite subject' nghĩa là môn học yêu thích của tôi, 'is English' là môn tiếng Anh." },
+        { id: "e1_22", type: "short_answer", question: "Question 22. Translate to Vietnamese: Where is your school?", correct: "trường của bạn ở đâu", explanation: "Giải thích nhé: 'Where' là ở đâu, 'your school' là trường của bạn. Vậy câu này hỏi: Trường của bạn ở đâu?" },
+        { id: "e1_23", type: "short_answer", question: "Question 23. Translate to Vietnamese: He goes to school by bus.", correct: "anh ấy đi học bằng xe buýt", explanation: "Giải thích nhé: 'He goes to school' (anh ấy đi học), 'by bus' (bằng xe buýt)." },
+        { id: "e1_24", type: "short_answer", question: "Question 24. Translate to Vietnamese: What are you doing?", correct: "bạn đang làm gì", explanation: "Giải thích nhé: Đây là câu hỏi thì hiện tại tiếp diễn, 'doing' là đang làm. Câu này nghĩa là: Bạn đang làm gì?" },
+        { id: "e1_25", type: "short_answer", question: "Question 25. Translate to Vietnamese: I have a cat and a dog.", correct: "tôi có một con mèo và một con chó", explanation: "Giải thích nhé: 'I have' (Tôi có), 'a cat' (một con mèo), 'and a dog' (và một con chó)." },
+        { id: "e1_26", type: "short_answer", question: "Question 26. Translate to Vietnamese: Can you play football?", correct: "bạn có thể chơi bóng đá không", explanation: "Giải thích nhé: 'Can you' (Bạn có thể... không?), 'play football' (chơi bóng đá)." },
+        { id: "e1_27", type: "short_answer", question: "Question 27. Translate to Vietnamese: It is sunny today.", correct: "hôm nay trời nắng", explanation: "Giải thích nhé: 'today' (hôm nay), 'It is sunny' (trời có nắng/trời nắng)." },
+        { id: "e1_28", type: "short_answer", question: "Question 28. Translate to Vietnamese: She likes eating apples.", correct: "cô ấy thích ăn táo", explanation: "Giải thích nhé: 'She likes' (Cô ấy thích), 'eating apples' (việc ăn táo/ăn táo)." },
+        { id: "e1_29", type: "short_answer", question: "Question 29. Translate to Vietnamese: How many pens do you have?", correct: "bạn có bao nhiêu cái bút", explanation: "Giải thích nhé: 'How many pens' (Bao nhiêu cái bút), 'do you have' (bạn có)." },
+        { id: "e1_30", type: "short_answer", question: "Question 30. Translate to Vietnamese: I am listening to music.", correct: "tôi đang nghe nhạc", explanation: "Giải thích nhé: 'I am listening' (Tôi đang nghe), 'to music' (nhạc)." },
+
+        // --- PHẦN 4: DỊCH SANG TIẾNG ANH ---
+        { id: "e1_31", type: "short_answer", question: "Question 31. Translate to English: Bạn có khỏe không?", correct: "how are you", explanation: "Giải thích nhé: Câu hỏi thăm sức khỏe quen thuộc nhất trong tiếng Anh là 'How are you?'." },
+        { id: "e1_32", type: "short_answer", question: "Question 32. Translate to English: Hôm nay là thứ Hai.", correct: "today is monday", explanation: "Giải thích nhé: Hôm nay là 'Today', thứ Hai là 'Monday'. Cả câu là 'Today is Monday'." },
+        { id: "e1_33", type: "short_answer", question: "Question 33. Translate to English: Tôi thích xem tivi.", correct: "i like watching tv", explanation: "Giải thích nhé: Tôi thích là 'I like', sau like động từ thêm -ing là 'watching TV'." },
+        { id: "e1_34", type: "short_answer", question: "Question 34. Translate to English: Mẹ tôi là bác sĩ.", correct: "my mother is a doctor", explanation: "Giải thích nhé: Mẹ tôi là 'My mother', một bác sĩ là 'a doctor'. Mẫu câu: 'My mother is a doctor'." },
+        { id: "e1_35", type: "short_answer", question: "Question 35. Translate to English: Bạn làm nghề gì?", correct: "what do you do", explanation: "Giải thích nhé: Để hỏi nghề nghiệp, tiếng Anh dùng mẫu câu 'What do you do?' các em nhé." },
+        { id: "e1_36", type: "short_answer", question: "Question 36. Translate to English: Trời đang mưa.", correct: "it is raining", explanation: "Giải thích nhé: Nói về thời tiết đang diễn ra, ta dùng chủ ngữ 'It' + is + V-ing (mưa là rain). Đáp án: 'It is raining'." },
+        { id: "e1_37", type: "short_answer", question: "Question 37. Translate to English: Tôi muốn uống nước cam.", correct: "i want to drink orange juice", explanation: "Giải thích nhé: Tôi muốn là 'I want to', uống là 'drink', nước cam là 'orange juice'." },
+        { id: "e1_38", type: "short_answer", question: "Question 38. Translate to English: Cô ấy đang nấu ăn.", correct: "she is cooking", explanation: "Giải thích nhé: Cô ấy là 'She', đang làm gì đó dùng to be + V-ing (nấu ăn là cook). Đáp án: 'She is cooking'." },
+        { id: "e1_39", type: "short_answer", question: "Question 39. Translate to English: Trường của tôi rất lớn.", correct: "my school is very big", explanation: "Giải thích nhé: Trường của tôi là 'My school', rất lớn là 'very big'. Đáp án: 'My school is very big'." },
+        { id: "e1_40", type: "short_answer", question: "Question 40. Translate to English: Bạn có bao nhiêu cuốn sách?", correct: "how many books do you have", explanation: "Giải thích nhé: Hỏi số lượng đếm được dùng 'How many' + danh từ số nhiều 'books' + 'do you have?'." }
+    ];
+
+    const de2_data = [
+        // --- PHẦN 1: NGỮ ÂM ---
+        { id: "e2_1", type: "single", question: "Question 1. Choose the odd one out:", options: ["A. like", "B. rice", "C. pig", "D. kite"], correct: 2, explanation: "Giải thích nhé: Chữ 'i' trong từ 'pig' đọc là /ɪ/ (i ngắn), các từ 'like', 'rice', 'kite' đều đọc là /aɪ/ (ai)." },
+        { id: "e2_2", type: "single", question: "Question 2. Choose the odd one out:", options: ["A. him", "B. fine", "C. six", "D. milk"], correct: 1, explanation: "Giải thích nhé: Chỉ có từ 'fine' đọc là /aɪ/ (ai), 3 từ 'him', 'six', 'milk' đều đọc âm /ɪ/ (i ngắn)." },
+        { id: "e2_3", type: "single", question: "Question 3. Choose the odd one out:", options: ["A. nine", "B. fish", "C. dish", "D. wish"], correct: 0, explanation: "Giải thích nhé: Từ 'nine' đọc là /aɪ/ (ai), các từ 'fish', 'dish', 'wish' đọc là /ɪ/ (i ngắn)." },
+        { id: "e2_4", type: "single", question: "Question 4. Choose the odd one out:", options: ["A. ride", "B. wine", "C. sit", "D. bike"], correct: 2, explanation: "Giải thích nhé: Chữ 'i' trong 'sit' đọc là /ɪ/ (i ngắn), khác với 'ride', 'wine', 'bike' đều đọc là /aɪ/ (ai)." },
+        { id: "e2_5", type: "single", question: "Question 5. Choose the odd one out:", options: ["A. list", "B. mine", "C. fine", "D. dine"], correct: 0, explanation: "Giải thích nhé: Từ 'list' đọc là /ɪ/ (i ngắn), còn 'mine', 'fine', 'dine' đọc là /aɪ/ (ai)." },
+        { id: "e2_6", type: "single", question: "Question 6. Choose the odd one out:", options: ["A. kill", "B. hide", "C. line", "D. five"], correct: 0, explanation: "Giải thích nhé: Từ 'kill' có chữ 'i' đọc là /ɪ/ (i ngắn), các từ 'hide', 'line', 'five' đọc là /aɪ/ (ai)." },
+        { id: "e2_7", type: "single", question: "Question 7. Choose the odd one out:", options: ["A. dip", "B. pit", "C. dive", "D. wind"], correct: 2, explanation: "Giải thích nhé: Từ 'dive' đọc là /aɪ/ (ai), các từ 'dip', 'pit', 'wind' đọc là /ɪ/ (i ngắn)." },
+        { id: "e2_8", type: "single", question: "Question 8. Choose the odd one out:", options: ["A. fill", "B. will", "C. bite", "D. sill"], correct: 2, explanation: "Giải thích nhé: Từ 'bite' đọc là /aɪ/ (ai), còn 'fill', 'will', 'sill' đọc là /ɪ/ (i ngắn)." },
+        { id: "e2_9", type: "single", question: "Question 9. Choose the odd one out:", options: ["A. dine", "B. wish", "C. list", "D. pink"], correct: 0, explanation: "Giải thích nhé: Chữ 'i' trong từ 'dine' đọc là /aɪ/ (ai), các từ 'wish', 'list', 'pink' đọc là /ɪ/ (i ngắn)." },
+        { id: "e2_10", type: "single", question: "Question 10. Choose the odd one out:", options: ["A. hide", "B. pile", "C. mile", "D. dip"], correct: 3, explanation: "Giải thích nhé: Từ 'dip' đọc là /ɪ/ (i ngắn), các từ 'hide', 'pile', 'mile' đều đọc là /aɪ/ (ai)." },
+
+        // --- PHẦN 2: SẮP XẾP TỪ (REORDER) ---
+        { id: "e2_11", type: "short_answer", question: "Question 11. Reorder the words: subject / favorite / is / what / your / ?", correct: "what is your favorite subject?", explanation: "Giải thích nhé: Câu hỏi môn học yêu thích: Từ để hỏi 'What' + to be 'is' + 'your favorite subject?'." },
+        { id: "e2_12", type: "short_answer", question: "Question 12. Reorder the words: school / I / bike / by / go / to / .", correct: "i go to school by bike.", explanation: "Giải thích nhé: Chủ ngữ 'I' + cụm từ đi học 'go to school' + phương tiện đứng cuối 'by bike'." },
+        { id: "e2_13", type: "short_answer", question: "Question 13. Reorder the words: you / are / doing / what / ?", correct: "what are you doing?", explanation: "Giải thích nhé: Cấu trúc hỏi đang làm gì rất quen thuộc: 'What are you doing?'." },
+        { id: "e2_14", type: "short_answer", question: "Question 14. Reorder the words: playing / he / chess / is / .", correct: "he is playing chess.", explanation: "Giải thích nhé: Chủ ngữ 'He' + to be 'is' + động từ thêm -ing 'playing' + danh từ 'chess'." },
+        { id: "e2_15", type: "short_answer", question: "Question 15. Reorder the words: like / do / you / apples / ?", correct: "do you like apples?", explanation: "Giải thích nhé: Câu hỏi Yes/No về sở thích bắt đầu bằng 'Do' + chủ ngữ 'you' + động từ 'like' + 'apples?'." },
+        { id: "e2_16", type: "short_answer", question: "Question 16. Reorder the words: my / is / brother / doctor / a / .", correct: "my brother is a doctor.", explanation: "Giải thích nhé: Chủ ngữ 'My brother' + to be 'is' + danh từ chỉ nghề nghiệp 'a doctor'." },
+        { id: "e2_17", type: "short_answer", question: "Question 17. Reorder the words: time / what / it / is / ?", correct: "what time is it?", explanation: "Giải thích nhé: Để hỏi giờ, chúng ta dùng câu: 'What time is it?'." },
+        { id: "e2_18", type: "short_answer", question: "Question 18. Reorder the words: listening / I / to / am / music / .", correct: "i am listening to music.", explanation: "Giải thích nhé: Chủ ngữ 'I' + to be 'am' + cụm động từ đang nghe nhạc 'listening to music'." },
+        { id: "e2_19", type: "short_answer", question: "Question 19. Reorder the words: have / you / do / how / pens / many / ?", correct: "how many pens do you have?", explanation: "Giải thích nhé: Cấu trúc hỏi số lượng đếm được: 'How many' + danh từ số nhiều 'pens' + 'do you have?'." },
+        { id: "e2_20", type: "short_answer", question: "Question 20. Reorder the words: weather / today / how / is / the / ?", correct: "how is the weather today?", explanation: "Giải thích nhé: Câu hỏi thời tiết bắt đầu bằng 'How is' + 'the weather' + thời gian 'today?'." },
+
+        // --- PHẦN 3: DỊCH SANG TIẾNG VIỆT ---
+        { id: "e2_21", type: "short_answer", question: "Question 21. Translate to Vietnamese: My father is a worker.", correct: "bố tôi là công nhân", explanation: "Giải thích nhé: 'My father' (Bố tôi), 'is a worker' (là một công nhân)." },
+        { id: "e2_22", type: "short_answer", question: "Question 22. Translate to Vietnamese: What are you doing, Nam?", correct: "bạn đang làm gì vậy nam", explanation: "Giải thích nhé: 'What are you doing' (Bạn đang làm gì), thêm tên bạn gọi 'Nam' ở cuối." },
+        { id: "e2_23", type: "short_answer", question: "Question 23. Translate to Vietnamese: I like listening to music.", correct: "tôi thích nghe nhạc", explanation: "Giải thích nhé: 'I like' (Tôi thích), 'listening to music' (việc nghe nhạc)." },
+        { id: "e2_24", type: "short_answer", question: "Question 24. Translate to Vietnamese: Today is Sunday.", correct: "hôm nay là chủ nhật", explanation: "Giải thích nhé: 'Today' (Hôm nay), 'is Sunday' (là Chủ nhật)." },
+        { id: "e2_25", type: "short_answer", question: "Question 25. Translate to Vietnamese: Does she like chicken?", correct: "cô ấy có thích thịt gà không", explanation: "Giải thích nhé: Câu hỏi 'Does she like' (Cô ấy có thích... không), 'chicken' (thịt gà)." },
+        { id: "e2_26", type: "short_answer", question: "Question 26. Translate to Vietnamese: Where do you live?", correct: "bạn sống ở đâu", explanation: "Giải thích nhé: 'Where' (Ở đâu), 'do you live' (bạn sống). Cả câu: Bạn sống ở đâu?" },
+        { id: "e2_27", type: "short_answer", question: "Question 27. Translate to Vietnamese: I have three brothers.", correct: "tôi có ba anh em trai", explanation: "Giải thích nhé: 'I have' (Tôi có), 'three brothers' (3 anh em trai)." },
+        { id: "e2_28", type: "short_answer", question: "Question 28. Translate to Vietnamese: It is hot today.", correct: "hôm nay trời nóng", explanation: "Giải thích nhé: 'It is hot' (Trời nóng), 'today' (hôm nay)." },
+        { id: "e2_29", type: "short_answer", question: "Question 29. Translate to Vietnamese: What subject do you have today?", correct: "hôm nay bạn có môn học gì", explanation: "Giải thích nhé: 'What subject' (Môn học gì), 'do you have today' (bạn có vào hôm nay)." },
+        { id: "e2_30", type: "short_answer", question: "Question 30. Translate to Vietnamese: He goes to school at 7 o'clock.", correct: "anh ấy đi học lúc 7 giờ", explanation: "Giải thích nhé: 'He goes to school' (Anh ấy đi học), 'at 7 o'clock' (lúc 7 giờ đúng)." },
+
+        // --- PHẦN 4: DỊCH SANG TIẾNG ANH ---
+        { id: "e2_31", type: "short_answer", question: "Question 31. Translate to English: Bạn thích môn học nào?", correct: "what subject do you like", explanation: "Giải thích nhé: Môn học nào là 'What subject', bạn thích là 'do you like'." },
+        { id: "e2_32", type: "short_answer", question: "Question 32. Translate to English: Mẹ tôi là y tá.", correct: "my mother is a nurse", explanation: "Giải thích nhé: Mẹ tôi là 'My mother', một y tá là 'a nurse'. Đáp án: 'My mother is a nurse'." },
+        { id: "e2_33", type: "short_answer", question: "Question 33. Translate to English: Tôi đang đọc sách.", correct: "i am reading a book", explanation: "Giải thích nhé: Tôi đang làm gì dùng to be + V-ing, đọc sách là 'read a book'. Đáp án: 'I am reading a book'." },
+        { id: "e2_34", type: "short_answer", question: "Question 34. Translate to English: Trời đang nóng.", correct: "it is hot", explanation: "Giải thích nhé: Nói về thời tiết nóng, ta dùng cấu trúc 'It is hot'." },
+        { id: "e2_35", type: "short_answer", question: "Question 35. Translate to English: Bạn làm gì vào Chủ Nhật?", correct: "what do you do on sunday", explanation: "Giải thích nhé: Hỏi làm gì dùng 'What do you do', vào Chủ nhật là 'on Sunday'." },
+        { id: "e2_36", type: "short_answer", question: "Question 36. Translate to English: Tôi không thích bơi lội.", correct: "i do not like swimming", explanation: "Giải thích nhé: Tôi không thích là 'I do not like' (hoặc I don't like), bơi lội là 'swimming'." },
+        { id: "e2_37", type: "short_answer", question: "Question 37. Translate to English: Anh ấy muốn uống sữa.", correct: "he wants to drink milk", explanation: "Giải thích nhé: Anh ấy muốn là 'He wants' (phải thêm 's'), uống sữa là 'to drink milk'." },
+        { id: "e2_38", type: "short_answer", question: "Question 38. Translate to English: Bạn bao nhiêu tuổi?", correct: "how old are you", explanation: "Giải thích nhé: Câu hỏi tuổi rất quen thuộc trong tiếng Anh là 'How old are you?'." },
+        { id: "e2_39", type: "short_answer", question: "Question 39. Translate to English: Đây là trường của tôi.", correct: "this is my school", explanation: "Giải thích nhé: Đây là dùng mẫu câu 'This is', trường của tôi là 'my school'." },
+        { id: "e2_40", type: "short_answer", question: "Question 40. Translate to English: Tôi có hai cái bút chì.", correct: "i have two pencils", explanation: "Giải thích nhé: Tôi có là 'I have', hai cái bút chì là 'two pencils' (chữ pencil phải thêm 's')." }
+    ];
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return 40;
+    }
+
+    function getAnsweredCount() {
+        return Object.keys(userAnswers).length;
+    }
+
+    window.handleShortAnswer = function(qId) {
+        const inputEl = document.getElementById('short_input_' + qId);
+        if(!inputEl) return;
+        const val = inputEl.value;
+        if(val.trim() === '') {
+            delete userAnswers[qId];
+        } else {
+            userAnswers[qId] = val;
+        }
+        window.updateProgress();
+    };
+
+    window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+            
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+        }
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        
+        const sectionMap = {
+            "e1_1": "PHẦN 1. NGỮ ÂM", "e2_1": "PHẦN 1. NGỮ ÂM",
+            "e1_11": "PHẦN 2. SẮP XẾP TỪ", "e2_11": "PHẦN 2. SẮP XẾP TỪ",
+            "e1_21": "PHẦN 3. DỊCH SANG TIẾNG VIỆT", "e2_21": "PHẦN 3. DỊCH SANG TIẾNG VIỆT",
+            "e1_31": "PHẦN 4. DỊCH SANG TIẾNG ANH", "e2_31": "PHẦN 4. DỊCH SANG TIẾNG ANH"
+        };
+        currentQuestions.forEach((q) => {
+            if (sectionMap[q.id]) {
+                html += `<div class="mt-12 mb-6 flex flex-row items-center justify-center w-full gap-3 sm:gap-6">
+                    <div class="flex-1 h-0.5 sm:h-1 bg-red-200 rounded-full"></div>
+                    <h3 class="text-xl sm:text-2xl font-black text-red-600 uppercase tracking-widest text-center">${sectionMap[q.id]}</h3>
+                    <div class="flex-1 h-0.5 sm:h-1 bg-red-200 rounded-full"></div>
+                </div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-indigo-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg cursor-pointer hover:border-indigo-300">
+                            <div class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-indigo-50 text-indigo-900 p-4 rounded-xl font-semibold mb-4 border-2 border-indigo-100 text-lg sm:text-xl leading-relaxed text-justify">${q.context}</div>`;
+                html += `<div class="space-y-3 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-4 sm:p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-indigo-200">
+                        <div class="font-bold text-red-600 flex-1 text-base sm:text-lg math-scroll">${item.text}</div>
+                        <div class="flex gap-2 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnT}">TRUE</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnF}">FALSE</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'short_answer') {
+                let ans = userAnswers[q.id] || "";
+                html += `<div class="bg-gradient-to-r from-red-50 to-orange-50 text-red-600 p-5 rounded-2xl font-bold mb-6 border border-red-100 shadow-sm text-lg sm:text-xl leading-relaxed">${q.question}</div>`;
+                html += `<div class="mt-4 p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm">
+                     <textarea id="short_input_${q.id}" oncopy="return false" onpaste="return false" oncut="return false" oninput="window.handleShortAnswer('${q.id}')" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 font-bold text-xl outline-none transition-all text-indigo-700" rows="1" placeholder="Type your answer here...">${ans}</textarea>
+                 </div>`;
+            }
+
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        window.updateProgress();
+    };
+       
+
+    window.updateProgress = function() {
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+   window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'short_answer') {
+                // TỰ ĐỘNG XÓA DẤU CÂU (. , ? !) VÀ KHOẢNG TRẮNG DƯ THỪA ĐỂ CHẤM ĐIỂM CHUẨN XÁC
+                let uVal = (userAnswers[q.id] || "").toString().trim().toLowerCase().replace(/[.,?!]/g, '').replace(/\s+/g, ' ');
+                let cVal = q.correct.toString().trim().toLowerCase().replace(/[.,?!]/g, '').replace(/\s+/g, ' ');
+                if (uVal === cVal) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { 
+                    if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; 
+                });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+       const record = {
+            hoTen: currentStudent.hoTen, 
+            lop: currentStudent.lop, 
+            maDe: currentStudent.maDe,
+            tenDe: currentStudent.tenDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' - ' + quizStartTime.toLocaleDateString('vi-VN'), 
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' - ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), 
+            deviceId: deviceId,
+            answers: userAnswers
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-indigo-50 border-2 border-indigo-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-indigo-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-indigo-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-pink-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-indigo-100">Thời gian: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem chi tiết</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+   window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+       const sectionMap = {
+            "e1_1": "PHẦN 1. NGỮ ÂM", "e2_1": "PHẦN 1. NGỮ ÂM",
+            "e1_11": "PHẦN 2. SẮP XẾP TỪ", "e2_11": "PHẦN 2. SẮP XẾP TỪ",
+            "e1_21": "PHẦN 3. DỊCH SANG TIẾNG VIỆT", "e2_21": "PHẦN 3. DỊCH SANG TIẾNG VIỆT",
+            "e1_31": "PHẦN 4. DỊCH SANG TIẾNG ANH", "e2_31": "PHẦN 4. DỊCH SANG TIẾNG ANH"
+        };
+        currentQuestions.forEach((q) => {
+            if (sectionMap[q.id]) {
+                html += `<div class="mt-12 mb-8 flex flex-row items-center justify-center w-full gap-3 sm:gap-6">
+                    <div class="flex-1 h-1 sm:h-1.5 bg-red-200 rounded-full"></div>
+                    <h3 class="text-2xl sm:text-3xl font-black text-red-600 uppercase tracking-widest text-center drop-shadow-sm">${sectionMap[q.id]}</h3>
+                    <div class="flex-1 h-1 sm:h-1.5 bg-red-200 rounded-full"></div>
+                </div>`;
+            }
+
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let isUnanswered = (uAns === undefined || uAns === "");
+                let borderColor = isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-red-400 bg-red-50';
+                
+                // Lời phê thân thiện cho học sinh
+                let feedbackText = isUnanswered ? '⚠️ CÁC EM CHƯA LÀM CÂU NÀY!' : (isCorrect ? '🎉 XUẤT SẮC! CÁC EM LÀM ĐÚNG RỒI!' : '😢 TIẾC QUÁ, CÁC EM LÀM SAI RỒI!');
+                let feedbackColor = isUnanswered ? 'text-orange-600' : (isCorrect ? 'text-emerald-600' : 'text-red-600');
+                
+                html += `<div class="p-6 sm:p-8 border-4 rounded-3xl shadow-md mb-8 flex flex-col ${borderColor}">`;
+                html += `<div class="font-black text-xl sm:text-2xl text-red-600 mb-6 leading-relaxed">${q.question}</div>`;
+                html += `<div class="space-y-4">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-500 border-2 shadow-sm'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-md ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-500 border-2 shadow-sm'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-md ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border-2 border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-2xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/60 text-lg font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-extrabold' : 'font-bold'} text-lg sm:text-xl flex-1">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                // 1. Đưa kết quả lên trên
+                html += `<div class="mt-6 pb-6 border-b-2 border-dashed border-gray-300 text-center"><span class="text-xl sm:text-2xl font-black ${feedbackColor}">${feedbackText}</span></div>`;
+                
+                // 2. Chèn Hướng dẫn xuống dưới và lọc bỏ chữ
+                if (q.explanation) {
+                    let cleanExpl = q.explanation.replace(/\]+\]/g, '').trim();
+                    html += `<div class="review-explanation mt-6 pt-2"><p class="text-lg sm:text-xl font-black uppercase tracking-widest text-indigo-600 mb-3 flex items-center gap-2"><span>💡</span> Cô hướng dẫn chi tiết:</p><p class="font-bold text-lg sm:text-xl leading-loose text-gray-800 bg-white p-5 rounded-2xl border-2 border-indigo-100 shadow-sm">${cleanExpl}</p></div>`;
+                }
+                
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 sm:p-8 border-4 border-indigo-300 bg-indigo-50 rounded-3xl shadow-md mb-8">`;
+                html += `<div class="font-bold text-xl sm:text-2xl text-gray-800 mb-6 text-justify leading-relaxed">${q.context}</div>`;
+                html += `<div class="space-y-6">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isCorrect = uAns === item.correct;
+                    let isUnanswered = (uAns === undefined);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'TRUE' : 'FALSE';
+                    
+                    let feedbackText = isUnanswered ? '⚠️ CÁC EM CHƯA LÀM Ý NÀY!' : (isCorrect ? '🎉 XUẤT SẮC!' : '😢 CHƯA ĐÚNG RỒI!');
+                    let feedbackColor = isUnanswered ? 'text-orange-600' : (isCorrect ? 'text-emerald-600' : 'text-red-600');
+
+                    html += `<div class="p-5 bg-white border-2 border-indigo-200 rounded-2xl shadow-sm flex flex-col">
+                        <div class="font-black text-red-600 text-xl mb-4">${item.text}</div>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-gray-100 pb-4 gap-3">
+                            <span class="text-lg font-bold text-gray-500">Các em chọn: <span class="${uAns === undefined ? 'text-gray-400' : 'text-indigo-600'} font-black uppercase">${uAns === undefined ? 'Chưa trả lời' : (uAns?'True':'False')}</span></span>
+                            <span class="font-black text-xl ${isCorrect ? 'text-emerald-600' : 'text-red-600'}">Đáp án chuẩn: ${ansText} ${iconHtml}</span>
+                        </div>
+                        
+                        <div class="mt-4 pb-4 border-b-2 border-dashed border-gray-200 text-center"><span class="text-xl font-black ${feedbackColor}">${feedbackText}</span></div>
+                        
+                        <div class="review-explanation mt-4 pt-2 text-lg font-medium leading-relaxed">
+                            <span class="text-indigo-600 font-black uppercase mb-2 block">💡 Giải thích:</span>
+                            <div class="font-bold text-gray-800 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">${item.expl.replace(/\]+\]/g, '').trim()}</div>
+                        </div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+            else if (q.type === 'short_answer') {
+                let uValRaw = userAnswers[q.id] || "";
+                let uVal = uValRaw.toString().trim().toLowerCase().replace(/[.,?]/g, '').replace(/\s+/g, ' ');
+                let cVal = q.correct.toString().trim().toLowerCase().replace(/[.,?]/g, '').replace(/\s+/g, ' ');
+                let isCorrect = (uVal === cVal);
+                let isUnanswered = (uValRaw.toString().trim() === "");
+                let borderColor = isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-red-400 bg-red-50';
+                
+                let feedbackText = isUnanswered ? '⚠️ CÁC EM CHƯA LÀM CÂU NÀY!' : (isCorrect ? '🎉 XUẤT SẮC! CÁC EM LÀM ĐÚNG RỒI!' : '😢 TIẾC QUÁ, CÁC EM LÀM SAI RỒI!');
+                let feedbackColor = isUnanswered ? 'text-orange-600' : (isCorrect ? 'text-emerald-600' : 'text-red-600');
+                
+                html += `<div class="p-6 sm:p-8 border-4 rounded-3xl shadow-md mb-8 flex flex-col ${borderColor}">`;
+                html += `<div class="font-black text-xl sm:text-2xl text-red-600 mb-6 leading-relaxed">${q.question}</div>`;
+                
+                html += `<div class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div class="flex-1 p-5 bg-white border-2 border-gray-200 rounded-2xl min-w-0 shadow-sm"><span class="block text-sm font-black text-gray-500 uppercase mb-2">Học sinh nhập:</span><span class="text-2xl font-black ${isCorrect ? 'text-emerald-600' : 'text-red-600'} block break-words">${uValRaw || '(Trống)'}</span></div>
+                    <div class="flex-1 p-5 bg-emerald-100 border-2 border-emerald-400 rounded-2xl min-w-0 shadow-sm"><span class="block text-sm font-black text-emerald-800 uppercase mb-2">ĐÁP ÁN CHUẨN LÀ:</span><span class="text-2xl font-black text-emerald-700 block break-words">${q.correct}</span></div>
+                </div>`;
+                
+                html += `<div class="mt-4 pb-6 border-b-2 border-dashed border-gray-300 text-center"><span class="text-xl sm:text-2xl font-black ${feedbackColor}">${feedbackText}</span></div>`;
+                
+                // Lọc bỏ cụm khi hiển thị để không làm rối mắt học sinh
+                if (q.explanation) {
+                    let cleanExpl = q.explanation.replace(/\]+\]/g, '').trim();
+                    html += `<div class="review-explanation pt-4 border-t-2 border-gray-200"><p class="text-sm font-black uppercase tracking-widest text-indigo-600 mb-2">💡 Hướng dẫn:</p><p class="font-medium text-base leading-loose">${cleanExpl}</p></div>`;
+                }
+                
+                html += `</div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { 
+        if(window.reviewSource === 'scores') {
+            showSection('scores');
+        } else {
+            showSection('result'); 
+        }
+    };
+
+    window.viewStudentDetail = function(idx) {
+        const s = allScores[idx];
+        currentStudent = { hoTen: s.hoTen, lop: s.lop, maDe: s.maDe, tenDe: s.tenDe };
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[s.maDe] || testBanks['de1']));
+        userAnswers = s.answers || {};
+        window.reviewSource = 'scores';
+        window.reviewQuiz();
+        showSection('review');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td>
+            <td class="px-4 py-4 font-black text-indigo-600 text-sm">${s.lop}</td>
+            <td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-4 text-xs font-bold text-indigo-500"><span class="bg-indigo-50 border border-indigo-100 px-2 py-1 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td>
+            <td class="px-4 py-4 text-center text-slate-500 text-xs">${s.endTime}</td>
+            <td class="px-4 py-4 text-center"><button onclick="window.viewStudentDetail(${idx})" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-1 rounded-md text-xs font-bold transition">Xem bài</button></td>
+            </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.executeSubmit();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
