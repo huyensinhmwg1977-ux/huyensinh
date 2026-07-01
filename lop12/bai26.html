@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1">BÀI 26. LIÊN KẾT VÀ THANH ĐIỀU HƯỚNG </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_26');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI ĐƯỢC CẬP NHẬT TỪ BÀI 26
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Trong thiết kế web, cụm từ mang thao tác nháy chuột để chuyển trang gọi là gì?", options: ["Cụm từ mang liên kết (link).", "Cụm từ mang định dạng (format).", "Cụm từ mang biểu tượng (icon).", "Cụm từ mang hình ảnh (image)."], correct: 0, explanation: "Trong thiết kế web, cụm từ chứa địa chỉ dùng để khi người dùng nhấp chuột vào sẽ được điều hướng ngay lập tức đến một trang khác được gọi là cụm từ mang liên kết (Hyperlink)." },
+        { id: "d1_2", type: "single", question: "Câu 2: Trang web đầu tiên chứa các khối văn bản giới thiệu được gọi là gì?", options: ["Trang chủ của toàn trang web.", "Trang con của toàn trang web.", "Trang phụ của toàn trang web.", "Trang ẩn của toàn trang web."], correct: 0, explanation: "Trang web đầu tiên (trang gốc) chứa các thông tin giới thiệu khái quát nhất để người đọc nắm bắt được toàn bộ tinh thần của website được định nghĩa là Trang chủ (Home page)." },
+        { id: "d1_3", type: "single", question: "Câu 3: Các trang web được mở ra từ bảng chọn của trang chủ có tên gọi là gì?", options: ["Gọi là các trang con của trang chủ.", "Gọi là các trang gốc của trang chủ.", "Gọi là các trang chủ của trang con.", "Gọi là các trang web độc lập nhau."], correct: 0, explanation: "Từ Trang chủ, để trình bày chi tiết từng phần nội dung, người ta tạo ra các trang nhánh nằm bên dưới, chúng được gọi chung là các trang con (Subpage)." },
+        { id: "d1_4", type: "single", question: "Câu 4: Để tiến hành tạo một trang con mới, em cần mở bảng chọn lệnh nào?", options: ["Mở bảng chọn lệnh Trang.", "Mở bảng chọn lệnh Chèn.", "Mở bảng chọn Giao diện.", "Mở bảng chọn Hình ảnh."], correct: 0, explanation: "Để quản lí cấu trúc (thêm, sửa, xoá trang con), người thiết kế luôn phải truy cập vào thẻ Trang (Pages) nằm ở cột menu bên phải giao diện Google Sites." },
+        { id: "d1_5", type: "single", question: "Câu 5: Sau khi tạo trang, biểu tượng nào dùng để xem trước kết quả hiển thị?", options: ["Biểu tượng hình chiếc máy tính/điện thoại.", "Biểu tượng hình chiếc đĩa mềm lưu trữ.", "Biểu tượng hình thùng rác để xoá bỏ.", "Biểu tượng hình bánh răng cưa cài đặt."], correct: 0, explanation: "Công cụ 'Xem trước' (Preview) trên thanh công cụ của Google Sites được thể hiện bằng biểu tượng kết hợp hình chiếc máy tính và điện thoại, cho phép giả lập hiển thị thực tế." },
+        { id: "d1_6", type: "single", question: "Câu 6: Để thiết lập vị trí cho thanh điều hướng, em vào bảng chọn nào đầu tiên?", options: ["Vào bảng chọn lệnh Cài đặt.", "Vào bảng chọn lệnh Chia sẻ.", "Vào bảng chọn Định dạng.", "Vào bảng chọn lệnh Công bố."], correct: 0, explanation: "Thanh điều hướng là một phần của hệ thống trang, để thay đổi thuộc tính của nó, ta phải truy cập vào phần Cài đặt (biểu tượng bánh răng) trên góc phải màn hình." },
+        { id: "d1_7", type: "single", question: "Câu 7: Thanh điều hướng của trang web có thể được thiết lập xuất hiện ở đâu?", options: ["Nằm ở trên cùng hoặc nằm bên cạnh.", "Nằm ở dưới cùng hoặc nằm giữa trang.", "Nằm lơ lửng tại vị trí tâm của màn hình.", "Nằm ẩn khuất hoàn toàn dưới hình nền."], correct: 0, explanation: "Trong cài đặt Điều hướng, Google Sites cung cấp hai tuỳ chọn hiển thị mặc định: Trên cùng (Top) hoặc Bên (Side - nằm mép bên trái màn hình)." },
+        { id: "d1_8", type: "single", question: "Câu 8: Để tạo trang con, em nháy chuột vào biểu tượng nào cạnh tên trang gốc?", options: ["Biểu tượng dấu ba chấm thẳng đứng.", "Biểu tượng mũi tên quay ngược chiều.", "Biểu tượng hình ngôi sao năm cánh.", "Biểu tượng hình chiếc bút chì nhỏ."], correct: 0, explanation: "Trong thẻ Trang, để xổ ra menu tuỳ chọn lệnh 'Thêm trang con' (Add subpage) cho một trang cụ thể, ta cần nháy chuột vào biểu tượng ba dấu chấm thẳng đứng ở góc phải tên trang đó." },
+        { id: "d1_9", type: "single", question: "Câu 9: Để chèn liên kết vào một đoạn văn bản, em chọn biểu tượng có hình gì?", options: ["Biểu tượng chiếc ghim kẹp giấy.", "Biểu tượng chữ T in hoa lớn.", "Biểu tượng một khay đổ màu.", "Biểu tượng máy ảnh thu nhỏ."], correct: 0, explanation: "Công cụ chèn liên kết (Insert link) trong thanh công cụ soạn thảo thường được biểu diễn bằng hình ảnh chiếc ghim kẹp giấy hoặc mắt xích." },
+        { id: "d1_10", type: "single", question: "Câu 10: Mô hình các trang web liên kết với nhau trong bài được mô tả theo dạng gì?", options: ["Mô hình liên kết theo cấu trúc hình cây.", "Mô hình liên kết theo cấu trúc vòng tròn.", "Mô hình liên kết theo cấu trúc đường thẳng.", "Mô hình liên kết theo cấu trúc hình nón."], correct: 0, explanation: "Việc phân cấp từ một Trang chủ rẽ nhánh ra nhiều trang con, và các trang con lại rẽ nhánh tiếp tạo nên một mô hình phân cấp dạng hình cây (Tree structure) rất trực quan." },
+        { id: "d1_11", type: "single", question: "Câu 11: Mối quan hệ giữa \"Trang chủ\" và \"Trang con\" thể hiện đặc điểm gì của website?", options: ["Sự phân cấp nội dung từ tổng quan đến chi tiết.", "Sự ngang hàng về mặt nội dung của các trang.", "Sự lộn xộn trong việc sắp xếp các thông tin.", "Sự độc lập hoàn toàn không liên quan đến nhau."], correct: 0, explanation: "Trang chủ đóng vai trò là phần tổng quan, tóm tắt. Các trang con sẽ đi sâu vào từng chủ đề cụ thể. Điều này thể hiện sự phân cấp cấu trúc thông tin từ tổng quan đến chi tiết." },
+        { id: "d1_12", type: "single", question: "Câu 12: Việc tạo trang \"Mù Cang Chải\" nằm trong trang \"Tây Bắc – Đông Bắc\" chứng tỏ điều gì?", options: ["Trang con có thể chứa các trang con khác nữa.", "Trang chủ chỉ được phép tạo một trang con.", "Trang con không bao giờ chứa được trang nào.", "Trang chủ bắt buộc phải nằm trong trang con."], correct: 0, explanation: "Vì Tây Bắc - Đông Bắc bản thân nó đã là một trang con của Trang chủ, nên việc nó có thể chứa thêm Mù Cang Chải chứng tỏ tính chất rẽ nhánh nhiều tầng (trang con chứa trang con)." },
+        { id: "d1_13", type: "single", question: "Câu 13: Chức năng \"Xem trước\" trên thanh công cụ mang lại lợi ích gì cho người thiết kế?", options: ["Kiểm tra xem trang web hiển thị có đúng không.", "Tự động sửa mọi lỗi chính tả của đoạn văn bản.", "Xuất bản trang web lên mạng lưới internet ngay.", "Nén dung lượng của trang web cho nhỏ gọn lại."], correct: 0, explanation: "Công cụ Xem trước (Preview) giúp người thiết kế nhìn thấy giao diện thực tế sẽ xuất hiện trên màn hình máy tính và điện thoại trước khi bấm nút phát hành chính thức." },
+        { id: "d1_14", type: "single", question: "Câu 14: Trong phần cài đặt thanh điều hướng, tuỳ chọn \"Phần tử xuất hiện nhiều nhất\" dùng để làm gì?", options: ["Thiết lập cấu trúc hiển thị của bảng chọn menu.", "Tính toán số lượt người dùng truy cập vào web.", "Tăng kích thước của tất cả các hình ảnh có sẵn.", "Xoá bỏ các trang web bị trùng lặp nội dung."], correct: 0, explanation: "Trong giao diện tiếng Việt, mục 'Phần tử xuất hiện nhiều nhất' (Mode) ở thẻ Cài đặt Điều hướng chính là nơi để lựa chọn cấu trúc hiển thị của menu (Trên cùng hoặc Bên)." },
+        { id: "d1_15", type: "single", question: "Câu 15: Vì sao cần tạo các liên kết (link) từ trang chủ đến các trang con?", options: ["Để người dùng dễ dàng chuyển hướng và truy cập.", "Để làm cho trang web có thêm nhiều màu sắc hơn.", "Để khoá không cho người lạ truy cập vào trang con.", "Để hệ thống tự động tải các hình ảnh về máy tính."], correct: 0, explanation: "Chức năng cốt lõi của siêu liên kết (hyperlink) là kết nối các trang web lại với nhau, tạo ra các 'nút bấm' để người dùng nháy chuột chuyển hướng tức thời mà không cần gõ địa chỉ." },
+        { id: "d1_16", type: "single", question: "Câu 16: Khi chèn liên kết, ô nhập văn bản (ví dụ \"Đọc tiếp\") có vai trò như thế nào?", options: ["Hiện chữ đó thay vì hiện đường dẫn link dài dòng.", "Báo lỗi nếu người dùng không bấm vào đường link.", "Tự động sao chép nội dung của trang web được chọn.", "Mở ra một hộp thoại yêu cầu nhập mật khẩu bảo vệ."], correct: 0, explanation: "Thay vì hiển thị một đường link URL gốc rất dài và khó nhìn (như https://...), ô nhập văn bản sẽ thay thế nó bằng một đoạn Text ngắn gọn (ví dụ: 'Nhấn vào đây', 'Đọc tiếp') để tăng tính thẩm mĩ." },
+        { id: "d1_17", type: "single", question: "Câu 17: Nút lệnh \"Thêm trang con\" trong Google Sites đảm nhiệm chức năng tạo ra cái gì?", options: ["Một trang web mới phụ thuộc vào trang hiện tại.", "Một bảng tính mới hoàn toàn nằm độc lập.", "Một trang văn bản mới nằm trên Google Docs.", "Một hình ảnh mới có kích thước vô cùng lớn."], correct: 0, explanation: "Thao tác 'Thêm trang con' (Add subpage) sẽ khởi tạo một cấu trúc trang web trống hoàn toàn mới và gán nó làm phần tử con phụ thuộc vào trang mà bạn vừa nháy dấu 3 chấm." },
+        { id: "d1_18", type: "single", question: "Câu 18: Khi hoàn thành việc chọn liên kết tới trang cần thiết, nút \"Áp dụng\" có tác dụng gì?", options: ["Xác nhận và lưu lại thiết lập liên kết vừa tạo.", "Huỷ bỏ toàn bộ các thay đổi vừa mới làm xong.", "Xoá trang web đang được chọn làm liên kết đi.", "Quay trở về màn hình giao diện của trang chủ."], correct: 0, explanation: "Trong các hộp thoại chức năng của Google Sites, nút 'Áp dụng' (Apply) có tác dụng như phím Enter hoặc nút Save, giúp hệ thống xác nhận cài đặt và thực thi thay đổi đó lên bản nháp." },
+        { id: "d1_19", type: "single", question: "Câu 19: Để trang \"Hành Trình Số\" có thư mục \"Lớp 12\", em sẽ thao tác lệnh gì tại Trang chủ?", options: ["Mở bảng chọn Trang, nháy dấu 3 chấm, Thêm trang con.", "Mở bảng chọn Chèn, chọn hộp văn bản và đánh chữ.", "Mở bảng chọn Giao diện, đổi màu nền cho trang web.", "Mở bảng chọn Cài đặt, chọn thiết lập thanh điều hướng."], correct: 0, explanation: "Muốn 'Lớp 12' nằm trong trang chủ, ta phải vào thẻ Trang, bấm dấu 3 chấm cạnh chữ 'Trang chủ' rồi chọn lệnh 'Thêm trang con' và điền tên là 'Lớp 12'." },
+        { id: "d1_20", type: "single", question: "Câu 20: Nếu thanh điều hướng đang nằm ở trên cùng làm che mất logo, em cài đặt lại ở đâu?", options: ["Vào Cài đặt -> Điều hướng -> Chọn Bên (sang trái).", "Vào lệnh Chèn -> Chọn hình ảnh -> Kéo nhỏ logo.", "Vào bảng chọn Trang -> Xoá bỏ tất cả các trang con.", "Nháy đúp chuột vào thanh điều hướng để ấn xoá đi."], correct: 0, explanation: "Khi thanh điều hướng (Menu) ở vị trí 'Trên cùng' gây vướng víu, ta có thể đổi hướng bằng cách vào biểu tượng răng cưa (Cài đặt) > Điều hướng > Chọn chuyển sang 'Bên'." },
+        { id: "d1_21", type: "single", question: "Câu 21: Em đang viết đoạn giới thiệu Bài 26 và muốn bấm chữ \"Xem bài\" để mở nội dung, em làm gì?", options: ["Bôi đen chữ Xem bài, nháy chuột phải, chọn chèn liên kết.", "Chọn chữ Xem bài, thay đổi phông chữ thành in đậm.", "Bấm vào nút Công bố để hệ thống tự động làm liên kết.", "Nhấn phím Enter nhiều lần để tách chữ Xem bài xuống."], correct: 0, explanation: "Để biến chữ thành nút bấm, ta phải bôi đen văn bản cần tạo (Xem bài), sau đó gọi lệnh chèn liên kết (bằng biểu tượng mắt xích hoặc nháy chuột phải) rồi trỏ tới trang Bài 26." },
+        { id: "d1_22", type: "single", question: "Câu 22: Để kiểm tra xem cấu trúc hình cây của web có hiện đúng trên điện thoại không, em bấm nút nào?", options: ["Bấm biểu tượng Xem trước -> chọn hình điện thoại.", "Bấm biểu tượng Cài đặt -> chọn chế độ bảo mật cao.", "Lấy điện thoại thật để quét mã vạch của trang web.", "Bấm nút Chia sẻ và gửi link sang cho điện thoại."], correct: 0, explanation: "Thanh công cụ ở trên cùng hỗ trợ tính năng giả lập (Xem trước). Bấm vào icon Xem trước, sau đó chọn icon chiếc Điện thoại ở góc dưới bên phải để kiểm tra giao diện di động." },
+        { id: "d1_23", type: "single", question: "Câu 23: Cô giáo yêu cầu đưa trang \"Bài tập trắc nghiệm\" vào trong trang \"Lớp 12\", em làm gì?", options: ["Bấm dấu 3 chấm cạnh Lớp 12 -> Thêm trang con.", "Bấm dấu 3 chấm cạnh Trang chủ -> Thêm trang con.", "Đổi tên trang Lớp 12 thành Bài tập trắc nghiệm.", "Xoá trang Lớp 12 và lập một trang web mới hoàn toàn."], correct: 0, explanation: "Theo yêu cầu phân cấp, 'Bài tập trắc nghiệm' phải nằm trong thư mục 'Lớp 12'. Do đó, ta phải tìm đúng chữ 'Lớp 12' ở thẻ Trang, bấm dấu 3 chấm cạnh nó rồi mới thêm trang con." },
+        { id: "d1_24", type: "single", question: "Câu 24: Nếu gõ chữ \"Bấm vào đây\" vào ô văn bản lúc chèn liên kết, người dùng sẽ thấy gì trên web?", options: ["Sẽ thấy dòng chữ Bấm vào đây có gạch chân.", "Sẽ thấy một hình ảnh mũi tên chỉ vào đường link.", "Sẽ thấy một hộp thoại yêu cầu tải tệp tin đó về.", "Sẽ thấy nguyên một đường link rất dài và xấu."], correct: 0, explanation: "Nội dung gõ vào ô 'Văn bản' sẽ là cụm từ hiển thị trực quan ra ngoài trang web. Dòng chữ này sẽ được Google Sites tự động gạch chân và đổi màu để báo hiệu đó là một liên kết." },
+        { id: "d1_25", type: "single", question: "Câu 25: Nhóm em muốn xây dựng web có các vùng miền, cấu trúc nào sau đây là hợp lí nhất?", options: ["Trang chủ chứa trang Tây Bắc, Tây Bắc chứa trang Mù Cang Chải.", "Trang Mù Cang Chải chứa trang Tây Bắc, Tây Bắc chứa Trang chủ.", "Tất cả các trang đều nằm độc lập và không liên kết với nhau.", "Trang chủ chỉ chứa duy nhất một hình ảnh về Mù Cang Chải."], correct: 0, explanation: "Cấu trúc hợp lí phải đi từ lớn đến nhỏ. Trang chủ (tổng quan) -> Tây Bắc (Vùng miền) -> Mù Cang Chải (Địa danh chi tiết). Đây là cấu trúc hình cây tiêu chuẩn." },
+        { id: "d1_26", type: "single", question: "Câu 26: Khi một đoạn văn bản được thiết lập liên kết thành công, nó thường có dấu hiệu gì khi xem?", options: ["Chữ đổi màu và con trỏ chuột biến thành hình bàn tay.", "Chữ tự động phóng to gấp đôi so với các chữ khác.", "Chữ nhấp nháy liên tục không ngừng để thu hút mắt.", "Đoạn văn bản đó sẽ tự động biến mất khỏi màn hình."], correct: 0, explanation: "Theo thiết kế UI/UX cơ bản của website, các văn bản gắn Hyperlink sẽ đổi màu (thường là màu xanh lam), có gạch chân, và khi di chuột vào con trỏ sẽ biến thành hình bàn tay chỉ trỏ." },
+        { id: "d1_27", type: "single", question: "Câu 27: Để bổ sung hình ảnh cho trang con \"Mù Cang Chải\" vừa tạo, thao tác tiếp theo là gì?", options: ["Mở trang con đó ra và dùng bảng chọn Chèn để thêm.", "Nháy chuột phải vào tên trang và chọn biểu tượng ảnh.", "Thay đổi hình nền của trang chủ bằng cảnh ruộng bậc thang.", "Bấm nút Công bố để hệ thống tự chèn ảnh phong cảnh."], correct: 0, explanation: "Sau khi tạo trang con xong ở thẻ Trang, ta phải nháy chọn vào tên trang đó để hệ thống mở khung soạn thảo, sau đó chuyển sang thẻ Chèn (Insert) để đẩy hình ảnh hoặc text vào." },
+        { id: "d1_28", type: "single", question: "Câu 28: Trong cửa sổ chèn liên kết, nếu em chọn một trang không có trong danh sách, lỗi do đâu?", options: ["Do em chưa tạo trang con đó trong bảng chọn Trang.", "Do máy tính của em đã bị rớt kết nối mạng internet.", "Do trình duyệt web không hỗ trợ tính năng liên kết.", "Do em chưa bấm nút Xem trước để lưu dữ liệu lại."], correct: 0, explanation: "Tính năng chèn liên kết nội bộ chỉ hiển thị các trang đích (để trỏ tới) nếu trang đó đã được tạo sẵn trong cấu trúc web. Nếu chưa tạo ở thẻ Trang thì danh sách sẽ không hiển thị." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1. Cô Lê Huyền Sinh đang thiết kế chuyên mục \"Kiểm tra 15 phút\" cho các em học sinh trên trang web Hành Trình Số. Cô muốn tạo các bài kiểm tra được sắp xếp gọn gàng theo từng khối lớp.", items: [
+            { id: "a", text: "a. Cô Sinh cần mở bảng chọn Trang để tiến hành thao tác Thêm trang con.", correct: true, expl: "Bảng chọn Trang (Pages) trên menu phía bên phải là khu vực duy nhất cung cấp các công cụ quản lí cấu trúc, thêm, xoá trang." },
+            { id: "b", text: "b. \"Kiểm tra 15 phút\" sẽ là trang chủ, còn \"Khối 10\", \"Khối 11\", \"Khối 12\" sẽ là các trang con của trang đó.", correct: true, expl: "Theo cấu trúc phân cấp hình cây, 'Kiểm tra 15 phút' là chủ đề lớn đóng vai trò thư mục gốc, các khối lớp cụ thể sẽ là các nhánh con bên dưới." },
+            { id: "c", text: "c. Để tạo trang \"Khối 12\", cô nháy chuột vào biểu tượng Cài đặt trên thanh công cụ và gõ chữ \"Khối 12\".", correct: false, expl: "Biểu tượng Cài đặt (răng cưa) chỉ dùng để cấu hình hệ thống (như Điều hướng, Hình ảnh thương hiệu). Việc tạo trang phải thực hiện ở bảng chọn Trang bằng dấu 3 chấm." },
+            { id: "d", text: "d. Cô Sinh hoàn toàn không thể tạo thêm trang \"Môn Tin học\" nằm bên trong trang con \"Khối 12\".", correct: false, expl: "Google Sites cho phép cấu trúc rẽ nhánh nhiều tầng. Bạn hoàn toàn có thể tiếp tục tạo các trang con mới nằm bên trong bất kì một trang con nào khác." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2. Ban cán sự lớp 12A1 đang được giao nhiệm vụ tạo một trang web kỉ yếu của lớp. Do danh sách các thành viên quá dài, lớp trưởng muốn làm một thanh điều hướng gọn gàng.", items: [
+            { id: "a", text: "a. Để tuỳ chỉnh thanh điều hướng, lớp trưởng nháy chuột vào mục Cài đặt, chọn phần Điều hướng.", correct: true, expl: "Thao tác truy cập biểu tượng răng cưa (Cài đặt) và chọn tab 'Điều hướng' là quy trình chuẩn để thay đổi vị trí của bảng chọn menu." },
+            { id: "b", text: "b. Chức năng \"Phân tử xuất hiện nhiều nhất\" cho phép thiết lập thanh điều hướng nằm ở Trên cùng hoặc Bên trái.", correct: true, expl: "Trong giao diện tiếng Việt của Google, mục Mode được dịch là 'Phần tử xuất hiện nhiều nhất', nó cung cấp hai tuỳ chọn là: Trên cùng và Bên." },
+            { id: "c", text: "c. Để thanh menu hiển thị ở cạnh trái của màn hình điện thoại, lớp trưởng sẽ chọn thuộc tính \"Trên cùng\" trong bảng cài đặt.", correct: false, expl: "Để thanh menu hiển thị ở cạnh trái màn hình, lớp trưởng phải chọn thuộc tính 'Bên' (Side). Thuộc tính 'Trên cùng' sẽ đặt menu nằm ngang trên đỉnh màn hình." },
+            { id: "d", text: "d. Việc đặt thanh điều hướng ở bên trái sẽ giúp người xem dễ dàng thấy các trang con khi truy cập bằng thiết bị di động.", correct: true, expl: "Khi truy cập bằng di động (màn hình dọc nhỏ hẹp), thanh điều hướng 'Bên' sẽ tự thu gọn thành nút menu hamburger, rất gọn gàng và dễ thao tác." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3. Bạn Hải đang làm một bài giới thiệu về du lịch Tây Bắc. Hải muốn khi người dùng đọc đến cuối bài ở Trang chủ, có thể bấm vào dòng chữ \"Khám phá Mù Cang Chải\" để chuyển sang đọc chi tiết.", items: [
+            { id: "a", text: "a. Thao tác này gọi là tạo liên kết từ Trang chủ đến trang con.", correct: true, expl: "Việc chèn một đường dẫn vào văn bản tại Trang chủ để khi nháy chuột sẽ nhảy đến một trang bài viết bên dưới được gọi là thao tác tạo liên kết nội bộ." },
+            { id: "b", text: "b. Chỉ cần bôi đen văn bản và chọn chữ in đậm, hệ thống sẽ tự động biến đoạn văn bản đó thành một đường liên kết.", correct: false, expl: "Chữ in đậm (Bold) chỉ là thao tác thay đổi định dạng hiển thị của phông chữ. Để tạo liên kết, bắt buộc phải dùng lệnh 'Chèn liên kết' (hình mắt xích)." },
+            { id: "c", text: "c. Hải bôi đen chữ \"Khám phá Mù Cang Chải\", nháy chuột phải, chọn biểu tượng chèn liên kết và trỏ tới trang Mù Cang Chải.", correct: true, expl: "Đây là quy trình thao tác chính xác từng bước: Bôi đen chữ -> gọi công cụ chèn liên kết -> chọn trang đích để hệ thống gắn link." },
+            { id: "d", text: "d. Nút \"Áp dụng\" trong hộp thoại liên kết dùng để xoá bỏ định dạng của đoạn văn bản vừa tạo.", correct: false, expl: "Nút 'Áp dụng' (Apply) trong hộp thoại có chức năng lưu lại và thực thi lệnh gán liên kết, không phải dùng để xoá hay huỷ bỏ." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Một đoạn văn bản khi nháy chuột vào sẽ chuyển đến trang khác được gọi là:", options: ["Văn bản chứa liên kết dẫn (link).", "Văn bản có định dạng in đậm.", "Văn bản chứa các hình ảnh tĩnh.", "Văn bản có chứa bảng tính Excel."], correct: 0, explanation: "Một đoạn văn bản (Text) được tích hợp URL ẩn bên dưới để có khả năng điều hướng người dùng khi click chuột được gọi là văn bản có chứa liên kết." },
+        { id: "d2_2", type: "single", question: "Câu 2: Trang web đầu tiên chứa thông tin giới thiệu chung của website gọi là gì?", options: ["Được định nghĩa là Trang chủ.", "Được định nghĩa là Trang con.", "Được định nghĩa là Trang cuối.", "Được định nghĩa là Trang ẩn."], correct: 0, explanation: "Trang chủ (Homepage) luôn là trang đầu tiên được tải khi người dùng nhập địa chỉ tên miền, nó đóng vai trò giới thiệu tổng quan toàn bộ nội dung của website đó." },
+        { id: "d2_3", type: "single", question: "Câu 3: Theo cấu trúc cây, các trang web mở ra từ trang chủ được gọi chung là gì?", options: ["Các trang con của trang chủ.", "Các trang chủ của thư mục.", "Các tập tin dữ liệu đính kèm.", "Các trang web ngoại tuyến."], correct: 0, explanation: "Trong sơ đồ phân cấp dạng hình cây, các nhánh rẻ ra bên dưới (nằm trong thư mục gốc) được gọi là các Trang con (Subpage)." },
+        { id: "d2_4", type: "single", question: "Câu 4: Tính năng \"Thêm trang con\" nằm ở cửa sổ bảng chọn nào trên giao diện?", options: ["Nằm tại khu vực bảng chọn Trang.", "Nằm tại khu vực bảng chọn Chèn.", "Nằm tại khu vực Đổi Giao diện.", "Nằm tại khu vực mục Cài đặt."], correct: 0, explanation: "Tính năng thêm, sửa, hay xoá một trang web bất kì luôn được đặt ở khu vực quản lí cấu trúc, chính là bảng chọn thẻ Trang (Pages)." },
+        { id: "d2_5", type: "single", question: "Câu 5: Nút lệnh hình con mắt cạnh nút mũi tên hoàn tác dùng để làm công việc gì?", options: ["Kích hoạt chế độ Xem trước.", "Chia sẻ trang web cho bạn bè.", "Thay đổi mật khẩu trang web.", "Xoá mọi hình ảnh trên trang."], correct: 0, explanation: "Nút lệnh mang biểu tượng kết hợp giữa hình máy tính/điện thoại (hoặc hình con mắt) nằm trên thanh công cụ dùng để Xem trước giao diện của web trên các thiết bị." },
+        { id: "d2_6", type: "single", question: "Câu 6: Khi vào mục Cài đặt -> Điều hướng, em đang thực hiện thay đổi thuộc tính gì?", options: ["Vị trí hiển thị của bảng chọn menu.", "Kích thước phông chữ của bài viết.", "Màu sắc mặc định của toàn trang.", "Thay đổi tên hiển thị của trang web."], correct: 0, explanation: "Thẻ Điều hướng (Navigation) nằm trong bảng Cài đặt được sinh ra với mục đích cấu hình cách hiển thị của Menu trang web (nằm trên cùng hay nằm bên trái)." },
+        { id: "d2_7", type: "single", question: "Câu 7: Có bao nhiêu vị trí phổ biến để đặt thanh điều hướng trên nền tảng Google Sites?", options: ["Có hai vị trí (Trên cùng hoặc Bên).", "Có một vị trí duy nhất ở chính giữa.", "Có ba vị trí (Trên, Dưới, Tâm hình).", "Có bốn vị trí ở bốn góc của màn hình."], correct: 0, explanation: "Trên nền tảng kéo thả trực quan Google Sites, thanh Menu điều hướng hiện chỉ hỗ trợ cố định ở 2 vị trí: Nằm ngang 'Trên cùng' (Top) hoặc nằm dọc ở 'Bên' (Side)." },
+        { id: "d2_8", type: "single", question: "Câu 8: Để tạo một trang con, em cần nháy chuột vào biểu tượng nào cạnh tên trang?", options: ["Biểu tượng ba dấu chấm thẳng hàng.", "Biểu tượng mũi tên hướng lên trên.", "Biểu tượng dấu cộng hình chữ thập.", "Biểu tượng chiếc ghim kẹp tài liệu."], correct: 0, explanation: "Trong thẻ Trang, danh sách các tuỳ chọn mở rộng (như Thêm trang con, Nhân bản, Xoá) được ẩn dưới biểu tượng ba dấu chấm thẳng đứng ở cạnh tên của mỗi trang." },
+        { id: "d2_9", type: "single", question: "Câu 9: Để biến dòng chữ thành liên kết (link), em nháy chuột phải và chọn hình gì?", options: ["Chọn hình mắt xích chèn liên kết.", "Chọn hình cái loa chèn âm thanh.", "Chọn hình cục tẩy để xoá định dạng.", "Chọn hình chiếc đĩa để lưu file lại."], correct: 0, explanation: "Biểu tượng chèn liên kết (Insert link) được thiết kế theo hình ảnh của một đoạn dây xích (mắt xích) để biểu thị sự kết nối giữa các đối tượng." },
+        { id: "d2_10", type: "single", question: "Câu 10: Việc phân chia Trang chủ và các Trang con tạo ra một cấu trúc có hình dáng gì?", options: ["Cấu trúc liên kết có dạng hình cây.", "Cấu trúc liên kết dạng lưới đan chéo.", "Cấu trúc liên kết kiểu đường thẳng.", "Cấu trúc liên kết xoắn ốc phức tạp."], correct: 0, explanation: "Với sơ đồ một thư mục gốc sinh ra các nhánh nhỏ, và nhánh nhỏ lại sinh ra nhiều nhánh nhỏ hơn, tổng thể trang web được tạo thành một cấu trúc liên kết dạng hình cây." },
+        { id: "d2_11", type: "single", question: "Câu 11: Trong mô hình liên kết hình cây, đặc điểm cơ bản nhất của Trang chủ là gì?", options: ["Là điểm bắt đầu điều hướng đến trang con.", "Là trang duy nhất không chứa văn bản nào.", "Là trang web tự động biến mất khi tải xong.", "Là trang dùng để nhập mật khẩu đăng nhập."], correct: 0, explanation: "Là cái rễ chính của mô hình hình cây, Trang chủ cung cấp thông tin tổng quan và là nơi xuất phát để người đọc click vào các menu điều hướng toả đi khắp các trang con." },
+        { id: "d2_12", type: "single", question: "Câu 12: Khi tạo trang \"Mù Cang Chải\" nằm trong trang \"Tây Bắc\", điều này có nghĩa là?", options: ["\"Mù Cang Chải\" là trang con của \"Tây Bắc\".", "\"Tây Bắc\" là trang con của \"Mù Cang Chải\".", "Cả hai trang này hoàn toàn không liên quan.", "Trang \"Tây Bắc\" sẽ bị xoá ngay lập tức."], correct: 0, explanation: "Trang bị chứa sẽ được gọi là trang con của trang chứa nó. Vì Mù Cang Chải nằm trong Tây Bắc, nên cấu trúc được hiểu là: Tây Bắc (trang gốc) -> Mù Cang Chải (trang con)." },
+        { id: "d2_13", type: "single", question: "Câu 13: Mục đích chính của việc sử dụng công cụ \"Xem trước\" trước khi Công bố là gì?", options: ["Kiểm tra lỗi hiển thị trên nhiều màn hình.", "Chỉnh sửa ngay các đoạn văn bản sai lỗi.", "Gửi bản nháp cho cô giáo chấm điểm trước.", "Đặt mật khẩu mã hoá cho cấu trúc trang web."], correct: 0, explanation: "Chức năng Xem trước (Preview) cung cấp các tuỳ chọn màn hình giả lập máy tính, tablet, điện thoại để kĩ thuật viên dò tìm và phát hiện các lỗi vỡ khung, trôi chữ trước khi web chính thức lên mạng." },
+        { id: "d2_14", type: "single", question: "Câu 14: Cài đặt \"Điều hướng -> Bên\" sẽ giúp ích gì khi truy cập web bằng điện thoại?", options: ["Hiển thị menu dưới dạng thanh trượt dọc dễ bấm.", "Biến tất cả chữ thành hình ảnh để dễ nhìn hơn.", "Tắt mọi chức năng cảm ứng để chống bấm nhầm.", "Buộc người dùng phải quay ngang điện thoại ra."], correct: 0, explanation: "Với màn hình điện thoại rất hẹp bề ngang, thanh điều hướng dạng 'Bên' sẽ ẩn gọn sang góc trái thành nút 3 gạch (hamburger button) và xổ xuống thành danh sách dọc khi bấm vào, cực kì tiện lợi." },
+        { id: "d2_15", type: "single", question: "Câu 15: Việc chèn liên kết \"Đọc tiếp\" ở cuối bài tóm tắt nhằm giải quyết vấn đề gì?", options: ["Giúp chuyển hướng người đọc đến bài chi tiết.", "Làm cho đoạn văn tóm tắt trở nên dài hơn.", "Báo hiệu kết thúc hoàn toàn của trang web.", "Giúp chuyển đổi văn bản sang dạng âm thanh."], correct: 0, explanation: "Trên trang chủ diện tích có hạn, ta chỉ đăng đoạn tóm tắt. Chữ 'Đọc tiếp' được gắn siêu liên kết sẽ điều hướng người xem nhảy sang một trang con khác chứa đầy đủ nội dung." },
+        { id: "d2_16", type: "single", question: "Câu 16: Ô nhập văn bản trong hộp thoại liên kết xác định nội dung gì khi hiển thị?", options: ["Xác định cụm từ có chứa đường dẫn liên kết.", "Xác định mật khẩu để mở khoá trang web.", "Xác định thời gian tải xong trang web đó.", "Xác định màu nền của đoạn văn bản đó."], correct: 0, explanation: "Trong hộp chèn liên kết, chuỗi kí tự người dùng nhập vào ô 'Văn bản' (Text) chính là những từ ngữ sẽ xuất hiện trực quan trên giao diện web dùng để giấu đường link ẩn bên dưới nó." },
+        { id: "d2_17", type: "single", question: "Câu 17: Các trang con được sinh ra từ lệnh \"Thêm trang con\" sẽ tự động hiển thị ở đâu?", options: ["Tự động hiển thị trên thanh điều hướng.", "Tự động gửi qua email cho học sinh.", "Ẩn đi và chỉ hiện khi có người tìm kiếm.", "Nằm trong thư mục thùng rác máy tính."], correct: 0, explanation: "Google Sites được lập trình tự động hoá rất cao. Ngay khi bạn tạo thành công một trang con, tên trang đó sẽ ngay lập tức xuất hiện dưới dạng menu thả xuống trên Thanh điều hướng chung." },
+        { id: "d2_18", type: "single", question: "Câu 18: Khi thiết lập liên kết bị sai trang đích, em cần làm thao tác gì để khắc phục?", options: ["Sửa liên kết và chọn lại trang đích chính xác.", "Xoá toàn bộ trang web và làm lại từ đầu.", "Khởi động lại hệ điều hành của máy tính.", "Ngắt mạng internet để ngăn chặn truy cập."], correct: 0, explanation: "Chỉ cần nháy chuột vào đoạn văn bản bị lỗi link, công cụ chỉnh sửa sẽ nổi lên. Bấm vào nút hình cây bút (Edit link) để thay đổi lại đường dẫn tới trang đích chính xác." },
+        { id: "d2_19", type: "single", question: "Câu 19: Để trang \"Hành Trình Số\" hiển thị môn \"Toán học\" bên dưới mục \"Lớp 12\", em làm sao?", options: ["Tại Lớp 12, bấm dấu 3 chấm -> Thêm trang con -> Gõ Toán học.", "Tại Trang chủ, bấm dấu 3 chấm -> Thêm trang con -> Gõ Lớp 12.", "Vào thẻ Chèn, chọn tính năng bản đồ và gắn toạ độ Toán học.", "Mở mục Giao diện, thay đổi màu sắc của phần đầu trang web."], correct: 0, explanation: "Theo yêu cầu sơ đồ cây, 'Toán học' nằm trong 'Lớp 12'. Do đó phải nháy dấu 3 chấm cạnh chữ 'Lớp 12' ở thẻ Trang để khởi tạo thuộc tính trang con phụ thuộc." },
+        { id: "d2_20", type: "single", question: "Câu 20: Logo của em bị thanh menu che lấp, em sẽ chuyển thanh menu sang trái bằng lệnh nào?", options: ["Cài đặt -> Điều hướng -> Chọn thuộc tính Bên.", "Chèn -> Hình ảnh -> Chọn tải một logo mới.", "Trang -> Chọn dấu 3 chấm -> Xoá trang hiện tại.", "Giao diện -> Đổi phông chữ -> Chọn phông nhỏ."], correct: 0, explanation: "Việc thay đổi vị trí toàn cục của Menu phải thao tác ở phần bánh răng Cài đặt -> mục Điều hướng, sau đó thay đổi Mode từ 'Trên cùng' thành 'Bên' (sang trái)." },
+        { id: "d2_21", type: "single", question: "Câu 21: Khi đọc xong bài \"Tây Bắc\", em muốn tạo nút bấm \"Sang Đông Bắc\", em thực hiện:", options: ["Bôi đen Sang Đông Bắc, chọn biểu tượng mắt xích, trỏ tới Đông Bắc.", "Thay đổi định dạng văn bản sang cỡ chữ lớn nhất để gây sự chú ý.", "Bấm nút Công bố để hệ thống tự động sinh ra một đường dẫn link.", "Xoá bài Tây Bắc đi và viết lại một bài mới hoàn toàn về Đông Bắc."], correct: 0, explanation: "Thao tác chuẩn để gán link: Bôi đen chuỗi kí tự làm nút -> Mở công cụ chèn liên kết (icon mắt xích) -> Chọn tên bài viết đích (Đông Bắc) ở danh sách trang xổ xuống." },
+        { id: "d2_22", type: "single", question: "Câu 22: Để đảm bảo các em học sinh xem bằng điện thoại không bị lỗi chữ, em sẽ dùng thao tác nào?", options: ["Dùng chế độ Xem trước và bấm vào biểu tượng hình điện thoại.", "Nhấn phím F5 để tải lại trình duyệt web trên máy tính để bàn.", "Đăng trang web lên mạng xã hội để nhờ mọi người kiểm tra lỗi.", "Lưu trang web thành tệp hình ảnh để học sinh phóng to lên xem."], correct: 0, explanation: "Công cụ Xem trước (Preview) của Google Sites hỗ trợ giải pháp Responsive, cho phép quản trị viên bấm vào icon di động để giả lập xem trang web sẽ hiển thị ra sao trên màn hình hẹp dọc." },
+        { id: "d2_23", type: "single", question: "Câu 23: Cô Lê Huyền Sinh muốn thêm trang \"Giải trí\" ngang hàng với \"Học tập\", cô sẽ nháy dấu 3 chấm ở đâu?", options: ["Nháy vào dấu 3 chấm bên cạnh chữ Trang chủ.", "Nháy vào dấu 3 chấm bên cạnh chữ Học tập.", "Nháy vào biểu tượng răng cưa ở góc màn hình.", "Nháy đúp chuột vào giữa bức ảnh nền phong cảnh."], correct: 0, explanation: "Để 'Giải trí' ngang hàng với 'Học tập' (tức là cả hai đều là con trực tiếp của Trang chủ), cô Sinh bắt buộc phải nháy vào 3 chấm của 'Trang chủ' để thực hiện lệnh thêm trang con." },
+        { id: "d2_24", type: "single", question: "Câu 24: Trong hộp chèn liên kết, nếu ở ô hiển thị em gõ \"Click here\", điều gì sẽ xảy ra?", options: ["Trang web sẽ hiện chữ Click here có chứa đường link ẩn bên dưới.", "Trang web sẽ bị lỗi font và không hiển thị được bất cứ kí tự nào.", "Hệ thống sẽ tự tải về một phần mềm virus gây hại cho máy tính.", "Dòng chữ đó sẽ luôn nhấp nháy và phát ra âm thanh cảnh báo."], correct: 0, explanation: "Ô Text (Văn bản) trong hộp liên kết dùng để hiển thị mặt ngoài của siêu liên kết. Khách truy cập sẽ chỉ thấy dòng chữ 'Click here' (được gạch chân, đổi màu) dùng để nhấn chuột." },
+        { id: "d2_25", type: "single", question: "Câu 25: Mô hình: Trang chủ -> Môn Tin học -> Bài 26. Đây là biểu hiện của cấu trúc gì?", options: ["Cấu trúc liên kết các trang dạng hình cây.", "Cấu trúc liên kết dạng lưới mạng nhện.", "Cấu trúc liên kết các khối bảng tính độc lập.", "Cấu trúc liên kết dạng hình nón tuyến tính."], correct: 0, explanation: "Mô hình đi từ một thư mục mẹ rẽ nhánh xuống thư mục con (Môn Tin học), và từ thư mục con rẽ nhánh tiếp (Bài 26) được gọi là sự phân cấp cấu trúc hình cây." },
+        { id: "d2_26", type: "single", question: "Câu 26: Làm sao để người dùng nhận biết được một dòng chữ là liên kết có thể bấm vào?", options: ["Chữ thường có gạch chân, đổi màu và con trỏ chuột đổi hình.", "Dòng chữ đó sẽ tự động nhảy lung tung trên khắp màn hình.", "Chữ sẽ tự động biến thành một video phát nhạc khi kéo qua.", "Chữ sẽ ẩn đi và chỉ hiện lên khi có người gõ đúng mật khẩu."], correct: 0, explanation: "Trình duyệt web luôn có dấu hiệu nhận biết Hyperlink chuẩn mực: Chữ được gạch chân, mang màu xanh lam, và khi đưa chuột vào biểu tượng mũi tên sẽ biến thành hình bàn tay." },
+        { id: "d2_27", type: "single", question: "Câu 27: Sau khi thiết lập cấu trúc trang con xong, để bắt đầu đưa bài giảng vào trang, em vào đâu?", options: ["Nháy chọn tên trang con đó, rồi mở bảng chọn Chèn nội dung.", "Nháy chuột phải vào Trang chủ để chỉnh sửa các trang con.", "Bấm vào biểu tượng chia sẻ trên góc để đưa bài giảng lên.", "Nhập mã lập trình HTML vào ô tiêu đề để hiển thị bài học."], correct: 0, explanation: "Khi cấu trúc nhánh đã hoàn tất bên thẻ Trang, ta phải nháy đúp vào tên trang cần soạn thảo để hệ thống load màn hình trắng, sau đó sang thẻ Chèn (Insert) để kéo thả nội dung vào." },
+        { id: "d2_28", type: "single", question: "Câu 28: Khi chèn link mà hộp thoại không hiện tên trang \"Bài 27\" dù em đã lên kế hoạch làm nó, lí do là:", options: ["Do em chưa tạo trang con tên Bài 27 trong bảng chọn Trang.", "Do cấu hình điện thoại của em quá yếu không hỗ trợ chức năng.", "Do đường dẫn kết nối mạng của trường đang bị đứt cáp quang.", "Do Google Sites bị giới hạn chỉ cho phép tạo tối đa mười liên kết."], correct: 0, explanation: "Chức năng chèn liên kết tới trang trong cùng website yêu cầu trang đó phải tồn tại sẵn. Nếu chưa vào thẻ Trang tạo trang con có tên 'Bài 27', hệ thống sẽ không có dữ liệu đích để trỏ link." },
+
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1. Trường THPT Lê Lợi đang xây dựng cổng thông tin tuyển sinh. Thầy Minh thiết kế sơ đồ trang web với mục tiêu phụ huynh dễ dàng tìm kiếm thông tin về khối lớp 10.", items: [
+            { id: "a", text: "a. Trang giới thiệu tổng quan của cổng thông tin tuyển sinh được gọi là Trang chủ.", correct: true, expl: "Trang chủ (Homepage) luôn là trang cao nhất, làm nhiệm vụ giới thiệu tổng quan về thông điệp, mục tiêu hoạt động của cổng thông tin website." },
+            { id: "b", text: "b. Các mục như \"Chương trình học\", \"Học phí\", \"Cơ sở vật chất\" sẽ được thiết lập là các trang con của Trang chủ.", correct: true, expl: "Để trình bày rành mạch, các mảng thông tin riêng rẽ này cần được bóc tách và phân cấp xuống thành các nhánh (trang con) nằm bên dưới Trang chủ." },
+            { id: "c", text: "c. Để tạo trang \"Học phí\", thầy Minh vào bảng chọn Chèn, chọn chức năng Bản đồ và nhập tên trang.", correct: false, expl: "Chức năng Bản đồ nằm trong thẻ Chèn dùng để hiển thị vị trí định vị địa lí. Để tạo một trang web mới phải truy cập vào thẻ Trang (Pages)." },
+            { id: "d", text: "d. Khi thầy Minh chọn chế độ \"Xem trước\", thầy chỉ có thể kiểm tra giao diện trên màn hình máy tính bàn mà không hỗ trợ thiết bị di động.", correct: false, expl: "Giao diện Xem trước của Google có 3 nút giả lập màn hình ở góc dưới: máy tính bàn, máy tính bảng (tablet) và thiết bị di động." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2. Bạn Lan đang hoàn thiện một dự án web về Bảo vệ Môi trường. Nhằm giúp người đọc chuyển từ bài tóm tắt sang bài phân tích chi tiết, Lan sử dụng chức năng liên kết.", items: [
+            { id: "a", text: "a. Để liên kết đến trang phân tích chi tiết, Lan sử dụng biểu tượng hình mắt xích trong thanh công cụ chỉnh sửa văn bản.", correct: true, expl: "Biểu tượng hình mắt xích (Insert link) là công cụ chuyên dụng dùng để nhúng các đường dẫn kết nối vào đoạn văn bản hoặc hình ảnh." },
+            { id: "b", text: "b. Chức năng chèn liên kết chỉ được phép sử dụng ở duy nhất Trang chủ, không được phép dùng ở các trang con.", correct: false, expl: "Các liên kết điều hướng được cấp quyền sử dụng không giới hạn ở tất cả các khu vực và các trang con trong website." },
+            { id: "c", text: "c. Lan bôi đen dòng chữ \"Xem phân tích chuyên sâu\", nháy chuột phải chọn chèn liên kết và trỏ tới trang bài viết tương ứng.", correct: true, expl: "Đây là thao tác quy trình đúng: Bôi đen đối tượng cần gán -> Mở công cụ gán liên kết -> Chọn đích đến trong danh sách -> Áp dụng." },
+            { id: "d", text: "d. Sau khi chèn liên kết xong, Lan hoàn toàn không thể sửa lại đường dẫn nếu lỡ tay chọn nhầm sang một trang web khác.", correct: false, expl: "Mọi liên kết đều có thể được sửa đổi, cập nhật đường dẫn mới, hoặc xoá bỏ lệnh liên kết đó đi một cách dễ dàng thông qua nút biểu tượng bút chì." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3. Câu lạc bộ Tin học vừa ra mắt một giao diện web mới để lưu trữ các bài tập trắc nghiệm. Các bạn muốn sắp xếp thanh điều hướng sao cho thật gọn gàng khi học sinh truy cập bằng màn hình điện thoại.", items: [
+            { id: "a", text: "a. Việc điều chỉnh vị trí thanh bảng chọn được thực hiện thông qua mục Cài đặt -> Điều hướng.", correct: true, expl: "Đây là đường dẫn cài đặt tiêu chuẩn của nền tảng Google Sites. Thẻ Điều hướng nằm trong Cài đặt chung của hệ thống web." },
+            { id: "b", text: "b. Lựa chọn \"Bên\" (sang trái) sẽ giúp thanh menu được gom gọn thành một biểu tượng góc trái, rất thuận tiện cho màn hình nhỏ.", correct: true, expl: "Khi chọn thuộc tính Bên, trên các thiết bị di động, menu điều hướng sẽ chuyển sang dạng thả rút (hamburger button) rất gọn và tối ưu không gian dọc." },
+            { id: "c", text: "c. Để thanh menu xuất hiện ngang trải dài trên cùng màn hình máy tính, nhóm quản trị cần thiết lập thuộc tính điều hướng là \"Trên cùng\".", correct: true, expl: "Tuỳ chọn 'Trên cùng' (Top) sẽ ép toàn bộ các nút bấm dàn thành một hàng ngang nằm ngay sát biên trên cùng của giao diện website." },
+            { id: "d", text: "d. Việc thay đổi vị trí của thanh điều hướng này sẽ làm xoá sạch toàn bộ dữ liệu các bài tập trắc nghiệm đang có sẵn trên trang web.", correct: false, expl: "Cài đặt điều hướng (Navigation) chỉ thay đổi về mặt giao diện và bố cục nút bấm, nó hoàn toàn độc lập và không xoá bỏ bất cứ dữ liệu nội dung bài viết nào." }
+        ]}
+    ];
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

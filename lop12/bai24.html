@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 24. XÂY DỰNG PHẦN ĐẦU TRANG WEB </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_24');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI ĐƯỢC CẬP NHẬT TỪ BÀI 24
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Để truy cập vào Google Sites, em nhập địa chỉ nào trên trình duyệt?", options: ["Truy cập địa chỉ sites.google.com.", "Truy cập địa chỉ drive.google.com.", "Truy cập địa chỉ gmail.google.com.", "Truy cập địa chỉ cloud.google.com."], correct: 0, explanation: "Google Sites là nền tảng tạo trang web miễn phí của Google, địa chỉ truy cập chính thức trên trình duyệt là sites.google.com. Drive là để lưu trữ, Gmail là hộp thư điện tử." },
+        { id: "d1_2", type: "single", question: "Câu 2: Biểu tượng dấu cộng (+) trong giao diện đầu tiên có chức năng gì?", options: ["Tạo một trang web hoàn toàn mới.", "Mở một trang web đã tạo từ trước.", "Xoá bỏ một trang web đang có sẵn.", "Chia sẻ trang web cho người khác."], correct: 0, explanation: "Trong giao diện của Google Sites, biểu tượng dấu (+) luôn được sử dụng làm phím tắt để khởi tạo một dự án/trang web trống hoàn toàn mới." },
+        { id: "d1_3", type: "single", question: "Câu 3: Khung \"Trang web không có tiêu đề\" dùng để thực hiện việc gì?", options: ["Nhập tên tệp lưu trong Google Drive.", "Chọn loại định dạng của phông chữ.", "Thay đổi kích thước của phần đầu.", "Chèn biểu mẫu liên hệ của tác giả."], correct: 0, explanation: "Khung 'Trang web không có tiêu đề' ở góc trên bên trái dùng để đặt tên cho tệp dữ liệu lưu trong Google Drive, giúp việc quản lý tệp dễ dàng hơn." },
+        { id: "d1_4", type: "single", question: "Câu 4: Mục \"Thay đổi hình ảnh\" trên giao diện làm phần đầu trang dùng để:", options: ["Chọn một hình nền cho phần đầu.", "Viết đoạn thông báo cho học sinh.", "Đặt tên hiển thị cho tab trình duyệt.", "Chèn một đoạn video trình chiếu."], correct: 0, explanation: "Mục 'Thay đổi hình ảnh' (Change Image) cho phép người thiết kế thay thế hình nền mặc định ở khu vực Header (đầu trang) bằng một bức ảnh khác." },
+        { id: "d1_5", type: "single", question: "Câu 5: Tính năng \"Loại tiêu đề\" cho phép người dùng lựa chọn điều gì?", options: ["Kích thước cho phần đầu trang web.", "Màu sắc cho toàn bộ trang văn bản.", "Độ mờ của hình nền ở phần thân.", "Giao diện xem trước trên máy tính."], correct: 0, explanation: "Tuỳ chọn 'Loại tiêu đề' (Header Type) cung cấp 4 kích thước chiều cao khác nhau cho phần đầu trang (Bìa, Biểu ngữ lớn, Biểu ngữ, Chỉ tiêu đề)." },
+        { id: "d1_6", type: "single", question: "Câu 6: Định dạng hình ảnh nào sau đây được hỗ trợ để làm logo và favicon?", options: ["Các tệp có định dạng là png, jpg, gif.", "Các tệp có định dạng là mp3, mp4.", "Các tệp có định dạng là doc, docx.", "Các tệp có định dạng là xls, xlsx, csv."], correct: 0, explanation: "Để làm Logo và Favicon, hệ thống web yêu cầu đầu vào là các tệp đồ họa tĩnh hoặc động đơn giản với đuôi mở rộng chuẩn như .png, .jpg, .jpeg, hoặc .gif." },
+        { id: "d1_7", type: "single", question: "Câu 7: Kích thước chuẩn dạng hình vuông của một favicon là bao nhiêu?", options: ["Kích thước chuẩn 16x16, 32x32, 48x48.", "Kích thước chuẩn 10x10, 20x20, 30x30.", "Kích thước chuẩn 50x50, 60x60, 70x70.", "Kích thước chuẩn 80x80, 90x90, 99x99."], correct: 0, explanation: "Favicon thường được trình duyệt thu nhỏ rất nhỏ, các kích thước pixel chuẩn quốc tế thiết kế tối ưu nhất cho nó là hình vuông 16x16, 32x32, hoặc 48x48." },
+        { id: "d1_8", type: "single", question: "Câu 8: Biểu tượng có hình \"con mắt\" trên thanh công cụ mang ý nghĩa gì?", options: ["Mở giao diện xem trước trang web.", "Xuất bản trang web lên mạng lưới.", "Tải mã nguồn trang web xuống máy.", "Chuyển đổi định dạng tệp hình ảnh."], correct: 0, explanation: "Biểu tượng hình 'con mắt' (Preview) cho phép kiểm tra trực quan giao diện trang web sẽ hiển thị như thế nào trên thực tế trước khi xuất bản." },
+        { id: "d1_9", type: "single", question: "Câu 9: Để trang web chính thức xuất hiện trên mạng, em nhấn nút nào?", options: ["Nhấn vào nút chức năng Công bố.", "Nhấn vào nút chức năng Lưu lại.", "Nhấn vào nút chức năng Xoá bỏ.", "Nhấn vào nút chức năng Chia sẻ."], correct: 0, explanation: "Để đẩy trang web lên môi trường Internet, người dùng cần bấm nút 'Công bố' (Publish) và thiết lập địa chỉ URL trực tuyến." },
+        { id: "d1_10", type: "single", question: "Câu 10: Phần (3) trong giao diện làm việc đầu tiên của Google Sites chứa nội dung gì?", options: ["Danh sách các trang người dùng mới mở.", "Bảng thông báo các lỗi kĩ thuật của máy.", "Danh sách các mẫu giao diện mua trả phí.", "Danh sách các ứng dụng soạn thảo văn bản."], correct: 0, explanation: "Khu vực số 3 (Recent sites) trên giao diện trang chủ Google Sites hiển thị danh sách các trang web mà tài khoản của bạn vừa mở và chỉnh sửa gần đây nhất." },
+        { id: "d1_11", type: "single", question: "Câu 11: Favicon thường được thiết kế dưới dạng hình vuông nhằm mục đích chính là gì?", options: ["Để hiển thị đẹp mắt trên tab trình duyệt.", "Để làm hình nền cho toàn bộ trang web.", "Để che giấu các thông tin bảo mật mạng.", "Để tiết kiệm dung lượng lưu trữ bộ nhớ."], correct: 0, explanation: "Do không gian trên Tab của các trình duyệt (Chrome, Cốc Cốc) là một ô vuông rất nhỏ gọn, Favicon phải có tỉ lệ 1:1 để hiển thị cân đối và đẹp mắt." },
+        { id: "d1_12", type: "single", question: "Câu 12: Khi muốn chèn logo và biểu tượng, em phải truy cập vào phần cài đặt nào?", options: ["Cài đặt mục Hình ảnh của thương hiệu.", "Cài đặt mục Bố cục văn bản trang web.", "Cài đặt mục Trình chiếu video minh hoạ.", "Cài đặt mục Liên kết các mạng xã hội."], correct: 0, explanation: "Để tải tệp Logo và Favicon, ta chọn nút Settings (hình bánh răng), sau đó truy cập vào danh mục con 'Brand images' (Hình ảnh của thương hiệu)." },
+        { id: "d1_13", type: "single", question: "Câu 13: Chức năng \"Phần thông báo\" thường được kích hoạt để làm gì trên trang web?", options: ["Đưa những lời nhắn quan trọng lên trên cùng.", "Xoá tất cả các thông tin cũ của trang web đi.", "Ẩn toàn bộ nội dung của phần thân trang web.", "Gửi email trực tiếp đến cho tất cả người xem."], correct: 0, explanation: "Tính năng Banner thông báo (Announcement banner) tạo ra một dải ruy-băng chạy ngang trên đỉnh giao diện để đưa ra những thông tin chú ý khẩn cấp cho người đọc." },
+        { id: "d1_14", type: "single", question: "Câu 14: Chế độ \"Tự động điều chỉnh độ sáng hình nền\" mang lại lợi ích nổi bật nào?", options: ["Giúp văn bản tiêu đề trên nền dễ đọc hơn hẳn.", "Làm cho ảnh nền biến thành định dạng 3 chiều.", "Tự động thay đổi ảnh nền mới sau mỗi mười giây.", "Làm cho màn hình thiết bị phát sáng mạnh mẽ."], correct: 0, explanation: "Khi ảnh nền quá sáng, chữ màu trắng của tiêu đề sẽ bị lấp đi. Nút 3 ngôi sao này sẽ phủ một lớp làm tối ảnh tự động để nâng cao độ tương phản, giúp chữ cực kì dễ đọc." },
+        { id: "d1_15", type: "single", question: "Câu 15: Trong mục \"Thay đổi hình ảnh\", tuỳ chọn \"Tải lên\" mang ý nghĩa kĩ thuật là gì?", options: ["Lấy tệp hình ảnh trực tiếp từ bộ nhớ máy tính.", "Lấy tệp hình ảnh đã lưu trữ từ Google Drive.", "Tìm kiếm và lấy ảnh từ mạng lưới Internet.", "Tự động vẽ một bức ảnh bằng trí tuệ nhân tạo."], correct: 0, explanation: "Lệnh 'Tải lên' (Upload) ra lệnh cho hệ thống mở cửa sổ duyệt tệp cục bộ để lấy dữ liệu có sẵn từ ổ đĩa cứng của thiết bị (máy tính, điện thoại)." },
+        { id: "d1_16", type: "single", question: "Câu 16: Tuỳ chọn \"Chọn\" trong công cụ \"Thay đổi hình ảnh\" cho phép em làm thao tác gì?", options: ["Lấy ảnh từ Google Drive hoặc qua mạng Internet.", "Lấy tệp văn bản từ ổ cứng của máy tính cá nhân.", "Sao chép lại ảnh nền của các trang web khác.", "Bật máy ảnh trên thiết bị để chụp một bức mới."], correct: 0, explanation: "Lệnh 'Chọn' (Select image) mở ra một thư viện ảnh mẫu của Google, đồng thời cho phép lấy nguồn ảnh đám mây từ Google Drive cá nhân hoặc tìm bằng Google Search." },
+        { id: "d1_17", type: "single", question: "Câu 17: Khi đang chỉnh sửa \"Tiêu đề trang\", tổ hợp phím Shift + Enter có tác dụng gì?", options: ["Ngắt dòng để viết đoạn văn bản mới liền kề.", "Xoá bỏ ngay lập tức dòng tiêu đề vừa nhập.", "In đậm và tô màu đỏ cho dòng văn bản đó.", "Sao chép dòng chữ đó thành mười bản sao."], correct: 0, explanation: "Tổ hợp Shift+Enter giúp ép ngắt con trỏ xuống một dòng (Line Break) ngay bên dưới đoạn văn bản hiện tại mà không làm chia tách định dạng của khối (Paragraph)." },
+        { id: "d1_18", type: "single", question: "Câu 18: Chế độ xem trước của Google Sites hỗ trợ hiển thị trên các dạng thiết bị nào?", options: ["Máy tính bàn, điện thoại và cả máy tính bảng.", "Chỉ hỗ trợ xem trên điện thoại thông minh.", "Chỉ xem được trên tivi có kết nối mạng lan.", "Chỉ xem được thông qua máy chiếu đời cũ."], correct: 0, explanation: "Giao diện Preview cung cấp 3 nút tương ứng với 3 kích thước màn hình phổ biến nhất hiện nay: PC (màn rộng), Tablet (vừa) và Mobile (hẹp dọc)." },
+        { id: "d1_19", type: "single", question: "Câu 19: Em muốn đặt tên tệp lưu trữ của mình là \"BaoCaoHocKi\", em sẽ nhập vào ô nào?", options: ["Ô có chữ Trang web không có tiêu đề.", "Ô có chữ Thay đổi hình ảnh màn hình.", "Ô có chữ Bảng chọn thanh điều hướng.", "Ô có chữ Tự động điều chỉnh độ sáng."], correct: 0, explanation: "Tên file để lưu trên Google Drive luôn được định danh bằng việc nhập văn bản vào ô 'Trang web không có tiêu đề' nằm ở góc trái thanh công cụ trên cùng." },
+        { id: "d1_20", type: "single", question: "Câu 20: Lớp 10A1 muốn đưa huy hiệu của lớp làm biểu tượng, các em cần chọn nút nào?", options: ["Nháy chuột chọn Thêm biểu tượng.", "Nháy chuột chọn Loại tiêu đề trang.", "Nháy chuột chọn Phần thông báo.", "Nháy chuột chọn Xem trước trang."], correct: 0, explanation: "Khi đưa chuột vào khu vực góc trái của phần Header, một nút có chữ 'Thêm biểu tượng' (Add Logo) sẽ hiện ra cho phép bạn upload hình ảnh huy hiệu." },
+        { id: "d1_21", type: "single", question: "Câu 21: Em thiết kế một trang chỉ có dòng chữ chào mừng mà không có nền, em chọn gì?", options: ["Chọn Loại tiêu đề là Chỉ có tiêu đề.", "Chọn Loại tiêu đề là Biểu ngữ lớn.", "Chọn Loại tiêu đề là Loại tấm Bìa.", "Chọn Loại tiêu đề là Biểu ngữ nhỏ."], correct: 0, explanation: "Tuỳ chọn 'Chỉ có tiêu đề' (Title Only) sẽ xoá hoàn toàn hình ảnh nền đi, giúp phần đầu trang rút gọn lại và chỉ hiển thị duy nhất đoạn văn bản." },
+        { id: "d1_22", type: "single", question: "Câu 22: Để tạo dòng chữ chạy \"Nghỉ lễ 30/4\" nổi bật trên đỉnh trang, em dùng công cụ gì?", options: ["Thiết lập nội dung trong Phần thông báo.", "Chèn văn bản vào khu vực Tiêu đề trang.", "Đổi tên tệp ở Trang web không tiêu đề.", "Tải một bức ảnh thông báo dán lên nền."], correct: 0, explanation: "Sử dụng tính năng 'Phần thông báo' (Announcement) trong phần Cài đặt hệ thống, nó sẽ tạo ra một dải ruy băng mỏng vắt ngang ở vị trí cao nhất của trang." },
+        { id: "d1_23", type: "single", question: "Câu 23: Để căn chỉnh dòng \"Chào mừng bạn\" ra chính giữa trang, em sử dụng chức năng gì?", options: ["Sử dụng bảng chọn căn lề đoạn văn bản.", "Sử dụng tính năng di chuyển hình ảnh.", "Đổi kiểu chữ thành phông Times Roman.", "Nhấn phím Enter liên tục hai mươi lần."], correct: 0, explanation: "Khi bôi đen văn bản, một thanh công cụ (Toolbar) sẽ nổi lên, ta dùng tính năng căn lề (Align) và chọn Căn giữa để đặt đoạn text chính xác vào trung tâm." },
+        { id: "d1_24", type: "single", question: "Câu 24: Nếu hình nền cảnh sân trường quá sáng làm mờ tiêu đề bài viết, em nên bấm nút nào?", options: ["Bấm nút tự động điều chỉnh độ sáng.", "Bấm nút sao chép đường liên kết web.", "Bấm phím xoá trên bàn phím máy tính.", "Đổi toàn bộ chữ tiêu đề sang màu trắng."], correct: 0, explanation: "Cần nhấn vào biểu tượng 3 ngôi sao (Tự động điều chỉnh độ sáng) ở góc dưới của khung Header để hệ thống tự tối ưu hoá độ tương phản." },
+        { id: "d1_25", type: "single", question: "Câu 25: Ảnh chân dung thầy hiệu trưởng bị khuất nửa mặt do định dạng web, em cần làm gì?", options: ["Nháy chuột vào biểu tượng Di chuyển hình nền.", "Tắt mạng internet và tải lại một bức ảnh khác.", "Xoá trang web đi và thiết kế lại từ bước đầu.", "Chuyển đổi tên tệp lưu trữ trên Google Drive."], correct: 0, explanation: "Khi tỉ lệ ảnh không khớp với khung, ta ấn vào nút mỏ neo 'Di chuyển hình nền' (Anchor image) để căn chỉnh đẩy khung hiển thị lên trên, lấy toàn bộ khuôn mặt." },
+        { id: "d1_26", type: "single", question: "Câu 26: Em muốn kiểm tra xem giao diện trang chủ có bị lỗi trên điện thoại không, em làm gì?", options: ["Bấm Xem trước rồi chọn icon điện thoại.", "Mượn năm chiếc điện thoại khác nhau để thử.", "Đổi loại tiêu đề thành chế độ Chỉ có tiêu đề.", "Lưu trang web dưới định dạng tệp ảnh png."], correct: 0, explanation: "Sử dụng tính năng 'Xem trước' (Preview) hình con mắt, sau đó nhấp vào biểu tượng Smartphone (hình chữ nhật dọc) để giả lập hiển thị của điện thoại." },
+        { id: "d1_27", type: "single", question: "Câu 27: Cô giáo yêu cầu em nộp đường dẫn sản phẩm thực hành, em cần nháy chuột vào đâu?", options: ["Biểu tượng Sao chép địa chỉ liên kết (URL).", "Nút chia sẻ ảnh lên mạng xã hội Facebook.", "Biểu tượng tải xuống máy tính cá nhân.", "Công cụ tìm kiếm nội bộ của trang web."], correct: 0, explanation: "Bấm vào biểu tượng hình mắt xích liên kết trên thanh công cụ (Copy published site link) để nhận URL dạng văn bản gửi cho cô giáo chấm điểm." },
+        { id: "d1_28", type: "single", question: "Câu 28: Bạn An vẽ một hình vuông 48x48 pixel có chữ \"A\", hình này nên dùng làm gì thì hợp?", options: ["Dùng làm hình ảnh Favicon cho trang web.", "Dùng làm hình nền chính cho toàn bộ web.", "Dùng làm băng rôn ở phần thân trang web.", "Dùng làm hình ảnh bìa kích thước cực lớn."], correct: 0, explanation: "Với kích thước chuẩn dạng vuông rất nhỏ là 48x48 pixel, hình vẽ này là sự lựa chọn tối ưu và duy nhất để phục vụ cho việc tải lên làm tệp Favicon hiển thị trên tab." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1. Thầy Tuấn hướng dẫn lớp 10A2 sử dụng Google Sites để thiết kế một trang web trưng bày tranh ảnh về chủ đề \"Bảo vệ môi trường\". Thầy yêu cầu mỗi nhóm phải có logo nhóm và một thông báo nhắc nhở ở đầu trang.", items: [
+            { id: "a", text: "a. Thầy Tuấn yêu cầu các em truy cập vào địa chỉ sites.google.com để bắt đầu làm việc.", correct: true, expl: "sites.google.com là địa chỉ trang chủ chính thức cung cấp dịch vụ thiết kế web trực quan của hệ sinh thái Google." },
+            { id: "b", text: "b. Các em bắt buộc phải lưu tên tệp tại ô \"Tiêu đề trang\" để hệ thống tự động đồng bộ vào Google Drive.", correct: false, expl: "Tên tệp lưu vào Drive được đặt ở ô 'Trang web không có tiêu đề' phía góc trái trên cùng, còn 'Tiêu đề trang' chỉ là đoạn văn bản hiển thị ra ngoài cho người xem." },
+            { id: "c", text: "c. Nhóm của An đã tải một bức hình vuông có logo của nhóm lên mục \"Favicon\" để nó hiện ra trên tab trình duyệt.", correct: true, expl: "Cài đặt hình vuông vào mục Favicon (trong phần Hình ảnh thương hiệu) là thao tác đúng kĩ thuật để đưa biểu tượng lên tab của trình duyệt." },
+            { id: "d", text: "d. Để dòng chữ \"Hãy giữ gìn lớp học sạch đẹp\" xuất hiện trên cùng, An sử dụng tính năng \"Phần thông báo\" và chọn màu nền nổi bật.", correct: true, expl: "Tính năng 'Phần thông báo' (Banner) sẽ tạo ra một dải thông điệp chạy ngang ở vị trí cao nhất của website với màu sắc tuỳ chọn." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2. Bạn Lan Anh đang xây dựng một trang web giới thiệu đặc sản quê hương. Lan Anh muốn đưa bức ảnh cánh đồng lúa cực rộng làm ảnh nền cho phần đầu trang nhưng sợ chữ tiêu đề bị mờ.", items: [
+            { id: "a", text: "a. Lan Anh nháy chuột vào mục \"Thay đổi hình ảnh\" để tiến hành cài đặt ảnh nền cánh đồng lúa.", correct: true, expl: "Nút 'Thay đổi hình ảnh' (Change Image) là lệnh bắt buộc để thay thế hình nền mặc định của phần Header bằng một tấm ảnh cá nhân hoá." },
+            { id: "b", text: "b. Google Sites cho phép Lan Anh có thể tải ảnh trực tiếp từ máy tính lên hoặc lấy từ bộ nhớ Google Drive.", correct: true, expl: "Hệ thống hỗ trợ 2 nguồn chính: lệnh Tải lên (lấy tệp từ ổ cứng máy tính) và lệnh Chọn (lấy hình ảnh từ dữ liệu đám mây Google Drive)." },
+            { id: "c", text: "c. Để chữ \"Đặc sản Quê tôi\" nổi bật trên nền lúa sáng màu, Lan Anh tuyệt đối không được dùng chức năng \"tự động điều chỉnh độ sáng\".", correct: false, expl: "Khi ảnh nền quá sáng, Lan Anh BẮT BUỘC phải bật chức năng điều chỉnh độ sáng (3 ngôi sao) để tạo một màng lọc tối giúp màu chữ nổi bật lên." },
+            { id: "d", text: "d. Vì bức ảnh lúa có kích thước rất lớn, Lan Anh bắt buộc phải chọn \"Loại tiêu đề\" là \"Chỉ có tiêu đề\" thì hệ thống mới hiển thị được.", correct: false, expl: "Chế độ 'Chỉ có tiêu đề' sẽ ẩn luôn hình ảnh. Đối với ảnh khổng lồ, cần chọn chế độ 'Bìa' (Cover) hoặc 'Biểu ngữ lớn' (Large banner) để hiển thị không gian lớn nhất." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3. Đội thi Olympic Tin học của trường THPT Nguyễn Huệ vừa hoàn thiện phần đầu trang web cho dự án thi cấp tỉnh và đang chuẩn bị xuất bản để gửi nộp cho ban tổ chức.", items: [
+            { id: "a", text: "a. Thao tác nháy chuột vào nút \"Công bố\" sẽ giúp dự án chính thức có mặt trên mạng lưới Internet.", correct: true, expl: "Nút 'Công bố' (Publish) là bước phát hành quan trọng nhất, cấp quyền cho trang web kết nối vào mạng lưới để tất cả mọi người có thể truy cập." },
+            { id: "b", text: "b. Tính năng \"Xem trước\" chỉ cho phép các bạn kiểm tra giao diện hiển thị trên duy nhất màn hình máy tính bàn.", correct: false, expl: "Công cụ Xem trước giả lập hiển thị đa nền tảng, bao gồm 3 chế độ: điện thoại, máy tính bảng và máy tính cá nhân." },
+            { id: "c", text: "c. Để bảo mật và tránh bị sao chép trước ngày thi, đội trưởng quyết định ẩn trang web bằng cách xoá trống ô \"Loại tiêu đề\".", correct: false, expl: "Việc xoá định dạng Loại tiêu đề chỉ làm mất đi phần hình ảnh trên cùng của giao diện chứ hoàn toàn không có tác dụng bảo mật khoá trang web." },
+            { id: "d", text: "d. Khi cần lấy đường dẫn (URL) nộp cho ban giám khảo, các bạn nhấn vào nút \"Thêm biểu tượng\" ở phần cài đặt hình ảnh.", correct: false, expl: "Để lấy URL chuẩn, phải dùng tính năng biểu tượng 'Sao chép đường liên kết' (Copy link) nằm trên thanh công cụ sau khi đã bấm công bố." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Công cụ của Google được dùng để thiết kế web trực quan có tên gọi là gì?", options: ["Công cụ hỗ trợ web Google Sites.", "Công cụ soạn thảo Google Docs.", "Công cụ trình chiếu Google Slide.", "Công cụ lưu trữ mây Google Drive."], correct: 0, explanation: "Google Sites là nền tảng miễn phí chuyên biệt của Google cho phép xây dựng website bằng phương pháp kéo thả trực quan." },
+        { id: "d2_2", type: "single", question: "Câu 2: Lựa chọn tạo một trang web mới trong Google Sites được kí hiệu bằng gì?", options: ["Biểu tượng dấu cộng (+) trực quan.", "Biểu tượng con mắt có dấu gạch.", "Biểu tượng bánh răng cưa cài đặt.", "Biểu tượng hình chiếc đĩa mềm."], correct: 0, explanation: "Trong giao diện của Google Sites, biểu tượng dấu (+) luôn được sử dụng làm phím tắt để khởi tạo một trang web trống hoàn toàn mới." },
+        { id: "d2_3", type: "single", question: "Câu 3: Tên tệp của trang web lưu trên hệ thống Google Drive được nhập vào vị trí nào?", options: ["Khu vực Trang web không tiêu đề.", "Khu vực Bảng chọn của thanh điều hướng.", "Khu vực Thiết lập hình nền trang chủ.", "Khu vực Thông báo quan trọng phần đầu."], correct: 0, explanation: "Tên định danh của file (tệp) để quản lí trên Google Drive được đặt ở ô văn bản 'Trang web không có tiêu đề' phía góc trái trên cùng." },
+        { id: "d2_4", type: "single", question: "Câu 4: Để cài đặt ảnh nền cho phần đầu trang, em sử dụng tính năng nào dưới đây?", options: ["Bấm chọn tính năng Thay đổi hình ảnh.", "Bấm chọn tính năng Tự động đổi sáng.", "Bấm chọn tính năng Chỉnh sửa mã nguồn.", "Bấm chọn tính năng Thay đổi phông chữ."], correct: 0, explanation: "Để nạp một ảnh mới làm hình nền thay cho dải màu đơn sắc, ta phải sử dụng lệnh 'Thay đổi hình ảnh' (Change Image)." },
+        { id: "d2_5", type: "single", question: "Câu 5: Có bao nhiêu tuỳ chọn kích thước trong bảng chọn Loại tiêu đề của trang web?", options: ["Có bốn kích thước chuẩn từ lớn đến nhỏ.", "Chỉ có duy nhất một kích thước chuẩn.", "Có hai kích thước chuẩn để tuỳ chỉnh.", "Có hàng chục loại kích thước khác nhau."], correct: 0, explanation: "Google Sites cung cấp chính xác 4 kích thước chiều cao cho Header: Bìa (Cover), Biểu ngữ lớn (Large Banner), Biểu ngữ (Banner), và Chỉ có tiêu đề." },
+        { id: "d2_6", type: "single", question: "Câu 6: Kích thước của Favicon được thiết kế chuẩn nhất theo khối hình học nào?", options: ["Khối hình học dạng vuông (cạnh bằng nhau).", "Khối hình học chữ nhật (chiều dài hơn rộng).", "Khối hình học dạng tam giác thật cân xứng.", "Khối hình học dạng tròn với bán kính nhỏ."], correct: 0, explanation: "Để hiển thị không bị méo trên một vùng rất nhỏ trên tab của trình duyệt, Favicon luôn tuân thủ nguyên tắc thiết kế theo khối hình vuông (tỉ lệ 1:1)." },
+        { id: "d2_7", type: "single", question: "Câu 7: Những định dạng ảnh nào sau đây dùng được để làm logo trên Google Sites?", options: ["Định dạng chuẩn png, jpg hoặc là gif.", "Định dạng văn bản là docx hoặc pdf.", "Định dạng bảng tính chuẩn đuôi xlsx.", "Định dạng trình chiếu chuẩn đuôi pptx."], correct: 0, explanation: "Logo là dữ liệu đồ họa, do đó bắt buộc phải sử dụng các tệp tin dạng hình ảnh như PNG (ảnh trong suốt), JPG/JPEG (ảnh thường) hoặc GIF." },
+        { id: "d2_8", type: "single", question: "Câu 8: Tính năng \"Xem trước\" trang web trên Google Sites mang biểu tượng hình gì?", options: ["Biểu tượng hình ảnh của một con mắt.", "Biểu tượng hình ảnh một chiếc loa nhỏ.", "Biểu tượng hình ảnh của chiếc thùng rác.", "Biểu tượng hình ảnh của một cây bút chì."], correct: 0, explanation: "Công cụ Preview (Xem trước giao diện trên các thiết bị) được quy ước bằng biểu tượng hình 'con mắt' đặt trên thanh công cụ." },
+        { id: "d2_9", type: "single", question: "Câu 9: Muốn sao chép địa chỉ URL của trang web sau khi xuất bản, em nhấn vào đâu?", options: ["Biểu tượng có hình liên kết (sao chép).", "Nút biểu tượng tải dữ liệu xuống máy.", "Biểu tượng kết nối vào sóng mạng Wi-Fi.", "Nút chia sẻ trực tiếp sang Zalo, Facebook."], correct: 0, explanation: "Sử dụng icon hình mắt xích liên kết (Copy link) để lấy trực tiếp dòng URL gốc của trang web gửi cho bạn bè truy cập." },
+        { id: "d2_10", type: "single", question: "Câu 10: Danh sách các trang web người dùng mới mở gần đây nằm ở vị trí nào?", options: ["Nằm ở phần số (3) giao diện làm việc.", "Nằm bên trong phần cài đặt mật khẩu.", "Ẩn sâu dưới các thanh cuộn văn bản.", "Luôn bị xoá sạch mỗi khi tắt màn hình."], correct: 0, explanation: "Theo cấu trúc chuẩn, danh sách các dự án truy cập gần nhất (Recent sites) luôn được hiển thị ở khu vực phía dưới (thường đánh số 3 trong sơ đồ bài học) của trang chủ Sites." },
+        { id: "d2_11", type: "single", question: "Câu 11: Trong cài đặt, mục \"Hình ảnh thương hiệu\" cung cấp những tuỳ chọn nào?", options: ["Tuỳ chọn thiết lập tệp logo và tệp favicon.", "Tuỳ chọn đổi màu cho tất cả các bức ảnh.", "Tuỳ chọn thêm âm thanh vào trang văn bản.", "Tuỳ chọn tắt hệ thống định vị của máy."], correct: 0, explanation: "Khu vực Brand images (Hình ảnh thương hiệu) là nơi quản lí các nhận diện cốt lõi, chuyên cung cấp nút upload cho Logo trang web và Favicon." },
+        { id: "d2_12", type: "single", question: "Câu 12: Tính năng \"Phần thông báo\" cho phép quản trị viên web thiết lập những gì?", options: ["Lời nhắn, màu sắc chữ và bật hiển thị.", "Thời gian tự động tắt trang web đi.", "Tạo ra một bài kiểm tra dài năm trang.", "Bật tính năng nhắn tin với mọi người."], correct: 0, explanation: "Khi kích hoạt (bật hiển thị) Announcement banner, ta có quyền điền nội dung Lời nhắn khẩn cấp, gắn kèm nút liên kết và tuỳ chỉnh màu sắc ruy-băng." },
+        { id: "d2_13", type: "single", question: "Câu 13: Tuỳ chọn \"Chọn\" khi thay đổi hình ảnh mang ý nghĩa gì đối với nguồn ảnh?", options: ["Sử dụng nguồn ảnh trực tuyến hoặc Drive.", "Chỉ lấy những ảnh trong ổ đĩa hệ điều hành.", "Vẽ ra một bức ảnh mới thông qua phần mềm.", "Chụp ảnh màn hình hiện tại của máy tính."], correct: 0, explanation: "Tính năng Chọn (Select image) sẽ mở kết nối internet, cho phép tìm kiếm hình ảnh qua mạng hoặc truy xuất kho lưu trữ đám mây Google Drive của bạn." },
+        { id: "d2_14", type: "single", question: "Câu 14: Khi tải một bức ảnh từ máy tính để làm hình nền, em dùng tuỳ chọn nào?", options: ["Dùng lệnh Tải lên trong mục Thay đổi hình.", "Dùng lệnh Chọn ảnh trong giao diện hệ thống.", "Copy đường link ảnh và dán trực tiếp vào.", "Đính kèm qua hộp thư điện tử cá nhân."], correct: 0, explanation: "Để lấy một tệp hình ảnh có sẵn từ bộ nhớ vật lí của máy tính (ổ cứng), bắt buộc phải sử dụng nút 'Tải lên' (Upload)." },
+        { id: "d2_15", type: "single", question: "Câu 15: Biểu tượng 3 ngôi sao lấp lánh ở góc ảnh nền phần đầu trang có tác dụng gì?", options: ["Tự động điều chỉnh độ sáng để chữ dễ nhìn.", "Biến hình ảnh tĩnh thành hình ảnh chuyển động.", "Tự động xoá nền của bức ảnh chụp chân dung.", "Biến chữ tiêu đề thành các biểu tượng 3 sao."], correct: 0, explanation: "Chức năng này tự tính toán độ sáng tối (độ tương phản) của hình nền gốc để phủ thêm màng lọc, bảo đảm đoạn văn bản đè lên trên không bị loá mờ." },
+        { id: "d2_16", type: "single", question: "Câu 16: Việc căn lề và dãn dòng cho tiêu đề trang được thực hiện ở khu vực nào?", options: ["Trong bảng chọn định dạng văn bản tiêu đề.", "Trong bảng thiết lập cài đặt logo, favicon.", "Trong mục tạo mới phần thông báo đầu trang.", "Trong phần thay đổi hình dạng của thanh menu."], correct: 0, explanation: "Khi soạn thảo nội dung tại Tiêu đề trang, một thanh công cụ (Text formatting toolbar) sẽ nổi lên chuyên xử lí font chữ, căn lề, in đậm nghiêng." },
+        { id: "d2_17", type: "single", question: "Câu 17: Các nút biểu tượng điện thoại, máy tính bảng ở chế độ xem trước dùng để làm gì?", options: ["Giúp kiểm tra giao diện hiển thị trên thiết bị đó.", "Để tự động gọi điện tới các thiết bị liên quan.", "Giúp biến máy tính bàn thành thiết bị di động.", "Chia sẻ trang web thẳng tới thiết bị tương ứng."], correct: 0, explanation: "Khi thiết kế Web Responsive (hiển thị đa màn hình), các nút này giả lập lại kích thước vật lí của điện thoại, tablet để kĩ thuật viên kiểm tra lỗi đồ họa." },
+        { id: "d2_18", type: "single", question: "Câu 18: Khi thiết lập tiêu đề, nhấn nút Enter mang ý nghĩa gì trong thao tác soạn thảo?", options: ["Chuyển con trỏ xuống một dòng mới dưới đó.", "Huỷ bỏ ngay thao tác vừa thực hiện trên máy.", "Đổi toàn bộ chữ viết thường thành chữ in hoa.", "Lưu trực tiếp nội dung văn bản vào ổ đĩa mềm."], correct: 0, explanation: "Như mọi phần mềm Word, phím Enter thực thi lệnh ngắt dòng văn bản (Line Break), đưa con trỏ xuống khu vực khoảng trắng ngay phía dưới." },
+        { id: "d2_19", type: "single", question: "Câu 19: Khi lập trang web \"Thể thao học đường\", em dùng dòng Chỉ có tiêu đề khi nào?", options: ["Khi em không muốn trang có bất kì ảnh nền nào.", "Khi em muốn chèn một video dài mười lăm phút.", "Khi em muốn tải một tấm ảnh thật to để trang trí.", "Khi em muốn thay đổi hình dáng của thanh menu."], correct: 0, explanation: "Định dạng Header dạng 'Chỉ có tiêu đề' (Title only) giúp phần đỉnh trang trở nên thanh thoát, gọn gàng bằng cách loại bỏ hoàn toàn khung ảnh nền hiển thị." },
+        { id: "d2_20", type: "single", question: "Câu 20: Để ghi tên tệp là \"BaiTapThucHanh\", thao tác nào sau đây là chính xác nhất?", options: ["Nháy vào dòng Trang web không có tiêu đề và gõ.", "Gõ trực tiếp vào ô Tìm kiếm trên Google Sites.", "Gõ vào ô cài đặt màu sắc phần thông báo trang.", "Nhập kí tự vào phần thiết lập địa chỉ email."], correct: 0, explanation: "Tên tệp định danh quản lí trên bộ nhớ Google Drive được thay đổi duy nhất bằng cách gõ văn bản đè vào khung chữ 'Trang web không có tiêu đề'." },
+        { id: "d2_21", type: "single", question: "Câu 21: Câu lạc bộ Âm nhạc vẽ xong một logo định dạng png, các bạn sẽ chèn nó ở đâu?", options: ["Vào Nhập tên trang web, bấm Thêm biểu tượng.", "Vào phần Thay đổi hình ảnh của hệ thống web.", "Vào ô Lời nhắn của phần thiết lập Thông báo.", "Tạo một biểu ngữ lớn rồi dán chèn hình ảnh lên."], correct: 0, explanation: "Trên góc thanh điều hướng có khu vực 'Nhập tên trang web', đưa chuột vào đó sẽ xuất hiện chức năng 'Thêm biểu tượng' chuyên để upload ảnh Logo PNG." },
+        { id: "d2_22", type: "single", question: "Câu 22: Để tạo một dải ruy-băng chạy ngang báo \"Giờ sinh hoạt đổi sang thứ 6\", em làm gì?", options: ["Vào Phần thông báo, gõ Lời nhắn và bật Hiển thị.", "Chọn Loại tiêu đề là Bìa để dải này che hết trang.", "Dùng chế độ Xem trước để vẽ thêm dải băng rôn.", "Chỉnh tự động sáng tối cho hình ảnh bìa trang."], correct: 0, explanation: "Vào Cài đặt hệ thống > Phần thông báo (Banner), tích chọn trạng thái bật 'Hiển thị' và nhập dòng văn bản cảnh báo vào ô 'Lời nhắn' để dải ruy-băng hiện lên." },
+        { id: "d2_23", type: "single", question: "Câu 23: Khi ảnh cảnh lớp học bị quá mờ, chữ lại tối màu không đọc được, em phải làm sao?", options: ["Bấm nút Tự động điều chỉnh độ sáng hình nền.", "Xoá tất cả mọi thứ và mua máy vi tính cấu hình cao.", "Thêm biểu tượng Favicon mới cho tab trình duyệt.", "Đổi cỡ của thanh điều hướng cho thật khổng lồ."], correct: 0, explanation: "Nút 3 ngôi sao (Tự động điều chỉnh sáng) ở viền Header sẽ thuật toán lại độ phủ màu, tạo nền bóng râm mờ ảo giúp chữ dù màu tối cũng đọc rất rõ." },
+        { id: "d2_24", type: "single", question: "Câu 24: Bức ảnh nhóm chụp ngoài sân bị cắt mất khuôn mặt khi làm nền, em xử lí thế nào?", options: ["Nháy chọn biểu tượng Di chuyển hình nền để chỉnh.", "Lưu trang dưới dạng file văn bản để tự động sửa.", "Dùng phím Enter đẩy bức ảnh rơi xuống phía dưới.", "Xoá hình nền và chỉ để lại các kí tự văn bản."], correct: 0, explanation: "Biểu tượng hình mỏ neo (Anchor image) cho phép người thiết kế đẩy bố cục của bức nền lên trên cùng, hoặc sang mép trái/phải để không bị cắt đi các chi tiết quan trọng." },
+        { id: "d2_25", type: "single", question: "Câu 25: Nhóm của Hùng muốn đổi màu chữ tiêu đề từ đen sang đỏ tươi, Hùng làm ở đâu?", options: ["Dùng công cụ màu sắc ở bảng định dạng Tiêu đề.", "Tải bức ảnh màu đỏ về rồi đè lên Tiêu đề trang.", "Thiết lập ở mục Cài đặt Hình ảnh của thương hiệu.", "Bấm nút Công bố rồi chọn mục đổi màu hệ thống."], correct: 0, explanation: "Bôi đen toàn bộ dòng văn bản, thanh công cụ Text format sẽ hiện ra. Hùng tìm icon chữ A (Text color) và chọn gam màu đỏ tươi áp dụng." },
+        { id: "d2_26", type: "single", question: "Câu 26: Để xem trước giao diện trên chiếc Ipad, em thao tác các bước như thế nào?", options: ["Nháy nút Xem trước -> Chọn biểu tượng máy tính bảng.", "Nháy nút Tải lên -> Đợi hệ thống gửi về máy tính bảng.", "Lấy điện thoại chụp màn hình gửi qua máy tính bảng.", "Đổi loại tiêu đề sang chế độ vừa với máy tính bảng."], correct: 0, explanation: "iPad thuộc dòng thiết bị màn hình cỡ vừa. Nhấn Preview (nút con mắt) và click vào icon Tablet (Máy tính bảng) ở góc phải bên dưới để xem giả lập." },
+        { id: "d2_27", type: "single", question: "Câu 27: Cô giáo báo em chia sẻ web để lớp cùng xem, thao tác đúng nhất là gì?", options: ["Bấm Công bố, chọn biểu tượng Sao chép địa chỉ.", "Chụp màn hình phần thiết kế gửi lên nhóm lớp.", "Mở giao diện xem trước rồi quay video gửi đi.", "Copy biểu tượng Favicon và dán vào email gửi."], correct: 0, explanation: "Trang web phải được bấm nút 'Công bố' để đẩy lên Internet, sau đó em sử dụng biểu tượng mắt xích lấy Copy Link chuẩn của hệ thống dán lên nhóm lớp." },
+        { id: "d2_28", type: "single", question: "Câu 28: Hình biểu tượng kích thước 32x32 pixel là lựa chọn tối ưu nhất để thiết lập cái gì?", options: ["Làm biểu tượng Favicon hiển thị trên tab.", "Làm biểu ngữ cỡ lớn trải dài màn hình.", "Làm hình nền cho phần Lời nhắn thông báo.", "Làm ảnh chân dung của tác giả bài viết."], correct: 0, explanation: "Favicon là loại icon nhỏ bé duy nhất đứng bên cạnh tựa đề ở tab trình duyệt, nên chỉ nó mới cần được thiết kế dạng hình vuông size mini 32x32 pixel." },
+
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1. Câu lạc bộ Sách trường THPT Lê Lợi đang lên kế hoạch thiết kế trang web giới thiệu không gian thư viện mới. Trưởng câu lạc bộ phân công các thành viên thực hiện khâu xây dựng phần đầu trang.", items: [
+            { id: "a", text: "a. Bước đầu tiên, các bạn cần có tài khoản Google và đăng nhập vào sites.google.com.", correct: true, expl: "Google Sites thuộc hệ sinh thái Google Workspace, bắt buộc người thiết kế phải sử dụng một tài khoản (Gmail) cá nhân để đăng nhập và làm việc." },
+            { id: "b", text: "b. Do thư viện chỉ dùng văn bản, hệ thống bắt buộc các bạn tải logo định dạng DOCX thay vì định dạng ảnh thông thường.", correct: false, expl: "Logo thương hiệu của bất kì website nào bắt buộc phải tải lên theo định dạng tệp hình ảnh như PNG, JPEG. Các tệp văn bản DOCX (Word) không thể hiển thị thành ảnh." },
+            { id: "c", text: "c. Để tên thư viện hiển thị rõ nét trên bức ảnh nền giá sách, nhóm đã sử dụng tính năng \"tự động điều chỉnh độ sáng\" của Google Sites.", correct: true, expl: "Tính năng này sẽ giảm độ tương phản của hình ảnh giá sách, làm mờ nhẹ đi, từ đó giúp phần chữ text màu trắng được đẩy lên cực kì rõ nét." },
+            { id: "d", text: "d. Bạn quản trị đã đưa nội dung \"Thư viện mở cửa từ 7h - 17h\" vào mục Lời nhắn trong \"Phần thông báo\" để học sinh dễ nhìn thấy nhất.", correct: true, expl: "Sử dụng 'Phần thông báo' (Banner) sẽ làm xuất hiện một dải ruy-băng chạy ngang ở điểm cao nhất, đây là vị trí hút mắt người đọc đầu tiên." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2. Minh được giao nhiệm vụ quản lí trang web học tập môn Vật lí của lớp. Minh đang cần tuỳ chỉnh tiêu đề trang sao cho khoa học và hấp dẫn hơn.", items: [
+            { id: "a", text: "a. Để quản lí file dễ dàng trên Google Drive, Minh đã nhập tên tệp vào ô \"Trang web không có tiêu đề\".", correct: true, expl: "Ô 'Trang web không có tiêu đề' chính là trường dữ liệu liên kết thẳng với tên tệp (filename) lưu trữ nội bộ trên không gian Google Drive." },
+            { id: "b", text: "b. Khi cài đặt kích thước, Minh phát hiện ra mục \"Loại tiêu đề\" chỉ có duy nhất một kích thước cố định không thể thay đổi.", correct: false, expl: "Tính năng 'Loại tiêu đề' rất linh hoạt vì cung cấp tới 4 chuẩn kích thước hiển thị: Ảnh bìa, Biểu ngữ lớn, Biểu ngữ thường và Không dùng ảnh (Chỉ có tiêu đề)." },
+            { id: "c", text: "c. Bằng cách bôi đen dòng tiêu đề và sử dụng công cụ căn lề, Minh đã đặt dòng chữ \"Vật lí Vui\" nằm chính giữa phần đầu trang.", correct: true, expl: "Căn lề giữa (Align Center) là thao tác tiêu chuẩn trên công cụ thanh ngang (Toolbar) để đẩy đối tượng văn bản vào vị trí trung tâm." },
+            { id: "d", text: "d. Để ngắt dòng chữ tiêu đề đang bị quá dài, Minh nhấn tổ hợp phím Shift + Enter, thao tác này đồng thời xoá luôn tiêu đề trang đó đi.", correct: false, expl: "Phím Shift + Enter là tổ hợp kĩ thuật dùng để ngắt dòng xuống hàng (Break Line) rất mềm mại, hoàn toàn không có tính năng xoá bất kì văn bản nào." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3. Cô giáo bộ môn yêu cầu các bạn trong nhóm phải nộp đường dẫn (URL) sản phẩm thực hành trang web cá nhân vào cuối tiết học.", items: [
+            { id: "a", text: "a. Để xuất bản trang web và gửi đường dẫn, học sinh cần nhấn vào biểu tượng có hình con mắt trên thanh công cụ trên cùng.", correct: false, expl: "Biểu tượng hình con mắt là công cụ dùng để 'Xem trước giao diện'. Để xuất bản, phải bấm vào nút màu xanh dương 'Công bố' (Publish)." },
+            { id: "b", text: "b. Việc bấm tính năng \"Xem trước\" giúp các bạn học sinh chủ động kiểm tra xem bố cục có bị lỗi trên điện thoại hay máy tính bảng không.", correct: true, expl: "Trong chế độ Xem trước, hệ thống cung cấp các nút giả lập môi trường màn hình kích cỡ điện thoại, tablet để kĩ thuật viên tự sửa lỗi." },
+            { id: "c", text: "c. Để sao chép đường dẫn gửi cho cô giáo, bạn Bình vào phần \"Thay đổi hình ảnh\" để lấy link hình ảnh gốc nộp thay cho link trang web.", correct: false, expl: "Nộp đường link ảnh gốc là sai kĩ thuật. Bình phải sử dụng tính năng 'Sao chép địa chỉ liên kết' trên thanh công cụ sau khi đã xuất bản web." },
+            { id: "d", text: "d. Ngay khi bạn An vừa nhấn nút \"Công bố\", hệ thống đã tự động lấy hình đại diện cá nhân của An để thiết kế làm Favicon cho trang web.", correct: false, expl: "Google Sites không tự động thiết kế Favicon. Học sinh phải tự thiết kế tệp đồ họa, sau đó thủ công upload vào phần 'Cài đặt hình ảnh của thương hiệu'." }
+        ]}
+    ];
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1">BÀI 28: THỰC HÀNH TỔNG HỢP VỚI GOOGLE SITES </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_28');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI THỰC HÀNH TỔNG HỢP
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Bước \"Định hình ý tưởng\" bao gồm thao tác chính nào?", options: ["Xác định mục đích và đối tượng.", "Tải các hình ảnh từ trên mạng.", "Chỉnh sửa phông chữ toàn trang.", "Chèn bản đồ số vào trang web."], correct: 0, explanation: "Bước Định hình ý tưởng là khâu đầu tiên, yêu cầu người thiết kế phải xác định rõ mục đích của website (làm để làm gì) và đối tượng người dùng (ai sẽ xem) để có hướng phát triển nội dung phù hợp." },
+        { id: "d1_2", type: "single", question: "Câu 2: Chủ đề nào sau đây được gợi ý trong sách giáo khoa?", options: ["Lớp 12A thân yêu của chúng tôi.", "Lập trình trí tuệ nhân tạo số.", "Phần mềm tính toán doanh thu.", "Trò chơi điện tử trên di động."], correct: 0, explanation: "Chủ đề 'Lớp 12A thân yêu của chúng tôi' (hoặc kỉ yếu lớp) là một trong những chủ đề thực hành tổng hợp gần gũi, thiết thực được SGK Tin học gợi ý cho học sinh." },
+        { id: "d1_3", type: "single", question: "Câu 3: Bước \"Thiết kế cấu trúc\" yêu cầu người làm web phải làm gì?", options: ["Lên dàn ý và phác thảo bố cục.", "Mua một tên miền thật đắt tiền.", "Thiết kế biểu tượng favicon mới.", "Xoá mọi dữ liệu trên máy tính."], correct: 0, explanation: "Thiết kế cấu trúc là khâu lên dàn ý, sơ đồ cây và phác thảo các bố cục nội dung (layout) trước khi bắt tay vào thực hiện trên phần mềm máy tính." },
+        { id: "d1_4", type: "single", question: "Câu 4: Việc chuẩn bị logo và ảnh nền thuộc vào bước nào dưới đây?", options: ["Thuộc bước chuẩn bị tư liệu web.", "Thuộc bước định hình ý tưởng web.", "Thuộc bước thiết kế cấu trúc web.", "Thuộc bước xuất bản trang web số."], correct: 0, explanation: "Chuẩn bị logo, ảnh nền, và biên soạn nội dung bài viết thô thuộc bước 'Chuẩn bị tư liệu', giúp quá trình xây dựng web diễn ra liền mạch." },
+        { id: "d1_5", type: "single", question: "Câu 5: Thanh điều hướng trên Google Sites có thể được thiết lập ở dạng nào?", options: ["Thanh điều hướng theo chiều ngang.", "Thanh điều hướng hình tròn đồng tâm.", "Thanh điều hướng có dạng lượn sóng.", "Thanh điều hướng theo hình xoắn ốc."], correct: 0, explanation: "Thanh điều hướng (Menu) trên Google Sites hỗ trợ hai định dạng hiển thị tiêu chuẩn: theo chiều ngang (ở trên cùng) và theo chiều dọc (ở bên cạnh trái)." },
+        { id: "d1_6", type: "single", question: "Câu 6: Google Sites cung cấp sẵn yếu tố nào để người dùng thiết kế nhanh hơn?", options: ["Các mẫu giao diện được tạo sẵn.", "Các đoạn mã lập trình phức tạp.", "Các trò chơi giải trí trực tuyến.", "Các bộ phim điện ảnh chất lượng."], correct: 0, explanation: "Các mẫu giao diện (Themes) cung cấp sẵn bộ phối màu, bố cục và phông chữ chuẩn hóa, giúp rút ngắn thời gian thiết kế cho những người không chuyên." },
+        { id: "d1_7", type: "single", question: "Câu 7: Trong giai đoạn \"Chuẩn bị tư liệu\", người dùng cần tìm kiếm những gì?", options: ["Thông tin, hình ảnh và video số.", "Các thiết bị phần cứng máy tính.", "Những đoạn mã nguồn mã hoá web.", "Mật khẩu của các người dùng khác."], correct: 0, explanation: "Chuẩn bị tư liệu bao gồm việc thu thập thông tin (văn bản thô), hình ảnh minh họa và video liên quan trực tiếp đến chủ đề của trang web." },
+        { id: "d1_8", type: "single", question: "Câu 8: Để đổi giao diện trang web, người dùng nháy chuột vào bảng chọn nào?", options: ["Nháy chuột vào bảng chọn Giao diện.", "Nháy chuột vào bảng chọn Hình ảnh.", "Nháy chuột vào bảng chọn Thiết lập.", "Nháy chuột vào bảng chọn Trình chiếu."], correct: 0, explanation: "Bảng chọn 'Giao diện' (Themes) là khu vực chuyên biệt để quản lí và tuỳ chỉnh toàn cục về màu sắc, phông chữ và kiểu dáng của trang web." },
+        { id: "d1_9", type: "single", question: "Câu 9: Đối tượng người dùng ảnh hưởng trực tiếp đến yếu tố nào của trang web?", options: ["Định hình phong cách thiết kế web.", "Tốc độ kết nối của mạng internet.", "Giá tiền của máy tính xách tay.", "Độ phân giải của màn hình thiết bị."], correct: 0, explanation: "Đối tượng người dùng (độ tuổi, sở thích, trình độ) ảnh hưởng trực tiếp đến việc quyết định chọn phong cách thiết kế, cách phối màu và ngôn ngữ sử dụng." },
+        { id: "d1_10", type: "single", question: "Câu 10: Tại sao phải xác định đối tượng người dùng ở bước định hình ý tưởng?", options: ["Để lựa chọn phong cách thiết kế chuẩn.", "Để ngăn chặn sự tấn công của tin tặc.", "Để tự động hoá quá trình viết mã lệnh.", "Để làm giảm dung lượng của trang web."], correct: 0, explanation: "Xác định rõ đối tượng người dùng giúp tác giả chọn đúng phong cách thiết kế, phông chữ, và màu sắc phù hợp để thu hút đúng tệp người xem mục tiêu." },
+        { id: "d1_11", type: "single", question: "Câu 11: Việc lập dàn ý trước khi làm web mang lại lợi ích kĩ thuật nào sau đây?", options: ["Giúp tổ chức nội dung web thật mạch lạc.", "Giúp tăng tốc độ truy cập internet lên.", "Giúp chuyển đổi văn bản sang âm thanh.", "Giúp thiết bị tự động tải trang web về."], correct: 0, explanation: "Lập dàn ý (sơ đồ cây) giúp cấu trúc nội dung được tổ chức mạch lạc, phân cấp rõ ràng thành các trang chủ và trang con logic, tránh bị thiếu sót." },
+        { id: "d1_12", type: "single", question: "Câu 12: Chức năng \"Mẫu giao diện\" (Themes) của Google Sites có ưu điểm gì lớn nhất?", options: ["Tiết kiệm thời gian thiết kế màu sắc.", "Tự động dịch trang web sang tiếng Anh.", "Biến trang web thành một bộ phim dài.", "Tự động trả lời tin nhắn của người xem."], correct: 0, explanation: "Mẫu giao diện (Themes) giúp thiết lập nhanh chóng sự đồng bộ về bảng màu và phông chữ trên toàn bộ website, tiết kiệm đáng kể thời gian căn chỉnh thủ công." },
+        { id: "d1_13", type: "single", question: "Câu 13: Việc đặt thanh điều hướng theo chiều ngang mang lại trải nghiệm xem như thế nào?", options: ["Giúp bảng chọn hiển thị trải dài phía trên.", "Giúp ẩn hoàn toàn thanh bảng chọn đi luôn.", "Giúp chuyển tất cả hình ảnh thành văn bản.", "Giúp trang web tự động nhấp nháy liên tục."], correct: 0, explanation: "Thanh điều hướng ngang giúp các mục menu hiển thị trải dài trên đỉnh trang, rất thuận tiện cho người dùng máy tính bàn trong việc quan sát tổng thể các danh mục." },
+        { id: "d1_14", type: "single", question: "Câu 14: Quá trình chuẩn bị hình ảnh cần được thực hiện trong giai đoạn nào là tốt nhất?", options: ["Nên được thực hiện ở bước chuẩn bị tư liệu.", "Nên được thực hiện sau khi web đã xuất bản.", "Nên được thực hiện khi người dùng yêu cầu.", "Nên được thực hiện lúc xoá bỏ trang web đi."], correct: 0, explanation: "Chuẩn bị hình ảnh trước (sưu tầm, cắt cúp) ở khâu 'Chuẩn bị tư liệu' giúp tránh gián đoạn lúc lắp ráp giao diện, đảm bảo các ảnh có chất lượng và kích thước nhất quán." },
+        { id: "d1_15", type: "single", question: "Câu 15: Thiết kế cấu trúc trang web có vai trò tương tự như công việc nào ngoài đời thực?", options: ["Vẽ bản vẽ thiết kế kiến trúc của ngôi nhà.", "Trồng thật nhiều cây xanh trong khu vườn.", "Sửa chữa các linh kiện điện tử bị hỏng hóc.", "Tính toán chi phí tiền điện của tháng trước."], correct: 0, explanation: "Thiết kế cấu trúc (dàn ý, bố cục khối) giống như vẽ bản thiết kế kiến trúc trước khi xây một ngôi nhà, giúp trang web được xây dựng vững chắc và không lộn xộn." },
+        { id: "d1_16", type: "single", question: "Câu 16: Sự khác biệt chính giữa \"Định hình ý tưởng\" và \"Thiết kế cấu trúc\" là gì?", options: ["Ý tưởng là mục tiêu, cấu trúc là bố cục.", "Ý tưởng là bố cục, cấu trúc là mục tiêu.", "Cả hai bước đều chỉ thiết kế logo trang.", "Cả hai bước đều yêu cầu lập trình mã code."], correct: 0, explanation: "Định hình ý tưởng là xác định mục tiêu chung và đối tượng hướng tới, còn Thiết kế cấu trúc là xây dựng sơ đồ các trang và sắp xếp bố cục nội dung trên từng trang đó." },
+        { id: "d1_17", type: "single", question: "Câu 17: Vì sao Google Sites cung cấp tính năng thay đổi hình thức thanh điều hướng?", options: ["Để tối ưu hiển thị cho nhiều thiết bị khác.", "Để làm cho máy tính hoạt động chậm lại bớt.", "Để xoá bỏ mọi dữ liệu văn bản trên trang web.", "Để tự động phát nhạc khi mở trang web mới."], correct: 0, explanation: "Việc thay đổi thanh điều hướng (Trên cùng hoặc Bên) giúp người quản trị tối ưu hoá trải nghiệm giao diện cho từng loại thiết bị (PC màn hình ngang hoặc điện thoại dọc)." },
+        { id: "d1_18", type: "single", question: "Câu 18: Việc \"đặt tên trang web\" trong giai đoạn chuẩn bị có ý nghĩa thực tiễn là gì?", options: ["Giúp người xem dễ nhận diện chủ đề trang.", "Giúp giấu thông tin của người quản trị viên.", "Giúp thay thế hoàn toàn hình ảnh biểu tượng.", "Giúp bảo mật thông tin tài khoản ngân hàng."], correct: 0, explanation: "Đặt tên trang web giúp định danh thương hiệu trực quan, người dùng sẽ dễ dàng nhận diện ngay chủ đề chính của website khi nhìn vào tab trình duyệt." },
+        { id: "d1_19", type: "single", question: "Câu 19: Lớp 12A muốn làm trang web kỉ yếu tông màu pastel nhẹ nhàng, thao tác nào đúng?", options: ["Chọn thẻ Giao diện và tuỳ chỉnh màu sắc.", "Chọn thẻ Chèn và nhúng một đoạn video.", "Chọn thẻ Trang và xoá tất cả trang con.", "Chọn thẻ Cài đặt và bật thông báo lỗi."], correct: 0, explanation: "Để thay đổi màu sắc tổng thể sang tông pastel, thao tác đúng là chọn bảng chọn 'Giao diện' (Themes) và nhấp vào tính năng tuỳ chỉnh màu sắc (Custom color) để áp dụng." },
+        { id: "d1_20", type: "single", question: "Câu 20: Em muốn thanh menu nằm trải ngang ở trên đỉnh trang web, em cài đặt như thế nào?", options: ["Điều hướng -> Phân tử xuất hiện -> Trên cùng.", "Điều hướng -> Phân tử xuất hiện -> Bên trái.", "Giao diện -> Phân tử xuất hiện -> Dưới cùng.", "Hình ảnh -> Phân tử xuất hiện -> Ở giữa tâm."], correct: 0, explanation: "Điều hướng ngang được thiết lập bằng cách vào biểu tượng Cài đặt -> Điều hướng (Navigation) -> Chọn chế độ hiển thị (Mode) là 'Trên cùng' (Top)." },
+        { id: "d1_21", type: "single", question: "Câu 21: Nhóm của em đang băn khoăn chưa biết chọn tông màu nào, giải pháp tốt nhất là gì?", options: ["Chọn thử các Mẫu giao diện có sẵn của Sites.", "Xoá bỏ trang web và dùng phần mềm vẽ Paint.", "Để trắng toàn bộ trang web không dùng màu.", "Tải hàng trăm bức ảnh đầy màu sắc và chèn."], correct: 0, explanation: "Google Sites cung cấp kho mẫu Giao diện (Themes) đa dạng được phối màu chuyên nghiệp. Nhóm chỉ cần click thử lần lượt từng mẫu để chọn ra tông màu phù hợp nhất." },
+        { id: "d1_22", type: "single", question: "Câu 22: Để bức ảnh \"Tập thể lớp\" làm banner không bị cắt mất mặt, em sử dụng tính năng gì?", options: ["Sử dụng biểu tượng di chuyển vị trí hình nền.", "Sử dụng biểu tượng chèn bản đồ địa lí số hoá.", "Sử dụng biểu tượng tạo liên kết trang nội bộ.", "Sử dụng biểu tượng xoá định dạng của văn bản."], correct: 0, explanation: "Khi tỷ lệ ảnh không khớp với khung banner, em sử dụng công cụ 'Neo hình ảnh' (Anchor image) để điều chỉnh dịch chuyển bức ảnh lên/xuống sao cho khuôn mặt nằm đúng trọng tâm." },
+        { id: "d1_23", type: "single", question: "Câu 23: Khi thực hành nhóm, việc đầu tiên các bạn cần thống nhất với nhau là công việc gì?", options: ["Cùng xác định mục đích và đối tượng người xem.", "Cùng nhau tải tất cả các trò chơi về máy tính.", "Cùng nhau đổi mật khẩu của tài khoản quản trị.", "Cùng nhau xoá toàn bộ bài viết trên trang web."], correct: 0, explanation: "Khi làm việc nhóm, việc đầu tiên (Định hình ý tưởng) cần thống nhất chung là mục đích và đối tượng người dùng để các thành viên hiểu đúng định hướng dự án." },
+        { id: "d1_24", type: "single", question: "Câu 24: Em có một đoạn video hoạt động ngoại khoá và muốn đưa lên trang, em dùng thẻ nào?", options: ["Mở bảng chọn Chèn và chọn công cụ YouTube.", "Mở bảng chọn Trang và bấm tạo một trang con.", "Mở bảng chọn Giao diện và đổi phông chữ mới.", "Mở phần Cài đặt và đổi màu thanh điều hướng."], correct: 0, explanation: "Thẻ Chèn (Insert) cung cấp rất nhiều công cụ, trong đó công cụ YouTube giúp tìm kiếm và nhúng trực tiếp video từ nền tảng này vào thẳng trang web." },
+        { id: "d1_25", type: "single", question: "Câu 25: Để tiêu đề \"Kỉ niệm THPT\" hiển thị rõ trên nền ảnh sân trường sáng, em dùng nút nào?", options: ["Bấm nút tự động điều chỉnh độ sáng hình nền.", "Bấm nút sao chép hình ảnh sang trang web mới.", "Bấm nút chia sẻ đường dẫn trang cho các bạn.", "Bấm nút thùng rác để xoá hoàn toàn hình nền."], correct: 0, explanation: "Chức năng 'Tự động điều chỉnh độ sáng để dễ đọc' (biểu tượng 3 ngôi sao lấp lánh) sẽ tạo một màng lọc tối lên bức ảnh sáng giúp phần chữ trắng bên trên nổi bật rõ ràng." },
+        { id: "d1_26", type: "single", question: "Câu 26: Nhóm thiết kế một logo lớp hình vuông, biểu tượng này tối ưu nhất để dùng làm chức năng gì?", options: ["Sử dụng để làm biểu tượng Favicon của web.", "Sử dụng để làm hình nền chính của toàn web.", "Sử dụng để làm video trình chiếu màn hình.", "Sử dụng để làm nút bấm tải dữ liệu xuống."], correct: 0, explanation: "Khối hình vuông kích thước nhỏ gọn (tỉ lệ 1:1) là định dạng chuẩn quốc tế tối ưu nhất để làm Favicon (Biểu tượng nhận diện trên tab của trình duyệt)." },
+        { id: "d1_27", type: "single", question: "Câu 27: Nếu trang chủ đã quá dài, em nên tổ chức cấu trúc web như thế nào cho khoa học nhất?", options: ["Tạo thêm các trang con và gắn vào thanh menu.", "Xoá bớt một nửa nội dung để trang ngắn lại.", "Đổi toàn bộ chữ thành hình ảnh để tiết kiệm.", "Đóng trang web lại và không công bố lên mạng."], correct: 0, explanation: "Khi một trang chứa quá nhiều nội dung, phương án khoa học nhất là bóc tách chúng ra thành các trang con riêng biệt và quản lí liên kết thông qua thanh menu điều hướng." },
+        { id: "d1_28", type: "single", question: "Câu 28: Trong dự án cuối kì, thao tác \"Lấy ý kiến phản hồi\" thường ứng dụng công cụ Google nào?", options: ["Ứng dụng Google Forms nhúng vào trong web.", "Ứng dụng Google Maps nhúng vào trong web.", "Ứng dụng Google Translate dịch thuật tự động.", "Ứng dụng Google Earth xem bản đồ vệ tinh số."], correct: 0, explanation: "Google Forms (Biểu mẫu) là công cụ chuyên dụng và mạnh mẽ nhất của Google dùng để nhúng vào web nhằm tạo phiếu khảo sát, lấy ý kiến đóng góp từ người dùng." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1. Câu lạc bộ Truyền thông trường THPT Nguyễn Du đang thực hiện dự án cuối kì thiết kế website \"Dấu ấn tuổi 17\". Trưởng nhóm Lan đang phân công nhiệm vụ cho các thành viên.", items: [
+            { id: "a", text: "a. Việc Lan yêu cầu các bạn đi chụp ảnh và quay video trường lớp thuộc bước \"Chuẩn bị tư liệu\".", correct: true, expl: "Việc thu thập ảnh và quay video thực chất là quá trình chuẩn bị các nguyên liệu thô để lắp ráp website, công đoạn này nằm hoàn toàn ở bước 'Chuẩn bị tư liệu'." },
+            { id: "b", text: "b. Bước \"Định hình ý tưởng\" phải được thực hiện sau khi trang web đã hoàn thành và xuất bản lên mạng.", correct: false, expl: "'Định hình ý tưởng' là khâu khởi nguồn đầu tiên của bất kì một dự án thiết kế nào. Nó bắt buộc phải làm trước mọi công đoạn khác để xác định đúng hướng đi." },
+            { id: "c", text: "c. Để tiết kiệm thời gian chọn phối màu sắc, Lan có thể vào bảng chọn \"Giao diện\" và áp dụng một mẫu (Theme) có sẵn của Google Sites.", correct: true, expl: "Các Mẫu Giao diện (Theme) đã được Google tích hợp sẵn các bảng màu và bộ phông chữ hài hoà, giúp người dùng tiết kiệm tối đa thời gian thiết kế mĩ thuật." },
+            { id: "d", text: "d. Nếu các bạn muốn thanh điều hướng của website nằm ngang ở trên đỉnh màn hình, Lan cần vào phần Cài đặt -> Điều hướng và chọn \"Bên trái\".", correct: false, expl: "Để thanh điều hướng nằm ngang trên đỉnh, Lan phải chọn thuộc tính 'Trên cùng' (Top). Thuộc tính 'Bên trái' (Side) sẽ đẩy menu thành cột dọc ở cạnh màn hình." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2. Nhóm học tập của lớp 12A1 đang xây dựng trang web \"Hành Trình Số\" để lưu giữ kỉ niệm trước ngày tốt nghiệp THPT.", items: [
+            { id: "a", text: "a. Xây dựng cấu trúc bằng cách phác thảo dàn ý là một trong những bước chuẩn bị quan trọng khi làm trang web.", correct: true, expl: "Phác thảo dàn ý là bước Thiết kế cấu trúc cực kì bắt buộc để tổ chức dữ liệu một cách khoa học, tránh bị thiếu sót các danh mục nội dung quan trọng." },
+            { id: "b", text: "b. Do đối tượng hướng đến là các bạn học sinh lớp 12, nhóm nên chọn phong cách thiết kế trang nhã, phông chữ dễ đọc và hình ảnh tươi sáng.", correct: true, expl: "Phong cách thiết kế tươi sáng, trẻ trung và dễ đọc là sự lựa chọn bám sát đặc điểm tâm lí lứa tuổi của học sinh khối 12 để tạo sự đồng cảm." },
+            { id: "c", text: "c. Để bảo mật thông tin lớp, bạn quản trị chỉ có thể dùng phần mềm Microsoft Word để thiết kế giao diện trang web này thay vì nền tảng Google Sites.", correct: false, expl: "Trang web được thiết kế trực tuyến bằng công cụ Google Sites. Microsoft Word là phần mềm soạn thảo văn bản, không thể dùng để thiết kế và xuất bản website." },
+            { id: "d", text: "d. Khi tải bức ảnh chụp tập thể lớp lên làm phần đầu trang, nếu bức ảnh che mất tiêu đề, nhóm có thể dùng biểu tượng có 3 ngôi sao để tự động điều chỉnh độ sáng nền.", correct: true, expl: "Tính năng tự động điều chỉnh độ sáng (3 ngôi sao) sẽ tự động tính toán và tạo một màng lọc làm tối ảnh nền, giúp chữ tiêu đề hiển thị thật nổi bật." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3. Cô Lê Huyền Sinh giao cho bạn Tuấn nhiệm vụ hoàn thiện phần điều hướng và giao diện cho dự án website \"Quê hương tôi\".", items: [
+            { id: "a", text: "a. Thanh điều hướng (Menu) của Google Sites có thể được thiết lập hiển thị theo chiều ngang hoặc dọc (bên).", correct: true, expl: "Nền tảng Google Sites cung cấp linh hoạt hai lựa chọn hiển thị thanh điều hướng: Nằm ngang (Trên cùng) hoặc nằm dọc thu gọn (Bên)." },
+            { id: "b", text: "b. Việc thay đổi mẫu giao diện (Theme) sẽ không bao giờ làm thay đổi phông chữ và bảng màu của trang web.", correct: false, expl: "Mục đích lớn nhất của việc thay đổi mẫu Giao diện (Theme) chính là việc thay đổi hệ thống phông chữ và bảng phối màu toàn cục của website." },
+            { id: "c", text: "c. Để thanh điều hướng xuất hiện trải ngang trên cùng trang web, Tuấn vào mục Cài đặt -> Điều hướng và chọn \"Trên cùng\".", correct: true, expl: "Vào phần Cài đặt hệ thống (biểu tượng bánh răng) -> Điều hướng -> Chọn vị trí 'Trên cùng' là thao tác kĩ thuật chính xác để dàn ngang các nút bấm." },
+            { id: "d", text: "d. Khi đổi từ mẫu giao diện này sang mẫu giao diện khác, tất cả nội dung bài viết và hình ảnh của Tuấn sẽ tự động bị xoá sạch.", correct: false, expl: "Đổi giao diện (Theme) chỉ thay đổi 'lớp áo mĩ thuật' bên ngoài. Mọi dữ liệu cốt lõi (hình ảnh, văn bản, bản đồ) đều được hệ thống bảo toàn nguyên vẹn." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Giai đoạn \"Thiết kế cấu trúc\" trang web bao gồm những công việc chính nào?", options: ["Lập dàn ý và phác thảo các bố cục.", "Cài đặt hệ điều hành cho máy tính.", "Xoá bỏ mọi tệp tin trên hệ thống.", "Mua sắm thiết bị phần cứng mới."], correct: 0, explanation: "Thiết kế cấu trúc là quá trình kĩ thuật vẽ sơ đồ hình cây của trang web và phác thảo chi tiết bố cục (layout) cho từng trang trước khi lên máy." },
+        { id: "d2_2", type: "single", question: "Câu 2: Một trong những chủ đề thực hành tổng hợp được sách giáo khoa gợi ý là gì?", options: ["Lưu bút trước ngày tốt nghiệp THPT.", "Viết chương trình phần mềm quản lí.", "Thiết kế hệ thống mạng máy tính ảo.", "Sửa chữa bo mạch của máy chiếu số."], correct: 0, explanation: "Chủ đề 'Lưu bút trước ngày tốt nghiệp THPT' là một dự án thực hành mang tính ứng dụng cao, bám sát thực tiễn học sinh, được gợi ý để làm sản phẩm website." },
+        { id: "d2_3", type: "single", question: "Câu 3: Bước nào yêu cầu xác định đối tượng người dùng trước khi tiến hành thiết kế?", options: ["Thuộc bước định hình ý tưởng web.", "Thuộc bước chuẩn bị tư liệu trang.", "Thuộc bước thay đổi giao diện web.", "Thuộc bước xuất bản trang web số."], correct: 0, explanation: "Xác định rõ đối tượng người dùng (học sinh, giáo viên hay khách hàng) là công việc cốt lõi của bước đầu tiên: Định hình ý tưởng website." },
+        { id: "d2_4", type: "single", question: "Câu 4: Việc tìm kiếm hình ảnh và làm logo được xếp vào giai đoạn chuẩn bị nào?", options: ["Xếp vào giai đoạn chuẩn bị tư liệu.", "Xếp vào giai đoạn thiết kế cấu trúc.", "Xếp vào giai đoạn xuất bản lên mạng.", "Xếp vào giai đoạn định hình ý tưởng."], correct: 0, explanation: "Toàn bộ công việc thu thập dữ liệu thô như thiết kế logo, tìm hình ảnh minh hoạ, chuẩn bị video đều được phân bổ vào giai đoạn 'Chuẩn bị tư liệu'." },
+        { id: "d2_5", type: "single", question: "Câu 5: Thanh điều hướng (menu) của trang web có thể được đặt ở vị trí ngang tại đâu?", options: ["Ở vị trí trên cùng của trang web.", "Ở vị trí chính giữa của trang web.", "Ở vị trí dưới đáy của trang web.", "Ở vị trí trôi nổi trên trang web."], correct: 0, explanation: "Nếu được thiết lập ở chế độ nằm ngang, thanh điều hướng sẽ tự động được hệ thống neo cố định ở vị trí 'Trên cùng' của trang web." },
+        { id: "d2_6", type: "single", question: "Câu 6: Bảng chọn nào trên Google Sites cung cấp sẵn các mẫu (themes) có sẵn?", options: ["Bảng chọn mang tên Giao diện.", "Bảng chọn mang tên Chèn biểu.", "Bảng chọn mang tên Thêm trang.", "Bảng chọn mang tên Cài đặt số."], correct: 0, explanation: "Thẻ 'Giao diện' (Themes) ở góc phải chứa các bộ phối màu, kiểu phông chữ nghệ thuật đã được các chuyên gia của Google tạo sẵn cho người dùng chọn." },
+        { id: "d2_7", type: "single", question: "Câu 7: Mục đích chính của việc \"định hình phong cách thiết kế\" là để làm gì?", options: ["Phù hợp với đối tượng người dùng.", "Làm giảm chi phí duy trì trang web.", "Tự động mã hoá mật khẩu hệ thống.", "Xoá bỏ các đoạn mã độc trên mạng."], correct: 0, explanation: "Phong cách thiết kế (trẻ trung, năng động hay nghiêm túc, học thuật) phải được định hình kĩ để bảo đảm nó phục vụ và thu hút đúng đối tượng người dùng mục tiêu." },
+        { id: "d2_8", type: "single", question: "Câu 8: Để tải một đoạn video có sẵn lên trang web, em sử dụng bảng chọn nào?", options: ["Truy cập vào bảng chọn công cụ Chèn.", "Truy cập vào bảng chọn công cụ Trang.", "Truy cập vào bảng chọn đổi Giao diện.", "Truy cập vào bảng chọn đổi Ngôn ngữ."], correct: 0, explanation: "Bảng chọn 'Chèn' (Insert) là trung tâm tích hợp tất cả các lệnh thêm đối tượng ngoại vi (Video, Ảnh, Biểu mẫu, Văn bản, Bản đồ) vào thân trang web." },
+        { id: "d2_9", type: "single", question: "Câu 9: Khi chuẩn bị tư liệu, việc \"đặt tên trang web\" giúp xác định điều gì?", options: ["Xác định thương hiệu và chủ đề web.", "Xác định độ sáng tối của màn hình.", "Xác định tốc độ tải trang web nhanh.", "Xác định địa chỉ vật lí của máy chủ."], correct: 0, explanation: "Tên trang web giống như một chiếc biển hiệu, nó giúp người truy cập xác định ngay lập tức thương hiệu và chủ đề nội dung bao quát của toàn bộ website." },
+        { id: "d2_10", type: "single", question: "Câu 10: Sự liên quan giữa \"mục đích thiết kế\" và \"phong cách thiết kế\" là như thế nào?", options: ["Mục đích sẽ quyết định đến phong cách.", "Phong cách sẽ quyết định lại mục đích.", "Cả hai yếu tố này không liên quan nhau.", "Phong cách chỉ áp dụng cho trang phụ."], correct: 0, explanation: "Mục đích của website (dùng để bán hàng, giải trí hay phục vụ giáo dục) sẽ quyết định trực tiếp đến phong cách thiết kế màu sắc, phông chữ và bố cục UI/UX." },
+        { id: "d2_11", type: "single", question: "Câu 11: Phác thảo bố cục (layout) ở bước thiết kế cấu trúc mang lại hiệu quả gì?", options: ["Trực quan hoá cách sắp xếp các nội dung.", "Giúp tạo ra một trò chơi điện tử hấp dẫn.", "Đổi mật khẩu của trình duyệt trang web.", "Tự động viết bài thay cho người quản trị."], correct: 0, explanation: "Phác thảo bố cục (Layout) giúp người làm web hình dung trực quan cách các hình ảnh, văn bản được sắp xếp theo tỷ lệ trước khi kéo thả thật trên máy tính." },
+        { id: "d2_12", type: "single", question: "Câu 12: Các \"Mẫu giao diện\" (Themes) giúp người mới thiết kế web vượt qua khó khăn gì?", options: ["Khó khăn trong phối màu và chọn phông chữ.", "Khó khăn trong việc mua thiết bị phần cứng.", "Khó khăn trong việc kéo cáp mạng internet.", "Khó khăn trong việc học tiếng nước ngoài."], correct: 0, explanation: "Các mẫu Themes có sẵn giải quyết khó khăn lớn nhất của người dùng không chuyên: không biết cách phối màu hài hoà và kết hợp phông chữ sao cho đẹp mắt." },
+        { id: "d2_13", type: "single", question: "Câu 13: Việc đưa thanh điều hướng lên trên cùng theo chiều ngang có tác dụng gì?", options: ["Giúp tiết kiệm không gian và dễ dàng thao tác.", "Giúp ẩn hoàn toàn các chức năng của trang web.", "Giúp biến trang web thành một bảng tính Excel.", "Giúp xoá mọi bài viết đã đăng trên trang chủ."], correct: 0, explanation: "Thanh điều hướng ngang ở viền trên cùng giúp tiết kiệm không gian dọc của trang và là thói quen thao tác tìm kiếm quen thuộc nhất của người dùng máy tính." },
+        { id: "d2_14", type: "single", question: "Câu 14: Giai đoạn \"Định hình ý tưởng\" đóng vai trò như thế nào trong cả dự án?", options: ["Là kim chỉ nam định hướng cho toàn dự án.", "Là bước thừa thãi và gây lãng phí thời gian.", "Là khâu cuối cùng sau khi xuất bản trang web.", "Là công cụ để dịch ngôn ngữ tiếng Việt sang."], correct: 0, explanation: "Ý tưởng đóng vai trò như bản lề, nó định hướng cho tất cả các khâu kĩ thuật phía sau (từ cấu trúc, nội dung đến giao diện) đi đúng trọng tâm, không bị chệch hướng." },
+        { id: "d2_15", type: "single", question: "Câu 15: Việc chuẩn bị logo và ảnh nền trước khi thiết kế trên máy giúp ích gì?", options: ["Đảm bảo tính nhất quán và quá trình làm nhanh.", "Làm cho máy tính tự động bật khi có điện vào.", "Tránh được sự tấn công của các virus nguy hiểm.", "Không cần phải thiết kế thêm bất kì nội dung gì."], correct: 0, explanation: "Chuẩn bị kĩ tài nguyên hình ảnh trước sẽ giúp quá trình lắp ráp giao diện trên máy tính diễn ra liên tục, đảm bảo tính thẩm mĩ nhất quán cho cả website." },
+        { id: "d2_16", type: "single", question: "Câu 16: Khi tạo trang lưu bút THPT, tư liệu nào sau đây là quan trọng cần chuẩn bị?", options: ["Hình ảnh kỉ niệm và video của tập thể lớp.", "Các đoạn mã lập trình của phần mềm quản lí.", "Bản đồ vệ tinh địa lí chi tiết của quốc gia.", "Phần mềm diệt virus phiên bản cập nhật mới."], correct: 0, explanation: "Đối với chủ đề đặc thù là Lưu bút thanh xuân, tài nguyên quan trọng mang ý nghĩa cốt lõi nhất chính là hình ảnh và video lưu giữ kỉ niệm của tập thể lớp." },
+        { id: "d2_17", type: "single", question: "Câu 17: Tầm quan trọng của thanh điều hướng (menu) trên một website là gì?", options: ["Giúp người dùng di chuyển qua lại các trang.", "Giúp máy tính tự động phát nhạc khi mở web.", "Giúp biến đổi toàn bộ hình ảnh thành văn bản.", "Giúp ngăn chặn người khác sao chép nội dung."], correct: 0, explanation: "Thanh điều hướng giống như bộ khung xương của một toà nhà, nó là công cụ thiết yếu nhất để người dùng click chuột truy cập qua lại giữa các trang nội bộ." },
+        { id: "d2_18", type: "single", question: "Câu 18: Việc thay đổi mẫu Giao diện (Theme) ảnh hưởng đến những yếu tố nào của trang?", options: ["Ảnh hưởng đến bảng màu và phông chữ trang.", "Ảnh hưởng đến tốc độ của kết nối mạng wifi.", "Ảnh hưởng đến tuổi thọ của pin trên máy tính.", "Ảnh hưởng đến địa chỉ URL của trang web đó."], correct: 0, explanation: "Việc thay đổi mẫu Theme sẽ ngay lập tức áp dụng một bảng màu (Color Palette) và hệ thống phông chữ (Typography) nghệ thuật mới cho toàn bộ các trang web." },
+        { id: "d2_19", type: "single", question: "Câu 19: Lớp em muốn thiết kế web về \"Quê hương tôi\", nhóm em nên thu thập tư liệu gì?", options: ["Những video phong cảnh và ảnh chụp xóm nhỏ.", "Các đoạn mã nguồn của một hệ điều hành mới.", "Tài liệu hướng dẫn sử dụng máy chiếu phòng.", "Danh sách các mật khẩu của mạng wifi ở lớp."], correct: 0, explanation: "Với chủ đề về Quê hương, tư liệu phù hợp và mang tính ứng dụng cao nhất chính là hình ảnh phong cảnh, di tích và video giới thiệu văn hoá địa phương." },
+        { id: "d2_20", type: "single", question: "Câu 20: Em muốn đổi thanh menu từ ngang sang dọc nằm bên trái màn hình, thao tác là?", options: ["Vào mục Cài đặt -> Điều hướng -> Chọn Bên.", "Vào mục Giao diện -> Màu sắc -> Chọn Trái.", "Vào mục Chèn -> Hình ảnh -> Chọn Bên Trái.", "Vào mục Trang -> Nháy đúp -> Chọn Bên Trái."], correct: 0, explanation: "Điều hướng dọc (bên trái) được kích hoạt dễ dàng trong phần Cài đặt hệ thống (biểu tượng bánh răng) -> Điều hướng -> Tuỳ chọn chế độ hiển thị là 'Bên'." },
+        { id: "d2_21", type: "single", question: "Câu 21: Khi thiết kế trang \"Kỉ niệm 12A\", em muốn đổi tông màu web sang đỏ, em dùng thẻ nào?", options: ["Sử dụng thẻ Giao diện để tuỳ chỉnh lại màu sắc.", "Sử dụng thẻ Chèn để kéo hình ảnh màu đỏ vào.", "Sử dụng thẻ Trang để đổi tên trang thành màu.", "Sử dụng tính năng xoá trang web làm lại từ đầu."], correct: 0, explanation: "Tại thẻ Giao diện (Themes), người dùng có thể nhấp vào biểu tượng hộp mực (Custom color) để đổi toàn bộ nền và dải phân cách giao diện sang tông màu đỏ." },
+        { id: "d2_22", type: "single", question: "Câu 22: Để dàn ý cấu trúc web trực quan, nhóm em có thể vẽ nháp ra đâu trước khi thực hành?", options: ["Vẽ sơ đồ tư duy trên giấy hoặc bằng phần mềm.", "Chạy trực tiếp các dòng mã lệnh trên máy tính.", "Định dạng lại toàn bộ ổ cứng máy tính trên lớp.", "Gọi điện thoại để mô tả cho các thành viên khác."], correct: 0, explanation: "Công việc phác thảo sơ đồ cây và phân cấp trang web nên được vẽ trực quan ra nháp bằng sơ đồ tư duy trên giấy hoặc dùng phần mềm trước khi bắt tay làm trên Sites." },
+        { id: "d2_23", type: "single", question: "Câu 23: Khi bức ảnh tập thể lớp chèn vào phần đầu trang bị tối màu, em khắc phục thế nào?", options: ["Bấm nút có hình 3 ngôi sao để điều chỉnh sáng.", "Tắt màn hình máy tính đi và khởi động lại ngay.", "Tăng độ sáng của chiếc bóng đèn trong phòng.", "Bấm nút xoá để huỷ bỏ toàn bộ trang web đó đi."], correct: 0, explanation: "Tính năng điều chỉnh độ sáng tự động (biểu tượng 3 ngôi sao lấp lánh) sẽ dùng thuật toán để phân tích và khắc phục các bức ảnh nền đang bị quá sáng hoặc quá tối." },
+        { id: "d2_24", type: "single", question: "Câu 24: Em tải một mẫu logo trường học dạng PNG lên trang web, vị trí tốt nhất để đặt là?", options: ["Đặt làm ảnh đại diện thương hiệu hoặc Favicon.", "Đặt làm hình nền chiếm toàn bộ phần thân trang.", "Đặt ở vị trí dưới cùng của phần chân trang web.", "Đặt giấu kín bên trong một đoạn văn bản nhỏ."], correct: 0, explanation: "Định dạng ảnh PNG (chất lượng cao, nền trong suốt) là lựa chọn hoàn hảo nhất để tải lên khu vực Hình ảnh thương hiệu làm Logo nhận diện chính hoặc Favicon tab." },
+        { id: "d2_25", type: "single", question: "Câu 25: Để thêm chức năng khảo sát \"Bài hát yêu thích của lớp\", em nhúng công cụ nào?", options: ["Nhúng biểu mẫu tạo từ nền tảng Google Forms.", "Nhúng video ca nhạc từ nền tảng YouTube vào.", "Nhúng bản đồ vị trí từ nền tảng Google Maps.", "Nhúng phần mềm gõ chữ Tiếng Việt vào trang."], correct: 0, explanation: "Google Forms (Biểu mẫu) là công cụ chuyên biệt tạo phiếu khảo sát, biểu quyết. Tính năng này được tích hợp sâu để nhúng trực tiếp ngay trong thẻ Chèn của Sites." },
+        { id: "d2_26", type: "single", question: "Câu 26: Cấu trúc: Trang chủ -> Hình ảnh -> Lớp 10, Lớp 11, Lớp 12 là dạng thiết kế gì?", options: ["Thiết kế liên kết các trang theo cấu trúc cây.", "Thiết kế một văn bản chạy ngang trên màn hình.", "Thiết kế định dạng của hình ảnh không gian 3D.", "Thiết kế cơ sở dữ liệu số trên phần mềm Excel."], correct: 0, explanation: "Sự phân cấp thông tin từ Trang chủ, qua các thư mục trung gian, rồi rẽ nhánh xuống các trang nội dung chi tiết nhỏ hơn chính là mô hình sơ đồ liên kết hình cây." },
+        { id: "d2_27", type: "single", question: "Câu 27: Nếu mẫu giao diện \"Ngoại giao\" làm chữ quá nhỏ, em tuỳ chỉnh chữ lớn lên ở đâu?", options: ["Bảng chọn Giao diện -> Tuỳ chỉnh kiểu phông chữ.", "Bảng chọn Cài đặt -> Tuỳ chỉnh thanh điều hướng.", "Bảng chọn Chèn -> Tuỳ chỉnh kích thước hình ảnh.", "Bảng chọn Trang -> Tuỳ chỉnh tạo trang web mới."], correct: 0, explanation: "Bên dưới mỗi mẫu trong bảng chọn Giao diện (Themes) đều cung cấp thêm các thuộc tính nâng cao để người dùng có thể tự gõ tuỳ chỉnh cỡ chữ, kiểu phông tiêu đề/văn bản." },
+        { id: "d2_28", type: "single", question: "Câu 28: Trong một dự án tổng hợp, công việc nào được thực hiện cuối cùng trước khi nộp?", options: ["Bấm nút Công bố và sao chép địa chỉ liên kết.", "Đi tìm ý tưởng và phác thảo cấu trúc trang web.", "Vẽ lại biểu tượng logo và cắt ghép các video.", "Lập danh sách các thành viên trong nhóm học."], correct: 0, explanation: "Sau khi hoàn thiện mĩ thuật và nội dung, thao tác bấm nút màu xanh 'Công bố' để web online và sao chép đường link URL gửi đi là khâu cuối cùng kết thúc dự án." },
+
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1. Cô Lê Huyền Sinh yêu cầu học sinh lớp 12 thực hành tổng hợp thiết kế website lưu bút \"Thanh Xuân Của Chúng Ta\".", items: [
+            { id: "a", text: "a. Bước đầu tiên nhóm cần làm là tìm kiếm các video và hình ảnh kỉ niệm để tải ngay lên trang web.", correct: false, expl: "Tìm kiếm video, hình ảnh thuộc bước thứ ba 'Chuẩn bị tư liệu'. Bước đầu tiên phải làm là 'Định hình ý tưởng' để xác định mục đích làm gì." },
+            { id: "b", text: "b. Việc thống nhất phong cách thiết kế sẽ giúp các trang con trong website trở nên đồng bộ và thẩm mĩ hơn.", correct: true, expl: "Thống nhất trước một phong cách thiết kế chung ngay từ đầu giúp giao diện đồng bộ, nhất quán, tránh tình trạng mỗi trang con một màu sắc lộn xộn." },
+            { id: "c", text: "c. Để tiết kiệm thời gian, nhóm trưởng quyết định dùng một mẫu Giao diện (Theme) có sẵn trên Google Sites để áp dụng màu sắc chung cho cả web.", correct: true, expl: "Sử dụng thư viện Themes được phối màu sẵn của Google Sites là phương pháp tối ưu và nhanh chóng nhất để tiết kiệm thời gian tinh chỉnh đồ hoạ." },
+            { id: "d", text: "d. Nhóm có thể sử dụng cấu trúc hình cây để sắp xếp các danh mục: Trang chủ chứa các trang con như \"Thành viên\", \"Hình ảnh\", \"Video kỉ niệm\".", correct: true, expl: "Mô hình rẽ nhánh từ một trang mẹ lớn (Trang chủ) quản lí bao quát các trang con bên dưới là sơ đồ phân cấp hình cây chuẩn mực của website." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2. Bạn cỏ dại đang chịu trách nhiệm thiết kế thanh điều hướng cho website giới thiệu đặc sản quê hương.", items: [
+            { id: "a", text: "a. Thanh điều hướng trên Google Sites chỉ có một vị trí hiển thị mặc định là bên trái màn hình.", correct: false, expl: "Google Sites cung cấp linh hoạt thanh điều hướng ở 2 vị trí hiển thị: Nằm ngang 'Trên cùng' và Nằm dọc ở 'Bên' trái." },
+            { id: "b", text: "b. Đặt thanh điều hướng trên cùng theo chiều ngang sẽ giúp người xem dễ dàng quan sát các danh mục ngay khi mở web.", correct: true, expl: "Menu nằm ngang trên đỉnh luôn hiển thị trực quan toàn bộ danh mục, thuận tiện cho thao tác click chuột của người dùng máy tính bàn." },
+            { id: "c", text: "c. Để thanh menu xuất hiện ngang trải dài trên phần đầu trang, cỏ dại mở mục Cài đặt, chọn Điều hướng và chọn thuộc tính \"Trên cùng\".", correct: true, expl: "Đây là thao tác chuẩn xác. Thiết lập vị trí Điều hướng ở chế độ 'Trên cùng' sẽ tự động dàn ngang các nút menu trên đỉnh giao diện." },
+            { id: "d", text: "d. Bạn quản trị bắt buộc phải biết lập trình viết mã lệnh HTML thì mới có thể thay đổi được vị trí của thanh điều hướng này.", correct: false, expl: "Google Sites là nền tảng thiết kế tự động trực quan hoá. Việc thay đổi vị trí chỉ cần một vài cú nháy chuột thiết lập, hoàn toàn không cần code HTML." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3. Đội thực hành môn Tin học vừa thống nhất ý tưởng làm một trang web về \"Câu lạc bộ Sách\". Các bạn đang chuyển sang bước chuẩn bị tư liệu.", items: [
+            { id: "a", text: "a. Chuẩn bị tư liệu bao gồm các việc như thiết kế logo, làm ảnh nền và thu thập nội dung bài viết.", correct: true, expl: "Giai đoạn chuẩn bị tư liệu là công đoạn tập hợp tất cả các nguyên liệu thô bao gồm: tệp đồ hoạ (Logo, Favicon) và thu thập nội dung văn bản." },
+            { id: "b", text: "b. Việc đặt tên trang web là thao tác dư thừa, hệ thống sẽ tự động lấy tên của bạn quản trị viên để làm tên website.", correct: false, expl: "Việc tự gõ đặt tên website là công việc bắt buộc để định hình thương hiệu riêng, hệ thống không bao giờ tự động lấy tên cá nhân của tài khoản quản trị." },
+            { id: "c", text: "c. Nhóm thiết kế một logo hình cuốn sách dạng hình vuông kích thước 32x32 pixel để tải lên làm Favicon cho trang web.", correct: true, expl: "Biểu tượng Favicon hiển thị trên tab duyệt web luôn phải được thiết kế dưới dạng khối hình vuông nhỏ (tỉ lệ 1:1) với các kích thước chuẩn." },
+            { id: "d", text: "d. Do chưa chuẩn bị kịp nội dung chữ, các bạn quyết định chèn trước tất cả hình ảnh vào trang web và dùng biểu tượng thùng rác để hoàn tác nếu chèn sai.", correct: false, expl: "Cần phác thảo và chuẩn bị đồng bộ cả chữ và ảnh trước. Việc chèn bừa bãi hình ảnh khi chưa có kịch bản sẽ làm hỏng bố cục và mất nhiều thời gian sửa lại." }
+        ]}
+    ];
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

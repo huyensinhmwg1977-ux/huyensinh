@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1">BÀI 27: BIỂU MẪU TRÊN TRANG WEB </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_27');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI TỪ BÀI VỀ GOOGLE FORMS
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Ứng dụng Google nào sau đây hỗ trợ tốt nhất cho việc tạo các biểu mẫu khảo sát trực tuyến?", options: ["Ứng dụng thiết kế biểu mẫu Google Forms.", "Ứng dụng soạn thảo văn bản Google Docs.", "Ứng dụng trình chiếu điện tử Google Slide.", "Ứng dụng tạo bảng tính số liệu Google Sheet."], correct: 0, explanation: "Google Forms (Biểu mẫu) là công cụ chuyên dụng của Google dùng để tạo các bài kiểm tra, thu thập dữ liệu và biểu mẫu khảo sát trực tuyến." },
+        { id: "d1_2", type: "single", question: "Câu 2: Giao diện làm việc của ứng dụng Google Forms được đánh giá là có nhiều nét tương đồng với?", options: ["Nền tảng thiết kế trang web Google Sites.", "Nền tảng chia sẻ video trực tuyến YouTube.", "Nền tảng thư điện tử trực tuyến Google Mail.", "Nền tảng lưu trữ đám mây của Google Drive."], correct: 0, explanation: "Giao diện của Google Forms được thiết kế với các khối lệnh và thanh công cụ rất tương đồng với Google Sites, giúp người dùng dễ dàng làm quen." },
+        { id: "d1_3", type: "single", question: "Câu 3: Trong Google Forms, biểu tượng hình dấu cộng (+) nhiều màu sắc có chức năng kĩ thuật là gì?", options: ["Tạo ra một biểu mẫu khảo sát hoàn toàn mới.", "Xoá bỏ một biểu mẫu đang có trên hệ thống.", "Chia sẻ biểu mẫu hiện tại cho mọi người khác.", "Đổi màu sắc giao diện của biểu mẫu hiện tại."], correct: 0, explanation: "Biểu tượng dấu cộng (+) lớn nhiều màu sắc ở góc màn hình hoặc trong thư viện mẫu luôn là nút lệnh dùng để khởi tạo một biểu mẫu trống hoàn toàn mới." },
+        { id: "d1_4", type: "single", question: "Câu 4: Đâu là một trong những kiểu biểu mẫu đã được Google Forms thiết kế sẵn cho người sử dụng?", options: ["Mẫu khảo sát lấy thông tin liên hệ cá nhân.", "Mẫu lập trình phần mềm quản lí thư viện.", "Mẫu chỉnh sửa hình ảnh chân dung nghệ thuật.", "Mẫu phân tích dữ liệu tài chính của công ty."], correct: 0, explanation: "Google Forms cung cấp Thư viện mẫu (Template gallery) chứa các biểu mẫu được tạo sẵn cho nhiều mục đích thông dụng như: Thông tin liên hệ, Trả lời sự kiện, Yêu cầu đặt hàng..." },
+        { id: "d1_5", type: "single", question: "Câu 5: Để tiến hành nhúng biểu mẫu vào Google Sites, người dùng nháy chuột vào bảng chọn lệnh nào?", options: ["Nháy chuột vào bảng chọn chứa các lệnh Chèn.", "Nháy chuột vào bảng chọn chứa lệnh Quản lí.", "Nháy chuột vào bảng chọn chứa lệnh Màu sắc.", "Nháy chuột vào bảng chọn chứa lệnh Hiển thị."], correct: 0, explanation: "Để đưa một đối tượng ngoại tuyến (như Forms, Maps, Docs) vào giao diện trang web, kĩ thuật viên phải mở bảng chọn Chèn (Insert) trên thanh công cụ của Google Sites." },
+        { id: "d1_6", type: "single", question: "Câu 6: Để đảm bảo người dùng không bỏ sót câu hỏi, quản trị viên cần bật tính năng nào sau đây?", options: ["Bật tính năng bắt buộc trả lời cho câu hỏi.", "Bật tính năng tự động điền câu trả lời mẫu.", "Bật tính năng ẩn câu hỏi đi để tiết kiệm chỗ.", "Bật tính năng thay đổi phông chữ của câu hỏi."], correct: 0, explanation: "Nút gạt 'Bắt buộc' (Required) ở góc dưới của mỗi câu hỏi sẽ buộc người dùng phải hoàn thành nó. Nếu bỏ trống, hệ thống sẽ báo lỗi và không cho gửi biểu mẫu." },
+        { id: "d1_7", type: "single", question: "Câu 7: Khi thực hiện chèn thành công, biểu mẫu thường sẽ tự động xuất hiện ở vị trí nào của trang?", options: ["Xuất hiện ngay tại vị trí cuối cùng của trang.", "Xuất hiện ngay tại vị trí đầu tiên của trang.", "Xuất hiện tại thanh điều hướng menu của trang.", "Xuất hiện chìm ẩn dưới phần nền của trang web."], correct: 0, explanation: "Theo cơ chế của Google Sites, bất kì phần tử nào mới được thêm vào (bao gồm cả Biểu mẫu) đều sẽ tự động được nối xuống vị trí dưới cùng (cuối trang) của khối nội dung hiện tại." },
+        { id: "d1_8", type: "single", question: "Câu 8: Trong thẻ Câu trả lời, lựa chọn \"Cá nhân\" cung cấp cho người quản trị thông tin chi tiết về?", options: ["Chi tiết câu trả lời của từng người tham gia.", "Tổng hợp tất cả câu trả lời dưới dạng biểu đồ.", "Thông tin chi tiết cho từng câu hỏi riêng biệt.", "Toàn bộ thông tin hiển thị trên một bảng tính."], correct: 0, explanation: "Tab Câu trả lời có 3 mục. Mục 'Cá nhân' (Individual) cho phép quản trị viên xem chi tiết toàn bộ bài làm/phiếu khảo sát của từng người dùng cụ thể một cách độc lập." },
+        { id: "d1_9", type: "single", question: "Câu 9: Để xem tất cả dữ liệu phản hồi dưới dạng bảng tính Excel trực quan, ta nháy chuột vào đâu?", options: ["Nháy chuột vào biểu tượng xem trong trang tính.", "Nháy chuột vào biểu tượng xem dưới dạng đồ thị.", "Nháy chuột vào nút công bố trang web lên mạng.", "Nháy chuột vào biểu tượng thùng rác để xoá đi."], correct: 0, explanation: "Biểu tượng hình chữ thập màu xanh lá (Xem trong trang tính / View in Sheets) sẽ tự động xuất toàn bộ dữ liệu khảo sát sang một tệp Google Sheet (tương tự Excel) để dễ dàng thống kê." },
+        { id: "d1_10", type: "single", question: "Câu 10: Bước đầu tiên trước khi tạo biểu mẫu trên ứng dụng Forms theo hướng dẫn bài học là gì?", options: ["Chuẩn bị trước nội dung các câu hỏi biểu mẫu.", "Chèn ngay biểu mẫu trống vào trang web Sites.", "Gửi đường link cho bạn bè để thu thập số liệu.", "Xuất bản trang web chứa biểu mẫu lên internet."], correct: 0, explanation: "Giống như thiết kế web, bước chuẩn bị kịch bản là vô cùng quan trọng. Cần chuẩn bị trước nội dung các câu hỏi để quá trình tạo lập trên Forms diễn ra liền mạch và không bị sót ý." },
+        { id: "d1_11", type: "single", question: "Câu 11: Tính năng \"Thêm tuỳ chọn\" trong câu hỏi dạng trắc nghiệm mang lại khả năng kĩ thuật gì?", options: ["Cho phép tạo ra nhiều phương án để lựa chọn.", "Tự động đánh dấu đáp án đúng cho người làm.", "Chuyển câu hỏi trắc nghiệm thành dạng tự luận.", "Xoá bỏ câu hỏi hiện tại khỏi biểu mẫu khảo sát."], correct: 0, explanation: "Đối với loại câu hỏi Trắc nghiệm nhiều lựa chọn, nháy vào 'Thêm tuỳ chọn' (Add option) giúp người soạn thảo tạo ra các phương án A, B, C, D cho người tham gia chọn." },
+        { id: "d1_12", type: "single", question: "Câu 12: Nút \"Sao chép\" (hình hai tờ giấy) bên cạnh câu hỏi trong Google Forms dùng để làm công việc gì?", options: ["Tạo ra một câu hỏi mới giống hệt câu hiện tại.", "Xoá bỏ hoàn toàn câu hỏi đó ra khỏi biểu mẫu.", "Chuyển câu hỏi đó xuống vị trí cuối cùng nhất.", "Đổi loại câu hỏi từ trắc nghiệm sang văn bản."], correct: 0, explanation: "Nút Sao chép (Duplicate) có biểu tượng 2 tờ giấy xếp chồng, giúp nhân bản ngay lập tức một câu hỏi (bao gồm cả các cài đặt của nó) xuống vị trí bên dưới." },
+        { id: "d1_13", type: "single", question: "Câu 13: Việc cung cấp sẵn các mẫu như \"Yêu cầu đặt hàng\" mang lại lợi ích nổi bật gì cho người dùng?", options: ["Tiết kiệm thời gian thiết kế cấu trúc biểu mẫu.", "Tăng dung lượng lưu trữ trên Google Drive lên.", "Giúp biểu mẫu tự động chấm điểm cho học sinh.", "Khoá quyền truy cập của những người dùng lạ."], correct: 0, explanation: "Thư viện mẫu cung cấp các cấu trúc đã được dàn sẵn giao diện và phân bố câu hỏi logic, giúp người dùng tiết kiệm tối đa thời gian thay vì phải tự thiết kế từ đầu." },
+        { id: "d1_14", type: "single", question: "Câu 14: Lệnh \"Biểu mẫu\" trong bảng chọn Chèn của Sites thực chất là thực hiện thao tác máy tính gì?", options: ["Nhúng một ứng dụng Google Forms vào website.", "Tạo một hình ảnh đồ hoạ biểu mẫu cực kì đẹp.", "Chèn một đoạn video hướng dẫn làm biểu mẫu.", "Xoá biểu mẫu hiện tại và thay bằng biểu mẫu mới."], correct: 0, explanation: "Bản chất của lệnh này là sử dụng mã nhúng (Embed code) để tích hợp một ứng dụng tương tác của Google Forms chạy trực tiếp ngay trên khung hiển thị của Google Sites." },
+        { id: "d1_15", type: "single", question: "Câu 15: Trong thẻ Câu trả lời, phần \"Bản tóm tắt\" hiển thị dữ liệu chủ yếu dưới dạng hình thức nào?", options: ["Trình bày bằng các biểu đồ thống kê trực quan.", "Trình bày bằng các đoạn văn bản dài hàng trang.", "Trình bày bằng những đoạn video âm thanh ngắn.", "Trình bày bằng các tập tin hình ảnh độ phân giải."], correct: 0, explanation: "Mục 'Bản tóm tắt' (Summary) sẽ tổng hợp toàn bộ dữ liệu phản hồi của tất cả người dùng và tự động vẽ ra các biểu đồ (tròn, cột) rất trực quan và chuyên nghiệp." },
+        { id: "d1_16", type: "single", question: "Câu 16: Nút \"Bắt buộc\" (Required) trong cài đặt câu hỏi mang ý nghĩa kĩ thuật quan trọng như thế nào?", options: ["Người dùng không thể gửi biểu mẫu nếu chưa làm.", "Câu hỏi đó sẽ tự động được làm nổi bật bằng chữ.", "Hệ thống sẽ tự động nhân đôi câu hỏi đó lên ngay.", "Câu hỏi đó sẽ chỉ xuất hiện ở trên điện thoại thôi."], correct: 0, explanation: "Đây là cơ chế bắt lỗi (Validation) của Forms. Khi bật tính năng này, hệ thống sẽ kiểm tra và chặn quá trình Submit (Gửi biểu mẫu) nếu người dùng bỏ trống câu hỏi đó." },
+        { id: "d1_17", type: "single", question: "Câu 17: Tuỳ chọn \"Câu trả lời khác\" trong dạng câu trắc nghiệm cho phép người tham gia khảo sát làm gì?", options: ["Tự nhập một đáp án riêng ngoài danh sách có sẵn.", "Bỏ qua câu hỏi đó mà không cần đưa ra câu trả lời.", "Chọn tất cả các phương án đang hiển thị trên màn.", "Xem trước đáp án chính xác của câu hỏi hiện tại."], correct: 0, explanation: "Chức năng 'Thêm câu trả lời khác' (Add 'Other') sẽ sinh ra một trường văn bản cho phép người khảo sát tự gõ ý kiến cá nhân của họ nếu các phương án A, B, C không phù hợp." },
+        { id: "d1_18", type: "single", question: "Câu 18: Thông tin \"số câu trả lời\" nằm ở dòng đầu tiên của tab Câu trả lời giúp quản trị viên biết được?", options: ["Tổng số lượt phản hồi đã gửi thành công biểu mẫu.", "Tổng số lượng câu hỏi đang có mặt trong biểu mẫu.", "Số lượng người dùng đã thoát ra giữa chừng bài thi.", "Số phút trung bình để hoàn thành xong bài khảo sát."], correct: 0, explanation: "Con số nổi bật ở ngay tiêu đề tab Câu trả lời (Responses) chính là bộ đếm tổng số lượng người dùng đã hoàn thành và nhấn nút Gửi (Submit) biểu mẫu về máy chủ." },
+        { id: "d1_19", type: "single", question: "Câu 19: Em muốn khảo sát sở thích đọc sách của lớp, bước đầu tiên em thao tác trên máy tính là gì?", options: ["Vào kho ứng dụng của Google và mở ứng dụng Forms.", "Mở phần mềm Microsoft Word để đánh máy văn bản.", "Mở ứng dụng Paint để vẽ một bức tranh về quyển sách.", "Bấm nút Công bố trang web Google Sites lên internet."], correct: 0, explanation: "Để tạo một công cụ khảo sát trực tuyến, bước đầu tiên bắt buộc phải truy cập vào trình duyệt, vào kho ứng dụng của Google Workspace và mở ứng dụng Google Forms lên." },
+        { id: "d1_20", type: "single", question: "Câu 20: Nếu câu hỏi yêu cầu học sinh chọn \"Có\" hoặc \"Không\", em nên dùng kiểu câu hỏi nào trong Forms?", options: ["Lựa chọn kiểu câu hỏi dạng Trắc nghiệm đơn giản.", "Lựa chọn kiểu câu hỏi dạng Đoạn văn bản thật dài.", "Lựa chọn kiểu câu hỏi dạng Tải tệp dữ liệu lên máy.", "Lựa chọn kiểu câu hỏi dạng Lưới trắc nghiệm phức."], correct: 0, explanation: "Với dạng câu hỏi chỉ có các đáp án cố định để lựa chọn (như Có/Không, A/B/C/D), kiểu định dạng 'Trắc nghiệm' (Multiple choice) là công cụ phù hợp và tối ưu nhất." },
+        { id: "d1_21", type: "single", question: "Câu 21: Cô giáo muốn học sinh nhập họ và tên vào biểu mẫu nhưng ô này đang dạng trắc nghiệm, cần sửa sao?", options: ["Chuyển kiểu Trắc nghiệm thành kiểu Trả lời ngắn.", "Bấm nút sao chép để tạo ra một câu trắc nghiệm mới.", "Đánh dấu tích vào nút Bắt buộc ở góc phải màn hình.", "Xoá biểu mẫu đó đi và tiến hành thiết kế lại từ đầu."], correct: 0, explanation: "Dữ liệu 'Họ và tên' là một chuỗi văn bản tự do do người dùng nhập vào, do đó phải bấm vào hộp thả xuống ở cạnh câu hỏi và chọn kiểu 'Trả lời ngắn' (Short answer) để có ô nhập text." },
+        { id: "d1_22", type: "single", question: "Câu 22: Em làm xong biểu mẫu \"Ý kiến phản hồi\", để đưa lên web trường, em mở thẻ nào trên Google Sites?", options: ["Mở thẻ Chèn, cuộn xuống và nháy chọn Biểu mẫu.", "Mở thẻ Trang, nhấn nút dấu cộng thêm trang con.", "Mở thẻ Giao diện, chọn màu sắc mới cho trang web.", "Mở thẻ Cài đặt, chỉnh sửa thanh điều hướng menu."], correct: 0, explanation: "Để nhúng một ứng dụng ngoại vi vào trang, em phải thao tác trên không gian thiết kế của trang web (Google Sites), mở thẻ Chèn (Insert) và chọn công cụ Biểu mẫu (Forms)." },
+        { id: "d1_23", type: "single", question: "Câu 23: Trong bảng Câu trả lời, để biết bạn Bình chọn đáp án nào cho câu hỏi số 3, em vào mục nào xem?", options: ["Nháy chuột chọn mục Cá nhân để xem bài của Bình.", "Nháy chuột chọn mục Bản tóm tắt của toàn bộ lớp.", "Nháy chuột chọn Cài đặt màu sắc cho khung biểu đồ.", "Mở trang Google Sites ra để tìm kiếm thông tin Bình."], correct: 0, explanation: "Để truy xuất dữ liệu phản hồi của một đối tượng cụ thể (ở đây là bạn Bình), em bắt buộc phải vào tab Câu trả lời và mở mục 'Cá nhân' (Individual) để tìm đến bài nộp của bạn đó." },
+        { id: "d1_24", type: "single", question: "Câu 24: Giáo viên muốn lấy toàn bộ điểm của lớp lưu vào máy tính để in ra giấy, giáo viên sẽ dùng nút nào?", options: ["Bấm chọn biểu tượng Xem dữ liệu trong trang tính.", "Bấm chọn tính năng chèn Hình ảnh vào trong biểu mẫu.", "Bấm chọn chức năng đổi màu Giao diện cho biểu mẫu.", "Bấm chọn lệnh thêm Video YouTube vào trong biểu mẫu."], correct: 0, explanation: "Biểu tượng màu xanh 'Xem trong trang tính' (View in Sheets) sẽ tự động xuất toàn bộ dữ liệu (câu trả lời, điểm số, thời gian) thành dạng bảng tính tương tự Excel để dễ dàng tải về và in ấn." },
+        { id: "d1_25", type: "single", question: "Câu 25: Để không phải gõ lại 5 phương án trả lời cho một câu hỏi tương tự câu trước, em nên làm thao tác gì?", options: ["Nhấn biểu tượng Sao chép câu hỏi ở ngay bên dưới.", "Bấm nút Xoá để làm sạch giao diện và gõ lại từ đầu.", "Tắt trình duyệt web và khởi động lại máy tính bàn.", "Chuyển câu hỏi đó thành dạng yêu cầu tải hình ảnh."], correct: 0, explanation: "Thay vì gõ lại thủ công, người dùng chỉ cần nháy vào biểu tượng 'Sao chép' (hai tờ giấy) ở câu hỏi gốc. Hệ thống sẽ nhân bản y hệt toàn bộ tiêu đề và các phương án xuống dưới." },
+        { id: "d1_26", type: "single", question: "Câu 26: Em muốn câu hỏi \"Lớp bạn đang học\" hiện ra 3 lựa chọn 10, 11, 12, thao tác thêm lựa chọn này là?", options: ["Nháy chuột vào mục Thêm tuỳ chọn để gõ thêm vào.", "Nháy chuột vào phần Thêm câu trả lời khác để gõ.", "Nhấn nút Bắt buộc trả lời để tự sinh ra các lựa chọn.", "Bấm biểu tượng Thùng rác để hệ thống tự động làm."], correct: 0, explanation: "Sau khi chọn kiểu câu hỏi dạng Trắc nghiệm, em phải liên tục nháy chuột vào dòng 'Thêm tuỳ chọn' (Add option) để bổ sung lần lượt các phương án 10, 11, 12 vào danh sách." },
+        { id: "d1_27", type: "single", question: "Câu 27: Sau khi nhúng biểu mẫu vào web, biểu mẫu nằm ở cuối trang, em muốn dời lên ngay dưới tiêu đề thì sao?", options: ["Nhấn giữ khối biểu mẫu và kéo thả thẳng lên đầu trang.", "Xoá bỏ trang web đó và thiết kế một trang web mới.", "Viết một đoạn mã lập trình để can thiệp vào hệ thống.", "Không thể thay đổi được vị trí của biểu mẫu đã chèn."], correct: 0, explanation: "Google Sites hoạt động theo cơ chế kéo thả trực quan (Drag and Drop). Em chỉ cần nhấp giữ chuột trái vào cụm dấu chấm mỏ neo của khối biểu mẫu và kéo thẳng nó lên vị trí mong muốn." },
+        { id: "d1_28", type: "single", question: "Câu 28: Nếu em muốn thu thập thêm \"Ý kiến khác\" của người dùng ngoài các lựa chọn cho sẵn, em dùng chức năng gì?", options: ["Nháy chuột vào dòng chữ Thêm \"Câu trả lời khác\".", "Nháy chuột chọn thay đổi Phông chữ của biểu mẫu.", "Tải một bức ảnh có nội dung tương tự lên hệ thống.", "Chuyển đổi định dạng biểu mẫu sang tệp trình chiếu."], correct: 0, explanation: "Nháy vào dòng chữ màu xanh 'Thêm câu trả lời khác' (Add 'Other') sẽ sinh ra một phương án cuối cùng có kèm ô văn bản trống, cho phép người dùng tự điền quan điểm cá nhân của họ." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1. Ban chủ nhiệm Câu lạc bộ Tin học trường THPT Lê Lợi tiến hành khảo sát đăng kí tham gia câu lạc bộ đầu năm học.", items: [
+            { id: "a", text: "a. Để tạo biểu mẫu đăng kí trực tuyến, Ban chủ nhiệm có thể sử dụng ứng dụng Google Forms.", correct: true, expl: "Google Forms là công cụ đám mây chuyên biệt và mạnh mẽ nhất của Google dành cho việc tạo bảng hỏi, khảo sát và thu thập thông tin đăng kí trực tuyến." },
+            { id: "b", text: "b. Do biểu mẫu yêu cầu học sinh nhập chính xác họ tên và lớp, các câu hỏi này cần được bật chế độ \"Bắt buộc\".", correct: true, expl: "Việc bật chế độ 'Bắt buộc' (Required) sẽ ra lệnh cho hệ thống chặn thao tác nộp biểu mẫu nếu học sinh cố tình để trống thông tin định danh quan trọng này." },
+            { id: "c", text: "c. Để đính kèm biểu mẫu lên trang web của trường, người quản trị cần mở Google Docs và dán đường link vào.", correct: false, expl: "Để đính kèm biểu mẫu lên trang web, quản trị viên phải mở ứng dụng thiết kế web là Google Sites, sau đó sử dụng thẻ 'Chèn' để nhúng trực tiếp biểu mẫu vào, chứ không phải dùng Google Docs." },
+            { id: "d", text: "d. Sau một tuần, Ban chủ nhiệm nháy chuột vào mục \"Bản tóm tắt\" trong tab Câu trả lời để xuất toàn bộ danh sách học sinh dưới dạng Excel.", correct: false, expl: "Mục 'Bản tóm tắt' chỉ dùng để xem biểu đồ thống kê dạng hình ảnh. Để xuất toàn bộ dữ liệu ra bảng tính dạng Excel, quản trị viên phải bấm vào biểu tượng màu xanh lá cây 'Xem trong trang tính'." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2. Cô Hoa thiết kế một bài kiểm tra trắc nghiệm 15 phút bằng Google Forms và tiến hành nhúng vào nền tảng học tập Hành Trình Số cho học sinh khối 12.", items: [
+            { id: "a", text: "a. Cô Hoa có thể chọn sẵn mẫu \"Thông tin liên hệ\" để hệ thống tự động sinh ra các câu hỏi trắc nghiệm bộ môn.", correct: false, expl: "Mẫu 'Thông tin liên hệ' trong thư viện chỉ cung cấp các trường văn bản lưu thông tin cá nhân (Tên, Email, SĐT), hệ thống không có AI để tự động sinh ra các câu hỏi trắc nghiệm kiến thức môn học." },
+            { id: "b", text: "b. Để tiết kiệm thời gian soạn bài, cô Hoa dùng tính năng Sao chép câu hỏi (biểu tượng hai tờ giấy) cho các câu có cùng 4 phương án A, B, C, D.", correct: true, expl: "Tính năng Sao chép (Duplicate) sẽ nhân bản y nguyên cấu trúc của câu hỏi hiện tại, giúp giáo viên không phải gõ lại nhiều lần các phương án A, B, C, D." },
+            { id: "c", text: "c. Cô Hoa mở giao diện chỉnh sửa trang web Hành Trình Số, vào bảng chọn Chèn, kéo xuống chọn Biểu mẫu để gắn bài thi vào trang.", correct: true, expl: "Đây là thao tác quy trình kĩ thuật chuẩn xác để nhúng một công cụ Forms ngoại tuyến vào hệ thống hiển thị của một trang web xây dựng bằng Google Sites." },
+            { id: "d", text: "d. Sau khi hết giờ làm bài, cô Hoa có thể vào phần \"Cá nhân\" trong tab Câu trả lời để xem chi tiết bài làm của từng em học sinh.", correct: true, expl: "Tab Câu trả lời cung cấp mục 'Cá nhân' (Individual). Tại đây, cô Sinh có thể lướt xem độc lập bài làm chi tiết của từng tài khoản học sinh đã gửi phản hồi." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3. Đoàn trường THPT Nguyễn Trãi tổ chức thu thập ý kiến học sinh về việc tổ chức Hội trại xuân thông qua một biểu mẫu trên trang web. Bí thư chi đoàn đang kiểm tra lại dữ liệu.", items: [
+            { id: "a", text: "a. Số lượng học sinh đã gửi ý kiến phản hồi sẽ không được hệ thống hiển thị trong giao diện của Google Forms.", correct: false, expl: "Google Forms luôn tự động bộ đếm và hiển thị ngay lập tức con số tổng các lượt gửi phản hồi ở ngay tiêu đề của tab 'Câu trả lời'." },
+            { id: "b", text: "b. Tính năng \"Xem trong trang tính\" giúp Bí thư chuyển toàn bộ biểu đồ hình tròn thành dạng video sinh động.", correct: false, expl: "Tính năng 'Xem trong trang tính' dùng để xuất các câu trả lời thô thành dạng bảng tính phân ô (như Excel) để tính toán số liệu, nó không có chức năng tạo video." },
+            { id: "c", text: "c. Nếu Bí thư muốn xem thống kê tỉ lệ phần trăm các lớp đồng ý tham gia hội trại, bạn ấy nên xem ở phần \"Bản tóm tắt\".", correct: true, expl: "Mục 'Bản tóm tắt' (Summary) sẽ tổng hợp dữ liệu chung và tự động vẽ ra các biểu đồ (như biểu đồ tròn thể hiện tỉ lệ phần trăm), rất phù hợp để đánh giá số đông." },
+            { id: "d", text: "d. Để tạo thêm lựa chọn ngoài danh sách cho câu hỏi \"Trò chơi bạn thích\", Bí thư nhấn nút \"Bắt buộc\" ở góc phải của câu hỏi đó.", correct: false, expl: "Nút 'Bắt buộc' (Required) chỉ dùng để ép người dùng phải điền câu hỏi. Để thêm một lựa chọn mở cho phép người dùng tự gõ ý kiến, Bí thư phải bấm vào chữ 'Thêm câu trả lời khác'." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Ứng dụng Google Forms được thiết kế và sử dụng chủ yếu với mục đích kĩ thuật gì?", options: ["Thiết kế các biểu mẫu khảo sát và thu thập thông tin.", "Trình chiếu các bài giảng điện tử trên lớp học trực tuyến.", "Chỉnh sửa các đoạn video âm nhạc để đăng tải lên mạng.", "Lập trình ra các trò chơi giải trí trên nền tảng di động."], correct: 0, explanation: "Mục đích cốt lõi của Google Forms (Google Biểu mẫu) là công cụ chuyên dùng để xây dựng các biểu mẫu trực tuyến nhằm thu thập dữ liệu và tổ chức các bài khảo sát." },
+        { id: "d2_2", type: "single", question: "Câu 2: Để bắt đầu một biểu mẫu mới hoàn toàn trên ứng dụng Forms, ta nháy vào nút nào?", options: ["Nháy chuột vào biểu tượng dấu cộng (+) có nhiều màu.", "Nháy chuột vào biểu tượng hình chiếc thùng rác màu đỏ.", "Nháy chuột vào biểu tượng hình chiếc đĩa mềm lưu trữ.", "Nháy chuột vào biểu tượng hình chiếc máy ảnh thu nhỏ."], correct: 0, explanation: "Trong giao diện trung tâm của Google Workspace, biểu tượng dấu cộng (+) lớn đa sắc màu luôn được quy ước là nút lệnh để tạo mới một tệp hoặc một dự án trống." },
+        { id: "d2_3", type: "single", question: "Câu 3: Tiêu đề mặc định \"Mẫu không có tiêu đề\" sẽ xuất hiện trên màn hình khi nào?", options: ["Khi một biểu mẫu hoàn toàn mới vừa được khởi tạo ra.", "Khi người dùng vừa xoá đi một bảng tính Excel quan trọng.", "Khi hệ thống Google Drive bị ngắt kết nối mạng lưới internet.", "Khi trang web Sites vừa được xuất bản thành công lên mạng."], correct: 0, explanation: "Ngay khi bạn ấn tạo mới một biểu mẫu, hệ thống sẽ sinh ra một file nháp. Lúc này, dòng chữ 'Mẫu không có tiêu đề' (Untitled form) là tên mặc định ban đầu chờ bạn thay đổi." },
+        { id: "d2_4", type: "single", question: "Câu 4: Kiểu biểu mẫu \"Yêu cầu đặt hàng\" trong ứng dụng Google Forms thuộc phân loại nào?", options: ["Là một trong những kiểu biểu mẫu đã được tạo sẵn mẫu.", "Là phần mềm tính toán chi phí vận chuyển hàng hoá kho.", "Là ứng dụng giao hàng trực tuyến trên hệ điều hành ảo.", "Là chức năng tự động thanh toán tiền qua thẻ tín dụng."], correct: 0, explanation: "'Yêu cầu đặt hàng' (Order Request) là một trong những bộ khung giao diện tiêu chuẩn được Google thiết kế sẵn trong Thư viện mẫu (Template gallery) để hỗ trợ dân kinh doanh." },
+        { id: "d2_5", type: "single", question: "Câu 5: Khi thiết kế trên Google Sites, lệnh chèn \"Biểu mẫu\" nằm ở khu vực làm việc nào?", options: ["Nằm ở trong cửa sổ của bảng chọn lệnh thiết kế Chèn.", "Nằm ở trong cửa sổ của bảng chọn chức năng Quản lí.", "Nằm ở trong cửa sổ của bảng chọn thay đổi Giao diện.", "Nằm ở trong cửa sổ của hệ điều hành máy tính cá nhân."], correct: 0, explanation: "Lệnh nhúng 'Biểu mẫu' (Forms) nằm ở khu vực phía dưới cùng của thanh công cụ bên phải, thuộc không gian của thẻ lệnh 'Chèn' (Insert) trên nền tảng Google Sites." },
+        { id: "d2_6", type: "single", question: "Câu 6: Chức năng \"Bắt buộc\" trong cài đặt câu hỏi biểu mẫu dùng để làm công việc gì?", options: ["Yêu cầu người tham gia bắt buộc phải trả lời câu hỏi đó.", "Tự động chuyển đổi câu hỏi sang ngôn ngữ tiếng nước ngoài.", "Khoá không cho người khác sao chép nội dung của biểu mẫu.", "Biến câu hỏi dạng trắc nghiệm thành câu hỏi dạng tải ảnh lên."], correct: 0, explanation: "Khi bật công tắc 'Bắt buộc' (Required), hệ thống sẽ kích hoạt một thuật toán chặn, không cho phép người dùng ấn nút Nộp bài nếu ô câu hỏi đó đang bị bỏ trống." },
+        { id: "d2_7", type: "single", question: "Câu 7: Khi chèn thành công, Google Sites mặc định sẽ sắp xếp đặt biểu mẫu ở vị trí nào?", options: ["Đặt ngay tại vị trí dưới cùng của trang web đang thiết kế.", "Đặt ngay tại vị trí trên cùng của trang web đang thiết kế.", "Đặt ẩn dưới thanh cuộn dọc của trình duyệt hệ thống mạng.", "Đặt đè lên trên hình ảnh biểu tượng logo của trang web."], correct: 0, explanation: "Theo cơ chế layout tự động, bất kì một đối tượng mới nào (bao gồm Forms) khi vừa được Insert sẽ được đẩy xuống nằm ở vị trí thấp nhất (cuối cùng) của không gian trang web." },
+        { id: "d2_8", type: "single", question: "Câu 8: Muốn xem phản hồi theo dạng biểu đồ chung của tất cả mọi người, em chọn mục nào?", options: ["Chọn vào mục Bản tóm tắt trong tab giao diện Câu trả lời.", "Chọn vào mục Cá nhân trong màn hình cài đặt hệ thống máy.", "Chọn vào tính năng Đổi màu nền giao diện của hệ biểu mẫu.", "Chọn vào mục Câu hỏi ở phía dưới cùng màn hình hiển thị."], correct: 0, explanation: "Mục 'Bản tóm tắt' (Summary) trong tab Câu trả lời là nơi duy nhất mà thuật toán AI của Google tự động tổng hợp data và vẽ biểu đồ trực quan thể hiện ý kiến số đông." },
+        { id: "d2_9", type: "single", question: "Câu 9: Dữ liệu phản hồi biểu mẫu có thể được xuất ra và xem chi tiết dưới dạng tập tin gì?", options: ["Xem dưới dạng một tập tin trang tính tính toán số liệu.", "Xem dưới dạng một bộ phim kĩ xảo điện ảnh ba chiều.", "Xem dưới dạng một tệp trình chiếu kèm theo âm nhạc.", "Xem dưới dạng một bức ảnh nền tĩnh không tương tác."], correct: 0, explanation: "Google Forms liên kết chặt chẽ với Google Sheets. Khi ấn biểu tượng hình chữ thập xanh lá, toàn bộ phản hồi sẽ được xuất ra và lưu trữ dưới dạng tập tin Trang tính (tương tự Excel)." },
+        { id: "d2_10", type: "single", question: "Câu 10: Sự tương đồng giữa giao diện Google Forms và Google Sites giúp ích gì cho người dùng?", options: ["Người dùng dễ dàng làm quen và thao tác sử dụng công cụ.", "Làm giảm dung lượng của các tập tin ảnh tải lên hệ thống.", "Tự động trả lời mọi câu hỏi khảo sát thay cho học sinh.", "Tăng tốc độ truy cập internet lên mức tối đa nhanh nhất."], correct: 0, explanation: "Việc đồng bộ hoá về UI/UX (giao diện, biểu tượng, cách đặt menu) trong cùng hệ sinh thái Google giúp người dùng giảm thiểu thời gian học cách sử dụng và thao tác nhanh chóng hơn." },
+        { id: "d2_11", type: "single", question: "Câu 11: Tại sao người thiết kế cần nhập mô tả ngắn gọn ngay bên dưới tiêu đề biểu mẫu?", options: ["Để người tham gia hiểu rõ mục đích của biểu mẫu khảo sát.", "Để tăng cường khả năng chống lại các loại mã độc máy tính.", "Để Google tự động thiết kế các hình nền màu sắc đẹp mắt.", "Để tự động cộng thêm điểm cho người đang tham gia làm."], correct: 0, explanation: "Phần 'Mô tả biểu mẫu' (Form description) cung cấp ngữ cảnh, hướng dẫn cách làm hoặc thông điệp của tác giả để người tham gia định hình được mục đích của bài khảo sát." },
+        { id: "d2_12", type: "single", question: "Câu 12: Nút \"Thêm tuỳ chọn\" trong kiểu câu hỏi dạng trắc nghiệm có tác dụng kĩ thuật gì?", options: ["Giúp bổ sung thêm các phương án trả lời mới cho câu hỏi.", "Giúp chuyển đổi định dạng câu hỏi sang dạng đoạn văn dài.", "Giúp sao chép toàn bộ trang web và gửi cho tất cả bạn bè.", "Giúp xoá ngay lập tức câu hỏi đang được chọn trên màn hình."], correct: 0, explanation: "Khi soạn thảo câu hỏi Trắc nghiệm nhiều lựa chọn, lệnh 'Thêm tuỳ chọn' (Add option) sẽ sinh ra một trường văn bản mới để bạn gõ các phương án nhiễu (A, B, C, D)." },
+        { id: "d2_13", type: "single", question: "Câu 13: Lựa chọn \"Thêm câu trả lời khác\" xử lí được vấn đề gì khi thiết kế bảng khảo sát?", options: ["Cho phép ghi nhận các đáp án ngoài danh sách dự kiến ban đầu.", "Tự động chấm điểm và đánh giá xếp loại cho từng học sinh.", "Ngăn chặn người lạ truy cập vào đường link của biểu mẫu web.", "Nhân đôi câu hỏi lên nhiều lần để điền kín không gian màn hình."], correct: 0, explanation: "Tính năng này sẽ tạo ra một tuỳ chọn cuối cùng có tên là 'Khác' kèm theo một ô TextBox, giúp thu thập những ý kiến dị biệt của người dùng mà người thiết kế chưa liệt kê ra." },
+        { id: "d2_14", type: "single", question: "Câu 14: Lợi thế lớn nhất khi nhúng trực tiếp biểu mẫu vào trang giao diện Google Sites là gì?", options: ["Người dùng có thể trả lời khảo sát ngay trên nền tảng trang web.", "Biểu mẫu sẽ tự động dịch mọi câu hỏi sang ngôn ngữ tiếng Anh.", "Hệ thống sẽ tự động gửi email cho tất cả các tài khoản Google.", "Hình nền của trang web sẽ liên tục thay đổi theo giờ thực tế."], correct: 0, explanation: "Khi được nhúng bằng tính năng Embed, biểu mẫu sẽ hiển thị trực quan ngay trên trang web. Người dùng có thể click chọn và Submit trực tiếp mà không bị nhảy sang một tab trình duyệt khác." },
+        { id: "d2_15", type: "single", question: "Câu 15: Trong thẻ Câu trả lời, lựa chọn \"Câu hỏi\" cho phép người quản trị viên xem được gì?", options: ["Xem thông tin chi tiết các phản hồi ứng với từng câu hỏi riêng.", "Xem toàn cảnh các biểu đồ thống kê của mọi bài kiểm tra cũ.", "Xem thông tin cá nhân bảo mật của người thiết lập trang web.", "Xem các thiết lập cài đặt mật khẩu của toàn bộ những người dùng."], correct: 0, explanation: "Mục 'Câu hỏi' (Question) trong tab Câu trả lời giúp quản trị viên lướt qua xem chi tiết tất cả những người dùng khác nhau đã trả lời như thế nào cho riêng một câu hỏi cụ thể đó." },
+        { id: "d2_16", type: "single", question: "Câu 16: Nút lệnh hình hai tờ giấy chồng lên nhau trong Forms thực thi thao tác lệnh gì?", options: ["Sao chép câu hỏi hiện tại thành một câu hoàn toàn giống hệt.", "Huỷ bỏ ngay lập tức thao tác chỉnh sửa văn bản vừa thực hiện.", "Xoá bỏ vĩnh viễn câu hỏi đó ra khỏi hệ thống cơ sở dữ liệu.", "Tự động tạo ra một trang web mới trên nền tảng Google Sites."], correct: 0, explanation: "Biểu tượng hai tờ giấy (Duplicate) thực thi lệnh nhân bản. Nó sẽ copy y nguyên cấu trúc, văn bản và cài đặt của câu hỏi đang chọn và dán ngay xuống vị trí kế tiếp." },
+        { id: "d2_17", type: "single", question: "Câu 17: Thông tin số lượng câu trả lời hiển thị ở dòng đầu tiên mang ý nghĩa quan trọng gì?", options: ["Thể hiện tổng số lượt người dùng đã nộp biểu mẫu thành công.", "Thể hiện số lượng câu hỏi trắc nghiệm đang có trong bài kiểm tra.", "Thể hiện thời gian trung bình mà một người dùng hoàn thành bài.", "Thể hiện dung lượng tối đa mà bộ nhớ Google Drive đang chứa."], correct: 0, explanation: "Con số (ví dụ: '15 câu trả lời') hiển thị ở tiêu đề tab Câu trả lời chính là bộ đếm ghi nhận có bao nhiêu lượt Submit dữ liệu thành công gửi về máy chủ của biểu mẫu đó." },
+        { id: "d2_18", type: "single", question: "Câu 18: Tính năng \"Xem trong trang tính\" đặc biệt hữu ích nhất trong trường hợp sử dụng nào?", options: ["Khi cần tải dữ liệu điểm số xuống để in ấn và tiến hành lưu trữ.", "Khi cần thiết kế một logo nghệ thuật đẹp mắt cho trang web.", "Khi cần thêm một đoạn video âm nhạc giải trí vào trong bài thi.", "Khi cần thay đổi kiểu chữ của toàn bộ biểu mẫu thành in nghiêng."], correct: 0, explanation: "Nút màu xanh lá này sẽ xuất bảng số liệu ra ứng dụng Google Sheets (tương tự Microsoft Excel). Dạng tệp này rất phù hợp cho việc tính toán hàm, tải xuống (download) và in ấn tài liệu." },
+        { id: "d2_19", type: "single", question: "Câu 19: Em được giao làm phiếu thu thập thông tin cựu học sinh, em dùng công cụ nào phù hợp?", options: ["Sử dụng phần mềm Google Forms tạo mẫu.", "Sử dụng phần mềm vẽ đồ hoạ Paint cơ bản.", "Sử dụng công cụ soạn thảo NotePad của máy.", "Sử dụng tính năng phát trực tiếp của YouTube."], correct: 0, explanation: "Việc thu thập thông tin hàng loạt (như tên, SĐT, năm tốt nghiệp) qua mạng internet là thế mạnh tuyệt đối của phần mềm tạo biểu mẫu trực tuyến Google Forms." },
+        { id: "d2_20", type: "single", question: "Câu 20: Câu hỏi \"Lớp bạn đang học là khối nào?\" có 3 lựa chọn 10, 11, 12. Em dùng dạng gì?", options: ["Sử dụng kiểu định dạng câu hỏi Trắc nghiệm.", "Sử dụng kiểu định dạng câu hỏi Trả lời ngắn.", "Sử dụng kiểu định dạng câu hỏi Tải tệp tin lên.", "Sử dụng kiểu định dạng câu hỏi Ngày và tháng."], correct: 0, explanation: "Khi một câu hỏi cung cấp sẵn một vài phương án cố định để người tham gia lựa chọn (ở đây là 10, 11, 12), em bắt buộc phải thiết lập kiểu câu hỏi là 'Trắc nghiệm' (Multiple choice)." },
+        { id: "d2_21", type: "single", question: "Câu 21: Em lỡ tạo một câu hỏi bị sai nội dung hoàn toàn, em cần nhấn vào biểu tượng nào để bỏ?", options: ["Nhấn vào biểu tượng hình chiếc thùng rác nhỏ.", "Nhấn vào biểu tượng dấu cộng đa sắc màu lớn.", "Nhấn vào biểu tượng hai tờ giấy chồng lên nhau.", "Nhấn vào biểu tượng hình con mắt để xem trước."], correct: 0, explanation: "Biểu tượng thùng rác (Delete) ở góc dưới của một khung câu hỏi là nút lệnh thực thi việc xoá bỏ hoàn toàn câu hỏi đó ra khỏi hệ thống bộ nhớ của biểu mẫu." },
+        { id: "d2_22", type: "single", question: "Câu 22: Em làm bài trắc nghiệm xong nhưng muốn học sinh bắt buộc nhập tên trước, em làm gì?", options: ["Bật tính năng Bắt buộc đối với câu hỏi Họ và tên.", "Đổi giao diện của biểu mẫu sang một màu thật chói.", "Gửi email riêng cho từng học sinh để nhắc nhở tên.", "Tắt tính năng chấp nhận câu trả lời của biểu mẫu đó."], correct: 0, explanation: "Tại câu hỏi 'Họ và tên', em phải nháy chuột bật thanh trượt 'Bắt buộc' (Required). Lúc này nếu học sinh cố tình nộp bài mà ô Tên để trống, hệ thống sẽ chặn lại báo lỗi." },
+        { id: "d2_23", type: "single", question: "Câu 23: Sau khi tạo xong mẫu \"Ý kiến phản hồi\", em muốn đưa nó lên web trường, em thao tác gì?", options: ["Mở web bằng Sites, vào Chèn, nháy chọn lệnh Biểu mẫu.", "Tải biểu mẫu đó về ổ cứng máy tính bằng định dạng PDF.", "Đổi tên biểu mẫu thành Trang chủ rồi công bố lên mạng.", "Mở bảng chọn Giao diện rồi tải biểu mẫu đó làm ảnh nền."], correct: 0, explanation: "Đưa biểu mẫu lên web là hành động nhúng đối tượng. Em phải chuyển sang thẻ thiết kế web trên Google Sites, sau đó mở bảng chọn lệnh Chèn (Insert) và gọi tính năng Biểu mẫu ra." },
+        { id: "d2_24", type: "single", question: "Câu 24: Biểu mẫu của em đang nằm cuối trang web nhưng em muốn nó nằm ngay dưới tiêu đề, em sẽ:", options: ["Kéo thả khối chứa biểu mẫu đó lên vị trí ngay dưới tiêu đề.", "Xoá trang web đi và tiến hành làm lại toàn bộ từ bước đầu.", "Nháy chuột vào biểu tượng thùng rác để tự động dịch chuyển.", "Thay đổi phông chữ của toàn bộ trang web cho kích thước to."], correct: 0, explanation: "Với nền tảng kéo thả trực quan như Google Sites, em chỉ việc nhấp giữ chuột trái vào cụm mỏ neo trên khối biểu mẫu, kéo lướt nó lên phía trên cùng rồi thả tay ra để gắn vào vị trí mới." },
+        { id: "d2_25", type: "single", question: "Câu 25: Bí thư chi đoàn muốn xem kĩ câu trả lời của riêng bạn lớp trưởng 12A, bạn ấy vào đâu xem?", options: ["Mở tab Câu trả lời và nháy chuột vào mục Cá nhân.", "Mở tab Câu trả lời và nháy chuột vào Bản tóm tắt.", "Mở phần Cài đặt và bật tính năng Chia sẻ định vị.", "Xoá toàn bộ các câu trả lời của những bạn khác đi."], correct: 0, explanation: "Để đánh giá riêng lẻ thông tin nộp bài của một người cụ thể, quản trị viên phải vào tab dữ liệu Câu trả lời, sau đó chọn mục 'Cá nhân' (Individual) và lật tìm bài nộp của tài khoản bạn lớp trưởng." },
+        { id: "d2_26", type: "single", question: "Câu 26: Em soạn một câu có 4 đáp án dài, câu tiếp theo cũng y hệt đáp án đó. Mẹo nhanh nhất là:", options: ["Nhấn nút Sao chép câu hỏi rồi sửa lại phần tiêu đề câu.", "Gõ lại từ đầu từng phương án một để luyện tốc độ máy.", "Nhấn phím F5 để máy tính tự động viết nốt các câu hỏi.", "Tải một tệp văn bản chứa đáp án lên thay cho trắc nghiệm."], correct: 0, explanation: "Đây là mẹo tối ưu khi soạn bài thi. Nhấn biểu tượng 2 tờ giấy (Sao chép/Duplicate) sẽ nhân bản ngay lập tức 4 đáp án dài đó xuống câu dưới, em chỉ cần xoá tên câu hỏi đi và điền tiêu đề mới vào là xong." },
+        { id: "d2_27", type: "single", question: "Câu 27: Cô giáo muốn vẽ biểu đồ tròn đánh giá tỉ lệ thích học môn Tin học, cô lấy biểu đồ đó ở đâu?", options: ["Trong mục Bản tóm tắt của tab giao diện Câu trả lời.", "Trong phần Cài đặt màu sắc giao diện của biểu mẫu.", "Trong tính năng chèn Hình ảnh vào phần đầu trang web.", "Trong khu vực tuỳ chọn thêm Câu trả lời khác ở dưới."], correct: 0, explanation: "Thuật toán AI của Google Forms tự động xử lí dữ liệu thô và vẽ sẵn các biểu đồ đánh giá (như biểu đồ tròn) trong phần 'Bản tóm tắt' (Summary) thuộc hệ thống tab Câu trả lời." },
+        { id: "d2_28", type: "single", question: "Câu 28: Nếu học sinh phàn nàn không tìm thấy tuỳ chọn phù hợp với mình trong câu hỏi, em sửa bằng cách?", options: ["Bấm chọn tính năng Thêm \"Câu trả lời khác\" cho câu hỏi.", "Bấm nút Bắt buộc để học sinh phải chọn bừa một đáp án.", "Gửi một đường link khác chứa bản đồ dẫn đến trường học.", "Bấm nút xoá bỏ toàn bộ câu hỏi đó ra khỏi bài kiểm tra."], correct: 0, explanation: "Thao tác click vào dòng 'Thêm câu trả lời khác' (Add 'Other') sẽ sinh ra một trường văn bản mở cuối cùng, giúp học sinh có thể tự gõ và miêu tả chính xác tuỳ chọn mà mình mong muốn." },
+
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1. Cô Nga cần thực hiện một phiếu khảo sát nguyện vọng chọn khối thi Đại học cho học sinh khối 12. Cô tiến hành thiết kế trên nền tảng Google Forms.", items: [
+            { id: "a", text: "a. Cô Nga có thể nháy chuột vào biểu tượng dấu cộng (+) để bắt đầu một \"Mẫu không có tiêu đề\" mới.", correct: true, expl: "Biểu tượng dấu cộng (+) đa sắc là phím tắt mặc định của Google để khởi tạo một trang tính/biểu mẫu trắng (với tên gọi ban đầu là Mẫu không có tiêu đề)." },
+            { id: "b", text: "b. Phần mô tả ngắn gọn bên dưới tiêu đề không có tác dụng gì, cô Nga bắt buộc phải để trống khu vực này.", correct: false, expl: "Phần mô tả rất quan trọng để ghi thông điệp, hướng dẫn học sinh cách điền hoặc thời hạn nộp bài. Khuyến cáo giáo viên không nên để trống khu vực giới thiệu này." },
+            { id: "c", text: "c. Với câu hỏi \"Em dự định thi khối nào?\", cô có thể dùng dạng câu hỏi Trắc nghiệm và bật thiết lập nút \"Bắt buộc\".", correct: true, expl: "Do số lượng khối thi có giới hạn (A, B, C, D), việc sử dụng dạng Trắc nghiệm là tối ưu. Đồng thời, bật 'Bắt buộc' sẽ ngăn việc học sinh nộp biểu mẫu mà để trống thông tin quan trọng này." },
+            { id: "d", text: "d. Để tiện lấy số liệu làm báo cáo cho nhà trường, cô Sinh có thể nháy chuột vào biểu tượng \"Xem trong trang tính\".", correct: true, expl: "Biểu tượng 'Xem trong trang tính' (hình chữ thập màu xanh lá) sẽ giúp cô tự động tải toàn bộ phản hồi của học sinh thành một tệp bảng tính như Excel, rất thuận tiện để lập báo cáo." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2. Nhóm học tập của lớp 10A1 đang xây dựng trang web dự án \"Thế giới Động vật\". Các bạn muốn gắn một biểu mẫu vào cuối trang để lấy ý kiến đóng góp của người xem.", items: [
+            { id: "a", text: "a. Để đưa biểu mẫu vào trang, các bạn cần mở bảng chọn Chèn và chọn nút lệnh \"Biểu mẫu\".", correct: true, expl: "Thao tác này rất chuẩn xác. Thẻ lệnh 'Chèn' (Insert) trên thanh công cụ của Google Sites là nơi chứa chức năng nhúng tệp 'Biểu mẫu' ngoại tuyến vào cấu trúc web." },
+            { id: "b", text: "b. Nhóm phải tải phần mềm Microsoft Word về máy tính thì mới có thể thiết kế được biểu mẫu này.", correct: false, expl: "Google Forms là một nền tảng điện toán đám mây chạy 100% trên trình duyệt web, người dùng chỉ cần có mạng Internet mà không cần cài đặt thêm bất cứ phần mềm văn phòng nào." },
+            { id: "c", text: "c. Sau khi chèn biểu mẫu \"Ý kiến phản hồi\", nó sẽ tự động xuất hiện ở phần đầu tiên của trang chủ.", correct: false, expl: "Theo cơ chế nối phần tử của hệ thống Sites, một khối nội dung mới vừa được chèn vào sẽ luôn bị đẩy xuống và nằm ở vị trí thấp nhất (dưới cùng) của trang web." },
+            { id: "d", text: "d. Nếu các bạn quên bấm nút \"Công bố\" trang web, người xem trên mạng Internet vẫn có thể nhìn thấy và điền biểu mẫu.", correct: false, expl: "Nút 'Công bố' (Publish) là chìa khoá để đưa dữ liệu web từ máy chủ lên môi trường mạng Internet. Nếu không ấn nút này, trang web chỉ tồn tại ở dạng bản nháp nội bộ." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3. Thầy Minh là giáo viên Thể dục, thầy dùng Forms để cho học sinh đăng kí thi đấu Hội khoẻ Phù Đổng. Thầy đang xử lí danh sách 200 học sinh đăng kí trên máy tính.", items: [
+            { id: "a", text: "a. Số lượng 200 câu trả lời này được hiển thị ngay ở dòng đầu tiên trong tab \"Câu trả lời\".", correct: true, expl: "Hệ thống bộ đếm phản hồi của Forms sẽ tự động hiển thị con số báo cáo theo thời gian thực (ở đây là 200) ngay bên cạnh tiêu đề của tab 'Câu trả lời'." },
+            { id: "b", text: "b. Thầy Minh có thể sử dụng mục \"Cá nhân\" để xem cụ thể bạn Nguyễn Văn A đăng kí thi đấu môn gì.", correct: true, expl: "Chế độ xem 'Cá nhân' (Individual) cho phép giáo viên cô lập và truy xuất chi tiết từng bài làm một, rất thuận tiện để kiểm tra chéo thông tin đăng kí của riêng bạn Nguyễn Văn A." },
+            { id: "c", text: "c. Nếu thầy muốn thêm hạng mục \"Môn thi đấu khác\", thầy cần phải đổi màu toàn bộ nền của trang web.", correct: false, expl: "Việc đổi màu nền giao diện hoàn toàn không liên quan đến cấu trúc câu hỏi. Thầy Minh chỉ cần nhấn lệnh 'Thêm câu trả lời khác' vào trong câu hỏi trắc nghiệm là được." },
+            { id: "d", text: "d. Việc kết nối biểu mẫu này với nền tảng Google Sites yêu cầu thầy Minh phải trả phí duy trì hàng tháng cho Google.", correct: false, expl: "Cả hệ thống tạo website (Google Sites) và tạo bảng khảo sát (Google Forms) đều là công cụ miễn phí 100% được cung cấp trong hệ sinh thái Google dành cho giáo dục." }
+        ]}
+    ];
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
