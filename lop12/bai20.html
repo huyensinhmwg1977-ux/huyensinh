@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 20: NHÓM NGHỀ QUẢN TRỊ THUỘC LĨNH VỰC CNTT </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            // Lưu dữ liệu vào nhánh bài 20
+            scoresRef = database.ref('bxh_tin_12_20');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 20: NHÓM NGHỀ QUẢN TRỊ THUỘC LĨNH VỰC CNTT)
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Ngành nào đang thúc đẩy doanh nghiệp phụ thuộc vào hệ thống máy tính?", options: ["Cuộc cách mạng số hoá toàn cầu.", "Cách mạng công nghiệp hoá.", "Ngành công nghiệp tự động hoá.", "Ngành công nghiệp sản xuất ô tô."], correct: 0, explanation: "Cuộc cách mạng số hóa toàn cầu (Chuyển đổi số) buộc các doanh nghiệp phải đưa toàn bộ quy trình, dữ liệu lên không gian mạng, từ đó tạo ra sự phụ thuộc mật thiết vào hệ thống CNTT để duy trì hoạt động." },
+        { id: "d1_2", type: "single", question: "Câu 2: Chuyên gia quản trị mạng có nhiệm vụ chính là gì trong tổ chức?", options: ["Quản lí và duy trì hệ thống mạng.", "Lập trình các phần mềm bán hàng.", "Thiết kế giao diện website học tập.", "Sửa chữa bo mạch phần cứng máy."], correct: 0, explanation: "Nhiệm vụ cốt lõi của chuyên gia quản trị mạng (Network Administrator) là thiết lập, cấu hình, giám sát lưu lượng và duy trì sự kết nối thông suốt của toàn bộ hệ thống mạng (LAN/WAN) trong tổ chức." },
+        { id: "d1_3", type: "single", question: "Câu 3: Nhiệm vụ của chuyên gia bảo mật hệ thống thông tin là gì?", options: ["Bảo mật dữ liệu, chống tấn công.", "Phân tích dữ liệu tài chính công ty.", "Viết kịch bản cho game giáo dục.", "Lắp ráp các linh kiện máy tính rời."], correct: 0, explanation: "Chuyên gia bảo mật (Security Specialist) giống như cảnh sát không gian mạng. Nhiệm vụ của họ là thiết lập tường lửa, mã hóa dữ liệu, rà quét lỗ hổng để bảo vệ hệ thống khỏi các cuộc tấn công từ hacker." },
+        { id: "d1_4", type: "single", question: "Câu 4: Quản trị và bảo trì hệ thống bao gồm việc quản lí những yếu tố nào?", options: ["Cả phần cứng và phần mềm hệ thống.", "Chỉ quản lí phần cứng của máy tính.", "Chỉ quản lí phần mềm ứng dụng web.", "Chỉ quản lí hệ thống điện của phòng."], correct: 0, explanation: "Quản trị hệ thống (System Administration) là công việc mang tính toàn diện. Kỹ sư phải vận hành từ phần cứng vật lý (máy chủ, ổ cứng) cho đến phần mềm (hệ điều hành, cơ sở dữ liệu) để đảm bảo hệ thống trơn tru." },
+        { id: "d1_5", type: "single", question: "Câu 5: Kĩ năng nào giúp người làm quản trị CNTT bắt kịp công nghệ mới?", options: ["Kĩ năng tự nghiên cứu và học hỏi.", "Kĩ năng giao tiếp với khách hàng.", "Kĩ năng quản lí thời gian làm việc.", "Kĩ năng đàm phán hợp đồng kinh tế."], correct: 0, explanation: "Vòng đời công nghệ cực kỳ ngắn. Khả năng tự nghiên cứu (Self-learning) qua tài liệu, diễn đàn quốc tế là kỹ năng sinh tồn giúp người làm IT liên tục cập nhật công nghệ và giải pháp bảo mật mới nhất." },
+        { id: "d1_6", type: "single", question: "Câu 6: Tấn công DoS trong an ninh mạng là viết tắt của phương thức nào?", options: ["Tấn công từ chối dịch vụ mạng.", "Tấn công dò lỗ hổng phần mềm.", "Tấn công đánh cắp mật khẩu wifi.", "Tấn công giả mạo email cá nhân."], correct: 0, explanation: "DoS (Denial of Service) là phương thức tấn công làm ngập lụt máy chủ bằng hàng triệu yêu cầu truy cập rác, khiến băng thông quá tải và người dùng hợp pháp không thể truy cập vào dịch vụ." },
+        { id: "d1_7", type: "single", question: "Câu 7: Thiết bị nào sau đây được dùng để bảo mật các thiết bị mạng?", options: ["Tường lửa (Firewall).", "Màn hình (Monitor).", "Bàn phím (Keyboard).", "Máy in (Printer máy)."], correct: 0, explanation: "Tường lửa (Firewall) đóng vai trò như một trạm gác biên giới. Nó kiểm duyệt gắt gao mọi luồng dữ liệu ra/vào mạng để ngăn chặn kịp thời các truy cập bất hợp pháp và phần mềm độc hại." },
+        { id: "d1_8", type: "single", question: "Câu 8: Sự phổ biến của thiết bị nào làm tăng nhu cầu quản trị mạng?", options: ["Các thiết bị kết nối mạng IoT.", "Các thiết bị gia dụng cơ bản.", "Các loại xe đạp điện đời mới.", "Các máy chiếu phim truyền thống."], correct: 0, explanation: "Sự bùng nổ của Vạn vật kết nối (IoT) như camera thông minh, máy chấm công, tủ lạnh thông minh... làm tăng hàng tỷ điểm truy cập mới, tạo ra áp lực khổng lồ buộc các tổ chức phải mở rộng quy mô quản trị mạng." },
+        { id: "d1_9", type: "single", question: "Câu 9: Ngành học nào sau đây liên quan đến nhóm nghề quản trị CNTT?", options: ["Ngành An ninh mạng.", "Ngành Kế toán tài chính.", "Ngành Quản trị kinh doanh.", "Ngành Thiết kế thời trang."], correct: 0, explanation: "Ngành An ninh mạng và Quản trị mạng máy tính là hai chuyên ngành cốt lõi tại các trường Đại học/Cao đẳng đào tạo trực tiếp nguồn nhân lực chuyên sâu cho nhóm nghề quản trị hạ tầng CNTT." },
+        { id: "d1_10", type: "single", question: "Câu 10: Vì sao chuyên gia bảo mật cần giám sát mạng thường xuyên?", options: ["Để phát hiện sự xâm nhập trái phép.", "Để tính toán lương cho nhân viên kĩ thuật.", "Để nâng cấp phần cứng cho các máy tính.", "Để thống kê số lượng học sinh truy cập."], correct: 0, explanation: "Hacker không có giờ nghỉ ngơi. Việc giám sát liên tục (24/7) lưu lượng mạng là cách duy nhất để phát hiện những kết nối bất thường, từ đó ngăn chặn kịp thời ngay khi tin tặc vừa nhen nhóm xâm nhập." },
+        { id: "d1_11", type: "single", question: "Câu 11: Hệ thống IDS trong bảo mật thông tin có chức năng chính là gì?", options: ["Phát hiện các xâm nhập bất hợp pháp.", "Lưu trữ dữ liệu điểm của học sinh.", "Tăng tốc độ truy cập internet cục bộ.", "Thiết kế đồ hoạ cho website trường."], correct: 0, explanation: "IDS (Intrusion Detection System) là Hệ thống phát hiện xâm nhập. Nó hoạt động như một hệ thống camera an ninh vô hình, chuyên soi quét các hành vi khả nghi trong mạng để báo động cho quản trị viên." },
+        { id: "d1_12", type: "single", question: "Câu 12: Việc cài đặt, cập nhật phần mềm trong hệ thống nhằm mục đích gì?", options: ["Đảm bảo tính ổn định và hiệu suất.", "Giảm bớt số lượng nhân viên kĩ thuật.", "Tăng chi phí vận hành cho nhà trường.", "Hạn chế học sinh sử dụng máy tính."], correct: 0, explanation: "Mỗi bản cập nhật phần mềm (Update/Patch) đều đi kèm việc vá các lỗ hổng bảo mật mới nhất và tối ưu hóa mã lệnh, giúp hệ thống không chỉ an toàn hơn mà còn hoạt động với hiệu suất (tốc độ) cao nhất." },
+        { id: "d1_13", type: "single", question: "Câu 13: Chuyển đổi số làm tăng nhu cầu nhân lực bảo mật vì lí do nào?", options: ["Gia tăng nhanh chóng của dữ liệu.", "Các máy tính ngày càng rẻ tiền hơn.", "Mạng internet bị chậm đi rất nhiều.", "Học sinh không thích học trực tuyến."], correct: 0, explanation: "Khi các tổ chức chuyển đổi số, lượng dữ liệu sinh ra là khổng lồ (Big Data) và mang giá trị kinh tế cốt lõi. Để bảo vệ khối tài sản số khổng lồ này, nhu cầu tuyển dụng các chuyên gia bảo mật tăng vọt." },
+        { id: "d1_14", type: "single", question: "Câu 14: Sự phát triển của lưu trữ đám mây dẫn đến yêu cầu gì cho mạng?", options: ["Yêu cầu cao về ổn định và an toàn.", "Yêu cầu màn hình máy tính phải lớn.", "Yêu cầu giảm thiểu số lượng máy chủ.", "Yêu cầu dùng cáp quang thay wifi."], correct: 0, explanation: "Lưu trữ đám mây (Cloud Computing) đặt toàn bộ dữ liệu ở các máy chủ từ xa. Do đó, đường truyền mạng kết nối đến đám mây bắt buộc phải cực kì ổn định (không rớt mạng) và mã hóa an toàn để chống nghe lén." },
+        { id: "d1_15", type: "single", question: "Câu 15: Vì sao người quản trị mạng cần hiểu luật pháp và tiêu chuẩn?", options: ["Để tuân thủ quy định bảo mật dữ liệu.", "Để thiết kế logo cho trang web trường.", "Để giảng dạy môn Giáo dục công dân.", "Để lắp đặt phần cứng máy tính nhanh."], correct: 0, explanation: "Công nghệ không nằm ngoài vòng pháp luật. Nắm vững luật an ninh mạng (như GDPR hay Luật An ninh mạng VN) giúp quản trị viên thiết lập hệ thống bảo vệ quyền riêng tư người dùng hợp pháp và tránh bị kiện tụng." },
+        { id: "d1_16", type: "single", question: "Câu 16: Sự đa dạng của IoT đặt ra thách thức gì cho quản trị hệ thống?", options: ["Gia tăng số lượng và chủng loại thiết bị.", "Giảm dung lượng ổ cứng của máy tính.", "Không thể kết nối được với internet.", "Thiết bị IoT không cần bảo mật thông tin."], correct: 0, explanation: "Thiết bị IoT cực kỳ đa dạng (từ bóng đèn, đồng hồ đến cảm biến nhiệt). Mỗi loại chạy một hệ điều hành riêng, giao thức riêng. Sự phức tạp và số lượng khổng lồ này là cơn ác mộng đối với việc quản trị đồng bộ." },
+        { id: "d1_17", type: "single", question: "Câu 17: Các nguy cơ tấn công mạng hiện nay có đặc điểm như thế nào?", options: ["Ngày càng phức tạp và rất tinh vi.", "Chỉ xảy ra ở các doanh nghiệp lớn.", "Rất dễ dàng bị phát hiện và ngăn chặn.", "Không ảnh hưởng đến dữ liệu cá nhân."], correct: 0, explanation: "Hacker ngày nay không còn hoạt động đơn lẻ mà hình thành các tổ chức tội phạm mạng lớn, sử dụng Trí tuệ nhân tạo (AI) và các mã độc tàng hình (Zero-day) khiến các cuộc tấn công trở nên cực kỳ tinh vi." },
+        { id: "d1_18", type: "single", question: "Câu 18: Sự cố an ninh mạng hiện nay có tầm ảnh hưởng ra sao?", options: ["Lan toả toàn cầu, không giới hạn quốc gia.", "Chỉ ảnh hưởng trong phạm vi một trường học.", "Không gây thiệt hại nghiêm trọng về kinh tế.", "Chỉ làm hỏng phần cứng của máy tính bàn."], correct: 0, explanation: "Internet là không gian mạng phẳng không biên giới. Một mã độc tống tiền (ví dụ WannaCry) được phát tán từ một quốc gia có thể lập tức lây nhiễm và làm tê liệt hệ thống y tế, tài chính trên phạm vi toàn cầu." },
+        { id: "d1_19", type: "single", question: "Câu 19: Để thiết lập một mạng LAN cho phòng máy tính, cần kiến thức gì?", options: ["Kiến thức về cấu hình các thiết bị mạng.", "Kiến thức về lập trình game trí tuệ.", "Kiến thức về chỉnh sửa video bài giảng.", "Kiến thức về thiết kế đồ hoạ 3D cao cấp."], correct: 0, explanation: "Để các máy tính trong phòng thực hành có thể giao tiếp với nhau, người thiết lập cần có kiến thức sâu rộng về mạng (giao thức IP, Subnet mask, cấu hình Switch/Router và bấm cáp mạng)." },
+        { id: "d1_20", type: "single", question: "Câu 20: Nếu trang web học tập liên tục bị sập do quá tải, cần chuyên gia nào?", options: ["Chuyên gia Quản trị và bảo trì hệ thống.", "Chuyên gia Thiết kế mĩ thuật đa phương tiện.", "Chuyên gia Lập trình trí tuệ nhân tạo.", "Chuyên gia Sản xuất nội dung truyền thông."], correct: 0, explanation: "Website sập khi quá tải (nghẽn cổ chai tài nguyên máy chủ). Chuyên gia Quản trị hệ thống là người có khả năng phân tích log, tăng cường RAM/CPU cho máy chủ và triển khai cân bằng tải (Load Balancing) để khắc phục." },
+        { id: "d1_21", type: "single", question: "Câu 21: Khi phát hiện có dấu hiệu lộ điểm học sinh, người bảo mật cần làm gì?", options: ["Rà soát hệ thống phát hiện xâm nhập IDS.", "Xoá toàn bộ dữ liệu trên máy chủ nhà trường.", "Ngắt kết nối internet của toàn bộ học sinh.", "Mua ngay máy tính mới để thay thế máy cũ."], correct: 0, explanation: "Việc rò rỉ dữ liệu điểm số chứng tỏ hệ thống đã bị xuyên thủng. Thao tác đầu tiên là trích xuất và rà soát nhật ký (log) từ hệ thống phát hiện xâm nhập (IDS) để tìm ra nguồn gốc và phương thức của kẻ tấn công." },
+        { id: "d1_22", type: "single", question: "Câu 22: Để ngăn chặn học sinh truy cập trang web độc hại, cần sử dụng gì?", options: ["Cấu hình hệ thống phòng thủ tường lửa.", "Cài đặt phần mềm soạn thảo văn bản.", "Nâng cấp thanh RAM cho máy tính trạm.", "Thay đổi toàn bộ bàn phím và chuột mới."], correct: 0, explanation: "Tường lửa (Firewall) không chỉ chặn hacker vào mạng, mà còn có khả năng thiết lập các bộ lọc (Outbound rules) để chặn không cho các máy tính bên trong mạng truy cập đến các địa chỉ web đen, độc hại." },
+        { id: "d1_23", type: "single", question: "Câu 23: Công ty dùng AI để dự đoán sự cố máy chủ đang áp dụng kĩ năng gì?", options: ["Quản lí và bảo trì hệ thống bằng công cụ mới.", "Giao tiếp và đàm phán với khách hàng.", "Thiết kế giao diện phần mềm quản lí điểm.", "Lắp ráp và sửa chữa phần cứng máy tính."], correct: 0, explanation: "Sử dụng Trí tuệ nhân tạo (AI) để giám sát nhiệt độ, băng thông và dự đoán thời điểm phần cứng sắp hỏng chính là kĩ năng hiện đại hóa quy trình quản trị, áp dụng công nghệ mới vào bảo trì dự phòng." },
+        { id: "d1_24", type: "single", question: "Câu 24: Một kĩ thuật viên đang cập nhật Windows cho 50 máy tính, họ làm nghề gì?", options: ["Quản trị và bảo trì hệ thống thông tin.", "Chuyên viên thiết kế đồ hoạ kiến trúc.", "Chuyên gia phân tích dữ liệu tài chính.", "Kĩ sư phần mềm lập trình ứng dụng di động."], correct: 0, explanation: "Triển khai phần mềm diện rộng, cập nhật hệ điều hành (OS Deployment & Patch Management) cho hàng chục máy tính nội bộ là công việc đặc trưng hàng ngày của vị trí Quản trị và bảo trì hệ thống." },
+        { id: "d1_25", type: "single", question: "Câu 25: Khi mạng trường học bị rớt liên tục, chuyên gia quản trị mạng sẽ làm gì?", options: ["Phân tích lưu lượng và cấu hình lại Router.", "Viết lại mã nguồn của trang web nhà trường.", "Yêu cầu tất cả học sinh tắt máy tính cá nhân.", "Định dạng lại ổ cứng của tất cả các máy tính."], correct: 0, explanation: "Mạng rớt liên tục thường do xung đột IP hoặc Router (bộ định tuyến) bị tràn bộ nhớ đệm do lưu lượng vượt tải. Kỹ sư mạng sẽ dùng phần mềm soi lưu lượng (như Wireshark) để bắt bệnh và thiết lập lại cấu hình định tuyến." },
+        { id: "d1_26", type: "single", question: "Câu 26: Để bảo vệ dữ liệu cá nhân của các em học sinh, nhà trường cần ai?", options: ["Chuyên gia bảo mật hệ thống thông tin.", "Chuyên gia lắp ráp thiết bị điện tử.", "Nhân viên trực tổng đài hỗ trợ kĩ thuật.", "Giáo viên phụ trách môn Giáo dục thể chất."], correct: 0, explanation: "Dữ liệu thông tin cá nhân (CCCD, địa chỉ, y tế) của học sinh là mục tiêu nhạy cảm. Nhà trường bắt buộc cần có Chuyên gia bảo mật để mã hóa cơ sở dữ liệu và bảo vệ hệ thống khỏi mã độc tống tiền (Ransomware)." },
+        { id: "d1_27", type: "single", question: "Câu 27: Áp dụng mô hình học từ xa đòi hỏi tổ chức giáo dục phải đối mặt với gì?", options: ["Yêu cầu cao về sự ổn định và an toàn mạng.", "Phải trang bị máy tính cấu hình mạnh cho tất cả.", "Cần xây dựng thêm nhiều phòng học truyền thống.", "Không cần quan tâm đến vấn đề bảo mật dữ liệu."], correct: 0, explanation: "Học trực tuyến yêu cầu việc truyền tải video/âm thanh thời gian thực (Real-time). Nếu mạng không ổn định, bài giảng sẽ bị giật/đứt. Nếu không an toàn, các tiết học sẽ bị phá rối (như nạn Zoombombing)." },
+        { id: "d1_28", type: "single", question: "Câu 28: Đâu là hành động thể hiện kĩ năng \"tự học hỏi\" của quản trị viên?", options: ["Đọc tài liệu về loại mã độc tống tiền mới nhất.", "Trực điện thoại hỗ trợ kĩ thuật suốt ngày đêm.", "Giao tiếp lưu loát với đồng nghiệp trong công ty.", "Sắp xếp lịch làm việc hợp lí cho từng tuần."], correct: 0, explanation: "Việc chủ động tìm đọc, cập nhật thông tin về các biến thể mã độc (Ransomware) mới trên các báo cáo an ninh mạng chính là biểu hiện rõ nét nhất của thái độ tự học và nâng cao chuyên môn để đón đầu rủi ro." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Để phục vụ cho năm học mới, trường THPT nơi bạn công tác quyết định nâng cấp toàn bộ hệ thống lưu trữ học liệu và quản lí điểm kiểm tra. Hệ thống mới này chạy trên nền tảng đám mây, kết nối với 45 máy tính tại phòng thực hành và cho phép các em truy cập từ xa bằng thiết bị di động cá nhân.", items: [
+            { id: "a", text: "a) Hệ thống này yêu cầu nhà trường cần có nhân sự làm công việc quản trị mạng và bảo trì hệ thống.", correct: true, expl: "Với hệ thống 45 máy trạm kết nối đám mây phức tạp, bắt buộc phải có đội ngũ IT chuyên trách duy trì đường truyền mạng và cấu hình bảo trì phần cứng thường xuyên để phòng máy hoạt động ổn định." },
+            { id: "b", text: "b) Việc cho phép truy cập từ thiết bị di động (IoT, Smartphone) sẽ làm giảm đi các nguy cơ tấn công mạng vì các thiết bị này rất an toàn.", correct: false, expl: "Đây là quan điểm hoàn toàn sai lầm. Smartphone cá nhân của học sinh không được kiểm duyệt bảo mật, chứa rất nhiều ứng dụng lạ. Cho phép chúng truy cập hệ thống chính là mở thêm nhiều lỗ hổng rủi ro cho mạng." },
+            { id: "c", text: "c) Để bảo vệ dữ liệu điểm số của các em không bị chỉnh sửa trái phép, nhà trường cần triển khai hệ thống tường lửa và hệ thống phát hiện xâm nhập (IDS).", correct: true, expl: "Điểm số là dữ liệu nhạy cảm. Tường lửa (Firewall) sẽ chặn các kết nối bên ngoài không hợp lệ, trong khi IDS sẽ phát hiện các hành vi cố tình leo thang đặc quyền để sửa điểm nội bộ, bảo đảm toàn vẹn dữ liệu." },
+            { id: "d", text: "d) Quản trị viên chỉ cần có kiến thức về phần cứng máy tính là đủ để đảm bảo toàn bộ hệ thống học trực tuyến này hoạt động mượt mà.", correct: false, expl: "Hệ thống học trực tuyến đám mây phụ thuộc 90% vào hạ tầng mạng (Network) và nền tảng phần mềm máy chủ. Kiến thức phần cứng máy tính đơn thuần không bao giờ đủ để quản lý và vận hành một hệ thống như thế này." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Nền tảng học tập trực tuyến đang tổ chức một kì thi thử quan trọng cho hơn 2000 học sinh cùng lúc. Đột nhiên, máy chủ báo lỗi quá tải băng thông và từ chối mọi lượt truy cập, mặc dù số lượng học sinh thực tế vào mạng chỉ khoảng 500 em.", items: [
+            { id: "a", text: "a) Sự cố máy chủ từ chối lượt truy cập này có thể liên quan đến một dạng tấn công mạng.", correct: true, expl: "Máy chủ bị cạn kiệt tài nguyên (băng thông) khi số lượng người truy cập thực tế vẫn ở mức rất thấp là dấu hiệu đặc trưng nhất của việc mạng lưới đang bị oanh tạc bởi các truy cập rác giả mạo từ Hacker." },
+            { id: "b", text: "b) Dấu hiệu mạng bị quá tải bất thường trong trường hợp này rất có thể là do tấn công từ chối dịch vụ (DoS).", correct: true, expl: "Tấn công từ chối dịch vụ (DoS / DDoS) nhắm đích vào việc huy động các máy tính ma (Botnet) gửi hàng triệu yêu cầu ảo cùng lúc để làm ngập lụt máy chủ, khiến học sinh thật bị từ chối truy cập do nghẽn mạng." },
+            { id: "c", text: "c) Chuyên gia bảo mật cần cấu hình lại phần mềm soạn thảo văn bản trên máy chủ để giải quyết sự cố.", correct: false, expl: "Phần mềm soạn thảo văn bản (như Word) là phần mềm người dùng ứng dụng cục bộ, không hề có chức năng điều hướng mạng hay liên quan đến băng thông máy chủ. Giải pháp này sai hoàn toàn về mặt kĩ thuật." },
+            { id: "d", text: "d) Chuyên gia quản trị mạng cần ngay lập tức phân tích lưu lượng mạng, kiểm tra nhật kí của Router và Firewall để lọc bỏ các truy cập giả mạo.", correct: true, expl: "Giải pháp tiêu chuẩn đối phó với DoS: Kĩ sư phải đọc Log (nhật ký) trên Firewall để tìm ra các địa chỉ IP đang gửi lượng gói tin lớn bất thường, sau đó viết quy tắc (Rule) trên Router để chặn đứng các IP rác này." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Bạn Tuấn là sinh viên mới ra trường và được nhận vào vị trí \"Chuyên viên quản trị và bảo trì hệ thống\" tại một trung tâm dữ liệu giáo dục. Công việc hàng ngày của Tuấn rất đa dạng và thường xuyên gặp những công nghệ hoàn toàn mới.", items: [
+            { id: "a", text: "a) Công việc của Tuấn sẽ bao gồm cài đặt, cập nhật phần mềm và xử lí sự cố máy tính.", correct: true, expl: "Theo chuẩn mô tả công việc (Job Description) của chuyên viên Quản trị và bảo trì hệ thống, việc cài đặt phần mềm lõi và cấp cứu sự cố hệ thống máy chủ / máy trạm là nghiệp vụ bắt buộc hàng ngày." },
+            { id: "b", text: "b) Tuấn không cần thiết phải rèn luyện kĩ năng giao tiếp vì công việc chỉ tiếp xúc với máy móc.", correct: false, expl: "Ngành IT làm việc với máy nhưng phục vụ con người. Kĩ năng giao tiếp rất quan trọng để Tuấn giải thích sự cố cho các giáo viên, phối hợp với đồng nghiệp hoặc đàm phán mua thiết bị với các đối tác." },
+            { id: "c", text: "c) Nếu trung tâm dữ liệu bị lỗi phần cứng, trách nhiệm xử lí khắc phục thuộc về chuyên gia bảo mật thông tin thay vì Tuấn.", correct: false, expl: "Chuyên gia bảo mật chỉ chuyên lo phòng chống hacker, dữ liệu. Việc xử lý lỗi vật lý (cháy nổ phần cứng, hỏng ổ cứng) hoàn toàn là trách nhiệm chuyên môn của người quản trị và bảo trì hệ thống như Tuấn." },
+            { id: "d", text: "d) Việc Tuấn chủ động tìm hiểu cách ứng dụng AI để giám sát hệ thống từ xa là một minh chứng rõ ràng cho kĩ năng tự học hỏi, cập nhật kiến thức.", correct: true, expl: "AI là công nghệ tương lai. Việc một sinh viên IT chủ động tìm tòi, ứng dụng AI để nâng cấp tự động hóa quy trình giám sát hệ thống mạng chính là biểu hiện rèn luyện kĩ năng cốt lõi: Tự cập nhật tri thức." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Công việc nào thuộc về chuyên gia bảo mật hệ thống thông tin?", options: ["Giám sát mạng để phát hiện xâm nhập.", "Cài đặt hệ điều hành cho máy tính bàn.", "Lập trình giao diện trang web học tập.", "Sửa chữa nguồn điện của phòng máy."], correct: 0, explanation: "Giám sát 24/7 để rà soát các hành vi kết nối bất hợp pháp, phát hiện dấu vết xâm nhập của hacker chính là nghiệp vụ sống còn của một chuyên gia an ninh mạng bảo mật thông tin." },
+        { id: "d2_2", type: "single", question: "Câu 2: Nghề quản trị mạng máy tính đòi hỏi kiến thức cơ bản về thiết bị nào?", options: ["Cấu hình và bảo mật Router, Firewall.", "Cài đặt phần mềm vẽ đồ hoạ kĩ thuật.", "Cách thay thế màn hình máy tính bàn.", "Viết nội dung truyền thông giáo dục."], correct: 0, explanation: "Router (Bộ định tuyến) và Firewall (Tường lửa) là trái tim và tấm khiên của hạ tầng mạng. Nắm vững kĩ thuật cấu hình hai thiết bị này là yêu cầu nghề nghiệp bắt buộc của kĩ sư quản trị mạng." },
+        { id: "d2_3", type: "single", question: "Câu 3: Việc tuân thủ quy định về an ninh mạng là yêu cầu của nhóm kiến thức nào?", options: ["Kiến thức về Luật pháp và quy định.", "Kiến thức về Lập trình phần mềm.", "Kiến thức về Quản trị cơ sở dữ liệu.", "Kiến thức về Thiết kế đồ hoạ 3D."], correct: 0, explanation: "Không gian mạng được quản lý bởi pháp luật. Kiến thức về Luật pháp (Luật An ninh mạng, quy chuẩn bảo mật thẻ thanh toán PCI-DSS...) giúp hệ thống IT của tổ chức hoạt động an toàn và hợp pháp." },
+        { id: "d2_4", type: "single", question: "Câu 4: Kĩ năng mềm nào rất cần thiết cho nhóm nghề quản trị mạng?", options: ["Kĩ năng tự học hỏi, cập nhật kiến thức.", "Kĩ năng dẫn chương trình truyền hình.", "Kĩ năng thiết kế thời trang hiện đại.", "Kĩ năng đàm phán giá cả mua bán."], correct: 0, explanation: "Trong ngành IT, giao thức và mã độc thay đổi từng ngày. Sự sống còn của kĩ sư mạng nằm ở kĩ năng tự học (đọc tài liệu tiếng Anh, tham gia diễn đàn) để không bị tụt hậu với kĩ thuật tấn công mới." },
+        { id: "d2_5", type: "single", question: "Câu 5: IDS là hệ thống dùng để làm gì trong bảo mật thông tin?", options: ["Phát hiện các xâm nhập trái phép.", "Lưu trữ điểm thi của học sinh lớp 10.", "Dọn dẹp tệp tin rác trên máy tính.", "Kết nối máy chiếu với máy tính bàn."], correct: 0, explanation: "Hệ thống IDS (Intrusion Detection System) có nhiệm vụ phân tích sâu các luồng gói tin đi qua mạng, nếu có luồng dữ liệu mang đặc điểm của virus hoặc nỗ lực hack, nó sẽ ngay lập tức phát cảnh báo." },
+        { id: "d2_6", type: "single", question: "Câu 6: Nhu cầu nhân lực an toàn thông tin tăng do yếu tố nào?", options: ["Sự chuyển đổi số và bùng nổ dữ liệu.", "Do học sinh ngày càng thích học tin học.", "Do số lượng máy tính bị hỏng hóc nhiều.", "Do tốc độ mạng internet ngày càng chậm."], correct: 0, explanation: "Khi mọi tài sản, tiền bạc, hồ sơ đều được mã hóa thành dữ liệu số (Chuyển đổi số), nguy cơ bị tội phạm mạng đánh cắp càng cao. Vì thế, nhu cầu tuyển dụng lực lượng bảo vệ không gian số tăng vọt." },
+        { id: "d2_7", type: "single", question: "Câu 7: Một trong các kĩ năng mềm của người quản trị CNTT là gì?", options: ["Kĩ năng quản lí thời gian làm việc.", "Kĩ năng sửa chữa thiết bị cơ khí.", "Kĩ năng biên tập video clip ngắn.", "Kĩ năng vẽ tranh phong cảnh 3D."], correct: 0, explanation: "Người quản trị IT thường phải xử lý cùng lúc hàng chục sự cố khác nhau. Việc sắp xếp thứ tự ưu tiên (lỗi nào cần cứu trước, lỗi nào chờ sau) thông qua kĩ năng quản lý thời gian là vô cùng quan trọng." },
+        { id: "d2_8", type: "single", question: "Câu 8: Ngành nào không trực tiếp liên quan đến nhóm nghề quản trị CNTT?", options: ["Ngành Quản trị khách sạn du lịch.", "Ngành Mạng máy tính truyền thông.", "Ngành Quản trị hệ thống thông tin.", "Ngành An toàn, an ninh mạng lưới."], correct: 0, explanation: "Quản trị khách sạn du lịch thuộc khối ngành dịch vụ thương mại xã hội, hoàn toàn không đào tạo chuyên môn về cấu trúc máy tính, phần mềm hay bảo mật kĩ thuật số như các ngành IT." },
+        { id: "d2_9", type: "single", question: "Câu 9: Chuyên gia quản trị hệ thống quản lí những thành phần nào?", options: ["Cả phần cứng và phần mềm tổ chức.", "Chỉ quản lí các thiết bị di động IoT.", "Chỉ đảm nhận việc cài đặt hệ điều hành.", "Chỉ phân tích lưu lượng của mạng LAN."], correct: 0, explanation: "Để một trung tâm dữ liệu hoạt động, chuyên gia quản trị phải chịu trách nhiệm đảm bảo cả về máy móc vật lý (Server, UPS điện) lẫn môi trường ảo (Hệ điều hành, phần mềm quản lý)." },
+        { id: "d2_10", type: "single", question: "Câu 10: Tấn công dò lỗ hổng (Vulnerability scanning) nhằm mục đích gì?", options: ["Tìm điểm yếu hệ thống để xâm nhập.", "Làm cho mạng máy tính chạy nhanh hơn.", "Chặn các website không lành mạnh.", "Cập nhật phần mềm diệt virus mới nhất."], correct: 0, explanation: "Trước khi đánh sập hệ thống, hacker sẽ sử dụng các phần mềm chuyên dụng quét qua toàn bộ các cổng mạng để dò tìm xem hệ điều hành có phiên bản cũ nào chưa vá lỗi hay không, từ đó dùng mã khai thác để thâm nhập." },
+        { id: "d2_11", type: "single", question: "Câu 11: Việc xử lí sự cố hệ thống hiệu quả có ý nghĩa như thế nào?", options: ["Đảm bảo sự ổn định của hệ thống.", "Giảm tiền điện của phòng máy tính.", "Tăng dung lượng ổ cứng lưu trữ.", "Xoá bỏ hoàn toàn các virus máy tính."], correct: 0, explanation: "Xử lý sự cố mạng/máy chủ với tốc độ chớp nhoáng (khắc phục ngay lập tức khi phát sinh) sẽ giảm thiểu thời gian Downtime (chết mạng), đảm bảo các hoạt động học tập, kinh doanh duy trì nhịp độ ổn định." },
+        { id: "d2_12", type: "single", question: "Câu 12: Tại sao xu hướng làm việc từ xa làm tăng nhu cầu quản trị mạng?", options: ["Đòi hỏi cao về tính ổn định, an toàn mạng.", "Vì người làm việc từ xa hay làm hỏng máy.", "Vì phải cấp cho mỗi người một máy chủ riêng.", "Đòi hỏi phải dùng các phần mềm đắt tiền."], correct: 0, explanation: "Người làm từ xa phải truy cập vào dữ liệu công ty thông qua Internet công cộng. Để đường truyền không bị lag và dữ liệu không bị nghe lén, công ty cần kĩ sư mạng để thiết lập các kênh kết nối riêng ảo VPN an toàn." },
+        { id: "d2_13", type: "single", question: "Câu 13: Chuyển đổi sang lưu trữ đám mây đòi hỏi chuyên gia phải làm gì?", options: ["Đảm bảo an toàn cho dữ liệu trên đám mây.", "Ngắt hoàn toàn kết nối với mạng internet.", "Yêu cầu mọi người dùng chung mật khẩu.", "Lưu toàn bộ dữ liệu ra đĩa CD truyền thống."], correct: 0, explanation: "Dữ liệu đưa lên đám mây nghĩa là tài sản đã nằm trên máy chủ của bên thứ ba. Chuyên gia CNTT phải áp dụng các thuật toán mã hóa đầu cuối và thiết lập phân quyền khắt khe để đảm bảo dữ liệu không bị rò rỉ." },
+        { id: "d2_14", type: "single", question: "Câu 14: Sự phát triển của IoT ảnh hưởng đến quản trị mạng như thế nào?", options: ["Tăng số lượng thiết bị cần kết nối và bảo mật.", "Làm cho việc quản trị mạng trở nên nhàn rỗi.", "Không cần phải thiết lập tường lửa bảo vệ nữa.", "Thiết bị IoT không bao giờ bị dính mã độc."], correct: 0, explanation: "Hàng nghìn cảm biến, camera IoT được gộp chung vào mạng nội bộ khiến sơ đồ mạng trở nên chằng chịt phức tạp. Mỗi thiết bị là một cửa ngõ tiềm năng để Hacker tấn công, tạo ra gánh nặng bảo mật khổng lồ." },
+        { id: "d2_15", type: "single", question: "Câu 15: Vì sao các tổ chức ngày càng chú trọng bảo vệ dữ liệu cá nhân?", options: ["Tuân thủ luật an ninh mạng và bảo vệ uy tín.", "Để lấy thông tin đó bán cho các bên thứ ba.", "Để xoá dữ liệu một cách nhanh chóng nhất.", "Để giảm bớt công việc cho kĩ thuật viên mạng."], correct: 0, explanation: "Lộ dữ liệu khách hàng (sđt, tài khoản) không chỉ khiến doanh nghiệp bị nhà nước phạt tiền rất nặng theo Luật An ninh mạng mà còn phá hủy hoàn toàn danh tiếng và niềm tin của người dùng vào tổ chức đó." },
+        { id: "d2_16", type: "single", question: "Câu 16: Kiến thức về giao thức mạng có vai trò gì với quản trị mạng?", options: ["Giúp phân tích lưu lượng và cấu hình mạng.", "Giúp thiết kế giao diện đồ hoạ cho website.", "Giúp lập trình ra các ứng dụng di động mới.", "Giúp sửa chữa phần cứng khi bị cháy nổ."], correct: 0, explanation: "Giao thức mạng (như TCP/IP, DNS, HTTP) là bộ ngôn ngữ chung của Internet. Nắm vững giao thức giúp người kĩ sư đọc hiểu được dữ liệu truyền tải, từ đó thiết lập đường đi cho dữ liệu chuẩn xác nhất." },
+        { id: "d2_17", type: "single", question: "Câu 17: Ứng dụng công nghệ AI vào quản trị hệ thống mang lại lợi ích gì?", options: ["Giúp tự động hoá và duy trì tính ổn định.", "Giúp sinh viên làm bài tập một cách tự động.", "Thay thế hoàn toàn chuyên gia bảo mật mạng.", "Ngăn chặn hoàn toàn mọi nguy cơ bị tấn công."], correct: 0, explanation: "Hệ thống AI có thể tự động học hỏi trạng thái mạng bình thường. Khi có dấu hiệu nghẽn mạng hoặc có mã độc lây lan, AI sẽ tự động kích hoạt kịch bản chặn IP hoặc dọn rác, giúp máy chủ luôn ổn định." },
+        { id: "d2_18", type: "single", question: "Câu 18: Tình huống an ninh mạng có tính lan toả toàn cầu cho thấy điều gì?", options: ["Tầm quan trọng của chuẩn an ninh quốc tế.", "Rằng mạng nội bộ của trường học là an toàn.", "Các cuộc tấn công mạng chỉ là chuyện nhỏ.", "Không cần quan tâm nếu không nối internet."], correct: 0, explanation: "Không một quốc gia hay tổ chức nào an toàn tuyệt đối. Mối đe dọa toàn cầu yêu cầu tất cả các hệ thống CNTT phải cùng tuân thủ các quy chuẩn an ninh bảo mật quốc tế (như ISO 27001) để phòng vệ chéo." },
+        { id: "d2_19", type: "single", question: "Câu 19: Khi nhà trường mở rộng thêm 3 phòng máy thực hành mới, ai sẽ là người đảm nhận việc nối mạng cho tất cả?", options: ["Chuyên gia Quản trị mạng máy tính.", "Giáo viên phụ trách môn Ngữ Văn.", "Kĩ sư lập trình phần mềm giáo dục.", "Nhân viên thiết kế mĩ thuật website."], correct: 0, explanation: "Việc quy hoạch cáp mạng, chia dải địa chỉ IP (Subnet), thiết lập thiết bị chia mạng (Switch) cho 3 phòng thực hành là nhiệm vụ vật lý và logic chuẩn xác của một chuyên gia Quản trị mạng máy tính." },
+        { id: "d2_20", type: "single", question: "Câu 20: Hệ thống điểm thi báo lỗi không thể truy cập sau khi cập nhật hệ điều hành. Ai cần khắc phục?", options: ["Người Quản trị và bảo trì hệ thống.", "Chuyên gia phân tích dữ liệu tài chính.", "Kĩ thuật viên lắp ráp linh kiện điện tử.", "Chuyên gia bảo vệ thông tin mật mã."], correct: 0, explanation: "Lỗi xung đột phần mềm sau khi Update Windows là lỗi nền tảng. Chuyên viên Quản trị và bảo trì hệ thống là người nắm giữ quyền quản trị máy chủ (Root) phải vào gỡ bỏ bản cập nhật lỗi để phục hồi hệ thống." },
+        { id: "d2_21", type: "single", question: "Câu 21: Có thông báo một loại virus tống tiền mới xuất hiện nhắm vào các trường học. Hành động phù hợp của chuyên gia bảo mật là gì?", options: ["Cập nhật ngay các hệ thống tường lửa và IDS.", "Chờ đến khi máy tính bị nhiễm rồi mới xử lí.", "Tắt toàn bộ hệ thống máy tính trong một tháng.", "Yêu cầu học sinh tự cài đặt phần mềm diệt virus."], correct: 0, explanation: "Phòng bệnh hơn chữa bệnh. Ngay khi có tin tức về biến thể virus mới, chuyên gia an ninh lập tức phải tải bộ nhận diện mã độc (Signatures) mới nhất để nạp vào Tường lửa và IDS nhằm thiết lập khiên phòng thủ chặn trước." },
+        { id: "d2_22", type: "single", question: "Câu 22: Để quản lí từ xa hệ thống bài giảng điện tử trên nền tảng đám mây, nhân viên IT cần kĩ năng gì mới?", options: ["Biết sử dụng công cụ hỗ trợ hiện đại như AI.", "Biết cách thiết kế banner quảng cáo ấn tượng.", "Biết sửa chữa các thiết bị điện dân dụng.", "Biết soạn thảo văn bản hành chính thông thạo."], correct: 0, explanation: "Đám mây là công nghệ hiện đại quy mô lớn. Nhân viên IT cần biết tận dụng các công cụ tự động hóa hoặc AI do nhà cung cấp Cloud cung cấp để giám sát tình trạng tài nguyên hệ thống một cách hiệu quả nhất." },
+        { id: "d2_23", type: "single", question: "Câu 23: Khi cấu hình Router cho phòng tin học, quản trị viên đang áp dụng kiến thức nào?", options: ["Kiến thức quản lí Mạng máy tính.", "Kiến thức thiết kế Đồ hoạ 3D.", "Kiến thức lập trình Robot thông minh.", "Kiến thức về Luật pháp quốc tế."], correct: 0, explanation: "Router (Bộ định tuyến) là trái tim vận phối dữ liệu của mạng lưới. Quá trình cấu hình định tuyến tĩnh (Static Route) hay cấp phát DHCP trên Router là cốt lõi của môn học kiến thức Quản lý mạng máy tính." },
+        { id: "d2_24", type: "single", question: "Câu 24: Một học sinh tò mò dùng phần mềm dò quét cổng (port) của máy chủ trường học. Hành động này thuộc loại gì?", options: ["Tấn công dò lỗ hổng (Vulnerability scanning).", "Tấn công từ chối dịch vụ (DoS) diện rộng.", "Học hỏi nâng cao kĩ năng lập trình máy tính.", "Quản trị và bảo trì hệ thống máy chủ mạng."], correct: 0, explanation: "Phần mềm dò cổng mạng (Port Scanner) sẽ soi xét hàng ngàn cánh cửa dịch vụ của máy chủ để tìm cửa mở hớ hênh. Trong an ninh mạng, hành vi thăm dò trái phép này được xếp vào dạng Tấn công dò tìm lỗ hổng." },
+        { id: "d2_25", type: "single", question: "Câu 25: Nhằm tuân thủ quy định bảo vệ dữ liệu, quản trị viên web học tập cần cấu hình tính năng gì?", options: ["Cấu hình bảo mật và mã hoá đường truyền dữ liệu.", "Cấu hình màu sắc giao diện website sao cho sặc sỡ.", "Cấu hình chức năng phát nhạc nền cho trang web.", "Cấu hình phần mềm gõ tiếng Việt cho các máy tính."], correct: 0, explanation: "Dữ liệu học sinh khi gửi qua mạng internet rất dễ bị đánh cắp ở giữa đường (Man-in-the-middle). Việc cấp chứng chỉ SSL mã hóa toàn bộ đường truyền (HTTPS) là tuân thủ chuẩn mức bảo mật pháp luật bắt buộc." },
+        { id: "d2_26", type: "single", question: "Câu 26: Việc lập lịch sao lưu dữ liệu máy chủ định kì mỗi đêm thể hiện kĩ năng nào của quản trị viên?", options: ["Kĩ năng quản lí thời gian và duy trì hệ thống.", "Kĩ năng giao tiếp với các phòng ban liên quan.", "Kĩ năng tự nghiên cứu các công nghệ phần mềm mới.", "Kĩ năng lập trình các ứng dụng trí tuệ nhân tạo."], correct: 0, explanation: "Sao lưu (Backup) ban đêm để tránh ảnh hưởng đến băng thông ban ngày. Khả năng thiết lập quy trình làm việc tự động này thể hiện kĩ năng thiết kế duy trì độ bền vững của hệ thống và quản trị thời gian tuyệt vời." },
+        { id: "d2_27", type: "single", question: "Câu 27: Để xử lí lỗi một phần mềm học thuật không tương thích với Windows 11, cần áp dụng kiến thức gì?", options: ["Kiến thức sâu về quản lí hệ điều hành.", "Kiến thức về các giao thức mạng internet.", "Kiến thức về luật pháp an ninh thông tin.", "Kiến thức về thiết kế giao diện người dùng."], correct: 0, explanation: "Môi trường Windows 11 có cơ chế phân quyền, nhân đồ họa (Kernel) rất khác. Sự xung đột phần mềm yêu cầu kỹ thuật viên phải dùng kiến thức sâu về hệ điều hành để chạy chế độ tương thích (Compatibility Mode) hoặc chỉnh sửa Registry." },
+        { id: "d2_28", type: "single", question: "Câu 28: Giải pháp nào ngăn chặn triệt để sự xâm nhập từ mạng bên ngoài vào hệ thống thư viện điện tử của trường?", options: ["Triển khai tường lửa và hệ thống phát hiện xâm nhập IDS.", "Mua thêm nhiều ổ cứng để sao lưu dữ liệu thường xuyên.", "Tăng tốc độ đường truyền internet của toàn trường học.", "Yêu cầu mọi người đổi mật khẩu định kì hàng ngày."], correct: 0, explanation: "Sao lưu hay đổi mật khẩu là phòng vệ bị động. Hệ thống phòng vệ chủ động ngăn chặn xâm nhập biên giới vòng ngoài vững chắc nhất bắt buộc phải là bức tường lửa (Firewall) bảo vệ kết hợp với bộ đôi soi chiếu IDS/IPS." },
+
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Trong buổi ra mắt nền tảng thi trắc nghiệm trực tuyến mới cho học sinh khối 12, Ban giám hiệu yêu cầu hệ thống phải tuyệt đối không để xảy ra tình trạng \"sập mạng\" giữa chừng và rò rỉ đề thi.", items: [
+            { id: "a", text: "a) Việc giám sát để hệ thống không bị \"sập mạng\" là nhiệm vụ của Quản trị mạng và bảo trì hệ thống.", correct: true, expl: "Cân bằng tải lưu lượng, mở rộng băng thông mạng và đảm bảo máy chủ không bị chết (Downtime) do quá tải là đặc quyền và trách nhiệm thiết yếu của kỹ sư Quản trị mạng và hệ thống." },
+            { id: "b", text: "b) Việc chống rò rỉ đề thi không liên quan đến chuyên gia bảo mật thông tin mà do giáo viên quản lí.", correct: false, expl: "Đây là hiểu lầm nghiêm trọng. Giáo viên chỉ quản lí file văn bản, nhưng khi đề thi đã tải lên máy chủ web, bảo vệ cơ sở dữ liệu ngăn hacker đánh cắp/rò rỉ lại là trách nhiệm chuyên môn tối cao của kỹ sư Bảo mật." },
+            { id: "c", text: "c) Chuyên gia bảo mật cần cấu hình các phương án phòng chống tấn công dò lỗ hổng và từ chối dịch vụ (DoS) cho máy chủ chứa đề thi.", correct: true, expl: "Hacker thường đánh sập mạng trường học vào các dịp thi cử (bằng DoS) hoặc tìm lỗ hổng web tải trước đề thi. Việc cấu hình Anti-DoS là thao tác bảo vệ nền tảng thi bắt buộc." },
+            { id: "d", text: "d) Nếu xảy ra sự cố phần cứng của máy chủ ngay lúc đang thi, chuyên gia Quản trị và bảo trì hệ thống phải có mặt để xử lí kịp thời.", correct: true, expl: "Những sự cố vật lý như RAM hỏng, nguồn cháy nổ dẫn đến sập web trong kỳ thi là tình huống khẩn cấp. Kỹ sư hệ thống phải túc trực 24/24 để thay nóng linh kiện dự phòng, đưa web sống lại." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Để phục vụ công tác chuyển đổi số, trường của bạn quyết định lắp đặt một phòng máy tính mới gồm 40 máy, kết hợp cùng hệ thống điểm danh tự động bằng camera IoT trước cửa phòng.", items: [
+            { id: "a", text: "a) Số lượng thiết bị IoT (camera) kết nối vào mạng ngày càng tăng sẽ đòi hỏi công tác quản trị mạng phức tạp hơn.", correct: true, expl: "Mỗi thiết bị IoT sử dụng một địa chỉ IP riêng, giao thức mở port khác nhau. Tích hợp thiết bị ngoại tuyến như camera vào chung mạng LAN với phòng máy đòi hỏi quy hoạch luồng dữ liệu (VLAN) cực kỳ phức tạp." },
+            { id: "b", text: "b) Thiết bị điểm danh tự động bằng camera không cần cài đặt bảo mật vì nó chỉ ghi hình ảnh chứ không chứa dữ liệu quan trọng.", correct: false, expl: "Nhận định này sai lầm chết người. Camera IP thường là điểm mù bảo mật. Hacker rất hay thâm nhập hệ thống mạng nội bộ thông qua việc hack mật khẩu mặc định của các camera, từ đó lây nhiễm toàn trường." },
+            { id: "c", text: "c) Để phòng máy hoạt động, chuyên gia quản trị cần cài đặt, cấu hình Router, phân tích lưu lượng để đảm bảo đường truyền ổn định.", correct: true, expl: "Để 40 máy tính cùng tải dữ liệu không bị nghẽn mạng, người thợ phải hiểu kĩ thuật cài đặt DHCP cấp IP, thiết lập quy tắc chất lượng dịch vụ (QoS) trên Router." },
+            { id: "d", text: "d) Quản trị viên không cần quan tâm đến tính tuân thủ quy định bảo mật vì đây chỉ là dữ liệu khuôn mặt nội bộ của trường học.", correct: false, expl: "Khuôn mặt là dữ liệu sinh trắc học cá nhân tối mật được pháp luật bảo vệ. Quản trị viên bắt buộc phải mã hóa dữ liệu đường truyền camera để tuyệt đối không bị lộ thông tin cá nhân của học sinh." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Thầy Quang phụ trách quản trị CNTT cho một hệ thống trường liên cấp. Gần đây, nhà trường áp dụng phần mềm quản lí mới chạy trên đám mây. Thầy Quang thường xuyên dành thời gian cuối tuần để đọc tài liệu về các giao thức bảo mật mới và luật an ninh mạng hiện hành.", items: [
+            { id: "a", text: "a) Kiến thức về luật pháp và tiêu chuẩn quốc tế là một yêu cầu đối với nhóm nghề quản trị CNTT.", correct: true, expl: "Công tác bảo mật thông tin liên quan mật thiết đến luật pháp (Bảo vệ thông tin người dùng, an toàn an ninh mạng). Người làm IT quản lý dữ liệu số bắt buộc phải trang bị nền tảng luật pháp chuyên ngành." },
+            { id: "b", text: "b) Việc thầy Quang dành thời gian đọc tài liệu cuối tuần thể hiện kĩ năng tự nghiên cứu, học hỏi và cập nhật kiến thức.", correct: true, expl: "Chủ động nghiên cứu tài liệu hệ thống mới và luật pháp trong thời gian rảnh rỗi chính là tinh thần \"Học tập suốt đời\" (Self-learning) – kỹ năng quý giá và bắt buộc để trụ vững trong ngành công nghệ thông tin." },
+            { id: "c", text: "c) Do hệ thống đã chạy trên đám mây của nhà cung cấp dịch vụ, thầy Quang chỉ cần làm công việc sửa chữa màn hình, bàn phím hỏng của học sinh là đủ.", correct: false, expl: "Đám mây chỉ cung cấp nền tảng phần cứng ảo. Việc cấu hình phân quyền người dùng, mở port chặn tường lửa và phân phối tài khoản học sinh trên nền tảng đám mây vẫn là nhiệm vụ chuyên sâu của kỹ sư hệ thống nội bộ." },
+            { id: "d", text: "d) Việc thầy Quang tìm hiểu thêm về luật an ninh mạng giúp nhà trường tránh được những rủi ro pháp lí trong việc bảo vệ dữ liệu học sinh.", correct: true, expl: "Hành động này giúp thầy xây dựng hệ thống quy định bảo mật đúng chuẩn. Ngăn chặn nguy cơ nhà trường bị rò rỉ dữ liệu, dẫn đến vi phạm Luật An toàn Thông tin và bị xử phạt pháp lý nặng nề." }
+        ]}
+    ];
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

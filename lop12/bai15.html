@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 15: TẠO MÀU CHO CHỮ VÀ NỀN </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_15');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 15: TẠO MÀU CHO CHỮ VÀ NỀN) - ĐÃ FIX MÃ HÓA KÝ TỰ HTML
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Hệ màu RGB cơ bản được tạo thành từ ba màu sắc nào?", options: ["Màu đỏ, xanh lá, xanh lam.", "Màu cam, xanh lá, xanh lam.", "Màu đỏ, xanh dương, màu tím.", "Màu đỏ, xanh lục, vàng tươi."], correct: 0, explanation: "Hệ màu RGB (Red, Green, Blue) kết hợp ba luồng ánh sáng cơ bản là Đỏ (Red), Xanh lá (Green) và Xanh lam (Blue) để hiển thị màu sắc trên màn hình." },
+        { id: "d1_2", type: "single", question: "Câu 2: HTML và CSS hỗ trợ tổng cộng bao nhiêu màu sắc RGB?", options: ["Khoảng hơn mười sáu triệu màu.", "Khoảng hơn mười lăm triệu màu.", "Khoảng hơn mười bảy triệu màu.", "Khoảng hơn mười tám triệu màu."], correct: 0, explanation: "Mỗi kênh màu R, G, B có 256 giá trị (từ 0 đến 255). Do đó tổng số màu sắc có thể tạo ra là 256 x 256 x 256 = 16.777.216 màu (hơn 16 triệu màu)." },
+        { id: "d1_3", type: "single", question: "Câu 3: Giá trị cao nhất của tham số trong hàm rgb() là số mấy?", options: ["Đạt mức giá trị hai năm năm.", "Đạt mức giá trị hai năm sáu.", "Đạt mức giá trị ba sáu không.", "Đạt mức giá trị một trăm chẵn."], correct: 0, explanation: "Trong không gian màu 8-bit chuẩn, cường độ của mỗi kênh màu được quy định bằng một số nguyên trải dài từ 0 (không có màu) đến mức tối đa là 255." },
+        { id: "d1_4", type: "single", question: "Câu 4: Hệ màu HSL là cụm từ viết tắt của ba từ tiếng Anh nào?", options: ["Từ Hue, Saturation, Lightness.", "Từ Hex, Saturation, Lightness.", "Từ Hue, Selections, Lightness.", "Từ Hue, Saturation, Lightings."], correct: 0, explanation: "HSL biểu diễn màu sắc thân thiện với con người hơn, viết tắt của: Hue (Vòng màu sắc), Saturation (Độ bão hòa màu) và Lightness (Độ sáng tối)." },
+        { id: "d1_5", type: "single", question: "Câu 5: Thuộc tính CSS nào được sử dụng để định dạng màu chữ?", options: ["Thuộc tính color của mã CSS.", "Thuộc tính border của mã CSS.", "Thuộc tính margin của mã CSS.", "Thuộc tính filter của mã CSS."], correct: 0, explanation: "Thuộc tính `color` trong CSS được lập trình viên sử dụng chuyên biệt để thiết lập màu sắc cho tiền cảnh, tức là màu của các ký tự văn bản." },
+        { id: "d1_6", type: "single", question: "Câu 6: Thuộc tính CSS nào được sử dụng để thiết lập màu nền?", options: ["Lệnh phông nền background-color.", "Lệnh phông nền foreground-color.", "Lệnh phông nền border-color-bg.", "Lệnh phông nền padding-margins."], correct: 0, explanation: "Thuộc tính `background-color` (màu nền đằng sau) được sử dụng để tô kín màu sắc cho toàn bộ phần diện tích không gian của phần tử HTML." },
+        { id: "d1_7", type: "single", question: "Câu 7: Ký hiệu tổ hợp E F mang ý nghĩa logic gì trong chuẩn CSS?", options: ["Phần tử F nằm lồng trong E.", "Phần tử F bọc ở ngoài chữ E.", "Phần tử F kề ngay sau chữ E.", "Phần tử F nằm song song thẻ E."], correct: 0, explanation: "Cú pháp có dấu cách (E F) được gọi là bộ chọn con cháu (Descendant Selector). Nó yêu cầu trình duyệt tìm tất cả các thẻ F nằm lồng bên trong thẻ E, bất kể độ sâu." },
+        { id: "d1_8", type: "single", question: "Câu 8: Phiên bản CSS3 thiết lập sẵn chuẩn bao nhiêu tên màu?", options: ["Có tất cả một trăm bốn mươi.", "Có tất cả một trăm năm mươi.", "Có tất cả một trăm sáu mươi.", "Có tất cả một trăm bảy mươi."], correct: 0, explanation: "Để tiện lợi khi code, phiên bản CSS3 đã hỗ trợ sẵn 140 tên màu chuẩn viết bằng tiếng Anh (ví dụ: red, blue, tomato, dodgerblue...) mà không cần phải dùng mã số phức tạp." },
+        { id: "d1_9", type: "single", question: "Câu 9: Theo tài liệu, thuộc tính nào không có đặc tính kế thừa?", options: ["Lệnh thuộc tính đường viền border.", "Lệnh thuộc tính màu chữ colors.", "Lệnh thuộc tính màu nền bground.", "Lệnh thuộc tính kiểu chữ fonts."], correct: 0, explanation: "Trong CSS, thuộc tính `border` (đường viền) không tự động kế thừa xuống các thẻ con. Nếu nó kế thừa, mỗi thẻ con bên trong sẽ tự vẽ một khung viền gây rối mắt trang web." },
+        { id: "d1_10", type: "single", question: "Câu 10: Khi tham số độ bão hòa (Saturation) bằng 0%, màu sẽ biến thành?", options: ["Chuyển thành sắc xám mờ nhạt.", "Chuyển thành sắc đỏ rực sáng.", "Chuyển thành sắc lam tươi tắn.", "Chuyển thành sắc lục đậm đà."], correct: 0, explanation: "Độ bão hòa (Saturation) xác định sự rực rỡ. Khi Saturation giảm về 0%, màu sắc sẽ bị mất hoàn toàn sắc thái gốc và biến thành một dải màu xám trung tính." },
+        { id: "d1_11", type: "single", question: "Câu 11: Trong hệ rgb, giá trị rgb(255, 0, 0) đại diện cho màu gì?", options: ["Hiển thị đúng sắc đỏ rực rỡ.", "Hiển thị đúng sắc lục rực rỡ.", "Hiển thị đúng sắc lam rực rỡ.", "Hiển thị đúng sắc đen tối bưng."], correct: 0, explanation: "Giá trị rgb(255, 0, 0) có kênh Red (Đỏ) bật ở mức tối đa 255, trong khi Green và Blue bằng 0. Kết quả xuất ra sẽ là màu đỏ thuần khiết." },
+        { id: "d1_12", type: "single", question: "Câu 12: Định dạng màu #rrggbb sử dụng hệ đếm cơ số mấy?", options: ["Dùng toán hệ đếm mười sáu.", "Dùng toán hệ đếm số mười.", "Dùng toán hệ đếm nhị phân.", "Dùng toán hệ đếm số tám."], correct: 0, explanation: "Mã màu Hex (như #FF0000) được viết dựa trên hệ đếm cơ số 16 (Hexadecimal), bao gồm các chữ số từ 0-9 và các chữ cái từ A-F." },
+        { id: "d1_13", type: "single", question: "Câu 13: Tổ hợp phần tử E > F áp dụng cho đối tượng F khi nào?", options: ["Chữ F là con trực tiếp của E.", "Chữ F là cháu trực tiếp của E.", "Chữ F là cha trực tiếp của E.", "Chữ F là bạn liền kề của chữ E."], correct: 0, explanation: "Dấu ngoặc nhọn `>` đại diện cho bộ chọn con trực tiếp (Child selector). Nó chỉ nhắm mục tiêu vào các thẻ F nằm sát ngay 1 bậc bên trong thẻ E (không quét sâu hơn)." },
+        { id: "d1_14", type: "single", question: "Câu 14: Khi độ sáng (Lightness) bằng 100%, ta nhận được màu gì?", options: ["Màn hình hiển thị màu trắng.", "Màn hình hiển thị màu đen.", "Màn hình hiển thị màu xám.", "Màn hình hiển thị màu đỏ."], correct: 0, explanation: "Trong hàm HSL, tham số thứ 3 là độ sáng (Lightness). Khi đẩy độ sáng lên cực đại 100%, màu sắc sẽ bị 'cháy sáng' hoàn toàn và màn hình chỉ còn lại màu trắng." },
+        { id: "d1_15", type: "single", question: "Câu 15: Các màu xám được thiết lập bằng RGB khi có điều kiện gì?", options: ["Ba tham số của RGB bằng nhau.", "Tham số R lớn hơn tham số G.", "Tham số B nhỏ hơn tham số R.", "Tham số G lớn hơn tham số B."], correct: 0, explanation: "Nguyên lý pha sáng: Bất cứ khi nào 3 kênh màu Red, Green, Blue có cường độ hoàn toàn bằng nhau (ví dụ rgb(120, 120, 120)), kết quả hòa trộn luôn cho ra phổ màu xám." },
+        { id: "d1_16", type: "single", question: "Câu 16: Thuộc tính định dạng màu nền kế thừa hoạt động thế nào?", options: ["Thẻ con nhận phông nền thẻ cha.", "Thẻ cha nhận phông nền thẻ con.", "Luôn luôn giữ màu trắng trong vắt.", "Luôn luôn đổi nền màu viền đen."], correct: 0, explanation: "Thuộc tính `background-color` mặc định là `transparent` (trong suốt). Khi đó thẻ con sẽ trong suốt và để lộ (nhìn xuyên qua) màu nền của phần tử cha bọc ngoài nó." },
+        { id: "d1_17", type: "single", question: "Câu 17: Bộ chọn E ~ F có nghĩa là áp dụng định dạng cho thẻ F?", options: ["Mọi thẻ F cùng cấp ở sau E.", "Chỉ thẻ F ngay kề ở sau E.", "Mọi thẻ F nằm bên trong thẻ E.", "Chỉ thẻ F bọc bên ngoài thẻ E."], correct: 0, explanation: "Dấu ngã `~` là bộ chọn anh em chung (General Sibling Selector). Nó sẽ áp dụng định dạng cho tất cả các thẻ F nằm cùng một cấp bậc (cùng cha) và xuất hiện sau thẻ E." },
+        { id: "d1_18", type: "single", question: "Câu 18: Ý nghĩa của giá trị H (Hue) trong hệ màu HSL là điều gì?", options: ["Góc độ trên vòng tròn màu sắc.", "Giá trị độ sáng hiển thị màn hình.", "Giá trị độ đậm nhạt của bảng màu.", "Giá trị mức độ tương phản hình ảnh."], correct: 0, explanation: "H (Hue) được tính bằng số đo góc từ 0 đến 360 độ trên bánh xe màu sắc (Color wheel). Ví dụ: 0 là đỏ, 120 là xanh lá cây, 240 là xanh lam." },
+        { id: "d1_19", type: "single", question: "Câu 19: Cho đoạn mã: <br>&lt;p style=\"color: rgb(100%, 0%, 0%);\"&gt;Lỗi&lt;/p&gt;. <br>Tác dụng là gì?", options: ["Chữ đoạn văn đổi thành màu đỏ.", "Chữ đoạn văn đổi thành màu lục.", "Chữ đoạn văn đổi thành màu lam.", "Chữ đoạn văn đổi thành màu đen."], correct: 0, explanation: "Thay vì dùng dải số 0-255, hàm rgb() có thể dùng phần trăm. 100% Red tương đương với cường độ tối đa 255. Hai kênh kia 0%, nên chữ sẽ hiển thị màu đỏ." },
+        { id: "d1_20", type: "single", question: "Câu 20: Cho đoạn mã:<br> &lt;div style=\"background-color: #000000;\"&gt;X&lt;/div&gt;. <br>Tác dụng là gì?", options: ["Phông nền phần tử biến thành đen.", "Phông nền phần tử biến thành xám.", "Phông nền phần tử biến thành lục.", "Phông nền phần tử biến thành lam."], correct: 0, explanation: "Mã Hex `#000000` biểu diễn mức độ phát sáng bằng 0 cho cả 3 kênh R, G, B. Khi không có ánh sáng nào phát ra, màu nền của khối sẽ có màu đen tuyệt đối." },
+        { id: "d1_21", type: "single", question: "Câu 21: Đoạn CSS <br>p > em { color: red; } áp dụng cho đoạn HTML &lt;p&gt; &lt;span&gt;&lt;em&gt;Sai&lt;/em&gt;&lt;/span&gt; &lt;/p&gt; <br>sẽ gây ra kết quả gì?", options: ["Chữ Sai không biến thành màu đỏ.", "Chữ Sai sẽ chuyển thành màu đỏ.", "Chữ Sai sẽ chuyển thành màu lam.", "Chữ Sai sẽ chuyển thành màu xám."], correct: 0, explanation: "Bộ chọn `p > em` yêu cầu thẻ `&lt;em&gt;` phải là con trực tiếp của `&lt;p&gt;`. Nhưng trong HTML, thẻ `&lt;em&gt;` lại bị lồng bên trong `&lt;span&gt;`, nên nó là cháu của `&lt;p&gt;`. Lệnh sẽ thất bại và chữ không có màu đỏ." },
+        { id: "d1_22", type: "single", question: "Câu 22: Cho đoạn mã:<br> &lt;h1 style=\"border: 1px solid hsl(120, 100%, 50%);\"&gt;OK&lt;/h1&gt;.<br> Viền có màu gì?", options: ["Đường viền sẽ hiển thị màu lục.", "Đường viền sẽ hiển thị màu lam.", "Đường viền sẽ hiển thị màu đỏ.", "Đường viền sẽ hiển thị màu đen."], correct: 0, explanation: "Trong bánh xe màu Hue của hệ HSL, góc 120 độ là vị trí tọa độ của màu Xanh lục (Green). Kết hợp với độ bão hòa 100% và độ sáng 50%, viền sẽ là màu xanh lục chuẩn." },
+        { id: "d1_23", type: "single", question: "Câu 23: Đoạn CSS<br> em + strong { color: blue; } và mã HTML &lt;p&gt; &lt;em&gt;A&lt;/em&gt; &lt;strong&gt;B&lt;/strong&gt; &lt;/p&gt;. <br>Tác dụng là gì?", options: ["Thẻ strong sẽ hiển thị màu xanh.", "Thẻ em sẽ hiển thị màu xanh.", "Thẻ p sẽ hiển thị màu xanh lam.", "Thẻ strong sẽ hiển thị màu xám."], correct: 0, explanation: "Bộ chọn `+` (Adjacent Sibling) chỉ định áp dụng cho thẻ liền kề phía sau. Ở đây thẻ `&lt;strong&gt;` nằm kề ngay sau thẻ `&lt;em&gt;`, nên chữ B bên trong strong sẽ nhận lệnh màu xanh." },
+        { id: "d1_24", type: "single", question: "Câu 24: Cho đoạn HTML:<br> &lt;div style=\"color: #FFFFFF; background-color: black;\"&gt;Văn bản&lt;/div&gt;. <br>Kết quả là gì?", options: ["Chữ màu trắng trên phông nền đen.", "Chữ màu đen trên phông nền trắng.", "Chữ màu xám trên phông nền xanh.", "Chữ màu xanh trên phông nền xám."], correct: 0, explanation: "`color: #FFFFFF` biến chữ thành màu trắng (do R, G, B đều đạt max FF). Còn `background-color: black` sẽ tô màu nền của toàn bộ khối div thành đen sẫm." },
+        { id: "d1_25", type: "single", question: "Câu 25: Đoạn CSS <br>div p { color: yellow; } tác động thế nào đến &lt;p&gt; nằm trong khối &lt;div&gt;<br> lồng nhau?", options: ["Đoạn văn p sẽ hiển thị màu vàng.", "Đoạn văn p sẽ hiển thị màu xám.", "Đoạn văn p sẽ hiển thị màu đen.", "Đoạn văn p sẽ hiển thị màu trắng."], correct: 0, explanation: "Bộ chọn con cháu (có dấu cách ở giữa) quét rất mạnh. Nó sẽ tìm và áp dụng màu vàng cho tất cả các thẻ `&lt;p&gt;` nằm bên trong thẻ `&lt;div&gt;`, dù nó có bị lồng sâu ở cấp độ nào đi nữa." },
+        { id: "d1_26", type: "single", question: "Câu 26: Mã &lt;p style=\"color: rgb(50%, 50%, 50%);\"&gt;Test&lt;/p&gt;<br> tạo ra màu gì?", options: ["Hiển thị ra màu xám trung tính.", "Hiển thị ra màu đỏ cực kỳ chói.", "Hiển thị ra màu xanh nước biển.", "Hiển thị ra màu vàng rất rực rỡ."], correct: 0, explanation: "Khi cả 3 thành phần R, G, B có thông số cường độ sáng ngang bằng nhau (ở đây cùng mức 50%), kết quả trộn màu chắc chắn sẽ sinh ra một sắc xám trung tính (Gray)." },
+        { id: "d1_27", type: "single", question: "Câu 27: Đoạn CSS:<br> h1 ~ p { color: gray; } áp dụng cho &lt;h1&gt;A&lt;/h1&gt; &lt;h2&gt;B&lt;/h2&gt; &lt;p&gt;C&lt;/p&gt;.<br> Chữ C màu gì?", options: ["Chữ C chuyển sang màu xám tro.", "Chữ C chuyển sang màu đỏ tươi.", "Chữ C chuyển sang màu lục đậm.", "Chữ C chuyển sang màu đen thui."], correct: 0, explanation: "Dấu ngã `~` là bộ chọn anh em chung, nó chọn mọi thẻ `p` đứng sau thẻ `h1` ở cùng một cấp độ. Mặc dù bị thẻ `&lt;h2&gt;` chen giữa, chữ C trong `&lt;p&gt;` vẫn hợp lệ và biến thành màu xám (gray)." },
+        { id: "d1_28", type: "single", question: "Câu 28: Cho mã: <br>&lt;h2 style=\"background-color: hsl(0, 0%, 100%);\"&gt;O&lt;/h2&gt;.<br> Nền màu gì?", options: ["Phông nền tiêu đề sẽ màu trắng.", "Phông nền tiêu đề sẽ màu đen.", "Phông nền tiêu đề sẽ màu xám.", "Phông nền tiêu đề sẽ màu đỏ."], correct: 0, explanation: "Trong hàm màu HSL, tham số cuối cùng là Lightness (độ sáng). Khi thiết lập Lightness = 100%, cường độ sáng đạt cực đại làm mất mọi sắc tố, hộp màu nền hiển thị thành màu trắng tinh." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Để chuẩn bị cho sự kiện \"Ngày hội Thể thao\", ban tổ chức yêu cầu thiết kế một bảng thông báo điểm số trên website của trường.<br>Nhóm kỹ thuật viên sử dụng đoạn mã HTML và CSS sau:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;.scoreboard { background-color: rgb(240, 240, 240); }<br>&nbsp;&nbsp;.scoreboard &gt; h2 { color: hsl(0, 100%, 50%); border: 2px solid black; }<br>&nbsp;&nbsp;.scoreboard p { color: #333333; }<br>&lt;/style&gt;<br>&lt;div class=\"scoreboard\"&gt;<br>&nbsp;&nbsp;&lt;h2&gt;Kết quả Trận Chung kết&lt;/h2&gt;<br>&nbsp;&nbsp;&lt;div class=\"match-info\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;Đội Xanh: 2 - Đội Đỏ: 1&lt;/p&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Hàm rgb() trong đoạn CSS trên được sử dụng để định dạng màu cho chữ viết.", correct: false, expl: "Quan sát mã lệnh, hàm `rgb(240, 240, 240)` đang được gán cho thuộc tính `background-color`. Do đó, nó dùng để tạo màu nền (màu xám nhạt) cho bảng điểm, chứ không phải màu chữ." },
+            { id: "b", text: "b)  Thẻ h2 có viền màu đen và chữ màu đỏ rực rỡ do các thông số HSL (0, 100%, 50%) tạo ra.", correct: true, expl: "Chính xác. HSL(0, 100%, 50%) có Hue=0 (màu Đỏ), độ bão hòa 100% giúp màu rực rỡ nhất. Kết hợp với thuộc tính `border: 2px solid black`, thẻ tiêu đề sẽ có chữ đỏ bọc trong khung viền đen." },
+            { id: "c", text: "c)  Thẻ &lt;p&gt; trong đoạn mã trên sẽ hiển thị màu chữ #333333 vì phần tử p là con cháu của lớp .scoreboard.", correct: true, expl: "Vì bộ chọn `.scoreboard p` (có khoảng trắng) là bộ chọn con cháu. Dù thẻ `&lt;p&gt;` nằm lồng bên trong `&lt;div class=\"match-info\"&gt;`, nó vẫn chịu sự quản lý của lớp scoreboard cha bên ngoài nên nhận màu xám đậm #333333." },
+            { id: "d", text: "d)  Nếu đổi bộ chọn CSS từ .scoreboard p thành .scoreboard &gt; p, văn bản &lt;p&gt; vẫn sẽ được tô màu #333333 bình thường.", correct: false, expl: "Dấu `>` là bộ chọn con trực tiếp. Thẻ `&lt;p&gt;` trong đoạn HTML này không nằm sát gốc `.scoreboard` mà bị lồng qua lớp trung gian `match-info`. Vì thế, bộ chọn `>` sẽ thất bại và thẻ `&lt;p&gt;` bị mất màu." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Trong buổi học thực hành thiết kế giao diện, một học sinh muốn tạo danh sách các ngôn ngữ lập trình nổi bật.<br>Bạn ấy viết đoạn mã sau:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;ul { background-color: #E6E6FA; }<br>&nbsp;&nbsp;li + li { border-top: 1px solid gray; }<br>&nbsp;&nbsp;li &gt; strong { color: rgb(0%, 0%, 100%); }<br>&lt;/style&gt;<br>&lt;ul&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;strong&gt;Python&lt;/strong&gt; - Phổ biến nhất&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;strong&gt;JavaScript&lt;/strong&gt; - Web Frontend&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;em&gt;C++&lt;/em&gt; - Hiệu năng cao&lt;/li&gt;<br>&lt;/ul&gt;</div>", items: [
+            { id: "a", text: "a)  Mã màu #E6E6FA là một cách biểu diễn màu sắc bằng hệ đếm cơ số 16.", correct: true, expl: "Màu có dấu thăng (#) đi trước và sử dụng các ký tự từ 0-9 cùng chữ cái A-F (như #E6E6FA) chính là định dạng mã màu thập lục phân (Hexadecimal color)." },
+            { id: "b", text: "b)  Bộ chọn li + li mang ý nghĩa là áp dụng định dạng cho mọi thẻ li nằm lồng bên trong thẻ ul.", correct: false, expl: "Ký hiệu dấu cộng `+` trong CSS biểu thị cho bộ chọn anh em liền kề (Adjacent Sibling Selector), chứ không phải mang ý nghĩa cha con (lồng nhau) như bộ chọn con cháu." },
+            { id: "c", text: "c)  Theo đoạn mã trên, chỉ có mục \"JavaScript\" và \"C++\" là xuất hiện đường viền màu xám ở viền phía trên.", correct: true, expl: "Bộ chọn `li + li` sẽ tìm các thẻ `&lt;li&gt;` nằm ngay sau một thẻ `&lt;li&gt;` khác. Thẻ Python là thẻ đầu tiên nên không có viền. Chỉ thẻ JS và C++ theo sau mới được vẽ viền trên (border-top)." },
+            { id: "d", text: "d)  Chữ \"Python\" và \"JavaScript\" sẽ có màu xanh lam vì lệnh rgb(0%, 0%, 100%) đã đặt thành phần Blue ở mức tối đa.", correct: true, expl: "Lệnh `rgb(0%, 0%, 100%)` vô hiệu hóa Đỏ và Lục, đẩy xanh lam (Blue) lên 100%. Bộ chọn `li > strong` nhắm chuẩn xác vào chữ Python và JavaScript đang nằm trong thẻ `&lt;strong&gt;`, nên chúng biến thành màu xanh lam." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Khi xây dựng trang hồ sơ cá nhân (Profile Card), một lập trình viên mới vào nghề đã áp dụng hệ màu và bộ chọn để tùy biến giao diện như sau:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;.card { border: 2px solid rgb(0, 0, 0); }<br>&nbsp;&nbsp;.card h3 { color: hsl(120, 100%, 25%); }<br>&nbsp;&nbsp;h3 ~ p { background-color: rgb(200, 200, 200); }<br>&lt;/style&gt;<br>&lt;div class=\"card\"&gt;<br>&nbsp;&nbsp;&lt;img src=\"avatar.jpg\" alt=\"Ảnh đại diện\"&gt;<br>&nbsp;&nbsp;&lt;h3&gt;Nguyễn Văn A&lt;/h3&gt;<br>&nbsp;&nbsp;&lt;strong&gt;Lập trình viên&lt;/strong&gt;<br>&nbsp;&nbsp;&lt;p&gt;Kinh nghiệm: 2 năm&lt;/p&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Theo lý thuyết, hệ màu HSL bao gồm ba thành phần cơ bản là Hue (vòng màu), Saturation (độ bão hòa) và Lightness (độ sáng).", correct: true, expl: "Cấu trúc chuẩn của mô hình màu HSL trong CSS được hình thành từ 3 trụ cột: H - Hue (tọa độ trên bánh xe màu), S - Saturation (Mức độ đậm nhạt rực rỡ), và L - Lightness (Sáng tối)." },
+            { id: "b", text: "b)  Thuộc tính border trong thẻ .card sẽ được trình duyệt tự động kế thừa xuống cho thẻ h3 và thẻ p bên trong nó.", correct: false, expl: "Trong luật thiết kế CSS, các thuộc tính mang tính chất cấu trúc khung viền như `border`, `margin`, hay `padding` tuyệt đối không có khả năng tự kế thừa (inherit) xuống phần tử con." },
+            { id: "c", text: "c)  Thẻ &lt;p&gt; trong đoạn HTML trên sẽ có nền màu xám nhờ bộ chọn h3 ~ p tác động đến phần tử cùng cấp và phía sau thẻ h3.", correct: true, expl: "Dấu ngã `~` đại diện cho General Sibling. Mặc dù thẻ `&lt;p&gt;` (Kinh nghiệm) đứng cách thẻ `&lt;h3&gt;` qua thẻ `&lt;strong&gt;`, nhưng chúng vẫn là anh em cùng chung thẻ cha gốc, nên `&lt;p&gt;` sẽ hợp lệ và nhận nền xám." },
+            { id: "d", text: "d)  Màu chữ của thẻ h3 sẽ hiển thị màu trắng hoàn toàn do tham số độ sáng (Lightness) trong hàm HSL đang được đặt ở mức 25%.", correct: false, expl: "Mức Lightness (độ sáng) 100% mới sinh ra màu trắng tuyệt đối. Ở mức 25%, độ sáng đang rất thấp, cộng với Hue 120 (Xanh lục), hệ thống sẽ trộn ra một màu xanh lá cây cực kỳ tối đậm, chứ không phải màu trắng." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Trong CSS, hệ màu HSL bao gồm ba thành phần cơ bản nào?", options: ["Vòng màu, độ bão hòa, độ sáng.", "Vòng màu, độ sắc nét, độ phản.", "Các màu, độ bão hòa, độ phản.", "Vòng màu, độ tương phản, tối."], correct: 0, explanation: "HSL được thiết kế dựa trên góc nhìn của con người về màu sắc, đại diện bởi: H (Hue - Vòng màu sắc), S (Saturation - Độ bão hòa/độ rực rỡ) và L (Lightness - Độ sáng)." },
+        { id: "d2_2", type: "single", question: "Câu 2: Giá trị thấp nhất của tham số trong hệ màu RGB là bao nhiêu?", options: ["Bắt đầu từ giá trị con số không.", "Bắt đầu từ giá trị con số một.", "Bắt đầu từ giá trị âm mười.", "Bắt đầu từ giá trị số một trăm."], correct: 0, explanation: "Mỗi kênh màu R, G, B không thể có cường độ âm. Khi không phát ra bất kì ánh sáng nào, giá trị nhỏ nhất của kênh đó được biểu diễn bằng số 0." },
+        { id: "d2_3", type: "single", question: "Câu 3: Phiên bản CSS2 thiết lập sẵn bao nhiêu tên màu chuẩn cơ bản?", options: ["Thiết lập đúng mười sáu tên màu.", "Thiết lập đúng mười lăm tên màu.", "Thiết lập đúng mười bốn tên màu.", "Thiết lập đúng mười bảy tên màu."], correct: 0, explanation: "Ở những ngày đầu, W3C đã định nghĩa 16 tên màu cơ bản trong chuẩn CSS2 (như aqua, black, blue, fuchsia, gray, green, lime, maroon, navy, olive, purple, red, silver, teal, white, yellow)." },
+        { id: "d2_4", type: "single", question: "Câu 4: Ký hiệu nào sau đây đúng khi dùng bộ chọn phần tử liền kề?", options: ["Dùng ký tự toán học dấu cộng (+).", "Dùng ký tự toán học dấu lớn (>).", "Dùng ký tự toán học dấu ngã (~).", "Dùng ký tự khoảng trắng trống ( )."], correct: 0, explanation: "Bộ chọn anh em liền kề (Adjacent Sibling Selector) sử dụng dấu cộng `+`. Nó áp dụng quy tắc CSS cho thẻ nằm sát vách ngay phía sau thẻ đứng trước nó." },
+        { id: "d2_5", type: "single", question: "Câu 5: Thuộc tính border trong CSS đóng vai trò định dạng điều gì?", options: ["Thiết lập màu khung viền bên ngoài.", "Thiết lập màu nền bao quanh khối.", "Thiết lập màu chữ văn bản cốt lõi.", "Thiết lập màu đổ bóng cho chữ viết."], correct: 0, explanation: "Thuộc tính `border` (Đường viền) là một phần của Box-model, chuyên dùng để vẽ khung kẻ viền bao bọc xung quanh ranh giới của một khối phần tử HTML." },
+        { id: "d2_6", type: "single", question: "Câu 6: Thành phần H (Hue) của hệ màu HSL nhận giá trị tối đa là bao nhiêu?", options: ["Mức giá trị cao nhất ba sáu không.", "Mức giá trị cao nhất hai năm năm.", "Mức giá trị cao nhất một trăm chẵn.", "Mức giá trị cao nhất hai năm sáu."], correct: 0, explanation: "Vì Hue là mô phỏng lại một vòng tròn màu sắc (Color wheel), nên đơn vị của nó là góc độ, trải dài từ điểm 0 độ vòng qua điểm kết thúc vòng quay là 360 độ." },
+        { id: "d2_7", type: "single", question: "Câu 7: Một số tên màu tiếng Anh thiết lập sẵn trong CSS bao gồm nhóm nào?", options: ["Nhóm black, white, green, orange.", "Nhóm blacks, whites, greens, oranges.", "Nhóm darks, lights, greens, oranges.", "Nhóm black, white, greent, oranget."], correct: 0, explanation: "CSS hỗ trợ gọi thẳng tên màu thông qua từ vựng tiếng Anh nguyên bản không biến đổi số nhiều, ví dụ như màu đen (black), trắng (white), lục (green), cam (orange)." },
+        { id: "d2_8", type: "single", question: "Câu 8: Định dạng tổ hợp phần tử E > F mang ý nghĩa logic là gì?", options: ["F là một phần tử con trực tiếp E.", "F nằm kế tiếp ngay sau của chữ E.", "F là phần tử cha bọc lấy của chữ E.", "F nằm ở bất kì nơi nào sau chữ E."], correct: 0, explanation: "Ký hiệu dấu lớn `>` chỉ định bộ chọn con trực tiếp (Child Selector). Trình duyệt sẽ chỉ quét tìm phần tử F nếu nó nằm sát ngay lớp vỏ cấp 1 bên trong thẻ E." },
+        { id: "d2_9", type: "single", question: "Câu 9: Để tô màu nền cho trang web, ta phải sử dụng thuộc tính lệnh nào?", options: ["Sử dụng thuộc tính lệnh background-color.", "Sử dụng thuộc tính lệnh foreground-color.", "Sử dụng thuộc tính lệnh text-colors-web.", "Sử dụng thuộc tính lệnh font-colors-web."], correct: 0, explanation: "Để sơn toàn bộ nền móng của một thẻ giao diện, HTML/CSS quy định sử dụng thuộc tính `background-color` truyền kèm theo giá trị tên màu hoặc mã hệ màu." },
+        { id: "d2_10", type: "single", question: "Câu 10: Khi tham số Lightness trong hàm HSL bằng 0%, màn hình ra màu gì?", options: ["Cho ra kết quả hiển thị màu đen.", "Cho ra kết quả hiển thị màu trắng.", "Cho ra kết quả hiển thị màu đỏ.", "Cho ra kết quả hiển thị màu xám."], correct: 0, explanation: "Trong hệ thống tham số HSL, L=0% nghĩa là cường độ ánh sáng bằng 0 (hoàn toàn không có ánh sáng phát ra). Khi đó, mọi phổ màu đều bị triệt tiêu và tạo thành màu đen thui." },
+        { id: "d2_11", type: "single", question: "Câu 11: Trong hệ hexa, màu đen tuyệt đối được biểu diễn bằng đoạn mã nào?", options: ["Viết bằng đoạn mã sáu con số không.", "Viết bằng đoạn mã sáu chữ cái F (F).", "Viết bằng đoạn mã sáu chữ cái A (A).", "Viết bằng đoạn mã sáu con số chín."], correct: 0, explanation: "Trong mã Hexa 6 ký tự `#RRGGBB`, số 0 là cường độ sáng yếu nhất. Vì thế mã `#000000` (sáu số 0) đại diện cho bóng tối tuyệt đối (màu đen)." },
+        { id: "d2_12", type: "single", question: "Câu 12: Thuộc tính nào trong CSS KHÔNG tự động kế thừa màu sắc xuống thẻ con?", options: ["Thuộc tính tạo viền border của CSS.", "Thuộc tính đổi màu chữ color của CSS.", "Thuộc tính màu nền bg-color của CSS.", "Thuộc tính kiểu chữ font-size của CSS."], correct: 0, explanation: "Bản chất hiển thị của Box-model yêu cầu thuộc tính `border` (đường viền) chỉ bao bọc ở phần tử hiện tại, ngăn cấm kế thừa để tránh việc các thẻ con bị đóng khung viền dị dạng liên hoàn." },
+        { id: "d2_13", type: "single", question: "Câu 13: Bộ chọn E + F được tài liệu CSS phân loại vào dạng cấu trúc gì?", options: ["Tổ hợp các phần tử có quan hệ gốc.", "Tổ hợp các phần tử sống độc lập riêng.", "Tổ hợp các phần tử bị vô hiệu hóa.", "Tổ hợp các phần tử cấp cao nhất web."], correct: 0, explanation: "Bộ chọn `E + F` và `E ~ F` đều mô tả các thẻ ở cùng một cấp độ trong cây DOM HTML (chúng có chung một thẻ cha bọc ngoài). Vì thế chúng thuộc nhóm tổ hợp các phần tử có quan hệ gốc (quan hệ anh em)." },
+        { id: "d2_14", type: "single", question: "Câu 14: Khi ta dùng hàm rgb(120, 120, 120) thì kết quả màu sắc hiển thị là gì?", options: ["Hiển thị một dạng sắc thái màu xám.", "Hiển thị một dạng sắc thái màu lam.", "Hiển thị một dạng sắc thái màu lục.", "Hiển thị một dạng sắc thái màu đỏ."], correct: 0, explanation: "Bí mật pha màu ánh sáng: Nếu thông số pha trộn của cả 3 kênh Đỏ, Lục, Lam cân bằng bằng nhau tuyệt đối, nó triệt tiêu đi các sắc tố màu riêng biệt và tạo ra một mảng màu xám xịt." },
+        { id: "d2_15", type: "single", question: "Câu 15: Tham số độ bão hòa (Saturation) trong HSL được viết dưới dạng số gì?", options: ["Số phần trăm từ khoảng không tới trăm.", "Số tự nhiên từ khoảng không tới trăm.", "Số thập phân từ khoảng không tới trăm.", "Số hệ hexa từ khoảng không tới số trăm."], correct: 0, explanation: "Trong cấu trúc cú pháp của lệnh HSL, tham số S (độ bão hòa) và L (độ sáng) bắt buộc phải được khai báo bằng đơn vị phần trăm (%), chạy trong khoảng từ 0% đến 100%." },
+        { id: "d2_16", type: "single", question: "Câu 16: Sự khác biệt giữa ký hiệu + và ~ trong bộ chọn CSS tổ hợp là gì?", options: ["Dấu + chỉ lấy thẻ F kề ngay sát E.", "Dấu ~ chỉ lấy thẻ F kề ngay sát E.", "Dấu + lấy mọi thẻ F ở phía sau E.", "Cả hai dấu này hoạt động giống nhau."], correct: 0, explanation: "Trong quan hệ anh em: `E + F` cực kỳ khắt khe, F phải đứng sát vách ngay phía sau lưng E. Còn `E ~ F` rất dễ dãi, nó chọn mọi phần tử F lảng vảng ở phía sau E, cho dù bị cách bức tường nào đi nữa." },
+        { id: "d2_17", type: "single", question: "Câu 17: Viết tên màu RED (viết hoa) hay red (viết thường) trong file CSS có hợp lệ không?", options: ["Cả hai cách viết đều hoàn toàn đúng.", "Chỉ chữ thường red mới được hợp lệ.", "Chỉ chữ hoa RED mới được hợp lệ.", "Cả hai cách viết đều bị tính là lỗi."], correct: 0, explanation: "Ngôn ngữ định dạng CSS được W3C thiết kế không phân biệt chữ hoa, chữ thường (Case-insensitive) đối với các từ khóa tên màu. Vì thế gõ RED, red hay ReD đều xuất ra màu đỏ." },
+        { id: "d2_18", type: "single", question: "Câu 18: Khi thiết lập hàm rgb(x-red%, x-green%, x-blue%), ký hiệu % đại diện cho điều gì?", options: ["Tính phần trăm của giới hạn hai năm năm.", "Tính phần trăm của giới hạn một trăm đúng.", "Tính phần trăm của giới hạn ba sáu không.", "Tính phần trăm của giới hạn hai năm sáu."], correct: 0, explanation: "Giá trị thực của kênh màu RGB luôn là 255. Khi dùng ký hiệu `%`, trình duyệt sẽ dịch 100% tương đương với độ sáng cực đại 255, 50% tương đương với khoảng 127." },
+        { id: "d2_19", type: "single", question: "Câu 19: Cho mã HTML: &lt;h1 style=\"color: rgb(0%, 100%, 0%);\"&gt;Logo&lt;/h1&gt;. Chữ có màu gì?", options: ["Chữ Logo hiển thị ra màu lục.", "Chữ Logo hiển thị ra màu đỏ.", "Chữ Logo hiển thị ra màu lam.", "Chữ Logo hiển thị ra màu đen."], correct: 0, explanation: "Theo thứ tự hàm rgb(Red, Green, Blue). Kênh R=0%, Kênh B=0%, nhưng kênh Green lại được buff lên tới cực đại 100%. Ánh sáng xanh lá sẽ rực lên hiển thị thành chữ màu Lục." },
+        { id: "d2_20", type: "single", question: "Câu 20: Cho mã HTML: <br>&lt;div style=\"background-color: #FFFFFF;\"&gt;Box&lt;/div&gt;. <br>Nền có màu gì?", options: ["Nền khối hộp hiển thị màu trắng.", "Nền khối hộp hiển thị màu xám.", "Nền khối hộp hiển thị màu xanh.", "Nền khối hộp hiển thị màu đen."], correct: 0, explanation: "Trong chuỗi mã Hex `#FFFFFF`, toàn bộ 6 ký tự đều mang giá trị lớn nhất của hệ 16 là `F`. Khi đỏ, lục, lam cùng phát sáng cực đại, nó tạo ra chùm ánh sáng màu trắng tinh khiết." },
+        { id: "d2_21", type: "single", question: "Câu 21: Đoạn CSS <br>p + span { color: red; } áp dụng cho &lt;p&gt;Đoạn 1&lt;/p&gt; &lt;span&gt;Thẻ 2&lt;/span&gt;.<br> Kết quả là gì?", options: ["Chữ Thẻ 2 sẽ biến thành màu đỏ.", "Chữ Đoạn 1 biến thành màu đỏ.", "Chữ Thẻ 2 biến thành màu đen.", "Chữ Đoạn 1 biến thành màu lam."], correct: 0, explanation: "Bộ chọn `p + span` nhắm bắn vào mục tiêu là thẻ `&lt;span&gt;` đang đứng tựa vào lưng thẻ `&lt;p&gt;`. Do thẻ span (chứa chữ 'Thẻ 2') nằm ngay sau p, nó sẽ bị nhuộm đỏ." },
+        { id: "d2_22", type: "single", question: "Câu 22: Cho mã: <br>&lt;p style=\"border: 1px solid rgb(0, 0, 255);\"&gt;Nội dung&lt;/p&gt;. Viền có màu gì?", options: ["Khung viền đoạn văn có màu lam.", "Khung viền đoạn văn có màu lục.", "Khung viền đoạn văn có màu đỏ.", "Khung viền đoạn văn có màu đen."], correct: 0, explanation: "Hàm trộn `rgb(0, 0, 255)` đã ngắt nguồn sáng Đỏ và Xanh lục. Duy nhất nguồn sáng cuối cùng là Blue được kích hoạt mức 255 cực đại, nên viền sẽ vẽ ra mực xanh lam (Blue)." },
+        { id: "d2_23", type: "single", question: "Câu 23: Đoạn CSS<br> ul > li { color: blue; } và mã &lt;ul&gt; &lt;div&gt; &lt;li&gt;Mục 1&lt;/li&gt; &lt;/div&gt; &lt;/ul&gt;. <br>Tác dụng là gì?", options: ["Chữ Mục 1 không chuyển thành màu xanh.", "Chữ Mục 1 sẽ chuyển sang thành màu xanh.", "Chữ Mục 1 sẽ chuyển sang thành màu đỏ.", "Chữ Mục 1 sẽ chuyển sang thành màu đen."], correct: 0, explanation: "Dấu `>` đòi hỏi `&lt;li&gt;` phải là con trực hệ cấp 1 của `&lt;ul&gt;`. Nhưng trong đoạn mã bị lỗi HTML này, `&lt;li&gt;` lại nằm chui tọt vào bên trong cái tổ `&lt;div&gt;`, nên nó là thẻ cháu. Bộ chọn cấp 1 sẽ bỏ qua và thất bại." },
+        { id: "d2_24", type: "single", question: "Câu 24: Cho đoạn mã HTML:<br> &lt;button style=\"color: black; background-color: yellow;\"&gt;Bấm&lt;/button&gt;.<br> Kết quả là gì?", options: ["Nút có nền vàng và chữ viết màu đen.", "Nút có nền đen và chữ viết màu vàng.", "Nút có nền trắng và chữ viết màu đỏ.", "Nút có nền đỏ và chữ viết màu trắng."], correct: 0, explanation: "Tính chất rành mạch của CSS: Thuộc tính `color: black` quy định bút màu mực viết chữ là màu đen. Trong khi `background-color: yellow` quét sơn toàn bộ bề mặt nền nút bấm bằng màu vàng." },
+        { id: "d2_25", type: "single", question: "Câu 25: Đoạn CSS<br> h2 ~ p { color: gray; } tác động thế nào đến đoạn mã &lt;h2&gt;Tiêu đề&lt;/h2&gt; &lt;div&gt; &lt;p&gt;Văn bản&lt;/p&gt; &lt;/div&gt;?", options: ["Thẻ p không đổi màu do nằm trong div.", "Thẻ p đổi màu xám vì đứng ở sau h2.", "Thẻ p đổi màu xám vì nằm ở trong div.", "Thẻ p không đổi màu do đứng trước h2."], correct: 0, explanation: "Bẫy cấu trúc tổ hợp. Dấu `~` đòi hỏi `p` và `h2` phải là ANH EM CÙNG CẤP (chung cha). Ở đây thẻ `&lt;p&gt;` nằm tụt hẳn vào trong thẻ `&lt;div&gt;`, nó mất tư cách anh em với thẻ `&lt;h2&gt;` ở ngoài. Bộ chọn thất bại, thẻ p không đổi màu." },
+        { id: "d2_26", type: "single", question: "Câu 26: Mã <br>&lt;div style=\"background-color: hsl(0, 0%, 50%);\"&gt;Hộp&lt;/div&gt; tạo ra nền màu gì?", options: ["Hiển thị hộp nền xám trung tính.", "Hiển thị hộp nền đỏ rất chói chang.", "Hiển thị hộp nền xanh nước biển.", "Hiển thị hộp nền vàng rất rực rỡ."], correct: 0, explanation: "Trong hàm màu HSL, khi độ bão hòa S (Saturation) bị ép tụt xuống còn 0%, màu sắc sẽ bị biến sắc hoàn toàn thành gam màu xám (Grayscale) dù cho bánh xe Hue xoay ở bất kì góc độ nào." },
+        { id: "d2_27", type: "single", question: "Câu 27: Đoạn CSS <br>div p { background-color: red; } áp dụng cho &lt;div&gt; &lt;h1&gt; &lt;p&gt;T&lt;/p&gt; &lt;/h1&gt; &lt;/div&gt;. Nền chữ T màu gì?", options: ["Nền chữ T chuyển thành màu đỏ.", "Nền chữ T chuyển thành màu xám.", "Nền chữ T chuyển thành màu lục.", "Nền chữ T chuyển thành màu đen."], correct: 0, explanation: "Bộ chọn `div p` là cỗ máy dò tìm con cháu cực mạnh. Bất kể thẻ `&lt;p&gt;` chui sâu mấy lớp (ở đây chui vào trong `&lt;h1&gt;`), nó vẫn bị hệ thống truy quét trúng đích và sơn màu nền đỏ (red)." },
+        { id: "d2_28", type: "single", question: "Câu 28: Cho mã: <br>&lt;h3 style=\"color: hsl(240, 100%, 50%);\"&gt;B&lt;/h3&gt;. Chữ có màu gì?", options: ["Tiêu đề B sẽ có màu xanh lam.", "Tiêu đề B sẽ có màu xanh lục.", "Tiêu đề B sẽ có màu đỏ thắm.", "Tiêu đề B sẽ có màu xám tro."], correct: 0, explanation: "Theo vòng quay 360 độ của bánh xe màu sắc: Góc 0 là đỏ, góc 120 là xanh lá. Khi quay đến tọa độ góc 240, bánh xe sẽ chỉ định ra tông màu Xanh Lam (Blue)." },
+        
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Đội truyền thông của trường đang thực hiện dự án website \"Khoảnh khắc Kỷ yếu\".<br>Để làm nổi bật các bức ảnh kỉ niệm, trưởng nhóm code đã viết đoạn mã sau để định dạng khung viền và chú thích:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;.gallery { background-color: #F0F8FF; }<br>&nbsp;&nbsp;.gallery &gt; img { border: 4px solid hsl(0, 0%, 0%); }<br>&nbsp;&nbsp;.gallery p { color: rgb(50, 50, 50); }<br>&lt;/style&gt;<br>&lt;div class=\"gallery\"&gt;<br>&nbsp;&nbsp;&lt;img src=\"anh_lop.jpg\" alt=\"Ảnh lớp\"&gt;<br>&nbsp;&nbsp;&lt;div class=\"caption\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;Kỷ niệm ngày bế giảng năm học&lt;/p&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Hàm rgb() trong đoạn mã trên đang sử dụng các tham số có giá trị kiểu số nguyên từ 0 đến 255.", correct: true, expl: "Cú pháp `rgb(50, 50, 50)` sử dụng trực tiếp các số nguyên để biểu diễn cường độ ánh sáng, đây là cách viết chuẩn và các con số này luôn phải nằm gọn trong khung giới hạn hệ 8-bit (từ 0 đến 255)." },
+            { id: "b", text: "b)  Thuộc tính border (đường viền) của ảnh sẽ được tự động kế thừa xuống cho đoạn văn &lt;p&gt; nằm bên dưới.", correct: false, expl: "Một nguyên tắc bất di bất dịch của CSS: Thuộc tính `border` (viền hộp) là định dạng cục bộ của cấu trúc khối, nó không bao giờ tự động kế thừa lây lan xuống cho các phần tử con cháu bên trong." },
+            { id: "c", text: "c)  Thẻ &lt;img&gt; trong đoạn mã HTML trên sẽ có một đường viền màu đen do hàm hsl(0, 0%, 0%) có độ sáng bằng 0%.", correct: true, expl: "Trong hàm HSL, tham số kết luận cuối cùng là Lightness. Khi Lightness giảm xuống mốc 0%, ánh sáng tắt ngóm và vật thể biến thành màu đen xì, kết hợp với nét đứt solid tạo thành viền đen 4 điểm ảnh." },
+            { id: "d", text: "d)  Đoạn văn &lt;p&gt; sẽ nhận màu chữ xám đậm rgb(50, 50, 50) vì nó thỏa mãn điều kiện là phần tử con cháu của .gallery.", correct: true, expl: "Mặc dù thẻ `&lt;p&gt;` nằm sâu bên trong một thẻ `&lt;div&gt;` mang tên caption, nhưng bộ chọn `.gallery p` có dấu cách (chọn con cháu) sẽ rà soát đến tận cùng để áp dụng thành công màu chữ xám đậm cho nó." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Một tòa soạn báo điện tử cần tạo giao diện hiển thị bài viết nổi bật trong ngày.<br>Kỹ thuật viên giao diện (Frontend) sử dụng các bộ chọn CSS có quan hệ để tô màu tiêu đề bài viết:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;.news-post { background-color: rgb(255, 255, 255); }<br>&nbsp;&nbsp;h1 + h2 { color: rgb(100%, 0%, 0%); }<br>&nbsp;&nbsp;h2 ~ p { color: gray; }<br>&lt;/style&gt;<br>&lt;div class=\"news-post\"&gt;<br>&nbsp;&nbsp;&lt;h1&gt;Công nghệ AI năm 2024&lt;/h1&gt;<br>&nbsp;&nbsp;&lt;h2&gt;Những bước tiến mới nhất&lt;/h2&gt;<br>&nbsp;&nbsp;&lt;p&gt;Trí tuệ nhân tạo đang phát triển...&lt;/p&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Theo chuẩn CSS, tên màu có sẵn như gray có thể viết bằng chữ hoa (GRAY) hay chữ thường (gray) đều có tác dụng như nhau.", correct: true, expl: "Trình thông dịch mã CSS là Case-Insensitive (không phân biệt hoa/thường) đối với hệ thống tên màu tiếng Anh. Do đó `GRAY` hay `gray` đều kích hoạt cùng một phổ màu xám như nhau." },
+            { id: "b", text: "b)  Mã màu rgb(255, 255, 255) sẽ tạo ra phông nền màu đen cho toàn bộ bài viết (thẻ div mang lớp news-post).", correct: false, expl: "Sự nhầm lẫn ngược chiều. Khi 3 kênh phát sáng Đỏ, Lục, Lam cùng đạt mức tối đa 255, ánh sáng hội tụ lại sẽ rực sáng và tạo thành màu nền TRẮNG TINH (White), chứ không phải đen tối." },
+            { id: "c", text: "c)  Thẻ &lt;h2&gt; chứa dòng chữ \"Những bước tiến mới nhất\" sẽ hiển thị màu đỏ nhờ bộ chọn h1 + h2.", correct: true, expl: "Ký hiệu `+` yêu cầu thẻ H2 phải đứng ngay mép thẻ H1. Trong đoạn HTML, thẻ `&lt;h2&gt;` kề sát ngay dưới thẻ `&lt;h1&gt;`, nên nó trúng độc đắc nhận lệnh `rgb(100%, 0%, 0%)` - tức là màu đỏ tươi." },
+            { id: "d", text: "d)  Nếu kỹ thuật viên chèn thêm một thẻ &lt;img&gt; vào giữa thẻ &lt;h2&gt; và &lt;p&gt;, đoạn văn bản &lt;p&gt; sẽ bị mất màu xám vì bộ chọn ~ yêu cầu các phần tử phải nằm sát ngay cạnh nhau.", correct: false, expl: "Đặc điểm ưu việt của dấu ngã `~` là bộ chọn anh em chung (General Sibling). Nó chỉ cần phần tử `&lt;p&gt;` nằm sau `&lt;h2&gt;` và cùng chung cấp bậc là đủ, việc có chèn thêm 100 cái ảnh `&lt;img&gt;` ở giữa cũng không làm nó bị mất màu." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Trong hệ thống phần mềm thi trắc nghiệm trực tuyến, để cảnh báo học sinh về thời gian làm bài sắp hết, hệ thống chạy một đoạn mã đổi màu nền và màu chữ của đồng hồ đếm ngược:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;#timer-box { border: 2px solid rgb(255, 0, 0); }<br>&nbsp;&nbsp;#timer-box span { color: #FF0000; }<br>&nbsp;&nbsp;#timer-box &gt; div { background-color: hsl(0, 100%, 90%); }<br>&lt;/style&gt;<br>&lt;div id=\"timer-box\"&gt;<br>&nbsp;&nbsp;&lt;div&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;Thời gian còn lại: &lt;span&gt;05:00&lt;/span&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Hàm RGB hỗ trợ tổng cộng lên đến hơn 16 triệu màu sắc khác nhau để lập trình viên sử dụng.", correct: true, expl: "Với không gian 8-bit, hàm RGB sinh ra 256 cấp độ cho mỗi màu. Phép nhân ma trận 256 x 256 x 256 cho ra hệ quy chiếu khổng lồ với 16.777.216 dải màu sắc đa dạng." },
+            { id: "b", text: "b)  Trong hệ màu Hexa (cơ số 16), mã #FF0000 biểu diễn cho sắc xanh lá cây (Green) ở cường độ cao nhất.", correct: false, expl: "Mã cấu trúc Hexa là `#RRGGBB`. Ở đây `FF` nằm ở hai chữ số đầu tiên (tức là kênh Red - Đỏ) ở cực đại. Kênh Green và Blue là `00`. Do đó `#FF0000` là màu đỏ thuần khiết chứ không phải màu xanh lá cây." },
+            { id: "c", text: "c)  Thẻ &lt;div&gt; nằm bên trong sẽ có nền màu đỏ rất nhạt (hồng nhạt) do giá trị độ sáng (Lightness) được thiết lập lên tới 90%.", correct: true, expl: "Hàm `hsl(0, 100%, 90%)` có Hue 0 là tông đỏ gốc. Tuy nhiên do thông số Lightness bị đẩy lên quá cao (90%), màu sắc bị lóa, biến tông đỏ chói lòa thành một dải màu đỏ phớt rất nhạt (gần như màu hồng)." },
+            { id: "d", text: "d)  Số \"05:00\" trong thẻ &lt;span&gt; sẽ nhận định dạng màu đỏ thông qua bộ chọn con cháu #timer-box span.", correct: true, expl: "Bộ chọn `#timer-box span` quét tìm thẻ `&lt;span&gt;` đang ẩn mình lồng bên trong hộp có id là `timer-box`. Nó bắt trúng thẻ span bao quanh chữ '05:00' và kích hoạt biến mã `#FF0000` sơn đỏ con số này." }
+        ]}
+    ];
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

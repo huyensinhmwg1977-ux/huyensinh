@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 19: DỊCH VỤ SỬA CHỮA VÀ BẢO TRÌ MÁY TÍNH </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_19');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 19: DỊCH VỤ SỬA CHỮA VÀ BẢO TRÌ MÁY TÍNH)
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Nghề sửa chữa máy tính thuộc lĩnh vực nào?", options: ["Thuộc về lĩnh vực y tế cộng đồng.", "Thuộc về lĩnh vực nông nghiệp công nghệ.", "Thuộc về lĩnh vực công nghệ thông tin.", "Thuộc về lĩnh vực công nghiệp thực phẩm."], correct: 2, explanation: "Nghề sửa chữa máy tính chuyên trực tiếp can thiệp, xử lý các sự cố về phần cứng và phần mềm, do đó đây là một cấu phần quan trọng của lĩnh vực Công nghệ thông tin (CNTT)." },
+        { id: "d1_2", type: "single", question: "Câu 2: Mục đích chính của bảo trì máy tính là?", options: ["Phá hủy sự ổn định của hệ thống máy.", "Đảm bảo sự ổn định của hệ thống máy.", "Làm giảm hiệu năng của hệ thống thiết bị.", "Làm tăng lỗi phần mềm của hệ thống máy."], correct: 1, explanation: "Bảo trì máy tính giúp phòng ngừa rủi ro, khắc phục sớm các hỏng hóc vật lý và lỗi logic, từ đó đảm bảo máy móc duy trì được sự hoạt động ổn định và kéo dài tuổi thọ." },
+        { id: "d1_3", type: "single", question: "Câu 3: Công việc nào thuộc về bảo trì phần cứng?", options: ["Cài đặt hệ điều hành cho máy tính mới.", "Hướng dẫn người dùng sử dụng ứng dụng web.", "Cập nhật phần mềm diệt virus cho máy tính.", "Lắp đặt và thay thế linh kiện bị hỏng."], correct: 3, explanation: "Lắp đặt và thay thế linh kiện (như RAM, ổ cứng, quạt tản nhiệt) là quá trình can thiệp trực tiếp vào các thiết bị vật lý, thuộc hạng mục bảo trì phần cứng." },
+        { id: "d1_4", type: "single", question: "Câu 4: Công việc nào thuộc về bảo trì phần mềm?", options: ["Cài đặt phần mềm phòng chống virus độc hại.", "Nâng cấp ổ cứng lưu trữ cho máy tính.", "Lắp thêm thanh ram mới cho hệ thống máy.", "Thay thế màn hình bị vỡ cho máy tính."], correct: 0, explanation: "Phần mềm diệt virus là các chương trình mã hóa được cài đặt vào hệ điều hành để bảo vệ dữ liệu. Cài đặt và cấu hình chúng là công việc bảo trì phần mềm." },
+        { id: "d1_5", type: "single", question: "Câu 5: Kĩ năng mềm nào cần cho người bảo trì?", options: ["Có kĩ năng sáng tác âm nhạc nghệ thuật.", "Có kĩ năng thiết kế đồ họa ba chiều.", "Có kĩ năng giao tiếp tốt với người dùng.", "Có kĩ năng lập trình trí tuệ nhân tạo."], correct: 2, explanation: "Bên cạnh chuyên môn kĩ thuật, khả năng giao tiếp tốt giúp thợ sửa chữa lắng nghe chính xác tình trạng lỗi từ khách hàng và giải thích rõ ràng các hướng khắc phục." },
+        { id: "d1_6", type: "single", question: "Câu 6: Yêu cầu kiến thức mạng máy tính bao gồm?", options: ["Cấu hình kết nối mạng cục bộ và mạng.", "Cấu hình bảng mạch in bên trong máy tính.", "Cấu hình bộ nguồn điện của hệ thống máy.", "Cấu hình chip xử lý trung tâm của máy."], correct: 0, explanation: "Kiến thức mạng máy tính trang bị cho kĩ thuật viên khả năng thiết lập, xử lý sự cố kết nối giữa nhiều thiết bị trong mạng cục bộ (LAN) hoặc Internet." },
+        { id: "d1_7", type: "single", question: "Câu 7: Bậc học nào chú trọng nguyên lí hoạt động?", options: ["Chương trình đào tạo ở cấp bậc phổ thông.", "Chương trình đào tạo ở cấp bậc cao đẳng.", "Chương trình đào tạo ở cấp bậc trung cấp.", "Chương trình đào tạo ở cấp bậc đại học."], correct: 3, explanation: "Đào tạo bậc đại học (đặc biệt ngành Khoa học máy tính) tập trung sâu vào tư duy logic và nguyên lí cốt lõi của phần cứng/phần mềm để giải quyết các hệ thống phức tạp." },
+        { id: "d1_8", type: "single", question: "Câu 8: Yêu cầu kiến thức về phần mềm bao gồm?", options: ["Thực hiện thay thế bo mạch chủ bị hỏng.", "Thực hiện cài đặt hệ điều hành máy tính.", "Thực hiện hàn gắn các linh kiện điện tử.", "Thực hiện vệ sinh quạt tản nhiệt của máy."], correct: 1, explanation: "Hệ điều hành (như Windows, Linux, macOS) là nền tảng phần mềm nền tảng của mọi máy tính. Việc cài đặt và tối ưu hệ điều hành đòi hỏi kiến thức chuyên sâu về phần mềm." },
+        { id: "d1_9", type: "single", question: "Câu 9: Ngành nào liên quan đến bảo trì máy tính?", options: ["Công nghệ kĩ thuật phần cứng của máy tính.", "Kĩ thuật điều khiển tự động hóa nhà máy.", "Kĩ thuật chế biến thực phẩm và đồ uống.", "Công nghệ sinh học ứng dụng trong nông nghiệp."], correct: 0, explanation: "Ngành Công nghệ kĩ thuật phần cứng máy tính đào tạo các kiến thức chuyên môn về kiến trúc máy tính, sửa chữa và tối ưu hóa hệ thống vật lý." },
+        { id: "d1_10", type: "single", question: "Câu 10: Vì sao cần phân công chuyên trách trong bảo trì?", options: ["Vì số lượng máy tính cá nhân rất ít.", "Vì người dùng không muốn gặp kĩ thuật viên.", "Vì thiết bị và phần mềm rất đa dạng.", "Vì thu nhập của thợ sửa chữa rất cao."], correct: 2, explanation: "Hệ sinh thái công nghệ có hàng nghìn loại thiết bị và ứng dụng với tính chất phức tạp khác nhau. Phân công chuyên trách (người lo phần cứng, người lo phần mềm) sẽ đem lại hiệu suất và chất lượng cao nhất." },
+        { id: "d1_11", type: "single", question: "Câu 11: Môi trường hoạt động của máy tính cần được?", options: ["Được bảo đảm có nhiều bụi bẩn tiếng ồn.", "Được bảo đảm luôn luôn nóng bức ẩm ướt.", "Được bảo đảm ngắt kết nối mạng internet ngoài.", "Được bảo đảm phù hợp cho hệ thống chạy."], correct: 3, explanation: "Máy tính là đồ điện tử chính xác, do đó môi trường xung quanh (nhiệt độ, độ ẩm, độ thoáng khí) phải được đảm bảo phù hợp để tránh làm hỏng hóc các vi mạch." },
+        { id: "d1_12", type: "single", question: "Câu 12: Nâng cấp RAM hoặc ổ cứng mang lại gì?", options: ["Giúp hệ thống máy tính tiêu thụ ít điện.", "Giúp hệ thống máy tính hoạt động mạnh mẽ.", "Giúp hệ thống máy tính kết nối mạng chậm.", "Giúp hệ thống máy tính rất dễ bị hỏng."], correct: 1, explanation: "Việc mở rộng bộ nhớ trong (RAM) hoặc nâng cấp ổ cứng (đặc biệt là SSD) sẽ gia tăng tốc độ nạp dữ liệu và xử lý đa nhiệm, giúp máy tính hoạt động mạnh mẽ và mượt mà hơn rất nhiều." },
+        { id: "d1_13", type: "single", question: "Câu 13: Kĩ năng giải quyết vấn đề thể hiện qua việc?", options: ["Từ chối sửa chữa khi máy tính gặp lỗi.", "Tìm kiếm và tra cứu tài liệu trên internet.", "Đổ lỗi cho người dùng làm hỏng thiết bị.", "Yêu cầu khách hàng tự mua linh kiện mới."], correct: 1, explanation: "Khi gặp các mã lỗi mới lạ, kĩ năng cốt lõi của thợ sửa chữa là biết phân tích tình trạng, sau đó vận dụng kĩ năng tra cứu Internet để tìm hướng giải quyết khoa học." },
+        { id: "d1_14", type: "single", question: "Câu 14: Vì sao nhu cầu nhân lực bảo trì tăng?", options: ["Do sự bùng nổ của thiết bị kết nối.", "Do linh kiện điện tử ngày càng rất đắt.", "Do máy tính cá nhân ngày càng khó dùng.", "Do người dùng không muốn tự sửa máy tính."], correct: 0, explanation: "Kỷ nguyên vạn vật kết nối (IoT) khiến số lượng thiết bị điện tử, máy tính cá nhân và máy chủ tăng lên theo cấp số nhân, kéo theo sự bùng nổ của nhu cầu bảo trì và sửa chữa hệ thống." },
+        { id: "d1_15", type: "single", question: "Câu 15: Sinh viên đại học có thế mạnh gì khi sửa chữa?", options: ["Không cần sử dụng phần mềm kiểm tra lỗi.", "Lắp ráp máy tính nhanh hơn thợ cao đẳng.", "Chỉ nhận sửa chữa các máy tính đời mới.", "Nắm vững nguyên lí để giải quyết lỗi khó."], correct: 3, explanation: "Do được đào tạo sâu về bản chất học thuật và nguyên lí nền tảng, sinh viên tốt nghiệp đại học có thế mạnh vượt trội trong việc phân tích và gỡ rối những lỗi logic cực kì phức tạp." },
+        { id: "d1_16", type: "single", question: "Câu 16: Cập nhật phần mềm mới nhằm mục đích gì?", options: ["Nhằm làm máy tính chạy chậm và tốn pin.", "Nhằm ngắt kết nối thiết bị với internet ngoài.", "Nhằm xóa bỏ hoàn toàn dữ liệu người dùng.", "Nhằm bảo đảm tính an toàn và hiệu quả."], correct: 3, explanation: "Các bản vá phần mềm từ nhà phát hành cung cấp tính năng mới và đặc biệt là vá các lỗ hổng bảo mật zero-day, đảm bảo hệ thống luôn hoạt động an toàn và đạt hiệu năng tối đa." },
+        { id: "d1_17", type: "single", question: "Câu 17: Đào tạo cao đẳng khác đại học ở điểm nào?", options: ["Tập trung nghiên cứu lí thuyết toán học sâu.", "Tập trung vào mức độ thành thạo công việc.", "Tập trung vào việc phát minh ra máy tính.", "Tập trung vào việc lập trình trí tuệ mới."], correct: 1, explanation: "Chương trình cao đẳng và trung cấp nghề mang tính chất thực chiến cao. Các học viên được rèn luyện thao tác tay nghề (tháo lắp, cài đặt) lặp đi lặp lại để đạt đến độ thành thạo kĩ năng cao nhất." },
+        { id: "d1_18", type: "single", question: "Câu 18: Quản lý thời gian trong bảo trì giúp gì?", options: ["Tăng chi phí sửa chữa cho người sử dụng.", "Hoàn thành công việc đúng thời gian quy định.", "Tránh việc phải bảo hành thiết bị nhiều lần.", "Kéo dài thời gian chờ đợi của khách hàng."], correct: 1, explanation: "Khi khối lượng công việc lớn, kĩ năng quản lý thời gian khoa học sẽ giúp thợ kĩ thuật phân bổ các tác vụ hợp lý, đảm bảo giao máy trả cho khách hàng đúng tiến độ cam kết." },
+        { id: "d1_19", type: "single", question: "Câu 19: Máy bật không lên nguồn, kĩ thuật viên cần làm?", options: ["Kiểm tra bộ nguồn và cáp điện phần cứng.", "Kiểm tra lịch sử duyệt web của người dùng.", "Kiểm tra hình nền của hệ điều hành máy.", "Kiểm tra phần mềm soạn thảo văn bản word."], correct: 0, explanation: "Máy tính không lên nguồn tức là không có dòng điện cấp vào bo mạch chủ. Bước đầu tiên mang tính nguyên tắc là kiểm tra phích cắm cáp điện và bộ nguồn điện (PSU)." },
+        { id: "d1_20", type: "single", question: "Câu 20: Máy tính bị nhiễm mã độc, bạn nên làm gì?", options: ["Quét mã độc và cài phần mềm diệt virus.", "Cài lại phần mềm trình chiếu văn bản mới.", "Rút ngay phích cắm màn hình của máy tính.", "Thay thế ổ cứng mới cho hệ thống máy."], correct: 0, explanation: "Giải pháp đối phó trực tiếp với mã độc là rà quét hệ thống bằng các phần mềm Anti-virus chuyên dụng để cách ly, gỡ bỏ virus, đồng thời thiết lập tường lửa bảo vệ." },
+        { id: "d1_21", type: "single", question: "Câu 21: Khách báo mạng Internet bị mất, lỗi có thể do?", options: ["Thiết bị định tuyến mạng đang gặp sự cố.", "Bàn phím máy tính đang bị liệt một nút.", "Ổ đĩa quang của máy tính bị kẹt đĩa.", "Quạt tản nhiệt của máy tính đang quay chậm."], correct: 0, explanation: "Bộ định tuyến (Router/Modem) là cửa ngõ kết nối máy tính với Internet toàn cầu. Thiết bị này gặp sự cố hoặc dây cáp quang bị lỏng/đứt là nguyên nhân phổ biến nhất gây mất mạng." },
+        { id: "d1_22", type: "single", question: "Câu 22: Máy in không nhận lệnh từ máy tính do đâu?", options: ["Màn hình máy tính đang bị giảm độ sáng.", "Chưa cài đặt phần mềm điều khiển thiết bị.", "Chuột máy tính đang bị hết pin hoàn toàn.", "Loa máy tính đang bị tắt chức năng âm."], correct: 1, explanation: "Máy tính không thể tự giao tiếp với máy in nếu thiếu phần mềm điều khiển (Driver). Driver đóng vai trò như phiên dịch viên giúp Hệ điều hành truyền chính xác lệnh in xuống phần cứng máy in." },
+        { id: "d1_23", type: "single", question: "Câu 23: Khách hàng phàn nàn máy chạy rất chậm, bạn nên?", options: ["Thay đổi màu sắc của giao diện màn hình.", "Kiểm tra nâng cấp bộ nhớ ram cho máy.", "Lau chùi vỏ bên ngoài của máy tính sạch.", "Thay thế chuột và bàn phím máy tính mới."], correct: 1, explanation: "Trạng thái máy chạy ì ạch, treo lag thường bắt nguồn từ hiện tượng đầy bộ nhớ hoặc thắt cổ chai dữ liệu. Nâng cấp bộ nhớ RAM hoặc thay sang ổ cứng chuẩn SSD sẽ cải thiện triệt để tốc độ." },
+        { id: "d1_24", type: "single", question: "Câu 24: Một công ty cần làm việc từ xa, bạn cấu hình?", options: ["Lắp thêm loa công suất lớn cho máy tính.", "Cấu hình mạng internet và phần mềm trực tuyến.", "Tháo bỏ toàn bộ lớp vỏ của máy tính.", "Cấu hình phần mềm chơi game giải trí cao."], correct: 1, explanation: "Mô hình làm việc từ xa (Remote/Work From Home) yêu cầu nhân viên phải được thiết lập kết nối mạng riêng ảo (VPN), phần mềm họp trực tuyến và cấp quyền truy cập máy chủ công ty." },
+        { id: "d1_25", type: "single", question: "Câu 25: Kĩ thuật viên gặp một lỗi rất mới lạ, cần làm?", options: ["Báo với khách hàng là máy tính đã hỏng.", "Tự ý thay thế toàn bộ linh kiện máy.", "Lên mạng tìm kiếm thông tin và cách sửa.", "Trả lại máy tính và thu tiền kiểm tra."], correct: 2, explanation: "Công nghệ thông tin luôn xuất hiện lỗi mới hàng ngày. Khai thác sức mạnh của cộng đồng mạng và các diễn đàn chuyên gia là phương pháp tối ưu để chẩn đoán các ca bệnh công nghệ khó nhằn." },
+        { id: "d1_26", type: "single", question: "Câu 26: Khách hàng không biết lưu file Word, bạn làm gì?", options: ["Bắt khách hàng đi học một khóa tin học.", "Xóa phần mềm soạn thảo khỏi máy của khách.", "Hướng dẫn khách sử dụng phần mềm đúng cách.", "Từ chối hỗ trợ vì đây không phải lỗi."], correct: 2, explanation: "Hỗ trợ người dùng cũng là một phần không thể thiếu của dịch vụ bảo trì chuyên nghiệp. Hướng dẫn tận tình thao tác sử dụng phần mềm sẽ nâng cao tính bảo mật dữ liệu và làm hài lòng khách." },
+        { id: "d1_27", type: "single", question: "Câu 27: Doanh nghiệp yêu cầu bảo mật thông tin cao, bạn sẽ?", options: ["Tắt toàn bộ phần mềm diệt virus trên máy.", "Chia sẻ mật khẩu cho mọi người cùng dùng.", "Xóa toàn bộ dữ liệu lưu trữ quan trọng.", "Cập nhật hệ thống và cài đặt tường lửa."], correct: 3, explanation: "Giải pháp bảo mật mạng cấp doanh nghiệp bắt buộc bao gồm việc cập nhật vá lỗi (Patching) cho hệ điều hành và thiết lập tường lửa (Firewall) vững chắc để lọc luồng dữ liệu độc hại." },
+        { id: "d1_28", type: "single", question: "Câu 28: Để bảo trì phòng máy 30 chiếc nhanh chóng, bạn nên?", options: ["Yêu cầu khách hàng chờ đợi trong nhiều tháng.", "Áp dụng kĩ năng quản lý thời gian tốt.", "Chỉ kiểm tra ngẫu nhiên hai chiếc máy tính.", "Thuê thêm thợ sửa chữa ống nước tới làm."], correct: 1, explanation: "Với số lượng máy móc đồng loạt rất lớn, kĩ thuật viên phải biết lập kế hoạch, sử dụng phần mềm triển khai hàng loạt và quản lý thời gian tốt để tối ưu hóa tiến độ công việc." },
+
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Một trường THPT vừa trang bị 40 máy tính mới cho phòng thực hành Tin học. Sau một tháng sử dụng, một số máy có hiện tượng không nhận chuột và bàn phím, vài máy khác báo lỗi màn hình xanh do xung đột phần mềm. Thầy quản lý phòng máy yêu cầu nhân viên kĩ thuật tiến hành kiểm tra và bảo trì toàn bộ hệ thống.", items: [
+            { id: "a", text: "a) Việc xác định nguyên nhân và thay thế chuột, bàn phím bị hỏng thuộc về nhóm công việc bảo trì phần cứng.", correct: true, expl: "Chuột và bàn phím là các thiết bị ngoại vi có cấu tạo vật lý. Bất cứ hành động chẩn đoán và thay thế phần cơ học/điện tử nào của chúng đều là hoạt động bảo trì phần cứng điển hình." },
+            { id: "b", text: "b) Lỗi màn hình xanh do xung đột phần mềm có thể được khắc phục triệt để bằng cách lau chùi vệ sinh bên ngoài vỏ máy tính.", correct: false, expl: "Lỗi màn hình xanh (BSOD) do xung đột phần mềm là lỗi logic xảy ra ở tầng hệ điều hành. Vệ sinh phần cứng bên ngoài sẽ hoàn toàn vô tác dụng trong trường hợp này, bắt buộc phải dùng các lệnh gỡ phần mềm lỗi hoặc cài lại máy." },
+            { id: "c", text: "c) Để rà soát an toàn cho toàn bộ 40 máy, nhân viên kĩ thuật cần cập nhật hệ điều hành và chạy phần mềm quét mã độc.", correct: true, expl: "Việc sử dụng các công cụ rà quét diện rộng bằng Anti-virus kết hợp cập nhật gói vá lỗi từ Microsoft (Windows Update) là thao tác tiêu chuẩn để dọn dẹp và bảo vệ không gian mạng cho cả phòng máy." },
+            { id: "d", text: "d) Nếu gặp một lỗi kết nối mạng nội bộ chưa từng gặp, nhân viên kĩ thuật nên áp dụng kĩ năng tự học để tra cứu tài liệu trên Internet nhằm tìm hướng giải quyết.", correct: true, expl: "Hệ thống mạng luôn phát sinh lỗi mới do có sự tương tác của nhiều thiết bị khác nhau. Kĩ năng chủ động tra cứu tài liệu trên Internet (như StackOverflow, Microsoft Docs) là điều kiện sống còn của một thợ IT lành nghề." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Công ty truyền thông MediaX có một hệ thống máy tính chuyên dùng để thiết kế đồ họa. Dạo gần đây, các nhân viên thiết kế phàn nàn rằng máy tính kết xuất video (render) rất chậm, thỉnh thoảng ứng dụng thiết kế bị treo và văng ra ngoài, làm mất tiến độ công việc. Đội ngũ IT của công ty bắt đầu vào cuộc để xử lý.", items: [
+            { id: "a", text: "a) Kĩ năng giao tiếp là cần thiết để đội ngũ IT lắng nghe, hiểu rõ tình trạng lỗi máy tính từ các nhân viên thiết kế.", correct: true, expl: "Kĩ thuật viên chỉ có thể chẩn đoán đúng bệnh nếu họ thu thập đủ thông tin tiền sử máy bị lỗi. Giao tiếp mềm mỏng và cặn kẽ với nhân viên (người sử dụng trực tiếp) là thao tác quan trọng số một." },
+            { id: "b", text: "b) Để khắc phục hiện tượng ứng dụng bị treo do đầy bộ nhớ, giải pháp duy nhất và rẻ nhất là thay thế toàn bộ bo mạch chủ (mainboard) của các máy tính.", correct: false, expl: "Đây là giải pháp hoàn toàn sai lầm cả về mặt kĩ thuật và kinh tế. Ứng dụng bị treo do đầy bộ nhớ thì chỉ cần gắn thêm thanh RAM với chi phí thấp, việc thay thế cả bo mạch chủ là sự lãng phí nghiêm trọng." },
+            { id: "c", text: "c) Nếu nguyên nhân do cấu hình phần cứng không đáp ứng đủ nhu cầu, đội ngũ IT cần đề xuất nâng cấp RAM hoặc thay thế ổ cứng tốc độ cao hơn cho các máy tính đồ họa này.", correct: true, expl: "Video độ phân giải cao đòi hỏi khả năng xử lý luồng dữ liệu khổng lồ. Cắm thêm RAM dung lượng lớn và sử dụng ổ cứng SSD siêu tốc sẽ giải tỏa triệt để điểm thắt nút cổ chai phần cứng." },
+            { id: "d", text: "d) Vì máy tính thiết kế đồ họa chỉ dùng mạng nội bộ, không kết nối Internet nên đội ngũ IT hoàn toàn không cần quan tâm đến việc cài đặt phần mềm phòng chống virus.", correct: false, expl: "Ngay cả khi hệ thống bị ngắt khỏi Internet, virus vẫn có thể xâm nhập từ USB, ổ cứng cắm ngoài của nhân viên thiết kế. Hệ thống vẫn bắt buộc phải có các tuyến phòng thủ diệt mã độc cục bộ." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Anh Hùng mới mở một trung tâm dịch vụ sửa chữa máy tính cá nhân. Số lượng khách hàng mang laptop đến để cài lại hệ điều hành, dọn dẹp rác máy tính và khôi phục dữ liệu ngày càng đông. Tuy nhiên, anh Hùng đang gặp khó khăn vì nhận quá nhiều máy cùng lúc dẫn đến trả máy trễ hẹn, khiến một số khách hàng không hài lòng.", items: [
+            { id: "a", text: "a) Công việc cài đặt lại hệ điều hành và dọn dẹp rác máy tính thuộc về nhóm công việc bảo trì phần mềm.", correct: true, expl: "Các thao tác như ghost Win, cài mới hệ điều hành, dọn dẹp file rác hệ thống (Temp files) đều tác động vào cấu trúc dữ liệu trên nền tảng số, thuộc nhóm định nghĩa bảo trì phần mềm." },
+            { id: "b", text: "b) Việc anh Hùng liên tục để khách hàng phàn nàn do trả máy trễ hẹn cho thấy anh đang thiếu kĩ năng học hỏi và cập nhật công nghệ mới.", correct: false, expl: "Sự việc trả máy trễ hẹn xuất phát từ điểm yếu trong khâu quản lý quỹ thời gian, quản lý quy trình nhận/trả máy và phân bổ nguồn nhân lực, chứ không hề phản ánh trình độ kĩ thuật kém cỏi của thợ sửa." },
+            { id: "c", text: "c) Để tối ưu hóa công việc, anh Hùng có thể phân công chuyên trách: một thợ chuyên xử lý phần cứng, một thợ chuyên cài đặt phần mềm.", correct: true, expl: "Áp dụng phương pháp làm việc theo dây chuyền (Pipeline) giúp chuyên môn hóa kĩ năng tay nghề, đẩy nhanh tốc độ chẩn đoán bệnh và sửa chữa, nhờ đó máy sẽ được hoàn thành nhanh hơn." },
+            { id: "d", text: "d) Để hỗ trợ khách hàng tốt hơn, anh Hùng nên hướng dẫn khách cách sử dụng máy tính an toàn tại nhà để hạn chế rủi ro máy bị nhiễm virus trở lại.", correct: true, expl: "Cung cấp thêm dịch vụ tư vấn, hướng dẫn hành vi sử dụng mạng an toàn (ví dụ: không click link lạ) chính là tiêu chuẩn vàng của ngành dịch vụ công nghệ, giúp khách hàng hạn chế lỗi trong tương lai." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Công việc kiểm soát hoạt động máy tính là?", options: ["Thuộc nhóm công việc nâng cấp phần mềm máy.", "Thuộc nhóm công việc hỗ trợ người dùng máy.", "Thuộc nhóm công việc bảo trì phần cứng máy.", "Thuộc nhóm công việc bảo trì phần mềm máy."], correct: 2, explanation: "Theo sự phân loại ngành nghề, việc giám sát, đo đạc nhiệt độ chip xử lý hay mức tiêu hao điện áp của bo mạch đều mang tính chất tương tác trực tiếp với vật lý hệ thống, tức là can thiệp vào phần cứng." },
+        { id: "d2_2", type: "single", question: "Câu 2: Dịch vụ sửa chữa máy tính có vai trò?", options: ["Phân phối và bán lẻ các loại lương thực.", "Hỗ trợ và duy trì hệ thống công nghệ.", "Xây dựng và thiết kế các tòa nhà lớn.", "Sản xuất và lắp ráp các dòng xe điện."], correct: 1, explanation: "Dịch vụ IT hoạt động như một hệ thống y tế công nghệ, đóng vai trò sống còn trong việc cấp cứu sự cố và duy trì sự tuần hoàn ổn định của nền kinh tế số nói chung." },
+        { id: "d2_3", type: "single", question: "Câu 3: Cài đặt hệ điều hành thuộc nhóm công việc?", options: ["Thuộc về mảng dịch vụ bảo trì phần cứng.", "Thuộc về mảng dịch vụ lắp ráp thiết bị.", "Thuộc về mảng dịch vụ tư vấn khách hàng.", "Thuộc về mảng dịch vụ bảo trì phần mềm."], correct: 3, explanation: "Hệ điều hành là bộ não chỉ huy phi vật lý của máy. Bất kì thao tác nào cài đặt, chỉnh sửa hay nạp mới phân vùng của nó đều được xếp gọn vào mảng dịch vụ tác động lên phần mềm." },
+        { id: "d2_4", type: "single", question: "Câu 4: Hướng dẫn người dùng sử dụng máy tính là?", options: ["Thuộc nhóm công việc sửa chữa phần cứng máy.", "Thuộc nhóm công việc thay thế linh kiện máy.", "Thuộc nhóm công việc thiết kế hệ thống mạng.", "Thuộc nhóm công việc hỗ trợ người dùng máy."], correct: 3, explanation: "Phòng ngừa sự cố từ yếu tố con người. Cung cấp hướng dẫn sử dụng, giải đáp thắc mắc và đào tạo khách hàng sử dụng máy an toàn là cốt lõi của việc hỗ trợ người dùng cuối (Helpdesk Support)." },
+        { id: "d2_5", type: "single", question: "Câu 5: Để chẩn đoán lỗi thiết bị cần kiến thức?", options: ["Cần phải có kiến thức nền về phần mềm.", "Cần phải có kiến thức nền về mạng máy.", "Cần phải có kiến thức nền về nghệ thuật.", "Cần phải có kiến thức nền về phần cứng."], correct: 3, explanation: "Khi một thiết bị phần cứng (như thẻ RAM hay ổ đĩa quang) chết hỏng, muốn chẩn đoán chính xác kĩ thuật viên phải hiểu được cấu trúc điện tử và vai trò phần cứng của từng món đồ." },
+        { id: "d2_6", type: "single", question: "Câu 6: Việc cấu hình mạng cục bộ (LAN) đòi hỏi?", options: ["Đòi hỏi kiến thức vững chắc về phần mềm.", "Đòi hỏi kiến thức vững chắc về đồ họa.", "Đòi hỏi kiến thức vững chắc về mạng máy.", "Đòi hỏi kiến thức vững chắc về phần cứng."], correct: 2, explanation: "Mạng cục bộ (LAN) bao gồm hàng loạt router, switch kết nối qua cáp mạng. Chỉ có hệ thống kiến thức chuyên sâu về địa chỉ IP, chia mạng con (Subnetting) mới đủ khả năng thiết lập cấu hình." },
+        { id: "d2_7", type: "single", question: "Câu 7: Đào tạo kĩ thuật phần cứng thường ở cấp?", options: ["Thường được đào tạo ở cấp độ trung học.", "Thường được đào tạo ở cấp độ cao đẳng.", "Thường được đào tạo ở cấp độ mẫu giáo.", "Thường được đào tạo ở cấp độ tiểu học."], correct: 1, explanation: "Do yêu cầu rèn luyện kĩ năng thao tác thực hành trực tiếp (như hàn vi mạch, bắt ốc vít linh kiện) với cường độ cao, các khóa đào tạo phần cứng thường được giảng dạy chính khóa tại các trường trung cấp và cao đẳng nghề." },
+        { id: "d2_8", type: "single", question: "Câu 8: Yếu tố nào gây ra khối lượng việc lớn?", options: ["Sự sụt giảm của các hệ thống máy tính.", "Sự bùng nổ của các thiết bị kết nối.", "Máy tính ngày nay không bao giờ bị hỏng.", "Số lượng người dùng internet ngày càng ít đi."], correct: 1, explanation: "Số lượng thiết bị được xuất xưởng trong kỉ nguyên chuyển đổi số liên tục tăng chóng mặt. Dân số thiết bị tăng mạnh kéo theo khối lượng công việc bảo trì sửa chữa phình to tương đương." },
+        { id: "d2_9", type: "single", question: "Câu 9: Sinh viên đại học công nghệ thông tin được học?", options: ["Được học cách thay thế các màn hình hỏng.", "Được học kĩ năng kinh doanh phần cứng máy.", "Được học nguyên lí hoạt động của máy tính.", "Được học kĩ năng sửa chữa từng linh kiện."], correct: 2, explanation: "Chương trình Đại học thiết kế tập trung truyền đạt tư duy nguyên lí, cấu trúc thuật toán và kiến trúc hệ thống cốt lõi để sinh viên có năng lực nghiên cứu, phân tích thay vì chỉ thao tác rập khuôn." },
+        { id: "d2_10", type: "single", question: "Câu 10: Sự phân công chuyên trách mang lại lợi ích?", options: ["Làm tăng thời gian chờ đợi của khách hàng.", "Giúp thợ kĩ thuật làm việc hiệu quả hơn.", "Giúp khách hàng tự sửa được máy tính nhà.", "Làm giảm chất lượng của dịch vụ bảo trì."], correct: 1, explanation: "Chuyên môn hóa tức là để thợ phần cứng chỉ làm phần cứng, thợ phần mềm chỉ gõ lệnh phần mềm. Việc này thu hẹp phạm vi thao tác, giúp năng suất làm việc của mỗi người tăng lên gấp bội." },
+        { id: "d2_11", type: "single", question: "Câu 11: Tại sao phần cứng và phần mềm gắn liền?", options: ["Vì mọi phần mềm tự biến thành phần cứng.", "Vì mọi phần cứng tự tạo ra phần mềm.", "Vì cả hai đều được sản xuất từ nhựa.", "Vì phần thiết bị chỉ chạy nhờ phần mềm."], correct: 3, explanation: "Phần cứng là một cỗ máy vô hồn không thể tự hoạt động. Nó bắt buộc phải được truyền lệnh, được đánh thức bởi các chương trình logic của phần mềm mới có thể sinh ra tác dụng công nghệ." },
+        { id: "d2_12", type: "single", question: "Câu 12: Quét mã độc thường xuyên mang lại tác dụng?", options: ["Làm cho máy tính bị nóng lên rất nhiều.", "Đảm bảo an toàn thông tin cho hệ thống.", "Ngắt kết nối toàn bộ hệ thống mạng lan.", "Xóa bỏ các tập tin cá nhân của khách."], correct: 1, explanation: "Máy tính không có kháng thể tự nhiên như con người. Việc lên lịch rà quét mã độc liên tục sẽ tiêu diệt kịp thời gián điệp mạng, mã hóa tống tiền, bảo vệ tuyệt đối an toàn dữ liệu khách hàng." },
+        { id: "d2_13", type: "single", question: "Câu 13: Môi trường công ty mang lại lợi ích gì?", options: ["Hạn chế khả năng tìm hiểu thiết bị mới.", "Khiến kĩ thuật viên lười cập nhật kiến thức.", "Giúp kĩ thuật viên học hỏi thêm từ nghề.", "Làm giảm kĩ năng giao tiếp của kĩ thuật."], correct: 2, explanation: "Làm việc tại công ty cung cấp cơ hội va chạm với hàng nghìn ca máy tính đa dạng khác nhau và nhận được sự chia sẻ kiến thức từ các thợ IT bậc cao hơn, giúp tay nghề tiến bộ rất nhanh." },
+        { id: "d2_14", type: "single", question: "Câu 14: Kĩ năng giao tiếp quan trọng vì lí do?", options: ["Tránh việc phải hướng dẫn khách hàng sử dụng.", "Giúp kĩ thuật hiểu rõ yêu cầu của khách.", "Thay thế cho toàn bộ kiến thức chuyên môn.", "Giúp kĩ thuật viên làm việc độc lập hơn."], correct: 1, explanation: "Khai thác bệnh sử thiết bị là khâu then chốt. Giao tiếp tốt giúp người thợ đặt đúng câu hỏi cho khách hàng để hiểu nguyên nhân sâu xa làm thiết bị hỏng, rút ngắn thời gian chẩn đoán." },
+        { id: "d2_15", type: "single", question: "Câu 15: Mô hình làm việc từ xa yêu cầu kĩ năng?", options: ["Yêu cầu tháo lắp linh kiện điện tử vật lý.", "Yêu cầu dọn dẹp vệ sinh phòng làm việc.", "Yêu cầu lắp ráp các hệ thống máy chủ.", "Yêu cầu chẩn đoán và sửa chữa lỗi xa."], correct: 3, explanation: "Đặc thù làm việc từ xa là không được chạm tay vào máy tính. IT Support phải sử dụng phần mềm điều khiển (TeamViewer/UltraViewer) và vận dụng logic cực cao để chẩn đoán, sửa lỗi mà không cần nhìn trực tiếp." },
+        { id: "d2_16", type: "single", question: "Câu 16: Sự phát triển công nghệ yêu cầu kĩ thuật viên?", options: ["Luôn phải cập nhật kiến thức kĩ thuật mới.", "Chỉ sử dụng các linh kiện sản xuất cũ.", "Từ chối sửa chữa các thiết bị công nghệ.", "Dừng việc học tập sau khi tốt nghiệp trường."], correct: 0, explanation: "Vòng đời công nghệ cực kì ngắn, các tiêu chuẩn như bộ nhớ DDR, khe cắm PCI hay thuật toán hệ điều hành thay đổi mỗi năm. Người thợ không chịu tiếp thu cái mới sẽ lập tức bị đào thải." },
+        { id: "d2_17", type: "single", question: "Câu 17: Đào tạo đại học mang lại ưu thế gì?", options: ["Không cần sử dụng tài liệu hướng dẫn sửa.", "Khả năng tìm hiểu và giải quyết lỗi khó.", "Khả năng sửa chữa tivi và tủ lạnh hỏng.", "Tốc độ tháo lắp máy tính cực kì nhanh."], correct: 1, explanation: "Với bộ rễ nền tảng lý thuyết được đào tạo bài bản, sinh viên đại học có năng lực tư duy hệ thống sắc bén, giúp họ dễ dàng mổ xẻ nguyên lý và giải mã những ca lỗi máy tính khó nhằn chưa từng thấy." },
+        { id: "d2_18", type: "single", question: "Câu 18: Cài đặt driver (điều khiển thiết bị) nhằm để?", options: ["Tăng độ sáng của màn hình hiển thị lên.", "Giúp hệ điều hành nhận diện thiết bị mới.", "Ngăn chặn người lạ truy cập vào máy tính.", "Giúp máy tính có giao diện màn hình đẹp."], correct: 1, explanation: "Driver là bộ từ điển phiên dịch của hệ thống. Nếu không cài đúng driver cho card đồ họa hay máy in, hệ điều hành (Windows) sẽ mù tịt và không biết cách điều khiển phần cứng mới vừa được cắm vào." },
+        { id: "d2_19", type: "single", question: "Câu 19: Máy chiếu lớp học không nhận tín hiệu, bạn làm?", options: ["Tháo tung hệ thống bảng mạch của máy chiếu.", "Thay thế bóng đèn của chiếc máy chiếu đó.", "Xóa phần mềm soạn thảo văn bản trong máy.", "Cắm lại cáp kết nối và cấu hình màn."], correct: 3, explanation: "Máy chiếu mất tín hiệu phần lớn do lỏng đầu nối dây cáp chuẩn (HDMI/VGA) hoặc người dùng thiết lập sai chế độ xuất màn hình trên máy tính. Cần thực hiện kiểm tra cáp và cấu hình phần mềm trước tiên." },
+        { id: "d2_20", type: "single", question: "Câu 20: Ổ cứng máy tính bị đầy dữ liệu, giải pháp?", options: ["Tắt toàn bộ hệ thống mạng của máy tính.", "Thay thế màn hình độ phân giải cao hơn.", "Nâng cấp thanh bộ nhớ ram cho máy tính.", "Lắp thêm ổ cứng mới dung lượng lớn hơn."], correct: 3, explanation: "Dung lượng bộ nhớ lưu trữ vật lý là hữu hạn. Khi ổ cứng đã chạm ngưỡng tối đa (đỏ vạch cảnh báo), giải pháp duy nhất và triệt để nhất là gắn thêm một ổ cứng mới để mở rộng sức chứa." },
+        { id: "d2_21", type: "single", question: "Câu 21: Máy tính in ra giấy bị mờ chữ, nguyên nhân?", options: ["Máy tính của bạn đang bị nhiễm mã độc.", "Bàn phím máy tính của bạn bị liệt nút.", "Máy in của bạn đang bị sắp hết mực.", "Cáp mạng internet của máy tính bị đứt gãy."], correct: 2, explanation: "Cơ chế in phụ thuộc trực tiếp vào hạt mực trên trống in. Văn bản in ra xuất hiện hiện tượng mờ sọc dọc là dấu hiệu cơ bản cảnh báo hộp mực (Toner) đã cạn, cần nạp mới." },
+        { id: "d2_22", type: "single", question: "Câu 22: Trình duyệt web liên tục bật quảng cáo lạ?", options: ["Nâng cấp bộ vi xử lý của máy tính.", "Thay thế con chuột máy tính bằng loại mới.", "Cài phần mềm diệt virus và quét mã độc.", "Rút dây nguồn của màn hình máy tính ra."], correct: 2, explanation: "Trình duyệt tự động mở các cửa sổ Popup độc hại là biểu hiện đặc trưng khi máy tính đã lây nhiễm mã độc quảng cáo (Adware). Hệ thống cần được cách ly và rà quét virus ngay lập tức." },
+        { id: "d2_23", type: "single", question: "Câu 23: Giáo viên không biết dùng phần mềm mới, bạn?", options: ["Yêu cầu giáo viên tự đọc sách hướng dẫn.", "Cài lại hệ điều hành cho máy tính đó.", "Xóa bỏ phần mềm đó khỏi máy tính ngay.", "Trực tiếp hướng dẫn giáo viên sử dụng phần mềm."], correct: 3, explanation: "Hỗ trợ người dùng tại chỗ (On-site Support) bằng cách tận tình chỉ dẫn từng thao tác click chuột sẽ nâng cao năng suất sử dụng máy của giáo viên và hạn chế lỗi thao tác người dùng gây hỏng ứng dụng." },
+        { id: "d2_24", type: "single", question: "Câu 24: Một thiết bị mạng mới được mua về, bạn?", options: ["Cất thiết bị vào tủ bảo quản an toàn.", "Cấu hình mạng để thiết bị kết nối được.", "Thay đổi phông nền của màn hình máy tính.", "Tháo rời thiết bị để kiểm tra bên trong."], correct: 1, explanation: "Mua phần cứng mạng về mới chỉ là một nửa chặng đường. Kĩ thuật viên phải đăng nhập vào giao diện điều khiển của thiết bị để khai báo địa chỉ mạng, phân luồng kết nối thì nó mới thông mạng được." },
+        { id: "d2_25", type: "single", question: "Câu 25: Gặp lỗi phần mềm chưa từng xuất hiện, bạn?", options: ["Tháo bộ nhớ ram ra rồi lắp lại ngay.", "Tự ý xóa mọi tập tin của khách hàng.", "Khuyên khách hàng mua một chiếc máy tính mới.", "Tìm kiếm cách khắc phục qua công cụ mạng."], correct: 3, explanation: "Không ai có thể học thuộc toàn bộ mã lỗi trên thế giới. Kĩ năng tiên quyết khi gặp trường hợp bế tắc là gõ từ khóa mã lỗi đó lên công cụ tìm kiếm mạng để tham khảo cách giải quyết của cộng đồng toàn cầu." },
+        { id: "d2_26", type: "single", question: "Câu 26: Công ty cần nâng cấp đồng loạt 50 máy tính?", options: ["Chỉ nâng cấp đúng một chiếc máy tính thôi.", "Lập kế hoạch thời gian để nâng cấp dần.", "Tắt điện toàn bộ công ty trong nhiều ngày.", "Tháo rời năm mươi máy tính ra cùng lúc."], correct: 1, explanation: "Cập nhật hạ tầng CNTT diện rộng tiềm ẩn rủi ro treo hệ thống kinh doanh. Lập kế hoạch phân bổ thời gian cuốn chiếu từng bộ phận sẽ đảm bảo công ty vẫn hoạt động mà công tác nâng cấp vẫn hoàn thành." },
+        { id: "d2_27", type: "single", question: "Câu 27: Khách hàng phàn nàn máy tính chạy rất ồn ào?", options: ["Cài đặt lại phần mềm nghe nhạc cho máy.", "Xóa toàn bộ tệp tin hình ảnh trong máy.", "Kiểm tra vệ sinh hoặc thay quạt tản nhiệt.", "Thay đổi mật khẩu wifi của khách hàng ngay."], correct: 2, explanation: "Âm thanh ù ù bất thường phát ra từ thân vỏ máy tính gần như chắc chắn là do vòng bi của hệ thống quạt tản nhiệt bị kẹt khô dầu hoặc dính quá nhiều bụi bẩn. Việc vệ sinh/thay thế quạt sẽ trả lại sự êm ái cho máy." },
+        { id: "d2_28", type: "single", question: "Câu 28: Máy tính kế toán bị mất mạng nội bộ LAN?", options: ["Cài đặt lại phần mềm diệt virus cao cấp.", "Nâng cấp dung lượng ổ cứng cho máy tính.", "Thay thế màn hình mới cho máy tính đó.", "Kiểm tra cáp mạng và thông số cấu hình."], correct: 3, explanation: "Khi đứt kết nối mạng dây (LAN), kĩ thuật viên phải đi từ phần cứng đến phần mềm: kiểm tra trước dây cáp xoắn đôi (Cáp mạng 8 lõi) cắm có chắc chắn không, tiếp đó mới rà soát thông số cấu hình dải IP trên hệ thống Windows." },
+
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Phòng hành chính của Ủy ban nhân dân huyện vừa được trang bị hệ thống máy in qua mạng LAN để dùng chung cho 20 máy tính. Tuy nhiên, sau khi lắp đặt, chỉ có 5 máy tính gửi được lệnh in, 15 máy tính còn lại liên tục báo lỗi không tìm thấy thiết bị in. Đội ngũ kĩ thuật viên của huyện được điều động đến xử lý.", items: [
+            { id: "a", text: "a) Việc xử lý lỗi không in được qua mạng LAN đòi hỏi kĩ thuật viên phải có nền tảng kiến thức vững chắc về mạng máy tính.", correct: true, expl: "Cấu hình in ấn qua mạng không sử dụng cáp USB vật lý mà phải điều hướng đường truyền dữ liệu qua địa chỉ IP của mạng LAN nội bộ. Do đó, am hiểu sâu về quy luật mạng IP là kiến thức bắt buộc." },
+            { id: "b", text: "b) Kĩ năng giao tiếp là không cần thiết trong trường hợp này vì kĩ thuật viên chỉ cần âm thầm thao tác trên hệ thống máy móc.", correct: false, expl: "Mọi sự cố hệ thống đều cần kĩ năng giao tiếp để thảo luận với nhân viên sử dụng máy, từ đó xác định xem lỗi xảy ra đồng loạt vào thời điểm nào, hoặc có thay đổi gì từ người dùng hay không." },
+            { id: "c", text: "c) Để khắc phục lỗi, kĩ thuật viên có thể cần tiến hành cài đặt và cập nhật phần mềm điều khiển thiết bị (driver) máy in cho 15 máy tính đang bị lỗi.", correct: true, expl: "Driver là chìa khóa kết nối logic giữa hệ điều hành máy tính và bảng điều khiển máy in. Các máy chưa có driver hoặc driver bị xung đột sẽ không thể phiên dịch được tập tin tài liệu gửi đến máy in." },
+            { id: "d", text: "d) Giải pháp tốt nhất và tiết kiệm nhất cho trường hợp này là mua thêm 15 chiếc máy in nữa để cắm trực tiếp vào 15 máy tính bị lỗi.", correct: false, expl: "Nguyên lý của hệ thống mạng LAN là để tối ưu hóa chia sẻ tài nguyên phần cứng. Mua thêm 15 chiếc máy in là đi ngược lại giải pháp kinh tế và kĩ thuật, làm lãng phí lớn nguồn ngân sách." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Chị Hoa làm nghề biên tập video tại nhà (Freelancer). Hôm nay, chị nhận được thông báo từ hệ điều hành yêu cầu cập nhật phần mềm bảo mật. Tuy nhiên, trong quá trình cập nhật, máy tính bị sập nguồn do mất điện và hiện tại cứ khởi động lên là tự động tắt lại (lỗi khởi động vòng lặp). Chị gọi điện cho trung tâm dịch vụ bảo trì máy tính để nhờ hỗ trợ.", items: [
+            { id: "a", text: "a) Sự cố máy tính của chị Hoa liên quan mật thiết đến các lỗi ở khâu cập nhật phần mềm và hệ điều hành.", correct: true, expl: "Mất điện đột ngột trong lúc Windows đang ghi đè nhân hệ thống (kernel) để cập nhật sẽ dẫn đến làm hỏng hoàn toàn cấu trúc thư mục boot, khiến máy không thể tải xong nền tảng và khởi động liên tục." },
+            { id: "b", text: "b) Khối lượng công việc của nghề dịch vụ sửa chữa máy tính ngày càng giảm sút vì máy tính ngày nay có khả năng tự sửa mọi loại lỗi.", correct: false, expl: "Công nghệ hiện nay chưa thể tự chủ khắc phục lỗi vật lý hoặc sửa chữa các xung đột phần mềm hệ thống sâu. Số lượng máy tăng mạnh khiến nghề sửa chữa máy tính ngày càng bùng nổ nhu cầu nhân sự hơn." },
+            { id: "c", text: "c) Nhân viên hỗ trợ có thể áp dụng ngay mô hình làm việc từ xa, yêu cầu chị Hoa kết nối mạng để nhân viên truy cập máy và sửa lỗi từ xa.", correct: false, expl: "Điều kiện kiên quyết của việc sửa máy từ xa là máy tính phải còn truy cập được vào môi trường hệ điều hành và Internet. Trong trường hợp sập nguồn chết Win này, phương pháp remote từ xa là bất khả thi." },
+            { id: "d", text: "d) Do tính chất công việc biên tập video cần lưu trữ an toàn, nhân viên kĩ thuật phải cẩn thận sao lưu dữ liệu từ ổ cứng trước khi quyết định cài lại hệ điều hành cho chị Hoa.", correct: true, expl: "Dữ liệu biên tập video là tài sản lớn nhất của khách hàng Freelancer. Cài lại Windows sẽ làm trắng ổ đĩa, nên kĩ thuật viên có đạo đức nghề nghiệp bắt buộc phải dùng công cụ boot để hút dữ liệu ra an toàn trước." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Bệnh viện đa khoa tỉnh đang triển khai phần mềm quản lý hồ sơ bệnh án điện tử. Để đảm bảo hệ thống vận hành trơn tru, bệnh viện đã ký hợp đồng bảo trì định kỳ với một công ty dịch vụ IT. Các kĩ thuật viên IT thường xuyên phải đến bệnh viện để kiểm tra máy chủ (server), dọn dẹp hệ thống và cập nhật các bản vá phần mềm mới.", items: [
+            { id: "a", text: "a) Dịch vụ bảo trì IT đóng vai trò cốt lõi trong việc đảm bảo các hệ thống công nghệ thông tin của bệnh viện hoạt động ổn định và hiệu quả.", correct: true, expl: "Bệnh án điện tử liên quan trực tiếp đến sinh mạng người bệnh. Đảm bảo hạ tầng máy chủ, hệ thống phần mềm luôn sẵn sàng vận hành không độ trễ chính là vai trò cốt lõi của công ty đối tác IT." },
+            { id: "b", text: "b) Việc cập nhật các phiên bản mới của phần mềm quản lý bệnh án là hoàn toàn không cần thiết nếu phiên bản cũ vẫn đang mở được bình thường trên máy tính.", correct: false, expl: "Ngay cả khi chức năng cũ vẫn hoạt động, bản cập nhật mới vẫn chứa những dòng code bảo vệ hệ thống trước sự tấn công bảo mật thế hệ mới nhất. Bỏ qua cập nhật đồng nghĩa với việc mở toang cánh cửa cho Hacker." },
+            { id: "c", text: "c) Nếu các bác sĩ yêu cầu độ phân giải màn hình sắc nét hơn để xem chính xác các tấm ảnh chụp X-quang, kĩ thuật viên IT có nhiệm vụ tư vấn cấu hình và tiến hành thay thế các màn hình chất lượng cao.", correct: true, expl: "Đáp ứng yêu cầu trải nghiệm chuyên môn cao thông qua việc thay thế, nâng cấp linh kiện hiển thị phần cứng nằm trong phạm vi nghiệp vụ căn bản của nhân sự bảo trì công nghệ thông tin." },
+            { id: "d", text: "d) Do dữ liệu hồ sơ bệnh án mang tính riêng tư cá nhân rất cao, kĩ thuật viên thực hiện bảo trì phải nắm vững và áp dụng nghiêm ngặt các biện pháp bảo mật thông tin.", correct: true, expl: "Đạo đức nghề IT và nguyên tắc pháp lý tối thượng yêu cầu tuyệt đối giữ bí mật thông tin dữ liệu bệnh nhân. Kĩ thuật viên không được sao chép, làm rò rỉ hoặc xem trộm tài liệu của bệnh viện trong quá trình bảo trì." }
+        ]}
+    ];
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

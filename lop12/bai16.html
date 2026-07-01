@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 16: ĐỊNH DẠNG KHUNG </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_16');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 16: ĐỊNH DẠNG KHUNG) - ĐÃ ESCAPE KÝ TỰ MÃ HTML
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Trong HTML, các thẻ (phần tử) được chia làm mấy loại cơ bản?", options: ["Gồm hai loại phân biệt", "Gồm ba loại phân biệt", "Gồm bốn loại phân biệt", "Gồm năm loại phân biệt"], correct: 0, explanation: "HTML chia các thẻ thành 2 loại cơ bản dựa trên cách trình bày: phần tử cấp độ khối (Block-level) và phần tử nội tuyến (Inline-level)." },
+        { id: "d1_2", type: "single", question: "Câu 2: Phần tử khối (block level) thường có đặc điểm bắt đầu như thế nào?", options: ["Bắt đầu từ giữa hàng", "Bắt đầu từ cuối hàng", "Bắt đầu từ đầu hàng", "Bắt đầu từ hàng sau"], correct: 2, explanation: "Đặc trưng của phần tử khối (như thẻ &lt;div&gt;, &lt;p&gt;, &lt;h1&gt;) là luôn luôn ngắt dòng và bắt đầu ở một dòng mới (đầu hàng)." },
+        { id: "d1_3", type: "single", question: "Câu 3: Phần tử nội tuyến (inline level) có đặc điểm vị trí như thế nào?", options: ["Nằm độc lập ngoài cùng", "Nhúng bên trong phần tử khác", "Nằm ở dưới cùng trang web", "Nhúng trên cùng trang web"], correct: 1, explanation: "Phần tử nội tuyến (như &lt;span&gt;, &lt;a&gt;, &lt;em&gt;) không tự tạo ra dòng mới mà luôn được lồng ghép, nhúng mượt mà vào bên trong luồng chữ của một phần tử khác." },
+        { id: "d1_4", type: "single", question: "Câu 4: Thuộc tính nào dùng để thay đổi loại phần tử trong HTML?", options: ["Thuộc tính hiển thị (display)", "Thuộc tính căn lề (padding)", "Thuộc tính viền ngoài (margin)", "Thuộc tính đường viền (border)"], correct: 0, explanation: "Thuộc tính 'display' trong CSS là công cụ dùng để ép buộc một phần tử HTML thay đổi bản chất hiển thị của nó (ví dụ biến từ nội tuyến thành khối và ngược lại)." },
+        { id: "d1_5", type: "single", question: "Câu 5: Giá trị nào của thuộc tính display làm ẩn phần tử trên trang web?", options: ["Giá trị kiểu block", "Giá trị kiểu inline", "Giá trị kiểu hidden", "Giá trị kiểu none"], correct: 3, explanation: "Lệnh 'display: none;' sẽ xóa bỏ hoàn toàn phần tử đó khỏi cấu trúc dàn trang hiển thị (giống như nó chưa từng tồn tại trên màn hình)." },
+        { id: "d1_6", type: "single", question: "Câu 6: Bộ chọn lớp (class selector) trong CSS được bắt đầu bằng kí tự nào?", options: ["Bắt đầu bằng dấu chấm", "Bắt đầu bằng dấu phẩy", "Bắt đầu bằng dấu thăng", "Bắt đầu bằng dấu sao"], correct: 0, explanation: "Bộ chọn lớp (class selector) luôn luôn sử dụng cú pháp bắt đầu bằng một dấu chấm (.) đứng trước tên lớp. Ví dụ: .tieu-de" },
+        { id: "d1_7", type: "single", question: "Câu 7: Bộ chọn định danh (id selector) trong CSS bắt đầu bằng kí tự nào?", options: ["Bắt đầu bằng dấu chấm", "Bắt đầu bằng dấu phẩy", "Bắt đầu bằng dấu thăng", "Bắt đầu bằng dấu sao"], correct: 2, explanation: "Bộ chọn định danh (id selector) được khai báo trong tệp CSS bằng kí tự dấu thăng (#) đứng trước tên định danh. Ví dụ: #menu-chinh" },
+        { id: "d1_8", type: "single", question: "Câu 8: Trong một trang web, một phần tử có thể có tối đa bao nhiêu mã id?", options: ["Chỉ có một mã duy nhất", "Có thể có hai mã id", "Có thể có ba mã id", "Không giới hạn mã id"], correct: 0, explanation: "Mã định danh (id) đóng vai trò như số thẻ Căn cước công dân. Mỗi thẻ HTML chỉ được phép sở hữu một mã id duy nhất để phân biệt với các thẻ khác." },
+        { id: "d1_9", type: "single", question: "Câu 9: Khi đặt tên cho id và class trong CSS, quy tắc nào sau đây đúng?", options: ["Không phân biệt chữ hoa", "Có phân biệt chữ hoa", "Chỉ dùng chữ in thường", "Chỉ dùng chữ in hoa"], correct: 1, explanation: "Theo chuẩn CSS, tên gọi của id và class có phân biệt chữ hoa chữ thường (Case-sensitive). Lớp tên là 'Menu' sẽ hoàn toàn khác với lớp 'menu'." },
+        { id: "d1_10", type: "single", question: "Câu 10: Điểm khác biệt lớn nhất về định dạng khung giữa khối và nội tuyến là gì?", options: ["Nội tuyến không xét chiều cao rộng", "Nội tuyến luôn có chiều cao rộng", "Khối không có viền bao xung quanh", "Khối không có màu nền xung quanh"], correct: 0, explanation: "Phần tử nội tuyến bó sát vào nội dung văn bản nên các thuộc tính ép kích thước chiều rộng (width) và chiều cao (height) sẽ bị vô hiệu hóa." },
+        { id: "d1_11", type: "single", question: "Câu 11: Bộ chọn .test trong CSS mang ý nghĩa áp dụng định dạng cho đối tượng nào?", options: ["Tất cả phần tử có id tên là test", "Tất cả phần tử có lớp tên là test", "Chỉ phần tử p có lớp tên là test", "Chỉ phần tử p có id tên là test"], correct: 1, explanation: "Do có dấu chấm (.) ở đầu, trình duyệt sẽ tự động lùng sục và áp dụng giao diện cho TẤT CẢ các thẻ HTML (không phân biệt loại thẻ) có chứa `class=\"test\"`." },
+        { id: "d1_12", type: "single", question: "Câu 12: Bộ chọn p.test trong CSS mang ý nghĩa áp dụng định dạng cho đối tượng nào?", options: ["Tất cả phần tử có id tên là test", "Tất cả phần tử có lớp tên là test", "Chỉ phần tử p có lớp tên là test", "Chỉ phần tử p có id tên là test"], correct: 2, explanation: "Đây là bộ chọn kết hợp. Nó chỉ lọc ra định dạng cho những thẻ là thẻ đoạn văn &lt;p&gt; VÀ ĐỒNG THỜI phải mang lớp có tên là 'test'." },
+        { id: "d1_13", type: "single", question: "Câu 13: Bộ chọn .test.warning trong CSS sẽ áp dụng cho phần tử có đặc điểm gì?", options: ["Chỉ mang duy nhất lớp tên là test", "Mang đồng thời lớp test và warning", "Có id là test và có lớp là warning", "Có id là warning và có lớp là test"], correct: 1, explanation: "Hai dấu chấm dính liền nhau mô tả một bộ chọn đa lớp (Multiple class selector). Nó yêu cầu phần tử đó phải đang đeo cả 2 thẻ lớp: class=\"test warning\"." },
+        { id: "d1_14", type: "single", question: "Câu 14: Khi một phần tử HTML thuộc nhiều lớp, các tên lớp được viết cách nhau bởi kí tự nào?", options: ["Cách nhau bởi một dấu phẩy", "Cách nhau bởi một dấu chấm", "Cách nhau bởi một dấu gạch", "Cách nhau bởi một dấu cách"], correct: 3, explanation: "Bên trong thuộc tính class của HTML, khoảng trắng (dấu cách) được sử dụng để phân định các tên lớp khác nhau. Ví dụ: &lt;div class=\"kieu-1 kieu-2\"&gt;" },
+        { id: "d1_15", type: "single", question: "Câu 15: Tên của id hoặc class nào sau đây được đặt đúng quy tắc của CSS?", options: ["Tên id bắt đầu bằng một số", "Tên chứa các dấu cách trắng", "Tên chứa các kí tự đặc biệt", "Tên bắt đầu bằng một chữ cái"], correct: 3, explanation: "W3C quy định cực kì khắt khe: Tên id và class bắt buộc phải khởi đầu bằng một chữ cái (A-Z, a-z), không được phép chứa dấu cách, không bắt đầu bằng số." },
+        { id: "d1_16", type: "single", question: "Câu 16: Kết quả hiển thị trên trang web sẽ thế nào nếu sử dụng display: block cho phần tử nội tuyến?", options: ["Phần tử ẩn hoàn toàn khỏi trang", "Phần tử kéo dài suốt chiều rộng", "Phần tử nằm gọn trong dòng chữ", "Phần tử tự động thu nhỏ kích cỡ"], correct: 1, explanation: "Khi được hô biến thành dạng khối bằng 'display: block', phần tử sẽ bị ép ngắt xuống dòng mới và tự động bung bề ngang ra chiếm trọn 100% không gian cho phép." },
+        { id: "d1_17", type: "single", question: "Câu 17: Mục đích chính của việc sử dụng bộ chọn thuộc tính trong CSS là gì?", options: ["Định dạng theo một lớp cụ thể", "Định dạng theo mã định danh", "Định dạng theo tính chất riêng", "Định dạng theo vị trí phần tử"], correct: 2, explanation: "Bộ chọn thuộc tính (ví dụ: [type=\"text\"]) cho phép truy bắt siêu chính xác các phần tử dựa vào những đặc tính riêng biệt (attribute) khai báo trong thẻ." },
+        { id: "d1_18", type: "single", question: "Câu 18: Tên id và class bắt buộc phải tuân theo điều kiện nào về mặt kí tự?", options: ["Chứa ít nhất một kí tự không là số", "Chứa ít nhất một kí tự là chữ số", "Chứa ít nhất một kí tự đặc biệt", "Chứa ít nhất một kí tự in hoa"], correct: 0, explanation: "Tên id và class luôn yêu cầu chứa ít nhất một kí tự là chữ cái (không phải là số) để không bị trình duyệt dịch nhầm sang hệ số kích thước." },
+        { id: "d1_19", type: "single", question: "Câu 19: Xem đoạn mã HTML sau: &lt;span style=\"display: block;\"&gt;Học tập&lt;/span&gt;. Kết quả hiển thị là:", options: ["Phần tử hiển thị trên cùng một dòng", "Phần tử chiếm toàn bộ chiều rộng", "Phần tử bị ẩn khỏi màn hình web", "Phần tử không nhận lệnh định dạng"], correct: 1, explanation: "Mặc định &lt;span&gt; là một thẻ nội tuyến yếu ớt. Nhưng khi bị tiêm mã CSS 'display: block', nó lột xác thành một khối lớn, rớt xuống dòng và bung rộng hết cỡ." },
+        { id: "d1_20", type: "single", question: "Câu 20: Xem đoạn mã: &lt;p class=\"title highlight\"&gt;Nội dung&lt;/p&gt;. Bộ chọn CSS nào áp dụng đúng?", options: ["Bộ chọn lớp .title.highlight", "Bộ chọn lớp p#title.highlight", "Bộ chọn định danh #title.highlight", "Bộ chọn định danh p#highlight.title"], correct: 0, explanation: "Thẻ p này khai báo cùng lúc 2 tên lớp phân cách bởi khoảng trắng. Để nhắm trúng nó, ta viết hai tên lớp sát cạnh nhau bằng dấu chấm: .title.highlight" },
+        { id: "d1_21", type: "single", question: "Câu 21: Đoạn mã &lt;div id=\"123menu\"&gt;...&lt;/div&gt; vi phạm quy tắc thiết lập nào sau đây?", options: ["Tên id chứa các chữ số bên trong", "Tên id bắt đầu bằng một chữ số", "Tên id không có chữ in hoa nào", "Tên id có độ dài quá ngắn gọn"], correct: 1, explanation: "Tên định danh vi phạm luật cấm cơ bản: Chữ cái đầu tiên của id hoặc class tuyệt đối không được phép là một con số (1, 2, 3)." },
+        { id: "d1_22", type: "single", question: "Câu 22: Để căn chỉnh khung cho đoạn mã &lt;a class=\"btn\"&gt;Link&lt;/a&gt; với kích thước rộng 100px, CSS cần có:", options: ["display: inline; width: 100px;", "display: none; width: 100px;", "display: block; width: 100px;", "display: auto; width: 100px;"], correct: 2, explanation: "Thẻ &lt;a&gt; sinh ra vốn dĩ là nội tuyến (inline) nên nó miễn nhiễm với lệnh chiều rộng (width). Muốn width:100px có tác dụng, ta phải ép nó thành hình khối bằng display: block." },
+        { id: "d1_23", type: "single", question: "Câu 23: Đoạn mã &lt;p id=\"header\" class=\"main\"&gt;Chào em&lt;/p&gt;. Bộ chọn nào hợp lệ cho thẻ p này?", options: ["Bộ chọn định danh .header.main", "Bộ chọn kết hợp là p#header.main", "Bộ chọn kết hợp là p.header#main", "Bộ chọn định danh là #header#main"], correct: 1, explanation: "Bộ chọn kết hợp yêu cầu gọi: Tên thẻ (p) + Id (#header) + Class (.main) ghép dính lại với nhau thành một chuỗi mục tiêu p#header.main không khoảng trắng." },
+        { id: "d1_24", type: "single", question: "Câu 24: Cho mã HTML: &lt;div class=\"box\"&gt;&lt;/div&gt;. Viết CSS .box {display: none;} sẽ tạo ra kết quả:", options: ["Khung box tự động phóng to ra", "Khung box bị ẩn khỏi giao diện", "Khung box chiếm trọn chiều rộng", "Khung box thu nhỏ lại bằng không"], correct: 1, explanation: "Thuộc tính 'display: none' là lệnh xóa sổ hiển thị. Bất cứ khối HTML nào bị áp lệnh này sẽ biến mất không tì vết khỏi giao diện trang web." },
+        { id: "d1_25", type: "single", question: "Câu 25: Cho HTML &lt;span id=\"test\"&gt;...&lt;/span&gt; và CSS #test {width: 200px;}. Kết quả là gì?", options: ["Chiều rộng đạt chính xác 200px", "Chiều rộng không có sự thay đổi", "Chiều rộng tự động bằng màn hình", "Chiều rộng thu gọn lại bằng số không"], correct: 1, explanation: "Lệnh tạo chiều rộng (width) là lệnh vô dụng đối với các thẻ nội tuyến (như thẻ span). Trừ khi chuyển thành khối, nếu không thì kích thước của nó sẽ giữ nguyên không thay đổi." },
+        { id: "d1_26", type: "single", question: "Câu 26: Mã &lt;div class=\"item\"&gt;A&lt;/div&gt; &lt;div class=\"item\"&gt;B&lt;/div&gt;. Nếu CSS là .item {display: inline;}, hai khối này sẽ:", options: ["Hiển thị dàn hàng ngang với nhau", "Hiển thị xếp chồng lên trên nhau", "Hiển thị cách xa nhau một khoảng", "Hiển thị biến mất khỏi màn hình"], correct: 0, explanation: "Bản chất khối &lt;div&gt; là luôn rớt xuống hàng dọc. Tuy nhiên mã CSS 'display: inline' đã tước đi đặc quyền đó, bắt chúng phải đứng nối đuôi nhau dàn thành hàng ngang." },
+        { id: "d1_27", type: "single", question: "Câu 27: Đoạn mã CSS nào đúng để định dạng cho &lt;p class=\"info\" id=\"main\"&gt;...&lt;/p&gt;?", options: ["Cú pháp .info#main {color: red;}", "Cú pháp #info.main {color: red;}", "Cú pháp p.info.main {color: red;}", "Cú pháp p#info#main {color: red;}"], correct: 0, explanation: "Để chọn mục tiêu hội tụ, ta có thể ghép Class (.info) và ID (#main) lại sát nhau. Cú pháp .info#main sẽ quét ra đúng cái thẻ hội đủ hai tính chất này." },
+        { id: "d1_28", type: "single", question: "Câu 28: Khi viết mã HTML &lt;div id=\"box1\"&gt;&lt;/div&gt; &lt;p id=\"box1\"&gt;&lt;/p&gt;, điều này vi phạm nguyên tắc nào?", options: ["Một trang web không dùng thẻ p", "Một mã id chỉ dùng cho một thẻ", "Một lớp không dùng cho nhiều thẻ", "Một trang web không dùng thẻ div"], correct: 1, explanation: "Thuộc tính id là định danh độc bản. Việc cấp phát một id ('box1') cho hai phần tử khác nhau hoàn toàn trái với quy định thiết kế HTML chuẩn mực." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Để xây dựng giao diện trang chủ cho một hệ thống học tập trực tuyến, giáo viên thiết kế một thanh điều hướng chứa các liên kết môn học.<br>Hãy phân tích đoạn mã HTML và CSS sau đây:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;#nav-bar { display: block; background: blue; }<br>&nbsp;&nbsp;.nav-item { display: inline; color: white; margin: 10px; }<br>&nbsp;&nbsp;.active { font-weight: bold; }<br>&lt;/style&gt;<br>&lt;div id=\"nav-bar\"&gt;<br>&nbsp;&nbsp;&lt;a class=\"nav-item active\" href=\"#\"&gt;Toán học&lt;/a&gt;<br>&nbsp;&nbsp;&lt;a class=\"nav-item\" href=\"#\"&gt;Ngữ văn&lt;/a&gt;<br>&nbsp;&nbsp;&lt;a class=\"nav-item\" href=\"#\"&gt;Tin học&lt;/a&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Trong đoạn mã trên, nav-bar là một mã định danh (id), còn nav-item là một bộ chọn lớp (class).", correct: true, expl: "Do cấu trúc khai báo trong CSS: kí tự '#' đặt trước nav-bar biểu thị cho ID, còn kí tự dấu '.' đặt trước nav-item biểu thị cho một tên Lớp (Class)." },
+            { id: "b", text: "b)  Các thẻ &lt;a&gt; chứa môn học sẽ được hiển thị trên cùng một hàng ngang vì chúng mang lớp nav-item có giá trị display là inline.", correct: true, expl: "Giá trị hiển thị inline (nội tuyến) có đặc điểm nổi bật là không bẻ gãy dòng, cho phép các phần tử trôi dạt và đứng nối tiếp nhau trên cùng một hàng ngang." },
+            { id: "c", text: "c)  Vì mang thuộc tính display: inline, nếu ta thêm mã width: 150px; vào lớp .nav-item, các liên kết môn học sẽ tự động mở rộng bề ngang ra đúng 150px.", correct: false, expl: "Đây là điểm mù trong CSS: Phần tử mang display 'inline' hoàn toàn trơ lỳ và từ chối nhận các thuộc tính điều chỉnh cấu trúc khung như width (chiều rộng) hay height (chiều cao)." },
+            { id: "d", text: "d)  Thẻ &lt;a&gt; chứa chữ \"Toán học\" đang thuộc về hai lớp khác nhau, được phân tách hợp lệ bằng khoảng trắng.", correct: true, expl: "Trong HTML, việc gọi `class=\"nav-item active\"` (ngăn cách bởi một dấu cách) là cú pháp chuẩn để cấp phát đồng thời nhiều lớp giao diện cho một phần tử." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Khi biên soạn một trang giới thiệu, cần làm nổi bật thông điệp chính mà không muốn làm đứt gãy mạch đọc của câu.<br>Hãy phân tích đoạn mã:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;.slogan { display: block; color: #ff5722; font-weight: bold; }<br>&nbsp;&nbsp;p.intro { font-size: 18px; }<br>&lt;/style&gt;<br>&lt;p class=\"intro\"&gt;<br>&nbsp;&nbsp;Chào mừng các em đến với &lt;span class=\"slogan\"&gt;Hành Trình Số&lt;/span&gt;, nơi mang tri thức đến mọi người!<br>&lt;/p&gt;</div>", items: [
+            { id: "a", text: "a)  Thẻ &lt;span&gt; theo mặc định của HTML là một phần tử thuộc loại nội tuyến (inline level).", correct: true, expl: "Đúng với lý thuyết cơ bản. Thẻ &lt;span&gt; là đại diện tiêu biểu nhất cho họ nhà phần tử inline, dùng để bọc một cụm chữ ngắn bên trong đoạn văn bản mà không làm vỡ câu." },
+            { id: "b", text: "b)  Bộ chọn p.intro sẽ áp dụng định dạng cho tất cả các phần tử có lớp là \"intro\" bất kể đó là thẻ gì.", correct: false, expl: "Cú pháp kết hợp `p.intro` là bộ chọn điều kiện khép kín: Nó bắt buộc phần tử đó VỪA PHẢI là thẻ &lt;p&gt;, VỪA PHẢI có lớp là 'intro'. Không áp dụng tràn lan cho thẻ khác." },
+            { id: "c", text: "c)  Với CSS đã cho, cụm từ \"Hành Trình Số\" sẽ bị ngắt xuống một dòng mới thay vì nằm liền mạch trong câu chào mừng.", correct: true, expl: "Bởi vì lớp .slogan đã được gán mã `display: block;`. Nó biến thẻ &lt;span&gt; đang mềm mỏng lọt thỏm trong câu thành một cái hộp cứng nhắc, ép đẩy các chữ xung quanh rớt xuống dòng." },
+            { id: "d", text: "d)  Để cụm từ \"Hành Trình Số\" nổi bật màu cam mà vẫn nằm liền mạch trong câu văn, ta chỉ cần sửa thuộc tính của lớp .slogan thành display: inline;.", correct: true, expl: "Lệnh `display: inline` sẽ phục hồi lại tính chất nguyên thủy của thẻ span. Nó giúp từ khóa lấy được màu cam mà vẫn trôi nổi ngoan ngoãn nằm ngang hàng trên dòng văn bản." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Trong quá trình thiết kế bảng điểm học sinh trên nền tảng web, giáo viên viết đoạn mã sau để xử lý những học sinh có điểm số cần lưu ý:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;#student-minh { background: yellow; }<br>&nbsp;&nbsp;.warning.low-score { display: none; }<br>&lt;/style&gt;<br>&lt;div id=\"student-minh\" class=\"warning low-score\"&gt;Lê Hoàng Minh - 4 điểm&lt;/div&gt;<br>&lt;div id=\"student-minh\" class=\"good-score\"&gt;Phạm Hải Yến - 9 điểm&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Giá trị none của thuộc tính display được dùng để ẩn phần tử khỏi giao diện trang web.", correct: true, expl: "Lệnh `display: none;` trong CSS là phương pháp triệt để nhất để giấu đi một phần tử HTML. Trang web sẽ render như thể phần tử đó bị bốc hơi hoàn toàn khỏi cấu trúc trang." },
+            { id: "b", text: "b)  Lớp .warning.low-score chỉ áp dụng cho những phần tử có tên lớp đồng thời là \"warning\" và \"low-score\".", correct: true, expl: "Các bộ chọn được viết nối sát vào nhau (không khoảng trắng) yêu cầu một phép AND logic: Mục tiêu bắt buộc phải hội tụ đầy đủ tất cả các lớp cấu thành nên chuỗi đó." },
+            { id: "c", text: "c)  Dòng thông tin của học sinh \"Lê Hoàng Minh\" sẽ không xuất hiện trên màn hình khi xem trang web này.", correct: true, expl: "Bởi vì thẻ div của em Minh mang trên mình cấu trúc class=\"warning low-score\". Nó lọt vào bộ lọc `.warning.low-score` và bị kích hoạt mã thi hành án `display: none` (ẩn mất)." },
+            { id: "d", text: "d)  Việc cấp mã định danh id=\"student-minh\" cho cả hai thẻ &lt;div&gt; trong đoạn mã trên là hoàn toàn đúng với quy tắc của CSS.", correct: false, expl: "Đây là một lỗi thiết kế nghiêm trọng. Thuộc tính `id` (như Căn cước công dân) là độc nhất vô nhị. Việc 2 học sinh Minh và Yến xài chung 1 mã id là vi phạm quy tắc W3C." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Dựa vào cách hiển thị khung, phần tử HTML được phân thành các nhóm nào?", options: ["Nhóm khối và nhóm nội tuyến", "Nhóm trên và nhóm dưới cùng", "Nhóm trái và nhóm bên phải", "Nhóm trong và nhóm bên ngoài"], correct: 0, explanation: "HTML Engine chia bố cục hiển thị thành hai trường phái chính: Cấp độ Khối (Block-level) tạo thành các hộp dọc, và Cấp độ Nội tuyến (Inline-level) chạy theo hàng ngang." },
+        { id: "d2_2", type: "single", question: "Câu 2: Phần tử HTML nào thường chiếm toàn bộ chiều rộng có sẵn trên trang web?", options: ["Phần tử thuộc cấp độ nội tuyến", "Phần tử thuộc cấp độ khối ngang", "Phần tử thuộc cấp độ khối (block)", "Phần tử thuộc cấp độ nhúng (embed)"], correct: 2, explanation: "Đặc tính tự nhiên của phần tử khối (Block) là tính ích kỷ. Nó luôn tự động đẩy chiều ngang (width) giãn ra đến 100% không gian thùng chứa cha của nó." },
+        { id: "d2_3", type: "single", question: "Câu 3: Các phần tử được nhúng trực tiếp bên trong một phần tử khác được gọi là gì?", options: ["Phần tử dạng khối độc lập", "Phần tử dạng khối liên kết", "Phần tử định dạng danh sách", "Phần tử định dạng nội tuyến"], correct: 3, explanation: "Phần tử nội tuyến (inline) giống như những từ ngữ xếp sát cạnh nhau trong một câu văn, chúng được thiết kế để nhúng trực tiếp, trơn tru vào bên trong lòng phần tử khác." },
+        { id: "d2_4", type: "single", question: "Câu 4: Để kiểm soát một phần tử là khối hay nội tuyến, ta dùng thuộc tính CSS nào?", options: ["Thuộc tính vị trí (position)", "Thuộc tính hiển thị (display)", "Thuộc tính màu sắc (colors)", "Thuộc tính kích cỡ (sizing)"], correct: 1, explanation: "Thuộc tính 'display' là chiếc chìa khóa vạn năng trong CSS. Nó chi phối toàn bộ bản chất cách mà cái hộp phần tử ấy trình diễn ra ngoài màn hình web." },
+        { id: "d2_5", type: "single", question: "Câu 5: Giá trị block của thuộc tính display có chức năng gì trong định dạng CSS?", options: ["Biến phần tử thành nội tuyến", "Biến phần tử thành dạng khối", "Làm ẩn phần tử trên màn hình", "Làm phần tử nhấp nháy liên tục"], correct: 1, explanation: "Khai báo 'display: block;' có sức mạnh biến đổi bất kỳ phần tử thẻ HTML yếu ớt nào trở thành một khối cứng cáp, luôn chiếm trọn vẹn 1 hàng trên màn hình." },
+        { id: "d2_6", type: "single", question: "Câu 6: Khi thiết lập định dạng chung cho một nhóm phần tử, ta sử dụng bộ chọn nào?", options: ["Bộ chọn mã định danh (id)", "Bộ chọn thuộc tính lớp (class)", "Bộ chọn thẻ hình ảnh (img)", "Bộ chọn liên kết trang (link)"], correct: 1, explanation: "Lớp (class) sinh ra để phân loại nhóm. Hàng chục, hàng trăm thẻ HTML khác nhau có thể cùng mang chung một class để chia sẻ đồng thời một mẫu thiết kế giao diện." },
+        { id: "d2_7", type: "single", question: "Câu 7: Để chọn phần tử có mã định danh là \"header\", ta viết bộ chọn như thế nào?", options: ["Kí hiệu là .header trong CSS", "Kí hiệu là #header trong CSS", "Kí hiệu là *header trong CSS", "Kí hiệu là @header trong CSS"], correct: 1, explanation: "Để gọi hồn một thẻ HTML mang mã định danh (id), trong tệp cấu hình CSS, người ta bắt buộc phải sử dụng kí hiệu dấu thăng (#) làm tiền tố định vị." },
+        { id: "d2_8", type: "single", question: "Câu 8: Tên của id và class trong CSS có phân biệt chữ hoa và chữ thường không?", options: ["Hoàn toàn không phân biệt", "Chỉ phân biệt với mã định danh", "Có phân biệt hoa và thường", "Chỉ phân biệt đối với bộ chọn lớp"], correct: 2, explanation: "Bộ máy biên dịch CSS hoạt động theo nguyên tắc nhạy cảm với kiểu chữ (Case-sensitive). Ví dụ: class có tên là 'Menu' sẽ bị coi là một phần tử xa lạ so với class 'menu'." },
+        { id: "d2_9", type: "single", question: "Câu 9: Quy định nào sau đây là BẮT BUỘC khi đặt tên cho một class trong HTML?", options: ["Phải bắt đầu bằng một con số", "Không được chứa các dấu cách", "Phải chứa kí hiệu đặc biệt (@)", "Bắt buộc phải viết hoa toàn bộ"], correct: 1, explanation: "Bởi vì dấu cách (khoảng trắng) được dùng để TÁCH BIỆT các tên lớp với nhau, nên trong bản thân một tên lớp, ta tuyệt đối không được dùng dấu cách để tránh lỗi phân mảnh." },
+        { id: "d2_10", type: "single", question: "Câu 10: Hạn chế của khung phần tử nội tuyến so với phần tử khối là gì?", options: ["Không thể thiết lập rộng, cao", "Không thể thiết lập màu sắc văn bản", "Không thể thiết lập kiểu chữ hiển thị", "Không thể thiết lập bộ chọn định danh"], correct: 0, explanation: "Tính chất bám sát (wrap content) của phần tử nội tuyến khiến nó kháng lại các nỗ lực thiết lập độ rộng (width) và độ cao (height) từ các tệp lệnh CSS." },
+        { id: "d2_11", type: "single", question: "Câu 11: Nếu CSS khai báo #main-content, điều này có nghĩa là hệ thống đang gọi đến:", options: ["Tất cả các phần tử có tên lớp main-content", "Phần tử duy nhất có mã id là main-content", "Tất cả các phần tử div có trong trang web", "Chỉ phần tử nội tuyến tên là main-content"], correct: 1, explanation: "Dấu thăng (#) là chỉ dấu độc quyền của ID selector. Nó rà soát toàn bộ cây dữ liệu DOM để trích xuất ra một và chỉ một phần tử đang mang mã Căn cước trùng khớp." },
+        { id: "d2_12", type: "single", question: "Câu 12: Khi thấy bộ chọn .box.error, trình duyệt sẽ áp dụng định dạng cho phần tử nào?", options: ["Phần tử có class \"box\" hoặc class \"error\"", "Phần tử có id \"box\" và class là \"error\"", "Phần tử mang đồng thời hai class này", "Phần tử mang đồng thời hai mã id này"], correct: 2, explanation: "Bộ chọn đa lớp không có dấu cách `.box.error` thiết lập điều kiện khắt khe: Nó chỉ thi hành lệnh cho thẻ HTML nào được gán cả hai lớp `class=\"box error\"` cùng một lúc." },
+        { id: "d2_13", type: "single", question: "Câu 13: Cú pháp div.container dùng để làm gì trong tệp định dạng trang web?", options: ["Chọn tất cả thẻ div có mã id là container", "Chọn tất cả thẻ div có lớp tên container", "Chọn tất cả phần tử có lớp tên container", "Chọn tất cả phần tử có mã id là container"], correct: 1, explanation: "Bóc tách cú pháp: `div` (yêu cầu bộ khung phải là thẻ div), nối với `.container` (yêu cầu thẻ div đó phải mang lớp container). Cú pháp này khóa chặt mục tiêu rất chuẩn xác." },
+        { id: "d2_14", type: "single", question: "Câu 14: Lý do giá trị none của thuộc tính display thường được sử dụng là gì?", options: ["Để phóng to phần tử chiếm toàn màn hình", "Để tạm thời ẩn phần tử khỏi người truy cập", "Để in đậm toàn bộ nội dung của đoạn văn", "Để đổi màu nền của phần tử thành trong suốt"], correct: 1, explanation: "Sức mạnh của `display: none;` nằm ở chỗ nó giúp lập trình viên thao túng linh hoạt giao diện: ẩn đi các menu, popup, thông báo lỗi khi không cần thiết mà không phải xóa bỏ mã gốc." },
+        { id: "d2_15", type: "single", question: "Câu 15: Một phần tử HTML nhận ba class: \"btn\", \"primary\", \"large\". Cách viết nào đúng?", options: ["class=\"btn, primary, large\"", "class=\"btn.primary.large\"", "class=\"btn primary large\"", "class=\"btn-primary-large\""], correct: 2, explanation: "Theo chuẩn ngữ pháp giao tiếp giữa HTML và CSS, kí tự khoảng trắng (Space) là dấu hiệu duy nhất được phép dùng để ngăn cách danh sách các lớp trong thuộc tính class." },
+        { id: "d2_16", type: "single", question: "Câu 16: Tên lớp nào sau đây vi phạm quy tắc đặt tên của ngôn ngữ HTML/CSS?", options: ["class=\"tieu-de-chinh-1\"", "class=\"tieudechinh_1\"", "class=\"1-tieu-de-chinh\"", "class=\"TieuDeChinh_1\""], correct: 2, explanation: "Phá luật định danh nghiêm trọng. Kí tự khai màn đầu tiên của chuỗi tên ID hoặc tên Class không bao giờ được phép là một con số đếm (như số 1)." },
+        { id: "d2_17", type: "single", question: "Câu 17: Đặc điểm nào chứng tỏ id khác biệt hoàn toàn so với class trong HTML?", options: ["id dùng cho nhiều phần tử, class dùng cho 1", "id mang tính duy nhất, class mang tính nhóm", "id không thể viết hoa, class có thể viết hoa", "id không dùng trong CSS, class dùng trong CSS"], correct: 1, explanation: "ID sinh ra để đánh dấu các phần tử đơn lẻ quan trọng không thể bị lặp lại (ví dụ #header, #footer). Còn Class là để xây dựng cộng đồng cho nhiều thẻ cùng chung định dạng." },
+        { id: "d2_18", type: "single", question: "Câu 18: Ngoài id và class, CSS có thể thiết lập bộ chọn dựa trên yếu tố nào khác?", options: ["Dựa trên số lượng từ trong câu", "Dựa trên tốc độ mạng internet", "Dựa trên thuộc tính của phần tử", "Dựa trên kích thước màn hình máy"], correct: 2, explanation: "Bên cạnh Selector theo tên (Class/ID), CSS trang bị siêu vũ khí 'Bộ chọn Thuộc tính' (Attribute Selector). Ví dụ `[href=\"#\"]` sẽ chọn mọi thẻ mang thuộc tính có giá trị href đó." },
+        { id: "d2_19", type: "single", question: "Câu 19: Khi viết &lt;img src=\"anh.jpg\" style=\"display: block;\"&gt;, hình ảnh sẽ hiển thị thế nào?", options: ["Nằm xen kẽ chung dòng với văn bản", "Nằm ở một dòng riêng biệt độc lập", "Bị ẩn hoàn toàn khỏi màn hình web", "Tự động mờ đi so với các văn bản"], correct: 1, explanation: "Theo mặc định, thẻ ảnh &lt;img&gt; sẽ đứng lọt thỏm cùng hàng với chữ. Lệnh thần chú `display: block` sẽ tống cổ nó xuống một dòng mới độc lập để chiếm ngai vàng không gian riêng." },
+        { id: "d2_20", type: "single", question: "Câu 20: Mã HTML: &lt;h1 id=\"title\" class=\"red bold\"&gt;Nội dung&lt;/h1&gt;. Bộ chọn nào hợp lệ?", options: ["Cú pháp áp dụng là #title.red.bold", "Cú pháp áp dụng là .title#red#bold", "Cú pháp áp dụng là h1.title.red.bold", "Cú pháp áp dụng là h1#title#red#bold"], correct: 0, explanation: "Giải mã cú pháp ghép nối CSS siêu cấp: Thẻ đang mang ID là title (#title), và mang cặp đôi class red và bold (.red.bold). Viết dính lại sẽ ra `#title.red.bold`." },
+        { id: "d2_21", type: "single", question: "Câu 21: Cho CSS: .hide {display: none;} và HTML &lt;p class=\"hide\"&gt;Lưu ý&lt;/p&gt;. Kết quả là:", options: ["Chữ \"Lưu ý\" sẽ có màu nền đen bóng", "Đoạn văn chứa chữ \"Lưu ý\" sẽ bị ẩn", "Chữ \"Lưu ý\" nằm chung dòng chữ khác", "Đoạn văn chứa \"Lưu ý\" sẽ bị bôi đậm"], correct: 1, explanation: "Thuộc tính tàng hình display:none đã được cấy vào lớp '.hide'. Bất kỳ đoạn văn HTML nào nhúng class này vào đều sẽ tự động xóa sổ bản thân khỏi giao diện người dùng." },
+        { id: "d2_22", type: "single", question: "Câu 22: Đoạn mã &lt;div class=\"a b c\"&gt; khai báo phần tử div này thuộc bao nhiêu lớp?", options: ["Thuộc duy nhất một lớp có tên a b c", "Thuộc ba lớp khác nhau là a, b và c", "Thuộc hai lớp khác nhau là a và b c", "Thuộc cấu trúc lỗi không chạy được"], correct: 1, explanation: "Khoảng trắng là ranh giới cắt lớp. Chuỗi 'a b c' chứa 2 khoảng trắng, nên trình duyệt sẽ cắt thẻ này gia nhập vào 3 hội nhóm giao diện riêng biệt là lớp 'a', lớp 'b' và lớp 'c'." },
+        { id: "d2_23", type: "single", question: "Câu 23: Mã &lt;span class=\"test\"&gt;Chữ&lt;/span&gt; kết hợp CSS .test {width: 500px;}. Chiều rộng là:", options: ["Chính xác là 500px như được thiết lập", "Bằng 0 vì mã CSS này bị sai cú pháp", "Chiều rộng không đổi vì là nội tuyến", "Tự động kéo dài hết màn hình hiển thị"], correct: 2, explanation: "Thuộc tính width: 500px là cái bẫy. Thẻ span vốn là dòng máu nội tuyến bẩm sinh, nó sẽ trực tiếp phớt lờ và vô hiệu hóa mọi lệnh điều chỉnh kích thước hình hộp này." },
+        { id: "d2_24", type: "single", question: "Câu 24: Một học sinh định nghĩa #1muc {color: blue;}. Lỗi sai trong định nghĩa này là gì?", options: ["Thiếu dấu chấm phẩy ở cuối câu lệnh", "Mã định danh bắt đầu bằng chữ số 1", "Màu blue không được hỗ trợ trong web", "Dấu thăng không dùng cho bộ chọn id"], correct: 1, explanation: "Lỗi sơ đẳng nhất trong bộ môn lập trình web: Tên gọi ID hay Class sau kí tự đánh dấu (như # hay .) tuyệt đối không được phép mở bát bằng một con số đếm (số 1)." },
+        { id: "d2_25", type: "single", question: "Câu 25: Để hai khối &lt;div class=\"box\"&gt; nằm ngang hàng nhau, ta thêm CSS nào cho .box?", options: ["Cấu trúc lệnh display: inline;", "Cấu trúc lệnh display: block;", "Cấu trúc lệnh display: none;", "Cấu trúc lệnh display: hidden;"], correct: 0, explanation: "Bản tính của thẻ div là tạo dòng mới (block). Lệnh `display: inline` sẽ cưỡng ép chúng lột bỏ bản tính cứng nhắc để biến thành các mảnh ghép đứng chung một hàng ngang." },
+        { id: "d2_26", type: "single", question: "Câu 26: Đoạn mã &lt;a class=\"link main\"&gt; tương ứng với bộ chọn CSS nào dưới đây?", options: ["Bộ chọn kết hợp là a#link#main", "Bộ chọn kết hợp là a.link.main", "Bộ chọn kết hợp là a.link#main", "Bộ chọn kết hợp là a#link.main"], correct: 1, explanation: "Thẻ HTML là thẻ `a`. Class trong HTML cách nhau bởi dấu cách (`link` và `main`). Viết sang CSS, chúng ta thay khoảng trắng bằng dấu chấm và ghép sát vào thẻ: `a.link.main`." },
+        { id: "d2_27", type: "single", question: "Câu 27: HTML có 3 thẻ p dùng chung một định dạng. Cách thiết lập CSS tối ưu nhất là:", options: ["Đặt ba id khác nhau cho ba thẻ p", "Đặt chung một id cho cả ba thẻ p", "Đặt chung một lớp cho ba thẻ p", "Viết CSS nội tuyến cho từng thẻ p"], correct: 2, explanation: "Sứ mệnh thiết kế của Lớp (Class) là để tái sử dụng giao diện (Reusability). Việc định nghĩa một lớp và gắn vào cả 3 thẻ &lt;p&gt; là phương án viết code chuẩn, gọn và đẹp nhất." },
+        { id: "d2_28", type: "single", question: "Câu 28: Viết mã HTML &lt;div id=\"vung1\"&gt;&lt;/div&gt; và &lt;p id=\"vung1\"&gt;&lt;/p&gt; sẽ gây ra lỗi vì:", options: ["Thẻ div và thẻ p không đứng gần nhau", "Mã định danh id không có tính duy nhất", "Tên vùng 1 không được phép viết liền", "Thiếu bộ chọn lớp class cho các thẻ này"], correct: 1, explanation: "Mã định danh id sinh ra để làm khóa chính độc tôn cho trang web. Việc đem mã 'vung1' phân phát cho cả hai thẻ HTML đã phá vỡ quy định nghiêm ngặt về tính duy nhất của nó." },
+        
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Để tổ chức một giao diện cung cấp bài giảng và bài tập thực hành, người lập trình chia màn hình thành vùng nội dung chính và một thanh bên (sidebar) chứa các mẹo nhỏ.<br>Hãy xem đoạn mã sau:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;.content-area { display: block; width: 70%; }<br>&nbsp;&nbsp;#sidebar { display: inline; background: #eee; }<br>&nbsp;&nbsp;p.tip-text { font-style: italic; }<br>&lt;/style&gt;<br>&lt;div class=\"content-area\"&gt;Nội dung bài giảng ở đây&lt;/div&gt;<br>&lt;div id=\"sidebar\"&gt;<br>&nbsp;&nbsp;&lt;p class=\"tip-text\"&gt;Chú ý: Các em đọc kỹ đề bài.&lt;/p&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Trong bộ chọn CSS, .content-area là bộ chọn lớp, còn #sidebar là bộ chọn mã định danh.", correct: true, expl: "Cú pháp rành mạch của CSS: Dấu chấm (.) báo hiệu cho hệ thống đây là tên của Class. Dấu thăng (#) là chỉ dấu khởi đầu cho tên của một ID." },
+            { id: "b", text: "b)  Dòng lệnh p.tip-text có nghĩa là áp dụng kiểu chữ in nghiêng cho tất cả các thẻ p có gắn class là tip-text.", correct: true, expl: "Cú pháp kết hợp `p.tip-text` làm nhiệm vụ giao thoa: Lọc ra chính xác các thẻ thuộc hệ đoạn văn (&lt;p&gt;) VÀ ĐỒNG THỜI đang mang class có tên 'tip-text' để in nghiêng (italic)." },
+            { id: "c", text: "c)  Vì #sidebar được thiết lập display: inline, nó có thể dễ dàng được điều chỉnh chiều rộng (width) và chiều cao (height) theo ý muốn.", correct: false, expl: "Lệnh `display: inline` làm mất đi bản chất không gian của khối hộp. Khi ở trạng thái inline, phần tử sẽ tự động đóng băng (vô hiệu hóa) khả năng thay đổi kích thước width/height." },
+            { id: "d", text: "d)  Lớp .content-area sử dụng display: block, do đó thẻ &lt;div&gt; này sẽ chiếm vùng không gian ngang độc lập và đẩy phần tử tiếp theo xuống hàng dưới.", correct: true, expl: "Mặc dù chỉ set chiều rộng width là 70%, nhưng thuộc tính khối lệnh 'display: block' vẫn sẽ dựng một bức tường vô hình chiếm trọn phần bề ngang còn lại, cưỡng ép mọi thẻ phía sau phải xuống dòng." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Hệ thống web cần tạo một nút bấm (button) \"Nộp bài\" cho học sinh.<br>Nút bấm này mặc định là một thẻ nội tuyến nhưng giáo viên muốn nó hiển thị thành một khối lớn trên giao diện di động.<br>Đoạn mã được viết như sau:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;.btn-submit {<br>&nbsp;&nbsp;&nbsp;&nbsp;display: block;<br>&nbsp;&nbsp;&nbsp;&nbsp;width: 100%;<br>&nbsp;&nbsp;&nbsp;&nbsp;background: green;<br>&nbsp;&nbsp;&nbsp;&nbsp;color: white;<br>&nbsp;&nbsp;&nbsp;&nbsp;font-size: 20px;<br>&nbsp;&nbsp;}<br>&lt;/style&gt;<br>&lt;span class=\"btn-submit\"&gt;Nộp bài thi&lt;/span&gt;</div>", items: [
+            { id: "a", text: "a)  Mặc định của HTML, thẻ &lt;span&gt; được phân loại là một phần tử khối (block level).", correct: false, expl: "Theo cấu trúc cốt lõi của HTML, &lt;span&gt; sinh ra là phần tử cấp độ Nội Tuyến (Inline level). Nó không bẻ gãy dòng hiển thị." },
+            { id: "b", text: "b)  Mục đích của việc đặt display: block; trong CSS là để biến đổi thuộc tính gốc của thẻ &lt;span&gt;, giúp nó hành xử như một khối.", correct: true, expl: "Đoạn mã `display: block;` như một phép thuật ép buộc thẻ &lt;span&gt; nội tuyến rũ bỏ bản chất nguyên thủy, chuyển sinh thành một khối hộp khổng lồ để cấu trúc giao diện lớn hơn." },
+            { id: "c", text: "c)  Nhờ được chuyển thành dạng khối (block), thẻ &lt;span&gt; này mới có thể nhận thuộc tính width: 100%; một cách hợp lệ.", correct: true, expl: "Đúng với quy luật Box Model. Chỉ khi nào mang trạng thái Khối (block hoặc inline-block), hệ thống web mới mở khóa cho phép phần tử thụ lý lệnh thu phóng kích thước (width/height)." },
+            { id: "d", text: "d)  Tên lớp btn-submit đã vi phạm quy tắc đặt tên vì chứa dấu gạch nối (kí tự đặc biệt không được phép).", correct: false, expl: "Đây là một sự hiểu lầm. Kí tự dấu gạch nối (hyphen -) hay dấu gạch dưới (underscore _) là các kí tự đặc biệt được CSS cho phép và rất hay dùng để kết nối các từ trong tên lớp." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Khi công bố kết quả một cuộc thi lập trình cấp trường trên web, có một số ghi chú nội bộ cần ẩn đi.<br>Cấu trúc mã nguồn được triển khai:<br><div class=\"html-code-block\">&lt;style&gt;<br>&nbsp;&nbsp;.public-info { display: block; }<br>&nbsp;&nbsp;#private-note { display: none; }<br>&nbsp;&nbsp;.result.winner { font-weight: bold; }<br>&lt;/style&gt;<br>&lt;div class=\"public-info result winner\"&gt;Giải Nhất: Lớp 10A1&lt;/div&gt;<br>&lt;div id=\"private-note\" class=\"result\"&gt;Ghi chú: Trần Bảo Ngọc đạt điểm tối đa&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a)  Giá trị display: none; được sử dụng nhằm mục đích làm ẩn phần tử trên trang web hiển thị.", correct: true, expl: "Định dạng display mang giá trị none có tác dụng xóa sổ hoàn toàn sự hiện diện hình ảnh và không gian của một thẻ trên màn hình." },
+            { id: "b", text: "b)  Bộ chọn .result.winner mang ý nghĩa là chọn tất cả phần tử p có lớp là \"result\" hoặc lớp là \"winner\".", correct: false, expl: "Không có khoảng trắng ở giữa `.result.winner` có nghĩa là điều kiện VÀ (AND), chứ không phải HOẶC. Nó bắt buộc thẻ phải mang đồng thời cả hai lớp này mới được chọn." },
+            { id: "c", text: "c)  Dòng chữ \"Ghi chú: Trần Bảo Ngọc đạt điểm tối đa\" sẽ không xuất hiện trên màn hình hiển thị của người dùng khi duyệt web.", correct: true, expl: "Vì dòng chữ này được nhét trong thẻ <div> có mã id là 'private-note'. Khối CSS bên trên đã khai báo trảm `#private-note` bằng mã độc `display: none`, nên nội dung bị tàng hình." },
+            { id: "d", text: "d)  Thẻ &lt;div&gt; công bố Giải Nhất đang áp dụng cùng lúc ba lớp (class) khác nhau và các lớp này được phân tách đúng quy tắc.", correct: true, expl: "Cú pháp `class=\"public-info result winner\"` đã nạp thành công 3 class giao diện riêng biệt cho thẻ div, ngăn cách nhau bằng dấu khoảng trắng chuẩn 10 điểm của W3C." }
+        ]}
+    ];
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

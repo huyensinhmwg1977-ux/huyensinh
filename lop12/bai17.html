@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 17: CÁC MỨC ƯU TIÊN CHO BỘ CHỌN </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_17');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 17: CÁC MỨC ƯU TIÊN CHO BỘ CHỌN) 
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Trong CSS, bộ chọn lớp giả (pseudo-class) dùng dấu gì?", options: ["Cú pháp sử dụng một dấu hai chấm chuẩn.", "Cú pháp sử dụng hai dấu hai chấm chuẩn.", "Cú pháp sử dụng một dấu chấm phẩy chuẩn.", "Cú pháp sử dụng hai dấu chấm phẩy chuẩn."], correct: 0, explanation: "Theo chuẩn CSS, pseudo-class (lớp giả) luôn bắt đầu bằng một dấu hai chấm (:). Ví dụ: :hover, :active." },
+        { id: "d1_2", type: "single", question: "Câu 2: Trong CSS, phần tử giả (pseudo-element) dùng ký hiệu gì?", options: ["Bắt buộc dùng đúng hai dấu hai chấm liền.", "Bắt buộc dùng đúng một dấu hai chấm liền.", "Bắt buộc dùng đúng hai dấu chấm phẩy liền.", "Bắt buộc dùng đúng một dấu chấm phẩy liền."], correct: 0, explanation: "Từ CSS3, để phân biệt với lớp giả, phần tử giả (pseudo-element) được quy định phải bắt đầu bằng hai dấu hai chấm liền nhau (::). Ví dụ: ::first-line." },
+        { id: "d1_3", type: "single", question: "Câu 3: Khái niệm pseudo-class được dùng để chỉ yếu tố nào?", options: ["Chỉ các trạng thái đặc biệt của thẻ chuẩn.", "Chỉ một phần nhỏ của các thẻ html chuẩn.", "Chỉ mã định danh của một thẻ web chuẩn.", "Chỉ tên lớp thiết kế của một thẻ chuẩn."], correct: 0, explanation: "Lớp giả (pseudo-class) không chọn phần tử dựa trên id hay class, mà chọn dựa trên TRẠNG THÁI tương tác hiện tại của nó (như hover, visited, focus)." },
+        { id: "d1_4", type: "single", question: "Câu 4: Khái niệm pseudo-element được dùng để chỉ yếu tố nào?", options: ["Chỉ một phần hoặc thành phần của thẻ html.", "Chỉ một trạng thái tương tác của thẻ html.", "Chỉ toàn bộ nội dung nằm trong thẻ html.", "Chỉ một mã định danh duy nhất của thẻ."], correct: 0, explanation: "Phần tử giả (pseudo-element) nhắm mục tiêu vào một thành phần con rất nhỏ cụ thể bên trong phần tử đó, ví dụ như chữ cái đầu tiên (::first-letter) hay dòng đầu tiên (::first-line)." },
+        { id: "d1_5", type: "single", question: "Câu 5: Theo quy tắc, trọng số của bộ chọn id là?", options: ["Mức điểm trọng số tiêu chuẩn là một trăm.", "Mức điểm trọng số tiêu chuẩn là mười điểm.", "Mức điểm trọng số tiêu chuẩn là một điểm.", "Mức điểm trọng số tiêu chuẩn là không điểm."], correct: 0, explanation: "Trong hệ thống tính điểm ưu tiên của CSS, ID selector (định danh) có sức mạnh rất lớn, được cấp điểm trọng số là 100." },
+        { id: "d1_6", type: "single", question: "Câu 6: Trọng số của lớp giả (pseudo-class) tính bằng bao nhiêu?", options: ["Giá trị điểm trọng số quy định là mười.", "Giá trị điểm trọng số quy định là một.", "Giá trị điểm trọng số quy định là trăm.", "Giá trị điểm trọng số quy định là không."], correct: 0, explanation: "Lớp giả (pseudo-class như :hover) và bộ chọn lớp (class) có giá trị ngang nhau trên bàn cân ưu tiên, đều được tính trọng số là 10 điểm." },
+        { id: "d1_7", type: "single", question: "Câu 7: Trọng số CSS của phần tử (element) tính bằng bao nhiêu?", options: ["Được tính điểm trọng số chuẩn là một điểm.", "Được tính điểm trọng số chuẩn là mười điểm.", "Được tính điểm trọng số chuẩn là trăm điểm.", "Được tính điểm trọng số chuẩn là ngàn điểm."], correct: 0, explanation: "Bộ chọn theo tên thẻ phần tử (element selector như h1, p, div) có sức ảnh hưởng yếu nhất trong cấu trúc CSS, chỉ được tính 1 điểm." },
+        { id: "d1_8", type: "single", question: "Câu 8: Nguyên tắc ưu tiên thứ tự cuối cùng áp dụng khi?", options: ["Khi các mẫu định dạng trùng mức trọng số.", "Khi các mẫu định dạng khác mức trọng số.", "Khi không có mẫu định dạng CSS nào cả.", "Khi trình duyệt báo lỗi mã nguồn trang web."], correct: 0, explanation: "Nếu hai mã lệnh CSS có tổng điểm trọng số bằng nhau y chang, trình duyệt sẽ dùng nguyên tắc 'người đến sau chiến thắng'. Mã lệnh nào viết ở vị trí cuối cùng trong file sẽ đè mã viết trước." },
+        { id: "d1_9", type: "single", question: "Câu 9: Điểm trọng số của bộ chọn lớp (class) là bao nhiêu?", options: ["Bộ chọn lớp được tính giá trị là mười.", "Bộ chọn lớp được tính giá trị là một.", "Bộ chọn lớp được tính giá trị là trăm.", "Bộ chọn lớp được tính giá trị là không."], correct: 0, explanation: "Class (lớp) được đánh giá cao hơn thẻ phần tử thông thường, do đó trọng số của nó được quy định là 10 điểm." },
+        { id: "d1_10", type: "single", question: "Câu 10: Sự khác biệt giữa pseudo-class và class bình thường là gì?", options: ["Pseudo class có sẵn không cần định nghĩa thẻ.", "Pseudo class bắt buộc định nghĩa trong thẻ html.", "Pseudo class luôn mang mức điểm trọng số cao.", "Pseudo class không dùng chung với các định danh."], correct: 0, explanation: "Lớp (class) bình thường bạn phải viết vào mã HTML (ví dụ: class='btn'). Còn pseudo-class (như :hover) là trạng thái vật lý có sẵn của trình duyệt, không cần bạn phải thêm thuộc tính gì vào HTML cả." },
+        { id: "d1_11", type: "single", question: "Câu 11: Trong ngôn ngữ CSS, lớp giả :hover dùng để làm gì?", options: ["Kích hoạt hiệu ứng khi di chuyển chuột lên.", "Kích hoạt hiệu ứng khi nhấp đúp chuột vào.", "Kích hoạt hiệu ứng khi chưa từng nhấp chuột.", "Kích hoạt hiệu ứng khi trang web load xong."], correct: 0, explanation: "Hover có nghĩa là bay lượn, lơ lửng. Pseudo-class `:hover` sẽ bùng nổ hiệu ứng CSS ngay khi người dùng đưa con trỏ chuột chạm lướt lên trên khu vực của phần tử đó." },
+        { id: "d1_12", type: "single", question: "Câu 12: Phần tử giả ::first-line tác động tới bộ phận nào?", options: ["Chỉ định dạng cho dòng đầu tiên của khối.", "Chỉ định dạng cho chữ đầu tiên của khối.", "Chỉ định dạng cho đoạn cuối cùng của khối.", "Chỉ định dạng cho toàn bộ chữ của khối."], correct: 0, explanation: "Đúng như tên gọi (first-line), bộ chọn này sẽ bôi đen toàn bộ các chữ cái thuộc về dòng hiển thị đầu tiên của đoạn văn bản và áp dụng CSS cho chúng." },
+        { id: "d1_13", type: "single", question: "Câu 13: Trọng số của bộ chọn kết hợp được tính như thế nào?", options: ["Là tổng điểm trọng số của các thành phần.", "Là tích điểm trọng số của các thành phần.", "Là hiệu điểm trọng số của các thành phần.", "Là điểm trung bình cộng của các thành phần."], correct: 0, explanation: "Khi một khối CSS kết hợp nhiều bộ chọn (ví dụ: h1#title.red), trọng số của nó đơn giản là bài toán cộng dồn tất cả các điểm thành phần lại với nhau (1 + 100 + 10 = 111)." },
+        { id: "d1_14", type: "single", question: "Câu 14: Khi hai bộ chọn khác trọng số, CSS ưu tiên bộ nào?", options: ["Bộ chọn mang mức điểm trọng số lớn hơn.", "Bộ chọn mang mức điểm trọng số nhỏ hơn.", "Bộ chọn được viết sau cùng ở trong tệp.", "Bộ chọn được viết đầu tiên ở trong tệp."], correct: 0, explanation: "Tính chất tối cao của trọng số: Trình duyệt sẽ luôn nghe lời và ưu tiên áp dụng định dạng của bộ chọn nào có tổng điểm trọng số tính toán cao hơn." },
+        { id: "d1_15", type: "single", question: "Câu 15: Nếu thẻ có id và class, CSS sẽ ưu tiên theo?", options: ["Áp dụng theo định dạng của mã định danh id.", "Áp dụng theo định dạng của mã lớp class.", "Áp dụng theo định dạng của thẻ văn bản.", "Báo lỗi vì không được dùng id cùng class."], correct: 0, explanation: "ID mang trọng số 100 điểm, trong khi Class chỉ có 10 điểm. Do ID mạnh gấp 10 lần Class, nên nó luôn giành chiến thắng tuyệt đối khi xảy ra tranh chấp giao diện." },
+        { id: "d1_16", type: "single", question: "Câu 16: Trạng thái a:visited thường áp dụng cho đối tượng web nào?", options: ["Áp dụng cho các liên kết web đã truy cập.", "Áp dụng cho các liên kết web chưa truy cập.", "Áp dụng cho các liên kết đang được di chuột.", "Áp dụng cho các hình ảnh nền trên trang web."], correct: 0, explanation: "Visited dịch ra là 'đã ghé thăm'. Trình duyệt sẽ ghi nhớ lịch sử click của người dùng và đổi màu các thẻ &lt;a&gt; mang trạng thái :visited để báo hiệu link đó đã từng được đọc." },
+        { id: "d1_17", type: "single", question: "Câu 17: Phần tử giả ::first-letter dùng để thực hiện chức năng gì?", options: ["Đổi định dạng của chữ cái đầu tiên khối.", "Đổi định dạng của dòng chữ đầu tiên khối.", "Đổi định dạng của toàn bộ chữ trong đoạn.", "Đổi định dạng của chữ cái cuối cùng đoạn."], correct: 0, explanation: "Thường được dùng trong báo chí (hiệu ứng Drop Cap). Lệnh `::first-letter` chỉ bắt duy nhất ký tự chữ cái đầu tiên của một khối văn bản để phóng to hoặc tô màu." },
+        { id: "d1_18", type: "single", question: "Câu 18: Tính kế thừa của CSS có sức mạnh ưu tiên ra sao?", options: ["Xếp dưới cùng trong thang đo ưu tiên mã.", "Xếp trên cùng trong thang đo ưu tiên mã.", "Ưu tiên hơn các bộ chọn mang định danh id.", "Ưu tiên hơn các bộ chọn mang định dạng lớp."], correct: 0, explanation: "Tính kế thừa (Inheritance) - ví dụ thẻ con nhận màu từ thẻ cha - có độ ưu tiên thấp cùi bắp nhất (thấp hơn cả trọng số 1 của element). Bất kỳ bộ chọn định dạng trực tiếp nào cũng sẽ ghi đè được nó." },
+        { id: "d1_19", type: "single", question: "Câu 19: Mã &lt;style&gt; a {color: red;} a:hover {color: blue;} &lt;/style&gt;. Khi di chuột vào liên kết màu gì?", options: ["Liên kết lập tức chuyển thành màu xanh lam.", "Liên kết lập tức chuyển thành màu đỏ chói.", "Liên kết lập tức chuyển thành màu đen tuyền.", "Liên kết lập tức chuyển thành màu xám tro."], correct: 0, explanation: "Thẻ `a` bình thường có màu đỏ. Khi di chuột vào, trạng thái `:hover` được kích hoạt. Trọng số của thẻ `a` là 1, trọng số của `a:hover` là 1+10=11. Do 11 > 1, nó sẽ đổi sang màu xanh lam (blue)." },
+        { id: "d1_20", type: "single", question: "Câu 20: Mã &lt;style&gt; .text {color: gray;} #main {color: black;} &lt;/style&gt; &lt;p class=\"text\" id=\"main\"&gt;Hi&lt;/p&gt;. Chữ màu gì?", options: ["Dòng chữ trên màn hình hiển thị màu đen.", "Dòng chữ trên màn hình hiển thị màu xám.", "Dòng chữ trên màn hình hiển thị màu lam.", "Dòng chữ trên màn hình hiển thị màu lục."], correct: 0, explanation: "Xảy ra cuộc chiến định dạng. Lớp `.text` yêu cầu màu xám (10 điểm). ID `#main` yêu cầu màu đen (100 điểm). ID luôn thắng Class nên chữ sẽ hiển thị màu đen (black)." },
+        { id: "d1_21", type: "single", question: "Câu 21: Dựa trên bảng quy tắc, trọng số của bộ chọn h1.title là?", options: ["Tổng điểm trọng số đạt mức mười một điểm.", "Tổng điểm trọng số đạt mức đúng mười điểm.", "Tổng điểm trọng số đạt mức đúng một điểm.", "Tổng điểm trọng số đạt mức một trăm điểm."], correct: 0, explanation: "Cộng điểm toán học cơ bản: Bộ chọn thẻ HTML `h1` đáng giá 1 điểm. Bộ chọn class `.title` đáng giá 10 điểm. Tổng: 1 + 10 = 11 điểm." },
+        { id: "d1_22", type: "single", question: "Câu 22: Dựa trên bảng quy tắc, trọng số của bộ chọn div#box là?", options: ["Tổng điểm trọng số là một trăm lẻ một.", "Tổng điểm trọng số là một trăm chẵn luôn.", "Tổng điểm trọng số là đúng mười một điểm.", "Tổng điểm trọng số là đúng một trăm mười."], correct: 0, explanation: "Cộng điểm toán học cơ bản: Bộ chọn thẻ HTML `div` đáng giá 1 điểm. Bộ chọn id `#box` đáng giá 100 điểm. Tổng: 1 + 100 = 101 điểm." },
+        { id: "d1_23", type: "single", question: "Câu 23: Mã &lt;style&gt; p::first-line {color: red;} &lt;/style&gt; &lt;p&gt;A&lt;br&gt;B&lt;/p&gt;. Ký tự B ở dòng hai có màu gì?", options: ["Ký tự đó sẽ hiển thị màu đen mặc định.", "Ký tự đó sẽ hiển thị màu đỏ rất nổi.", "Ký tự đó sẽ hiển thị màu xanh nước biển.", "Ký tự đó sẽ hiển thị màu xám rất nhạt."], correct: 0, explanation: "Lệnh `::first-line` chỉ tác dụng màu đỏ cho dòng số 1 (chứa chữ A). Thẻ `&lt;br&gt;` bẻ gãy dòng, đưa chữ B xuống dòng số 2. Dòng 2 không thuộc phạm vi của first-line nên chữ B vẫn màu đen bình thường." },
+        { id: "d1_24", type: "single", question: "Câu 24: Cho CSS: a:visited {color: red;}. Trọng số của bộ chọn này là?", options: ["Mức điểm đạt được là mười một điểm chuẩn.", "Mức điểm đạt được là đúng mười điểm chuẩn.", "Mức điểm đạt được là đúng một điểm chuẩn.", "Mức điểm đạt được là một trăm điểm chuẩn."], correct: 0, explanation: "Toán học tính điểm: Phần tử thẻ `a` là 1 điểm. Lớp giả `:visited` tương đương class là 10 điểm. Tổng: 1 + 10 = 11 điểm." },
+        { id: "d1_25", type: "single", question: "Câu 25: Mã &lt;style&gt; h2 {color: blue;} h2 {color: green;} &lt;/style&gt; &lt;h2&gt;O&lt;/h2&gt;. Chữ hiển thị màu gì?", options: ["Chữ hiển thị kết quả là màu xanh lá.", "Chữ hiển thị kết quả là màu xanh lam.", "Chữ hiển thị kết quả là màu đỏ tươi.", "Chữ hiển thị kết quả là màu đen thui."], correct: 0, explanation: "Hai bộ chọn `h2` đều giống hệt nhau, trọng số hòa (1 điểm). Theo luật Cascading ưu tiên thứ tự (kẻ đến sau làm vua), lệnh màu xanh lá (green) viết ở phía sau sẽ đè lên lệnh viết trước." },
+        { id: "d1_26", type: "single", question: "Câu 26: Định dạng inline (vd: &lt;div style=\"color:red\"&gt;) có quyền ưu tiên thế nào?", options: ["Có quyền ưu tiên cao nhất, đè mọi CSS.", "Có quyền ưu tiên thấp nhất, dưới cả thẻ.", "Quyền ưu tiên ngang với ID nhưng dưới lớp.", "Không được coi là một dạng mã chuẩn CSS."], correct: 0, explanation: "Inline CSS viết trực tiếp vào thẻ HTML có trọng số khủng khiếp là 1000 điểm. Nó miễn nhiễm với mọi cuộc chiến CSS và ghi đè toàn bộ ID, Class hay Element." },
+        { id: "d1_27", type: "single", question: "Câu 27: Trọng số tính toán của bộ chọn lớp giả p:hover là bao nhiêu?", options: ["Bộ chọn đạt tổng điểm là mười một điểm.", "Bộ chọn đạt tổng điểm là một trăm điểm.", "Bộ chọn đạt tổng điểm là đúng một điểm.", "Bộ chọn đạt tổng điểm là đúng mười điểm."], correct: 0, explanation: "Toán học cơ bản: Thẻ `p` là 1 điểm. Trạng thái pseudo-class `:hover` là 10 điểm. Tổng: 1 + 10 = 11 điểm." },
+        { id: "d1_28", type: "single", question: "Câu 28: Bộ chọn #nav li.active:hover sẽ có tổng trọng số là bao nhiêu?", options: ["Tổng điểm trọng số là một hai một điểm.", "Tổng điểm trọng số là một trăm mười điểm.", "Tổng điểm trọng số là mười hai điểm chẵn.", "Tổng điểm trọng số là một trăm điểm chẵn."], correct: 0, explanation: "Ta có: 1 ID `#nav` = 100 điểm. 1 phần tử `li` = 1 điểm. 1 class `.active` = 10 điểm. 1 pseudo-class `:hover` = 10 điểm. Tổng: 100 + 1 + 10 + 10 = 121 điểm." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Đội ngũ IT của trường học đang thiết kế trang Thư viện điện tử.<br>Để thu hút sự chú ý của học sinh khi tìm kiếm sách, lập trình viên đã xây dựng một khối hiển thị sản phẩm (sách) với rất nhiều hiệu ứng tương tác như viền, bóng đổ và đổi màu khi trỏ chuột.<br><div class=\"html-code-block\">/* Đoạn mã CSS định dạng khối thông tin sách */<br>.book-card {<br>&nbsp;&nbsp;width: 250px; padding: 20px; border: 2px solid #ccc;<br>&nbsp;&nbsp;background-color: white; border-radius: 8px; transition: 0.3s;<br>}<br>.book-card:hover {<br>&nbsp;&nbsp;border-color: #007bff; box-shadow: 0 4px 8px rgba(0,0,0,0.2);<br>&nbsp;&nbsp;transform: translateY(-5px);<br>}<br>h3.book-title { color: #333; font-size: 18px; margin-bottom: 10px; }<br>h3.book-title::first-letter { color: red; font-size: 26px; font-weight: bold; }</div><br><div class=\"html-code-block\">&lt;div class=\"book-card\"&gt;<br>&nbsp;&nbsp;&lt;h3 class=\"book-title\"&gt;Tin học 12&lt;/h3&gt;<br>&nbsp;&nbsp;&lt;p&gt;Sách giáo khoa bộ Kết nối tri thức.&lt;/p&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Ký hiệu :hover trong cụm .book-card:hover được gọi là một lớp giả (pseudo-class).", correct: true, expl: "Chính xác theo chuẩn cú pháp. Ký hiệu bắt đầu bằng một dấu hai chấm (`:`) như `:hover` đại diện cho một trạng thái tương tác của phần tử, được gọi là lớp giả (pseudo-class)." },
+            { id: "b", text: "b) (TH) Lớp giả .book-card:hover sẽ được kích hoạt khi học sinh nhấp đúp chuột (double click) vào thẻ div chứa thông tin cuốn sách.", correct: false, expl: "Trạng thái `:hover` được kích hoạt ngay khoảnh khắc mũi tên chuột lướt lên và di chuyển trên bề mặt của phần tử, không cần học sinh phải thực hiện bất kỳ hành động click hay nhấp đúp chuột nào." },
+            { id: "c", text: "c) (VD) Trên giao diện web, chữ \"T\" trong cụm từ \"Tin học 12\" sẽ được tô màu đỏ và có kích thước to hơn các chữ còn lại nhờ bộ chọn ::first-letter.", correct: true, expl: "Bộ chọn `::first-letter` (phần tử giả) được lập trình để bắt riêng ký tự đầu tiên của khối văn bản. Chữ 'T' sẽ nhận lệnh màu đỏ (red) và cỡ chữ to 26px như một dạng Drop Cap." },
+            { id: "d", text: "d) (VD) Trọng số CSS của bộ chọn h3.book-title::first-letter có giá trị là 13 điểm (Thẻ h3: 1 điểm + Class .book-title: 10 điểm + Pseudo-element ::first-letter: 1 điểm).", correct: false, expl: "Toán học tính sai. Tổng điểm phải là 12 điểm, không phải 13. Cụ thể: Thẻ h3 = 1 điểm. Class .book-title = 10 điểm. Pseudo-element ::first-letter = 1 điểm. Tổng: 1+10+1 = 12." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Tạp chí Thanh niên của trường cần định dạng cho các bài viết phỏng vấn.<br>Layout yêu cầu dòng mở đầu bài viết phải in đậm để tóm tắt nội dung, các liên kết đọc thêm nếu đã được truy cập thì phải đổi sang màu xám để tránh người đọc bấm lại.<br><div class=\"html-code-block\">/* CSS cho Tạp chí */<br>.article-body { font-family: 'Times New Roman', Times, serif; line-height: 1.6; }<br>.article-body p::first-line { font-weight: bold; color: darkblue; }<br>a.read-more:link { color: green; text-decoration: underline; }<br>a.read-more:visited { color: gray; text-decoration: none; }<br>a.read-more:hover { color: orange; }<br>#hot-news { color: red; }</div><br><div class=\"html-code-block\">&lt;div class=\"article-body\"&gt;<br>&nbsp;&nbsp;&lt;p id=\"hot-news\"&gt;Hôm nay trường tổ chức hội thao toàn trường.&lt;br&gt;Các lớp đều cử đại diện ưu tú nhất.&lt;/p&gt;<br>&nbsp;&nbsp;&lt;a href=\"chitiet.html\" class=\"read-more\"&gt;Đọc chi tiết&lt;/a&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Trong đoạn mã CSS, ::first-line là một phần tử giả (pseudo-element) dùng để định dạng một thành phần nhỏ bên trong thẻ.", correct: true, expl: "Cú pháp chuẩn của CSS3 quy định :: (hai dấu hai chấm liền nhau) là dấu hiệu nhận biết của Phần tử giả (Pseudo-element). Ở đây ::first-line nhắm vào đối tượng nhỏ là dòng hiển thị đầu tiên." },
+            { id: "b", text: "b) (TH) Dòng trạng thái a.read-more:visited sẽ làm cho liên kết \"Đọc chi tiết\" có màu xám ngay từ lúc trang web vừa được load lần đầu tiên (khi chưa ai bấm vào).", correct: false, expl: "Lớp giả `:visited` (đã ghé thăm) chỉ có tác dụng ĐÓNG BẤU thay đổi màu sắc SAU KHI người dùng đã thực sự click vào link đó. Khi mới load lần đầu (chưa bấm), thẻ sẽ nhận màu xanh lá của lệnh `:link`." },
+            { id: "c", text: "c) (VD) Dòng chữ \"Các lớp đều cử đại diện ưu tú nhất.\" (nằm sau thẻ &lt;br&gt;) sẽ KHÔNG được in đậm và KHÔNG có màu xanh đậm (darkblue) vì nó đã bị ngắt sang dòng thứ hai.", correct: true, expl: "Bộ chọn `::first-line` chỉ có tầm ảnh hưởng lên dòng văn bản đầu tiên. Thẻ `&lt;br&gt;` bẻ gãy dòng, đẩy văn bản xuống dòng 2, đưa nó ra khỏi vùng phủ sóng của bộ chọn này. Do đó văn bản không đổi màu." },
+            { id: "d", text: "d) (VD) Dòng chữ \"Hôm nay trường tổ chức hội thao toàn trường.\" là dòng đầu tiên, nên màu sắc cuối cùng của nó sẽ là màu đỏ (red) vì trọng số của ID #hot-news (100) mạnh hơn trọng số của p::first-line (12).", correct: true, expl: "Cuộc chiến trọng số: Bộ chọn `.article-body p::first-line` có tổng điểm = 10 (class) + 1 (thẻ p) + 1 (first-line) = 12 điểm. Bộ chọn `#hot-news` là ID nên có 100 điểm. 100 > 12 nên mã ID thắng, dòng chữ hiện màu đỏ (red)." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Bảng xếp hạng điểm thi có một ô thông báo tên thủ khoa.<br>Một học sinh viết CSS để làm nổi bật ô tên này nhưng bị xung đột do lạm dụng cả ID, Class và kiểu dáng trực tiếp (inline style).<br><div class=\"html-code-block\">/* CSS định dạng thông báo */<br>.student-box { background-color: #f0f0f0; padding: 15px; margin: 10px; }<br>div.highlight { color: blue; border: 2px solid blue; }<br>#top-scorer { color: green; font-size: 20px; text-transform: uppercase; }<br>div#top-scorer.highlight { color: purple; }</div><br><div class=\"html-code-block\">&lt;div class=\"student-box highlight\" id=\"top-scorer\" style=\"color: red;\"&gt;Nguyễn Văn A&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Khai báo style trực tiếp bên trong thẻ mở (ví dụ style=\"color: red;\") được gọi là định dạng CSS nội tuyến (inline style).", correct: true, expl: "Cấy thẳng thuộc tính `style=...` vào ngay thẻ mở của HTML chính là kỹ thuật Inline CSS. Đây là cách định dạng cục bộ và mạnh nhất." },
+            { id: "b", text: "b) (TH) Trọng số của bộ chọn #top-scorer (ID) thấp hơn so với bộ chọn div.highlight (thẻ + class).", correct: false, expl: "So sánh điểm số: Bộ chọn ID `#top-scorer` trị giá 100 điểm. Bộ chọn thẻ+class `div.highlight` có điểm là 1 (div) + 10 (class) = 11 điểm. 100 lớn hơn 11 rất nhiều nên trọng số của ID là cao hơn." },
+            { id: "c", text: "c) (VD) Bộ chọn kết hợp div#top-scorer.highlight có tổng trọng số là 111 (Thẻ div = 1, ID = 100, Class = 10).", correct: true, expl: "Công thức toán học chính xác: Ta đếm được 1 thẻ HTML (div) = 1. Có 1 ID (#top-scorer) = 100. Có 1 Class (.highlight) = 10. Phép cộng dồn ra kết quả 1+100+10 = 111 điểm." },
+            { id: "d", text: "d) (VD) Dù bộ chọn kết hợp div#top-scorer.highlight có trọng số rất cao là 111 và yêu cầu màu tím (purple), nhưng dòng chữ \"Nguyễn Văn A\" trên màn hình vẫn sẽ hiển thị màu đỏ (red) vì định dạng nội tuyến có mức độ ưu tiên tuyệt đối cao nhất.", correct: true, expl: "Định dạng CSS nội tuyến (Inline style) mang quyền lực của vua, có trọng số là 1000 điểm. Nó nghiền nát mọi bộ chọn ID (100) hay kết hợp phức tạp nào (111). Chữ sẽ bị ép thành màu đỏ (red)." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Trong chuẩn CSS, lớp giả (pseudo-class) ký hiệu bằng ký tự nào?", options: ["Cần dùng đúng một ký tự hai chấm.", "Cần dùng đúng hai ký tự hai chấm.", "Cần dùng đúng một ký tự chấm phẩy.", "Cần dùng đúng hai ký tự chấm phẩy."], correct: 0, explanation: "Theo chuẩn CSS, pseudo-class (lớp giả) luôn bắt đầu bằng một dấu hai chấm (:). Ví dụ: :hover, :active." },
+        { id: "d2_2", type: "single", question: "Câu 2: Phần tử giả (pseudo-element) trong CSS bắt buộc phải dùng dấu gì?", options: ["Viết đúng hai ký tự hai chấm liền.", "Viết đúng một ký tự hai chấm liền.", "Viết đúng hai ký tự chấm phẩy liền.", "Viết đúng một ký tự chấm phẩy liền."], correct: 0, explanation: "Từ CSS3, để phân biệt với lớp giả, phần tử giả (pseudo-element) được quy định phải bắt đầu bằng hai dấu hai chấm liền nhau (::). Ví dụ: ::first-line." },
+        { id: "d2_3", type: "single", question: "Câu 3: Khái niệm \"lớp giả\" (pseudo-class) mô tả tính chất gì của phần tử?", options: ["Thể hiện các trạng thái đặc biệt html.", "Thể hiện một thành phần nội dung thẻ.", "Thể hiện mã định danh id toàn cục.", "Thể hiện lớp thiết kế class thông thường."], correct: 0, explanation: "Lớp giả (pseudo-class) không chọn phần tử dựa trên id hay class, mà chọn dựa trên TRẠNG THÁI tương tác hiện tại của nó (như hover, visited, focus)." },
+        { id: "d2_4", type: "single", question: "Câu 4: Khái niệm \"phần tử giả\" (pseudo-element) mô tả tính chất gì?", options: ["Chỉ định một thành phần nhỏ của thẻ.", "Chỉ định một trạng thái chuột của thẻ.", "Chỉ định toàn bộ thẻ html ở trên web.", "Chỉ định một mã id riêng biệt duy nhất."], correct: 0, explanation: "Phần tử giả (pseudo-element) nhắm mục tiêu vào một thành phần con rất nhỏ cụ thể bên trong phần tử đó, ví dụ như chữ cái đầu tiên (::first-letter) hay dòng đầu tiên (::first-line)." },
+        { id: "d2_5", type: "single", question: "Câu 5: Dựa vào bảng CSS, trọng số bộ chọn id là bao nhiêu điểm?", options: ["Đạt mức điểm quy định là trăm điểm.", "Đạt mức điểm quy định là mười điểm.", "Đạt mức điểm quy định là một điểm.", "Đạt mức điểm quy định là không điểm."], correct: 0, explanation: "Trong hệ thống tính điểm ưu tiên của CSS, ID selector (định danh) có sức mạnh rất lớn, được cấp điểm trọng số là 100." },
+        { id: "d2_6", type: "single", question: "Câu 6: Trọng số của pseudo-class (ví dụ :hover) được CSS tính là?", options: ["CSS tính giá trị này là mười điểm.", "CSS tính giá trị này là một điểm.", "CSS tính giá trị này là trăm điểm.", "CSS tính giá trị này là không điểm."], correct: 0, explanation: "Lớp giả (pseudo-class như :hover) và bộ chọn lớp (class) có giá trị ngang nhau trên bàn cân ưu tiên, đều được tính trọng số là 10 điểm." },
+        { id: "d2_7", type: "single", question: "Câu 7: Trọng số của phần tử (như thẻ p, div) là bao nhiêu?", options: ["Có mức điểm mặc định bằng một điểm.", "Có mức điểm mặc định bằng mười điểm.", "Có mức điểm mặc định bằng trăm điểm.", "Có mức điểm mặc định bằng ngàn điểm."], correct: 0, explanation: "Bộ chọn theo tên thẻ phần tử (element selector như h1, p, div) có sức ảnh hưởng yếu nhất trong cấu trúc CSS, chỉ được tính 1 điểm." },
+        { id: "d2_8", type: "single", question: "Câu 8: Nguyên tắc cascading trong ngôn ngữ CSS sẽ xử lý ra sao?", options: ["Lấy định dạng phía cuối nếu cùng điểm.", "Lấy định dạng phía trên nếu cùng điểm.", "Loại bỏ tất cả định dạng nếu cùng điểm.", "Báo lỗi ra màn hình nếu trùng mức điểm."], correct: 0, explanation: "Nếu hai mã lệnh CSS có tổng điểm trọng số bằng nhau y chang, trình duyệt sẽ dùng nguyên tắc 'người đến sau chiến thắng'. Mã lệnh nào viết ở vị trí cuối cùng trong file sẽ đè mã viết trước." },
+        { id: "d2_9", type: "single", question: "Câu 9: Điểm trọng số của class theo quy chuẩn CSS là số mấy?", options: ["Class có mức điểm quy chuẩn bằng mười.", "Class có mức điểm quy chuẩn bằng một.", "Class có mức điểm quy chuẩn bằng trăm.", "Class có mức điểm quy chuẩn bằng không."], correct: 0, explanation: "Class (lớp) được đánh giá cao hơn thẻ phần tử thông thường, do đó trọng số của nó được quy định là 10 điểm." },
+        { id: "d2_10", type: "single", question: "Câu 10: Khi so sánh class và pseudo-class, điều gì là khác biệt rõ nhất?", options: ["Lớp giả mặc định có sẵn không cần tạo.", "Lớp giả bắt buộc ghi vào mã thẻ html.", "Lớp giả có trọng số thấp hơn thẻ chuẩn.", "Lớp giả yêu cầu bắt buộc phải dùng id."], correct: 0, explanation: "Lớp (class) bình thường bạn phải viết vào mã HTML (ví dụ: class='btn'). Còn pseudo-class (như :hover) là trạng thái vật lý có sẵn của trình duyệt, không cần bạn phải thêm thuộc tính gì vào HTML cả." },
+        { id: "d2_11", type: "single", question: "Câu 11: Trong ngôn ngữ CSS, lớp giả :hover phát huy tác dụng khi nào?", options: ["Xảy ra lúc người dùng để chuột lên thẻ.", "Xảy ra lúc người dùng kéo chuột ra xa.", "Xảy ra lúc người dùng nhấp đúp vào thẻ.", "Xảy ra lúc người dùng tải lại trang web."], correct: 0, explanation: "Hover có nghĩa là bay lượn, lơ lửng. Pseudo-class `:hover` sẽ bùng nổ hiệu ứng CSS ngay khi người dùng đưa con trỏ chuột chạm lướt lên trên khu vực của phần tử đó." },
+        { id: "d2_12", type: "single", question: "Câu 12: Lệnh phần tử giả ::first-line dùng để tinh chỉnh khu vực nào?", options: ["Tinh chỉnh riêng dòng đầu tiên của đoạn.", "Tinh chỉnh riêng chữ đầu tiên của đoạn.", "Tinh chỉnh riêng từ đầu tiên của đoạn.", "Tinh chỉnh riêng dòng cuối cùng văn bản."], correct: 0, explanation: "Đúng như tên gọi (first-line), bộ chọn này sẽ bôi đen toàn bộ các chữ cái thuộc về dòng hiển thị đầu tiên của đoạn văn bản và áp dụng CSS cho chúng." },
+        { id: "d2_13", type: "single", question: "Câu 13: Tổng trọng số của một bộ chọn phức tạp được tính ra sao?", options: ["Cộng tất cả điểm của các thành phần lại.", "Trừ tất cả điểm của các thành phần lại.", "Nhân tất cả điểm của các thành phần lại.", "Chia tất cả điểm của các thành phần lại."], correct: 0, explanation: "Khi một khối CSS kết hợp nhiều bộ chọn (ví dụ: h1#title.red), trọng số của nó đơn giản là bài toán cộng dồn tất cả các điểm thành phần lại với nhau (1 + 100 + 10 = 111)." },
+        { id: "d2_14", type: "single", question: "Câu 14: Khi xảy ra xung đột CSS, trình duyệt chọn định dạng nào?", options: ["Nó ưu tiên lấy mã có trọng số cao hơn.", "Nó ưu tiên lấy mã có trọng số thấp hơn.", "Nó ưu tiên mã được tải về trước từ mạng.", "Nó ưu tiên lấy mã có độ dài ngắn hơn cả."], correct: 0, explanation: "Tính chất tối cao của trọng số: Trình duyệt sẽ luôn nghe lời và ưu tiên áp dụng định dạng của bộ chọn nào có tổng điểm trọng số tính toán cao hơn." },
+        { id: "d2_15", type: "single", question: "Câu 15: Nếu phần tử web có cả ID lẫn Class, ai có quyền hơn?", options: ["ID luôn có quyền ghi đè cao hơn Class.", "Class luôn có quyền ghi đè cao hơn ID.", "Quyền của hai bên ngang bằng nhau hoàn toàn.", "Trình duyệt sẽ loại bỏ cả hai định dạng này."], correct: 0, explanation: "ID mang trọng số 100 điểm, trong khi Class chỉ có 10 điểm. Do ID mạnh gấp 10 lần Class, nên nó luôn giành chiến thắng tuyệt đối khi xảy ra tranh chấp giao diện." },
+        { id: "d2_16", type: "single", question: "Câu 16: Trạng thái mã a:visited sinh ra là để dành cho thành phần nào?", options: ["Dành riêng cho liên kết đã từng được bấm.", "Dành riêng cho liên kết chưa từng được bấm.", "Dành riêng cho hình ảnh chưa từng hiển thị.", "Dành riêng cho văn bản đang được bôi đen."], correct: 0, explanation: "Visited dịch ra là 'đã ghé thăm'. Trình duyệt sẽ ghi nhớ lịch sử click của người dùng và đổi màu các thẻ &lt;a&gt; mang trạng thái :visited để báo hiệu link đó đã từng được đọc." },
+        { id: "d2_17", type: "single", question: "Câu 17: Phần tử giả ::first-letter giúp lập trình viên làm thao tác gì?", options: ["Đổi màu kích thước chữ cái đầu tiên đoạn.", "Đổi màu kích thước dòng chữ đầu tiên đoạn.", "Đổi màu kích thước toàn bộ dòng chữ đoạn.", "Đổi màu kích thước chữ cái kết thúc văn bản."], correct: 0, explanation: "Thường được dùng trong báo chí (hiệu ứng Drop Cap). Lệnh `::first-letter` chỉ bắt duy nhất ký tự chữ cái đầu tiên của một khối văn bản để phóng to hoặc tô màu." },
+        { id: "d2_18", type: "single", question: "Câu 18: Thuộc tính kế thừa màu sắc từ thẻ cha đóng vai trò gì?", options: ["Đóng vai trò yếu nhất trong mức ưu tiên.", "Đóng vai trò mạnh nhất trong mức ưu tiên.", "Có quyền thay thế luôn cả thẻ định danh.", "Có quyền thay thế toàn bộ mã class css."], correct: 0, explanation: "Tính kế thừa (Inheritance) - ví dụ thẻ con nhận màu từ thẻ cha - có độ ưu tiên thấp cùi bắp nhất (thấp hơn cả trọng số 1 của element). Bất kỳ bộ chọn định dạng trực tiếp nào cũng sẽ ghi đè được nó." },
+        { id: "d2_19", type: "single", question: "Câu 19: Mã &lt;style&gt; p {color: green;} p:hover {color: red;} &lt;/style&gt;. Nếu rê chuột vào thẻ p, màu là?", options: ["Màu sắc hiển thị sẽ chuyển sang màu đỏ.", "Màu sắc hiển thị sẽ chuyển sang màu lục.", "Màu sắc hiển thị sẽ chuyển sang màu lam.", "Màu sắc hiển thị sẽ chuyển sang màu đen."], correct: 0, explanation: "Thẻ `p` bình thường có màu xanh. Khi di chuột vào, trạng thái `:hover` được kích hoạt. Trọng số của thẻ `p` là 1, trọng số của `p:hover` là 1+10=11. Do 11 > 1, nó sẽ đổi sang màu đỏ (red)." },
+        { id: "d2_20", type: "single", question: "Câu 20: Mã &lt;style&gt; .box {color: blue;} #id1 {color: red;} &lt;/style&gt; &lt;p class=\"box\" id=\"id1\"&gt;X&lt;/p&gt;. Chữ X màu gì?", options: ["Chữ cái sẽ được sơn lên thành màu đỏ.", "Chữ cái sẽ được sơn lên thành màu lam.", "Chữ cái sẽ được sơn lên thành màu đen.", "Chữ cái sẽ được sơn lên thành màu trắng."], correct: 0, explanation: "Xảy ra cuộc chiến định dạng. Lớp `.box` yêu cầu màu lam (10 điểm). ID `#id1` yêu cầu màu đỏ (100 điểm). ID luôn thắng Class nên chữ sẽ hiển thị màu đỏ (red)." },
+        { id: "d2_21", type: "single", question: "Câu 21: Theo quy tắc tính điểm, tổng trọng số của div.container là bao nhiêu?", options: ["Đáp án tính toán chính xác là mười một.", "Đáp án tính toán chính xác là mười chẵn.", "Đáp án tính toán chính xác là một chẵn.", "Đáp án tính toán chính xác là một trăm."], correct: 0, explanation: "Cộng điểm toán học cơ bản: Bộ chọn thẻ HTML `div` đáng giá 1 điểm. Bộ chọn class `.container` đáng giá 10 điểm. Tổng: 1 + 10 = 11 điểm." },
+        { id: "d2_22", type: "single", question: "Câu 22: Theo quy tắc tính điểm, tổng trọng số của thẻ p#text-main là?", options: ["Tính toán được con số là một linh một.", "Tính toán được con số là một trăm chẵn.", "Tính toán được con số là mười một điểm.", "Tính toán được con số là một trăm mười."], correct: 0, explanation: "Cộng điểm toán học cơ bản: Bộ chọn thẻ HTML `p` đáng giá 1 điểm. Bộ chọn id `#text-main` đáng giá 100 điểm. Tổng: 1 + 100 = 101 điểm." },
+        { id: "d2_23", type: "single", question: "Câu 23: Mã &lt;style&gt; p::first-letter {color: blue;} &lt;/style&gt; &lt;p&gt;Web&lt;/p&gt;. Chữ W có màu gì?", options: ["Riêng chữ này mang màu xanh nước biển.", "Riêng chữ này mang màu đen tuyền chuẩn.", "Riêng chữ này mang màu đỏ tươi sáng.", "Riêng chữ này mang màu xám rất nhạt."], correct: 0, explanation: "Lệnh `::first-letter` có tác dụng bắt lấy ký tự đầu tiên của đoạn văn. Ở đây chữ 'W' là ký tự đầu tiên nên nó sẽ bị nhuộm màu xanh lam (blue)." },
+        { id: "d2_24", type: "single", question: "Câu 24: Cho lệnh CSS li.active:hover {color: red;}. Tổng trọng số của cụm này?", options: ["Tổng cộng bằng đúng mức hai mươi mốt.", "Tổng cộng bằng đúng mức hai mươi chẵn.", "Tổng cộng bằng đúng mức mười một điểm.", "Tổng cộng bằng đúng mức ba mươi mốt."], correct: 0, explanation: "Toán học tính điểm: Phần tử `li` = 1 điểm. Lớp `.active` = 10 điểm. Lớp giả `:hover` = 10 điểm. Tổng cộng: 1 + 10 + 10 = 21 điểm." },
+        { id: "d2_25", type: "single", question: "Câu 25: Mã &lt;style&gt; div {color: red;} div {color: gray;} &lt;/style&gt; &lt;div&gt;OK&lt;/div&gt;. Chữ OK hiển thị màu gì?", options: ["Chữ cuối cùng xuất hiện có màu xám nhạt.", "Chữ cuối cùng xuất hiện có màu đỏ tươi.", "Chữ cuối cùng xuất hiện có màu đen xì.", "Chữ cuối cùng xuất hiện có màu trắng bóc."], correct: 0, explanation: "Hai bộ chọn `div` đều giống hệt nhau, trọng số hòa (1 điểm). Theo luật Cascading ưu tiên thứ tự (kẻ đến sau làm vua), lệnh màu xám (gray) viết ở phía sau sẽ đè lên lệnh viết trước." },
+        { id: "d2_26", type: "single", question: "Câu 26: Mã nội tuyến &lt;p style=\"color:red\"&gt; và tệp CSS p {color:blue}. Trình duyệt chọn gì?", options: ["Chọn lấy màu đỏ của đoạn mã nội tuyến.", "Chọn lấy màu xanh của đoạn mã tệp css.", "Trộn hai màu lại thành một màu tím than.", "Ẩn dòng chữ đi vì bị xung đột mã nguồn."], correct: 0, explanation: "Inline CSS viết trực tiếp vào thẻ HTML có trọng số khủng khiếp là 1000 điểm. Nó miễn nhiễm với mọi cuộc chiến CSS bên ngoài tệp và luôn lấy màu đỏ ưu tiên." },
+        { id: "d2_27", type: "single", question: "Câu 27: Trọng số tính toán của bộ chọn kết hợp tên là h1::first-line là?", options: ["Kết quả tính toán bằng số hai chẵn luôn.", "Kết quả tính toán bằng số mười một điểm.", "Kết quả tính toán bằng số một trăm điểm.", "Kết quả tính toán bằng số không chẵn luôn."], correct: 0, explanation: "Toán học cơ bản: Thẻ `h1` = 1 điểm. Phần tử giả `::first-line` = 1 điểm. Tổng cộng: 1 + 1 = 2 điểm." },
+        { id: "d2_28", type: "single", question: "Câu 28: Bộ chọn #header .menu a:hover mang tổng trọng số tính ra là bao nhiêu?", options: ["Số điểm ghi nhận là một trăm mười hai.", "Số điểm ghi nhận là một trăm hai mươi.", "Số điểm ghi nhận là một trăm hai mốt.", "Số điểm ghi nhận là một trăm linh một."], correct: 0, explanation: "Ta có: 1 ID `#header` = 100 điểm. 1 class `.menu` = 10 điểm. 1 phần tử `a` = 1 điểm. 1 pseudo-class `:hover` = 10 điểm. Tổng: 100 + 10 + 1 + 10 = 121 điểm. Các khoảng trắng nối bộ chọn không có điểm." },
+        
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Một trung tâm tiếng Anh thiết kế giao diện danh sách các khóa học nổi bật.<br>Kỹ thuật viên muốn tạo ra các nút (button) mềm mại, màu sắc hài hòa và tự động thay đổi hiệu ứng khi học viên tương tác bằng chuột trên trình duyệt.<br><div class=\"html-code-block\">/* CSS định dạng danh sách khóa học */<br>.course-list { list-style-type: none; margin: 0; padding: 0; }<br>li.course-item {<br>&nbsp;&nbsp;background-color: #f9f9f9; padding: 15px; margin-bottom: 10px;<br>&nbsp;&nbsp;border-left: 5px solid green; transition: 0.2s;<br>}<br>li.course-item:hover {<br>&nbsp;&nbsp;background-color: #e0f7fa; border-left: 5px solid orange;<br>&nbsp;&nbsp;cursor: pointer; padding-left: 20px;<br>}<br>p.desc { font-style: italic; color: gray; }</div><br><div class=\"html-code-block\">&lt;ul class=\"course-list\"&gt;<br>&nbsp;&nbsp;&lt;li class=\"course-item\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;h3&gt;IELTS 6.5+&lt;/h3&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;p class=\"desc\"&gt;Khóa học đầu ra chuẩn quốc tế.&lt;/p&gt;<br>&nbsp;&nbsp;&lt;/li&gt;<br>&lt;/ul&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Trong cụm li.course-item:hover, ký hiệu :hover là một pseudo-element (phần tử giả) được CSS hỗ trợ.", correct: false, expl: "Nhầm lẫn cơ bản: `:hover` (một dấu hai chấm) là ký hiệu của LỚP GIẢ (pseudo-class), thể hiện trạng thái khi di chuột. Còn phần tử giả (pseudo-element) dùng 2 dấu hai chấm `::`." },
+            { id: "b", text: "b) (TH) Lớp giả :hover trong đoạn mã trên sẽ làm cho màu nền của khóa học chuyển sang màu xanh dương nhạt (#e0f7fa) khi người dùng đặt chuột lên khối nội dung đó.", correct: true, expl: "Theo mã CSS đã viết, khi có tương tác `:hover` vào khóa học (thẻ `li`), thuộc tính `background-color` sẽ bị ghi đè, chuyển từ nền xám `#f9f9f9` sang màu xanh nhạt `#e0f7fa`." },
+            { id: "c", text: "c) (VD) Trọng số CSS của bộ chọn li.course-item là 11 điểm (Thẻ li: 1 điểm + Class .course-item: 10 điểm).", correct: true, expl: "Phép tính trọng số chuẩn xác. Bộ chọn bao gồm phần tử `li` trị giá 1 điểm và lớp class `.course-item` trị giá 10 điểm. Tổng là 11 điểm." },
+            { id: "d", text: "d) (VD) Khi người dùng di chuột vào khóa học \"IELTS 6.5+\", cạnh viền bên trái (border-left) sẽ lập tức chuyển từ màu xanh lá (green) sang màu cam (orange) và nội dung sẽ thụt vào trong thêm 5px (do padding-left tăng từ 15px lên 20px).", correct: true, expl: "Đúng với phân tích khối mã. Trong khối lệnh `:hover`, `border-left` được cập nhật thành màu `orange` thay cho `green`. Đồng thời `padding-left` đẩy từ 15px ở trạng thái gốc lên 20px, tạo hiệu ứng chữ tụt vào trong 5px." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Tòa soạn báo trường cần tạo hiệu ứng cho bài báo tiêu điểm (Hero Article).<br>Tác giả muốn chữ cái mở đầu của bài viết phải to như truyện cổ tích (Drop Cap), đồng thời các thẻ liên kết phải thể hiện rõ trạng thái tương tác của người xem.<br><div class=\"html-code-block\">/* CSS định dạng bài viết */<br>.hero-content { font-size: 16px; color: #444; text-align: justify; }<br>.hero-content p::first-letter {<br>&nbsp;&nbsp;font-size: 40px; color: darkred; font-weight: bold;<br>&nbsp;&nbsp;float: left; margin-right: 8px; line-height: 1;<br>}<br>a.nav-link:link { color: blue; }<br>a.nav-link:visited { color: purple; }<br>a.nav-link:active { color: yellow; }<br>#breaking { color: orange; font-weight: 900; }</div><br><div class=\"html-code-block\">&lt;div class=\"hero-content\"&gt;<br>&nbsp;&nbsp;&lt;p id=\"breaking\"&gt;Chào mừng các bạn tân học sinh khóa mới.&lt;br&gt;Chúc các em học tốt.&lt;/p&gt;<br>&nbsp;&nbsp;&lt;p&gt;Đây là một năm học hứa hẹn nhiều thay đổi.&lt;/p&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Ký hiệu ::first-letter là một pseudo-class (lớp giả) dùng để biểu thị trạng thái chuột của người dùng.", correct: false, expl: "Cú pháp `::first-letter` (dùng hai dấu hai chấm) không phải là Lớp giả, mà nó là một PHẦN TỬ GIẢ (pseudo-element). Nó dùng để chọn thành phần tĩnh (chữ cái đầu), chứ không liên quan đến trạng thái con chuột." },
+            { id: "b", text: "b) (TH) Nếu liên kết có lớp nav-link đang được người dùng bấm và giữ chuột (nhấn chuột xuống nhưng chưa thả ra), liên kết đó sẽ có màu vàng (yellow) do tác dụng của pseudo-class :active.", correct: true, expl: "Lớp giả `:active` (đang hoạt động) chính xác là bắt được khoảnh khắc vật lý khi người dùng nhấn giữ phím chuột (mousedown) trên liên kết. Theo đoạn code, nó sẽ đổi chữ thành màu vàng (yellow)." },
+            { id: "c", text: "c) (VD) Chữ cái \"C\" trong từ \"Chào mừng\" sẽ cực kỳ to (40px) và có màu đỏ đậm (darkred) nhờ tác động của bộ chọn .hero-content p::first-letter.", correct: true, expl: "Bộ chọn `::first-letter` này được cài đặt để bắn vào mọi thẻ `&lt;p&gt;` nằm trong vùng `.hero-content`. Đoạn văn đầu tiên bắt đầu bằng từ 'Chào mừng', nên chữ 'C' sẽ bị ép size 40px và màu darkred thành công." },
+            { id: "d", text: "d) (VD) Theo nguyên tắc tính điểm CSS, bộ chọn a.nav-link:visited có trọng số thấp hơn bộ chọn id #breaking.", correct: true, expl: "Tính toán trọng số: `a.nav-link:visited` = 1 (thẻ a) + 10 (class) + 10 (pseudo-class) = 21 điểm. Bộ chọn `#breaking` là ID = 100 điểm. 21 nhỏ hơn rất nhiều so với 100, nên nó yếu hơn." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Trong bài thi học kỳ môn Tin học, học sinh A được giao nhiệm vụ đổi màu nút \"Gửi bài\".<br>Học sinh này đã áp dụng nhiều cách khai báo CSS khác nhau cho cùng một nút bấm, dẫn đến việc phải tính toán mức độ ưu tiên.<br><div class=\"html-code-block\">/* CSS do học sinh A viết */<br>.submit-area button { background-color: gray; color: white; }<br>.btn-primary { background-color: blue; }<br>button#final-submit { background-color: green; font-size: 18px; }<br>#final-submit.btn-primary { background-color: orange; }</div><br><div class=\"html-code-block\">&lt;div class=\"submit-area\"&gt;<br>&nbsp;&nbsp;&lt;button id=\"final-submit\" class=\"btn-primary\" style=\"background-color: red;\"&gt;Gửi Bài&lt;/button&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Mã định danh (ID) #final-submit chỉ được phép gán cho duy nhất một phần tử trên toàn bộ trang web.", correct: true, expl: "Theo tiêu chuẩn định dạng cấu trúc W3C, mã định danh ID có tính chất độc tôn duy nhất (Unique), không bao giờ được phép chia sẻ cho 2 hay nhiều phần tử." },
+            { id: "b", text: "b) (TH) Trong hệ thống tính trọng số của CSS, bộ chọn .submit-area button có tổng điểm trọng số bằng 11.", correct: true, expl: "Phân tách bộ chọn: Có 1 class `.submit-area` trị giá 10 điểm, và 1 phần tử thẻ `button` trị giá 1 điểm. Tổng điểm trọng số của tổ hợp này đúng bằng 11." },
+            { id: "c", text: "c) (VD) Trọng số CSS của cụm #final-submit.btn-primary đạt 110 điểm (gồm 1 ID là 100 điểm và 1 Class là 10 điểm).", correct: true, expl: "Tính toán trọng số kết hợp: Bộ chọn gồm 1 ID `#final-submit` = 100 điểm, liên kết chặt chẽ với 1 class `.btn-primary` = 10 điểm. 100 + 10 = 110 điểm tròn." },
+            { id: "d", text: "d) (VD) Bỏ qua thuộc tính style=\"background-color: red;\", nút \"Gửi Bài\" sẽ có nền màu xanh lá (green) vì bộ chọn button#final-submit (trọng số 101) mạnh hơn #final-submit.btn-primary (trọng số 110).", correct: false, expl: "Lý luận logic sai về toán học. Trọng số 110 của `#final-submit.btn-primary` lớn hơn trọng số 101 của `button#final-submit`. CSS luôn ưu tiên kẻ mạnh hơn (điểm cao hơn), nên nút bấm sẽ nhận màu CAM (orange) chứ không phải màu xanh lá." }
+        ]}
+    ];
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

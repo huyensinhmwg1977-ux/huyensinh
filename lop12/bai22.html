@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI TẬP: THIẾT BỊ SỐ VÀ NHÀ THÔNG MINH </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_thietbiso');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI TẬP: THIẾT BỊ SỐ VÀ NHÀ THÔNG MINH)
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Thiết bị nào sau đây dùng để hiển thị hình ảnh trực quan cho người dùng?", options: ["Ti vi thông minh.", "Bàn phím máy tính.", "Chuột quang học.", "Loa phát âm thanh."], correct: 0, explanation: "Tivi thông minh (Smart TV) cùng với màn hình máy tính, máy chiếu là các thiết bị đầu ra chuyên dụng để xuất và hiển thị dữ liệu dưới dạng hình ảnh trực quan." },
+        { id: "d1_2", type: "single", question: "Câu 2: Cổng HDMI trên máy tính thường được sử dụng với mục đích gì?", options: ["Cắm dây mạng internet.", "Truyền tải xuất hình ảnh.", "Sạc pin cho thiết bị di động.", "Cắm tai nghe để nghe nhạc."], correct: 1, explanation: "HDMI (High-Definition Multimedia Interface) là chuẩn kết nối đa phương tiện rất phổ biến, có chức năng truyền tải đồng thời tín hiệu hình ảnh độ nét cực cao và âm thanh số." },
+        { id: "d1_3", type: "single", question: "Câu 3: Công nghệ Bluetooth sử dụng loại sóng nào để truyền dữ liệu không dây?", options: ["Sóng vô tuyến.", "Sóng siêu âm.", "Sóng cơ học.", "Sóng ánh sáng."], correct: 0, explanation: "Bluetooth là chuẩn kết nối không dây hoạt động dựa trên sóng vô tuyến (Radio Frequency) ở dải tần số 2.4 GHz, giúp các thiết bị giao tiếp với nhau trong phạm vi ngắn (khoảng 10 mét)." },
+        { id: "d1_4", type: "single", question: "Câu 4: Nhà thông minh là loại nhà được trang bị hệ thống gì để tăng tính tiện ích?", options: ["Công nghệ số thông minh.", "Nội thất bằng gỗ tự nhiên.", "Cửa kính cường lực dày.", "Đèn huỳnh quang đời cũ."], correct: 0, explanation: "Khác với nhà truyền thống, nhà thông minh (Smart Home) ứng dụng mạnh mẽ các thiết bị cảm biến và công nghệ số kết nối mạng, cho phép tự động hóa quy trình quản lý và điều khiển từ xa." },
+        { id: "d1_5", type: "single", question: "Câu 5: Mục tiêu chính của việc phát triển hệ thống nhà thông minh là gì?", options: ["Tạo môi trường sống tốt.", "Trồng thêm nhiều cây xanh.", "Tiêu thụ nhiều điện năng.", "Nuôi nhiều động vật cảnh."], correct: 0, explanation: "Việc kết nối các thiết bị thông minh nhằm mục tiêu cốt lõi là tối ưu hóa năng lượng, tăng cường an ninh và mang lại môi trường sống tiện nghi, thoải mái nhất cho con người." },
+        { id: "d1_6", type: "single", question: "Câu 6: Khi mới lắp đặt, thiết bị nhà thông minh thường được kết nối qua mạng nào?", options: ["Sóng Wi-Fi cục bộ.", "Cáp quang dưới biển.", "Dây cáp đồng trục.", "Sóng vô tuyến vệ tinh."], correct: 0, explanation: "Để truyền tải tín hiệu điều khiển, thao tác đầu tiên khi lắp đặt các thiết bị thông minh (ổ cắm, công tắc, camera) là khai báo và kết nối chúng vào mạng Wi-Fi cục bộ của gia đình." },
+        { id: "d1_7", type: "single", question: "Câu 7: Trong Windows, lựa chọn hiển thị nào cho phép mở rộng không gian màn hình?", options: ["Lựa chọn chế độ Extend.", "Lựa chọn chế độ Duplicate.", "Lựa chọn chế độ PC only.", "Lựa chọn chế độ Second."], correct: 0, explanation: "Khi xuất hình ảnh ra nhiều màn hình, chế độ Extend (mở rộng) sẽ biến các màn hình thành một không gian làm việc liền mạch lớn hơn, thay vì chiếu cùng một nội dung (Duplicate)." },
+        { id: "d1_8", type: "single", question: "Câu 8: Quá trình kết nối hai thiết bị qua Bluetooth lần đầu tiên được gọi là gì?", options: ["Ghép đôi thiết bị.", "Chia sẻ tệp tin.", "Nén nhỏ dữ liệu.", "Xoá bộ nhớ đệm."], correct: 0, explanation: "Quá trình \"Ghép đôi\" (Pairing) là bước giao tiếp bảo mật đầu tiên, yêu cầu hai thiết bị xác thực lẫn nhau trước khi có thể trao đổi dữ liệu qua Bluetooth." },
+        { id: "d1_9", type: "single", question: "Câu 9: Thiết bị nào sau đây là một dạng của hệ thống kính thực tế ảo hiện nay?", options: ["Kính Oculus Quest 2.", "Đồng hồ Apple Watch.", "Điện thoại Samsung.", "Bảng LED chiếu sáng."], correct: 0, explanation: "Oculus Quest 2 là thiết bị kính thực tế ảo (VR Headset) tiêu biểu, mang đến không gian 3D giả lập chân thực để ứng dụng trong giáo dục, y tế và giải trí." },
+        { id: "d1_10", type: "single", question: "Câu 10: Vai trò của cáp VGA khi kết nối máy tính xách tay với máy chiếu là gì?", options: ["Chuyền tải tín hiệu hình ảnh.", "Chuyền tải tín hiệu âm thanh.", "Cung cấp nguồn điện chiếu.", "Kết nối với mạng không dây."], correct: 0, explanation: "VGA (Video Graphics Array) là chuẩn cáp tín hiệu truyền thống chuyên dùng để truyền tải tín hiệu hình ảnh (dạng analog). Nhược điểm của VGA là nó không thể truyền tải được âm thanh." },
+        { id: "d1_11", type: "single", question: "Câu 11: Vì sao các thiết bị di động hiện nay đều được tích hợp công nghệ Bluetooth?", options: ["Đơn giản hoá việc kết nối.", "Tăng độ sáng của màn hình.", "Giảm dung lượng của bộ nhớ.", "Tăng cường khả năng diệt virus."], correct: 0, explanation: "Bluetooth loại bỏ sự vướng víu của các dây cáp vật lý. Việc tích hợp Bluetooth giúp các thiết bị di động kết nối với loa, tai nghe, chuột không dây một cách tiện lợi và đơn giản nhất." },
+        { id: "d1_12", type: "single", question: "Câu 12: Đặc điểm nổi bật nhất của các thiết bị trong hệ thống nhà thông minh là gì?", options: ["Khả năng hoạt động tự động.", "Kích thước hệ thống khổng lồ.", "Giá thành vô cùng rẻ tiền.", "Chỉ dùng được phím vật lí."], correct: 0, explanation: "Khả năng phản hồi theo cảm biến (tự bật đèn khi có người) và chạy theo lịch trình hẹn sẵn (tự động hóa) là giá trị cốt lõi làm nên sự \"thông minh\" của hệ thống này." },
+        { id: "d1_13", type: "single", question: "Câu 13: Phần mềm điều khiển các thiết bị nhà thông minh thường được cài đặt ở đâu?", options: ["Thiết bị điện thoại thông minh.", "Thiết bị tivi đời cũ trong nhà.", "Hệ thống máy in kim cỡ lớn.", "Các thiết bị máy chiếu quang."], correct: 0, explanation: "Smartphone là trung tâm điều khiển lý tưởng nhất. Các nhà sản xuất phát triển các Ứng dụng (App) trên Android và iOS để người dùng có thể giám sát và ra lệnh từ xa bằng điện thoại cá nhân." },
+        { id: "d1_14", type: "single", question: "Câu 14: Đám mây (Cloud) có vai trò gì đối với các thiết bị thông minh trong gia đình?", options: ["Lưu trữ trạng thái hoạt động.", "Phát sóng Wi-Fi cho gia đình.", "Sạc pin cho các ổ cắm điện.", "Cung cấp nguồn điện dự phòng."], correct: 0, explanation: "Cloud Server hoạt động như bộ não từ xa. Nó lưu trữ lịch sử hoạt động, tiếp nhận mệnh lệnh từ điện thoại người dùng qua Internet rồi đẩy lệnh đó về thiết bị thông minh trong nhà." },
+        { id: "d1_15", type: "single", question: "Câu 15: Khi kết nối điện thoại với WAP, mục đích chính của thao tác này là làm gì?", options: ["Đưa thiết bị vào mạng cục bộ.", "Xoá dữ liệu trên điện thoại.", "Ngắt kết nối với mạng Wi-Fi.", "Khởi động lại hệ thống mạng."], correct: 0, explanation: "WAP (Wireless Access Point - Điểm truy cập không dây) đóng vai trò phát sóng. Việc kết nối điện thoại với WAP chính là bước cấp quyền để thiết bị tham gia vào hệ thống mạng cục bộ (LAN) của gia đình/cơ quan." },
+        { id: "d1_16", type: "single", question: "Câu 16: Sự khác biệt giữa cổng xuất HDMI và cổng xuất VGA chủ yếu ở điểm nào?", options: ["HDMI truyền cả âm và hình.", "VGA truyền cả âm và hình.", "HDMI chỉ truyền tín hiệu âm.", "VGA chỉ truyền tín hiệu âm."], correct: 0, explanation: "Cổng VGA đời cũ chỉ có khả năng gửi đi tín hiệu hình ảnh. Trong khi đó, chuẩn giao tiếp hiện đại HDMI tích hợp cả dữ liệu video sắc nét và âm thanh kỹ thuật số trên cùng một sợi cáp." },
+        { id: "d1_17", type: "single", question: "Câu 17: Bước đầu tiên để gửi một tệp tin từ máy tính sang điện thoại qua Bluetooth là gì?", options: ["Bật Bluetooth trên hai thiết bị.", "Xoá bớt bộ nhớ của điện thoại.", "Cắm cáp kết nối USB vào máy.", "Tắt phần mềm diệt virus đi."], correct: 0, explanation: "Điều kiện tiên quyết để hai thiết bị có thể dò tìm và nhận diện được nhau là module phát sóng Bluetooth trên cả máy tính và điện thoại đều phải được bật (Turn on)." },
+        { id: "d1_18", type: "single", question: "Câu 18: Vì sao các thiết bị thông minh không cần giao diện trực tiếp vẫn có thể dùng được?", options: ["Vì điều khiển qua thiết bị di động.", "Vì điều khiển bằng remote tivi.", "Vì điều khiển qua màn hình vi tính.", "Vì điều khiển bằng các nút bấm cứng."], correct: 0, explanation: "Để giảm giá thành và tối ưu kích thước, các thiết bị thông minh (như ổ cắm, bóng đèn) thường loại bỏ màn hình. Thay vào đó, chúng kết nối với mạng và lấy giao diện của Smartphone làm bộ điều khiển trung tâm." },
+        { id: "d1_19", type: "single", question: "Câu 19: Để hiển thị bài giảng điện tử lên bảng tương tác, các em dùng cáp nào để nối?", options: ["Cáp tín hiệu chuẩn HDMI.", "Cáp sạc điện thoại dự phòng.", "Cáp truyền tải mạng internet.", "Cáp giắc cắm âm thanh 3.5mm."], correct: 0, explanation: "Bảng tương tác cần nhận hình ảnh độ phân giải cao và phát âm thanh từ bài giảng máy tính. Cáp HDMI là lựa chọn tiêu chuẩn, hoàn hảo nhất để đáp ứng cả hai yêu cầu này." },
+        { id: "d1_20", type: "single", question: "Câu 20: Khi muốn màn hình laptop và máy chiếu hiển thị hai nội dung khác nhau, em dùng?", options: ["Lựa chọn chế độ mở rộng Extend.", "Lựa chọn chế độ sao chép Duplicate.", "Lựa chọn chế độ màn hình PC only.", "Lựa chọn chế độ màn hình Second."], correct: 0, explanation: "Chế độ Extend sẽ coi máy chiếu như một không gian kéo dài của màn hình laptop. Em có thể đọc ghi chú bí mật trên laptop trong khi chiếu slide PowerPoint lên máy chiếu cho học sinh xem." },
+        { id: "d1_21", type: "single", question: "Câu 21: Em muốn gửi nội dung bài học từ điện thoại sang máy tính mà không có cáp mạng?", options: ["Dùng kết nối sóng Bluetooth.", "Dùng cáp truyền dữ liệu màn hình.", "Dùng cổng kết nối tín hiệu VGA.", "Dùng kết nối mạng cáp đồng trục."], correct: 0, explanation: "Khi không có cáp vật lý và cũng không có mạng Internet, Bluetooth là công nghệ chia sẻ dữ liệu tầm gần lý tưởng nhất để bắn tệp tin từ điện thoại sang laptop." },
+        { id: "d1_22", type: "single", question: "Câu 22: Để có thể bật điều hoà phòng khách từ xa khi đang đi du lịch, em thao tác ở đâu?", options: ["Mở ứng dụng điện thoại.", "Bật công tắc cơ học tường.", "Dùng bảng điều khiển tivi.", "Mở màn hình máy vi tính."], correct: 0, explanation: "Hệ thống nhà thông minh liên kết với các thiết bị qua máy chủ Cloud. Nhờ đó, chỉ cần điện thoại có mạng 4G/Wi-Fi, em có thể mở App để gửi lệnh bật điều hòa dù đang ở bất cứ đâu trên thế giới." },
+        { id: "d1_23", type: "single", question: "Câu 23: Trong giờ thuyết trình, loa không dây không phát tiếng dù đã ghép đôi, do lỗi gì?", options: ["Lỗi do chưa chọn đúng nguồn âm.", "Lỗi do màn hình máy tính đang tắt.", "Lỗi cáp tín hiệu HDMI bị cắm lỏng.", "Lỗi do chưa kết nối vào mạng LAN."], correct: 0, explanation: "Dù đã kết nối thành công, hệ điều hành (Windows/macOS) có thể vẫn đang giữ thiết lập phát âm thanh ở loa mặc định của laptop. Cần thao tác chọn đúng đầu ra âm thanh (Output device) là chiếc loa Bluetooth đó." },
+        { id: "d1_24", type: "single", question: "Câu 24: Khi em tiến hành thay bộ định tuyến Wi-Fi mới ở nhà, thiết bị thông minh sẽ ra sao?", options: ["Em cần phải thiết lập kết nối mạng lại.", "Nó tự động kết nối liền với mạng mới.", "Sẽ bị xoá sạch mọi dữ liệu lưu trữ cũ.", "Thiết bị sẽ bị hỏng và không dùng được."], correct: 0, explanation: "Các thiết bị IoT lưu thông tin Tên mạng (SSID) và Mật khẩu của Wi-Fi cũ. Khi thay cục phát mới, môi trường mạng thay đổi, thiết bị sẽ bị \"mù\" mạng và em bắt buộc phải dùng App để cấu hình lại kết nối cho chúng." },
+        { id: "d1_25", type: "single", question: "Câu 25: Muốn cài đặt thời gian tự động tắt bảng LED thông minh, em dùng chức năng nào?", options: ["Dùng tính năng hẹn giờ trên app.", "Rút trực tiếp phích cắm điện ra.", "Nhấn nút nguồn cơ học liên tục.", "Tắt nguồn của bộ định tuyến mạng."], correct: 0, explanation: "Bảng LED thông minh (Smart LED) thường đi kèm với các ứng dụng điều khiển. Trong ứng dụng này, tính năng Timer (Hẹn giờ) hoặc Schedule (Lịch trình) giúp thiết bị tự động bật/tắt đúng giờ." },
+        { id: "d1_26", type: "single", question: "Câu 26: Khi sở hữu vòng đeo tay thông minh, việc đầu tiên em làm để đồng bộ dữ liệu là gì?", options: ["Thực hiện ghép đôi với smartphone.", "Gắn bộ nhớ thẻ lưu trữ ngoài vào.", "Kết nối trực tiếp với máy in màu.", "Cắm cáp kết nối vào cổng tín hiệu."], correct: 0, explanation: "Vòng đeo tay thông minh (Smartband) không thể tự hoạt động độc lập. Bước đầu tiên thiết yếu là bật Bluetooth và Ghép đôi (Pair) nó với điện thoại để đồng bộ thời gian và dữ liệu sức khỏe." },
+        { id: "d1_27", type: "single", question: "Câu 27: Để ngăn người khác kết nối vào loa Bluetooth nhà mình, em cần làm gì sau khi dùng?", options: ["Tắt tín hiệu sóng Bluetooth trên loa.", "Bật chế độ máy bay trên thiết bị lên.", "Xoá ứng dụng nghe nhạc trực tuyến.", "Tháo toàn bộ pin của thiết bị âm thanh."], correct: 0, explanation: "Khi không sử dụng, loa Bluetooth vẫn phát tín hiệu chờ kết nối. Hành động tắt nút nguồn hoặc ngắt sóng Bluetooth trên loa sẽ ngăn chặn triệt để việc các thiết bị lạ xung quanh dò sóng và tự động kết nối." },
+        { id: "d1_28", type: "single", question: "Câu 28: Trường học bị rớt mạng cục bộ, camera an ninh gắn tường có xem từ xa qua app được không?", options: ["Không thể xem được hình ảnh từ xa.", "Vẫn xem được hình ảnh bình thường.", "Chỉ xem được hình ảnh có trắng đen.", "Xem được hình nhưng không có tiếng."], correct: 0, explanation: "Camera thông minh truyền trực tiếp luồng hình ảnh lên Server đám mây thông qua Internet. Nếu cục phát Wi-Fi trường bị rớt mạng, luồng dữ liệu này bị cắt đứt, và ứng dụng trên điện thoại sẽ báo ngoại tuyến (Offline)." },
+
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Gia đình bạn Hùng vừa trang bị một hệ thống đèn chiếu sáng thông minh cho phòng khách. Hệ thống đèn này có khả năng tuỳ chỉnh độ sáng và được thiết lập để có thể điều khiển qua ứng dụng cài trên điện thoại di động của các thành viên.", items: [
+            { id: "a", text: "a) Đèn thông minh thuộc nhóm các thiết bị được ứng dụng trong hệ thống nhà thông minh.", correct: true, expl: "Đây là khái niệm căn bản. Bóng đèn có chip điều khiển, có khả năng kết nối mạng để bật/tắt từ xa là một thiết bị IoT cấu thành nên hệ sinh thái Smart Home." },
+            { id: "b", text: "b) Do bóng đèn thông minh không có màn hình cảm ứng nên nó hoàn toàn không thể kết nối được với mạng Wi-Fi của gia đình.", correct: false, expl: "Nhận định này sai. Thiết bị không cần màn hình vẫn có thể kết nối Wi-Fi thông qua việc sử dụng ứng dụng di động trên điện thoại để nạp cấu hình (Tên Wi-Fi, mật khẩu) và truyền vào thiết bị." },
+            { id: "c", text: "c) Để Hùng có thể bật hoặc tắt đèn ở nhà khi đang ngồi học trên trường, hệ thống đèn nhà Hùng bắt buộc phải được kết nối ổn định với mạng Internet.", correct: true, expl: "Quy trình điều khiển từ xa: Điện thoại ở trường (có mạng) -> Server Đám mây -> Cục Wi-Fi ở nhà -> Bóng đèn. Nếu Wi-Fi nhà mất kết nối Internet, lệnh điều khiển sẽ không thể đến được bóng đèn." },
+            { id: "d", text: "d) Nếu không có sóng Wi-Fi, Hùng có thể dùng cáp VGA cắm trực tiếp từ điện thoại vào bóng đèn để điều khiển độ sáng.", correct: false, expl: "Cáp VGA là cáp truyền tín hiệu hình ảnh đồ họa cổ điển, hoàn toàn không có khả năng cấp nguồn hay truyền mã lệnh điều khiển nhà thông minh. Hơn nữa, bóng đèn cũng không được thiết kế để có cổng VGA." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Để chuẩn bị cho buổi báo cáo chuyên đề trực tiếp trên sân khấu của lớp 12A1, bạn Lan cần kết nối máy tính xách tay của mình với chiếc máy chiếu do nhà trường cung cấp.", items: [
+            { id: "a", text: "a) Máy chiếu đa phương tiện là một trong những loại thiết bị hiển thị số rất thông dụng.", correct: true, expl: "Chính xác. Máy chiếu (Projector) là giải pháp hàng đầu để khuếch đại và hiển thị hình ảnh số lên các mặt phẳng lớn phục vụ cho giáo dục và hội nghị." },
+            { id: "b", text: "b) Cáp kết nối HDMI giúp Lan có thể truyền tải cả tín hiệu hình ảnh và âm thanh từ máy tính xách tay lên máy chiếu.", correct: true, expl: "Điểm ưu việt của chuẩn cáp HDMI là nó được tích hợp công nghệ gộp chung cả băng thông cho hình ảnh siêu nét và tín hiệu âm thanh kỹ thuật số truyền đi trên cùng một sợi dây." },
+            { id: "c", text: "c) Để nội dung báo cáo trình chiếu lên màn hình lớn nhưng học sinh không thấy được kịch bản hay các cửa sổ đang mở trên máy tính của mình, Lan nên chọn chế độ hiển thị Duplicate.", correct: false, expl: "Duplicate là chế độ nhân bản (Máy tính có gì máy chiếu hiện nấy). Muốn học sinh không nhìn thấy kịch bản, Lan phải chọn chế độ Extend (Mở rộng thành 2 màn hình độc lập) mới đúng." },
+            { id: "d", text: "d) Trong quá trình báo cáo, nếu Lan muốn chia sẻ nhanh một tệp tài liệu cho bạn khác trong lớp ngồi gần đó mà phòng đang mất mạng Wi-Fi, Lan có thể bật và sử dụng kết nối Bluetooth.", correct: true, expl: "Sóng Bluetooth truyền nhận dữ liệu qua tín hiệu vô tuyến tầm gần, hoạt động hoàn toàn độc lập với hạ tầng mạng Internet hay mạng Wi-Fi, là giải pháp cứu cánh rất hữu hiệu khi mất mạng." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Thầy giáo Minh trang bị một chiếc đồng hồ đeo tay thông minh nhằm theo dõi nhịp tim và hỗ trợ nhận nhanh các thông báo tin nhắn trong lúc đang giảng dạy bài học trên lớp.", items: [
+            { id: "a", text: "a) Đồng hồ thông minh bắt buộc phải sử dụng kết nối cáp quang trực tiếp để đồng bộ dữ liệu sức khoẻ với điện thoại.", correct: false, expl: "Cáp quang là vật liệu làm bằng sợi thủy tinh dùng cho đường truyền hạ tầng mạng lớn, không thể dùng cho các thiết bị di động cá nhân. Đồng hồ đồng bộ dữ liệu qua sóng không dây Bluetooth." },
+            { id: "b", text: "b) Tính năng nhận thông báo tin nhắn trên đồng hồ yêu cầu điện thoại và đồng hồ phải được ghép đôi thành công và duy trì kết nối trong một phạm vi khoảng cách nhất định.", correct: true, expl: "Sóng Bluetooth có bán kính hoạt động hiệu quả khoảng 10 mét. Hai thiết bị phải được Pairing (ghép đôi) thì đồng hồ mới có quyền kéo dữ liệu tin nhắn từ điện thoại qua." },
+            { id: "c", text: "c) Nhằm cho lớp xem hình ảnh nhịp tim của mình, thầy Minh có thể kết nối trực tiếp đồng hồ thông minh với máy chiếu trên lớp qua cổng nối VGA.", correct: false, expl: "Đồng hồ thông minh có kích thước cực kỳ nhỏ, không thể tích hợp cổng vật lý to và cồng kềnh như cổng VGA. Để trình chiếu, cần đồng bộ qua ứng dụng điện thoại rồi mới kết nối điện thoại với máy chiếu." },
+            { id: "d", text: "d) Khi thầy Minh đi công tác ở tỉnh xa và để quên điện thoại ở nhà, chiếc đồng hồ thông minh sử dụng kết nối Bluetooth của thầy vẫn sẽ nhận được các thông báo tin nhắn gửi đến số điện thoại đó.", correct: false, expl: "Bluetooth là sóng kết nối tầm ngắn cục bộ (dưới 10m). Khi thầy Minh đi công tác xa, đồng hồ mất kết nối Bluetooth với điện thoại ở nhà nên sẽ không thể nhận hay hiện thông báo mới." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Bảng tương tác cảm ứng được phân loại vào nhóm thiết bị số nào dưới đây?", options: ["Nhóm thiết bị điện tử hiển thị.", "Nhóm thiết bị từ tính lưu trữ.", "Nhóm thiết bị khuyếch đại âm.", "Nhóm thiết bị phụ trợ in ấn."], correct: 0, explanation: "Bảng tương tác cảm ứng thực chất là một chiếc tivi/màn hình khổng lồ được tích hợp thêm lớp cảm biến chạm. Chức năng chính yếu của nó là tiếp nhận hình ảnh từ máy tính để xuất và hiển thị." },
+        { id: "d2_2", type: "single", question: "Câu 2: Kí hiệu cổng VGA là cụm từ viết tắt của chuẩn giao tiếp hình ảnh nào sau đây?", options: ["Chuẩn nối Vector Graphic Arrays.", "Chuẩn nối Video Graphic Adapter.", "Chuẩn nối Visual Graphic Action.", "Chuẩn nối Voice Graphic Arrays."], correct: 1, explanation: "VGA là viết tắt của thuật ngữ Video Graphics Array (hoặc Video Graphics Adapter). Đây là một tiêu chuẩn truyền tín hiệu đồ họa kỹ thuật tương tự (analog) được sử dụng rộng rãi trên các máy tính và máy chiếu truyền thống." },
+        { id: "d2_3", type: "single", question: "Câu 3: Kết nối sóng Bluetooth hoàn toàn không hỗ trợ truyền tải loại dữ liệu nào?", options: ["Dòng điện áp xoay chiều cực cao.", "Tệp tài liệu chứa văn bản báo cáo.", "Tín hiệu âm thanh của bản nhạc.", "Tệp hình ảnh chụp từ máy ảnh số."], correct: 0, explanation: "Bluetooth là một giao thức truyền tải tín hiệu bit dữ liệu số. Nó hoàn toàn không có khả năng, không có vật dẫn vật lý để truyền tải dòng điện năng năng lượng xoay chiều (AC)." },
+        { id: "d2_4", type: "single", question: "Câu 4: \"Smart Home\" là thuật ngữ công nghệ tiếng Anh chuyên ngành dùng để chỉ khái niệm gì?", options: ["Mô hình không gian nhà thông minh.", "Hệ thống mạng máy tính cục bộ lớn.", "Dòng máy tính xách tay cấu hình cao.", "Bộ định tuyến phát sóng Wi-Fi từ xa."], correct: 0, explanation: "Smart (Thông minh) và Home (Ngôi nhà). Đây là thuật ngữ chuẩn xác dùng để chỉ hệ sinh thái các thiết bị điện tử gia dụng được kết nối vạn vật (IoT), có thể điều khiển tự động và từ xa." },
+        { id: "d2_5", type: "single", question: "Câu 5: Lần đầu tiên thiết lập cấu hình cho ổ cắm thông minh, chúng ta thường cần dùng đến gì?", options: ["Phần mềm cài trên smartphone.", "Màn hình của chiếc tivi đời cũ.", "Bàn phím cơ sử dụng dây cáp.", "Máy in màu laser khổ lớn A3."], correct: 0, explanation: "Ổ cắm thông minh không có màn hình hiển thị. Để truyền dữ liệu mật khẩu Wi-Fi cho nó trong lần cấu hình đầu tiên, người dùng bắt buộc phải dùng Ứng dụng (App) kết nối Bluetooth trên điện thoại." },
+        { id: "d2_6", type: "single", question: "Câu 6: Chế độ hiển thị màn hình Duplicate trên hệ điều hành Windows có tác dụng chính là gì?", options: ["Sao chép nội dung ra hai màn hình.", "Mở rộng kích thước hai màn hình.", "Tắt tạm thời màn hình máy tính đi.", "Cắt tín hiệu chuyển ra máy chiếu."], correct: 0, explanation: "Duplicate mang nghĩa là \"nhân bản\". Khi cắm cáp kết nối ra tivi/máy chiếu và bật chế độ này, mọi thao tác trên màn hình máy tính sẽ được sao chép y hệt và hiển thị song song lên thiết bị ngoại vi." },
+        { id: "d2_7", type: "single", question: "Câu 7: Đâu là tên gọi của một loại thiết bị kính thực tế ảo rất phổ biến trên thị trường hiện nay?", options: ["Thiết bị kính Oculus Quest 2.", "Điện thoại Apple iPhone 15.", "Máy tính bảng Samsung Galaxy.", "Hệ điều hành Microsoft Windows."], correct: 0, explanation: "Oculus Quest (nay thuộc sở hữu của Meta) là dòng thiết bị phần cứng dạng kính đeo đầu (VR Headset), được trang bị cảm biến và màn hình độc lập để hiển thị không gian Thực tế ảo 3D." },
+        { id: "d2_8", type: "single", question: "Câu 8: Các thiết bị số giao tiếp và trao đổi tệp tin với nhau ở phạm vi rất gần thường sử dụng?", options: ["Công nghệ kết nối sóng Bluetooth.", "Công nghệ truyền tải bằng cáp quang.", "Công nghệ truyền tín hiệu siêu âm.", "Công nghệ mạng LAN dùng dây dẫn."], correct: 0, explanation: "Trong phạm vi ngắn (cưới 10 mét), sóng vô tuyến Bluetooth là công nghệ tối ưu, rẻ tiền và phổ biến nhất thế giới để trao đổi tệp tin, tín hiệu mà không cần phụ thuộc vào môi trường Internet." },
+        { id: "d2_9", type: "single", question: "Câu 9: Nhà cung cấp dịch vụ nhà thông minh thường lưu trạng thái của các thiết bị tại đâu?", options: ["Cơ sở dữ liệu trên bộ đám mây.", "Thẻ nhớ của chiếc điện thoại cũ.", "Ổ đĩa cứng của các máy vi tính.", "Đĩa CD/DVD lưu trữ truyền thống."], correct: 0, explanation: "Để đảm bảo các thiết bị có thể phản hồi lệnh điều khiển từ xa bất cứ lúc nào, toàn bộ tình trạng hoạt động (đang bật hay tắt) của thiết bị đều được đồng bộ thời gian thực lên máy chủ Cloud (Đám mây)." },
+        { id: "d2_10", type: "single", question: "Câu 10: Việc sử dụng thiết bị hiển thị kích thước lớn giúp ích gì trong các buổi thuyết trình?", options: ["Hỗ trợ bài trình bày thêm sinh động.", "Tự động soạn thảo nội dung văn bản.", "Làm giảm nhiệt độ không gian phòng.", "Phát tín hiệu Wi-Fi mạnh cho người xem."], correct: 0, explanation: "Một chiếc máy chiếu hay màn hình LED cỡ lớn giúp phóng to các biểu đồ, mô hình trực quan, tạo hiệu ứng thị giác mạnh mẽ giúp hàng trăm khán giả bên dưới dễ dàng theo dõi và tiếp thu nội dung." },
+        { id: "d2_11", type: "single", question: "Câu 11: Tại sao có thể nhận định công nghệ Bluetooth giúp đơn giản hoá việc kết nối các thiết bị?", options: ["Vì hoàn toàn không cần sử dụng dây cáp.", "Vì có tốc độ truyền tải cao hơn cáp quang.", "Vì hoàn toàn không tiêu thụ nguồn điện năng.", "Vì phạm vi kết nối có thể xuyên các lục địa."], correct: 0, explanation: "Điểm làm nên cuộc cách mạng của Bluetooth chính là khả năng truyền dẫn không dây (Wireless). Nó giải phóng không gian làm việc khỏi mớ dây cáp lằng nhằng và cồng kềnh, mang lại sự tinh gọn tối đa." },
+        { id: "d2_12", type: "single", question: "Câu 12: Việc bắt buộc phải thiết lập kết nối lần đầu cho camera thông minh nhằm mục đích gì?", options: ["Khai báo thiết bị vào hệ thống mạng.", "Cập nhật phần mềm diệt virus máy.", "Xoá sạch toàn bộ dữ liệu lưu cũ đi.", "Thay đổi ngôn ngữ giao diện hiển thị."], correct: 0, explanation: "Camera mới mua về là một thiết bị độc lập. Thao tác khai báo lần đầu chính là cung cấp thông tin Wi-Fi (Tên và Mật khẩu) để cấp quyền cho camera này được truy cập vào mạng Internet của ngôi nhà." },
+        { id: "d2_13", type: "single", question: "Câu 13: Ổ cắm thông minh không có màn hình nhưng có thể được bật/tắt từ xa là nhờ vào đâu?", options: ["Hệ thống kết nối hạ tầng Internet.", "Các nút bấm nhựa có trên ổ cắm.", "Kích thước ổ cắm được làm rất nhỏ.", "Hệ thống điện áp sử dụng cực kì ổn."], correct: 0, explanation: "Điều khiển từ xa hoạt động dựa trên cơ chế kết nối qua máy chủ mây. Ổ cắm và Smartphone phải cùng được truy cập vào hạ tầng Internet thì mệnh lệnh mới có thể được truyền tải xuyên quốc gia." },
+        { id: "d2_14", type: "single", question: "Câu 14: Khi truyền tệp ảnh qua Bluetooth, yêu cầu thao tác ghép đôi (Pairing) nhằm mục đích gì?", options: ["Đảm bảo tính an toàn và bảo mật.", "Tăng cường tốc độ của đường truyền.", "Nén làm nhỏ dung lượng dữ liệu gửi.", "Chuyển đổi định dạng file hệ thống."], correct: 0, explanation: "Ghép đôi (Pairing) bằng cách xác nhận chung một đoạn mã số giữa hai máy giúp loại bỏ nguy cơ thiết bị lạ tự động kết nối và trích xuất trộm dữ liệu, qua đó đảm bảo tính bảo mật rất cao." },
+        { id: "d2_15", type: "single", question: "Câu 15: Vì sao phần lớn các thiết bị nhà thông minh hiện nay không thiết kế thêm giao diện trực tiếp?", options: ["Nhằm mục đích thiết kế nhỏ gọn và giảm chi phí.", "Vì công nghệ chưa thể lắp được màn hình nhỏ.", "Do người dùng hoàn toàn không thích dùng chúng.", "Nhằm làm cho chúng phát sáng và trang trí cho đẹp."], correct: 0, explanation: "Giao diện được đẩy hoàn toàn sang Ứng dụng điều khiển trên Smartphone. Điều này giúp các bóng đèn, công tắc, ổ cắm được thiết kế nguyên khối nhỏ gọn và tiết giảm được rất nhiều chi phí sản xuất phần cứng màn hình." },
+        { id: "d2_16", type: "single", question: "Câu 16: Cổng HDMI được ứng dụng nhiều hơn trên các thiết bị giải trí so với VGA vì đặc điểm nào?", options: ["Khả năng truyền được hình ảnh độ nét cao và âm.", "Cáp nối tín hiệu có thể sản xuất với chiều dài vô tận.", "Có tính năng tương thích tuyệt đối với các máy in.", "Tín hiệu truyền đi mà không cần sử dụng điện năng."], correct: 0, explanation: "Ngành công nghiệp giải trí đòi hỏi hình ảnh 4K sắc nét đi liền với âm thanh vòm sống động. Chỉ có chuẩn HDMI thế hệ mới mới đủ dải băng thông để truyền cả hai loại dữ liệu khổng lồ này trên cùng một đường truyền." },
+        { id: "d2_17", type: "single", question: "Câu 17: Việc ứng dụng hệ thống nhà thông minh mang lại lợi ích nổi bật nào về vấn đề năng lượng?", options: ["Giúp giảm thiểu hao phí điện năng.", "Tự động sản xuất ra nguồn điện mới.", "Làm tăng thêm hoá đơn đóng tiền điện.", "Tự động chuyển đổi thành quang năng."], correct: 0, explanation: "Nhờ hệ thống cảm biến hồng ngoại, các thiết bị sẽ tự động ngắt (như tắt điều hòa, tắt đèn) khi phát hiện người dùng đã rời khỏi phòng, giúp tối ưu hóa và chống lãng phí năng lượng điện triệt để." },
+        { id: "d2_18", type: "single", question: "Câu 18: Tốc độ truyền tải dữ liệu của công nghệ Bluetooth thường phụ thuộc vào yếu tố kĩ thuật nào?", options: ["Các phiên bản và tiêu chuẩn hỗ trợ.", "Màu sắc lớp sơn của vỏ thiết bị số.", "Trọng lượng phần cứng của máy tính.", "Kích thước vật lí của màn hình chiếu."], correct: 0, explanation: "Mỗi phiên bản nâng cấp (Bluetooth 4.0, 5.0, 5.3) đi kèm với những đột phá về kĩ thuật nén và mở rộng băng thông. Chuẩn đời càng mới thì tốc độ truyền file và độ ổn định càng cao." },
+        { id: "d2_19", type: "single", question: "Câu 19: Lớp em tổ chức dã ngoại, để phát nhạc từ điện thoại cá nhân ra loa không dây di động, em chọn?", options: ["Bật và ghép đôi chức năng Bluetooth.", "Cắm trực tiếp dây mạng LAN vào loa.", "Gắn thẻ nhớ lưu trữ vào bên trong loa.", "Sử dụng kết nối cáp tín hiệu chuẩn VGA."], correct: 0, explanation: "Ngoại cảnh (dã ngoại) không có mạng dây điện và Internet. Sử dụng sóng vô tuyến Bluetooth nội bộ để ghép đôi điện thoại và loa kéo chính là giải pháp dã chiến thông dụng và tiện lợi nhất." },
+        { id: "d2_20", type: "single", question: "Câu 20: Em muốn tự cài đặt camera thông minh mới mua vào hệ thống mạng của phòng, thao tác đầu tiên là?", options: ["Cài đặt ứng dụng điều khiển di động.", "Mua thẻ nhớ gắn vào khe của máy ảnh.", "Rút toàn bộ dây cáp mạng LAN phòng.", "Cắm cáp màn hình VGA vào bộ phát."], correct: 0, explanation: "Camera thông minh là thiết bị dạng \"chờ cấu hình\". Người dùng bắt buộc phải dùng Smartphone tải đúng phần mềm của hãng (Ví dụ: Ezviz, Yoosee) để quét mã QR và truyền thông tin kết nối Wi-Fi cho thiết bị." },
+        { id: "d2_21", type: "single", question: "Câu 21: Khi phát bài giảng mà màn hình máy chiếu bị hiện tượng mất màu, kiểm tra cáp VGA em có thể thấy gì?", options: ["Đầu chân cắm cáp bị lỏng hoặc gãy cong.", "Dây cáp chưa kết nối được mạng cục bộ.", "Thiết bị điện thoại đang bị hết dung lượng.", "Chức năng phát sóng Bluetooth chưa được bật."], correct: 0, explanation: "Cáp VGA truyền tín hiệu tương tự (Analog) qua 15 chân kim vật lý chia cho ba màu (Đỏ, Lục, Lam). Nếu cắm bị lệch lỏng hoặc một chân kim bị gãy uốn cong, tín hiệu màu đó sẽ đứt, dẫn tới màn hình bị ố màu vàng/đỏ." },
+        { id: "d2_22", type: "single", question: "Câu 22: Để thiết lập quạt máy tự động bật vào lúc 10 giờ đêm mỗi ngày, em dùng chức năng gì trên điện thoại?", options: ["Thiết lập tính năng tự động hẹn giờ.", "Tắt tính năng kết nối mạng internet.", "Chạy khôi phục cài đặt gốc của máy.", "Bật trạng thái chế độ máy bay di động."], correct: 0, explanation: "Tính năng hẹn giờ (Timer/Schedule) trên ứng dụng (App) của nhà sản xuất sẽ lưu lịch trình vào bộ nhớ thiết bị/máy chủ. Đúng 10h đêm, hệ thống sẽ tự động cấp lệnh để đóng mạch cho quạt chạy." },
+        { id: "d2_23", type: "single", question: "Câu 23: Trong lúc tiến hành gửi ảnh qua Bluetooth bị báo lỗi \"Không thể kết nối thiết bị\", em nên ưu tiên thử gì?", options: ["Khởi động lại tính năng Bluetooth thiết bị.", "Rút toàn bộ dây cáp nguồn điện của máy ra.", "Đổi mật khẩu cấu hình của mạng Wi-Fi phòng.", "Cài đặt lại toàn bộ hệ điều hành vi tính."], correct: 0, explanation: "Module thu phát sóng Bluetooth đôi khi bị treo do xung đột hệ thống phần mềm tạm thời. Thao tác tắt đi và bật lại (Reset Bluetooth) trên điện thoại thường khắc phục ngay được lỗi vặt này." },
+        { id: "d2_24", type: "single", question: "Câu 24: Nếu nhà trường đổi mật khẩu Wi-Fi của phòng thực hành, các ổ cắm điện thông minh đang dùng sẽ bị sao?", options: ["Sẽ bị ngắt kết nối với ứng dụng điều khiển.", "Vẫn hoạt động bình thường như chưa có gì.", "Tự động thông minh nhận diện mật khẩu mới.", "Tự động chuyển qua dùng đường cáp vật lí."], correct: 0, explanation: "Ổ cắm thông minh là một máy khách (Client) lệ thuộc hoàn toàn vào hệ thống Wi-Fi cũ. Đổi mật khẩu khiến thiết bị bị hệ thống mạng \"đá\" ra ngoài, lập tức dẫn đến trạng thái Ngoại tuyến (Offline) trên ứng dụng điều khiển." },
+        { id: "d2_25", type: "single", question: "Câu 25: Nhằm giúp các em trải nghiệm không gian môi trường 3D môn Sinh học, phòng Lab cần trang bị thêm gì?", options: ["Các thiết bị kính thực tế ảo thế hệ mới.", "Những chiếc bảng đen phấn trắng truyền thống.", "Hệ thống máy in văn bản trắng đen khổ A4.", "Những con chuột quang có dây dài hai mét."], correct: 0, explanation: "Kính thực tế ảo (VR Headset) có màn hình lập thể, theo dõi chuyển động đầu của học sinh để tái hiện lại các mô hình giải phẫu sinh học nổi lên sắc nét ngay trước mắt với tỉ lệ 1:1." },
+        { id: "d2_26", type: "single", question: "Câu 26: Em muốn dùng điện thoại mở hệ thống khoá cửa từ xa cho bạn vào phòng, khoá cửa đó bắt buộc phải có gì?", options: ["Có khả năng kết nối với mạng Internet.", "Sử dụng công nghệ tấm nền màn hình LED.", "Tích hợp sẵn cổng nhận chuẩn cáp HDMI.", "Có khả năng kích hoạt chế độ Extend."], correct: 0, explanation: "Khóa cửa vật lý thông thường không hiểu lệnh kỹ thuật số. Nó phải được lắp thêm module kết nối Internet (thông qua Wi-Fi hoặc Zigbee) để biến thành Smart Lock, giao tiếp trực tiếp với điện thoại của em từ xa." },
+        { id: "d2_27", type: "single", question: "Câu 27: Để tự động ghi lại số bước chân và nhịp tim trong tiết Thể dục, học sinh có thể đeo thiết bị số nào dưới đây?", options: ["Thiết bị vòng đeo tay thông minh di động.", "Chiếc máy tính xách tay cá nhân loại nhẹ.", "Một chiếc tai nghe không dây dòng nhỏ gọn.", "Loại kính thực tế ảo bao trùm toàn bộ mắt."], correct: 0, explanation: "Vòng đeo tay thông minh (Smartband) hoặc đồng hồ thông minh (Smartwatch) được tích hợp các cảm biến quang học áp sát da cổ tay và con quay hồi chuyển, có năng lực đo lường nhịp tim sinh học và đếm số bước di chuyển." },
+        { id: "d2_28", type: "single", question: "Câu 28: Trong phòng máy của cô Sinh, nếu máy chủ giáo viên muốn hiển thị bài hướng dẫn lên tất cả các màn hình tivi phụ treo trên tường, cổng kết nối nào thường được cắm từ bộ chia tín hiệu?", options: ["Cổng truyền phát tín hiệu độ nét cao HDMI.", "Cổng nhận giao tiếp chuẩn sóng Bluetooth.", "Cổng dùng để kết nối bàn phím rời USB.", "Cổng tròn dùng cắm giắc âm thanh loại 3.5."], correct: 0, explanation: "Với số lượng lớn màn hình Tivi hiện đại, người ta phải dùng hệ thống cáp HDMI cắm từ bộ chia (HDMI Splitter) để truyền hình ảnh và âm thanh sắc nét chất lượng cao, đồng bộ hóa cùng lúc từ máy tính cô Sinh." },
+
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Trường THPT Xây Dựng vừa tiến hành nâng cấp phòng thực hành với một hệ thống bảng tương tác cảm ứng cỡ lớn, thay thế cho bảng phấn thông thường. Bảng này dùng để kết nối hiển thị bài học với máy tính xách tay của giáo viên.", items: [
+            { id: "a", text: "a) Bảng tương tác cảm ứng được xếp vào nhóm thiết bị số đóng vai trò hiển thị và tương tác.", correct: true, expl: "Bảng tương tác là một thiết bị \"lai\". Nó vừa đóng vai trò thiết bị xuất để hiển thị hình ảnh (giống máy chiếu), vừa đóng vai trò thiết bị nhập để nhận tín hiệu chạm tay cảm ứng (như con chuột)." },
+            { id: "b", text: "b) Nhằm đảm bảo truyền tải hình ảnh có độ phân giải cao kèm theo âm thanh minh hoạ từ máy tính xách tay sang bảng, giáo viên có thể sử dụng cáp nối HDMI.", correct: true, expl: "Cáp HDMI (High-Definition Multimedia Interface) là chuẩn vật lý mạnh mẽ nhất hiện nay để tải cùng lúc cả hình ảnh độ nét cao và âm thanh đồng bộ mà không cần phải cắm dây âm thanh phụ." },
+            { id: "c", text: "c) Giáo viên nên chọn thiết lập chế độ PC Screen Only (chỉ hiện màn hình máy tính) trong Windows để học sinh có thể theo dõi được nội dung bài giảng trên bảng tương tác.", correct: false, expl: "Chế độ \"PC Screen Only\" sẽ yêu cầu Windows cắt toàn bộ tín hiệu hình ảnh xuất ra cổng kết nối ngoại vi. Nếu chọn chế độ này, bảng tương tác sẽ đen sì và học sinh không thể thấy gì cả." },
+            { id: "d", text: "d) Nếu cần phát trực tiếp một file ghi âm từ điện thoại cá nhân ra hệ thống loa gắn liền của bảng tương tác mà không dùng dây, giáo viên có thể sử dụng kết nối sóng vô tuyến Bluetooth.", correct: true, expl: "Đa số các bảng tương tác thông minh ngày nay đều tích hợp hệ thống Android nội bộ và module thu nhận sóng Bluetooth, cho phép điện thoại giáo viên ghép đôi không dây và truyền âm thanh siêu tốc." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Nhằm đảm bảo an ninh, chú Tuấn tiến hành lắp đặt một chiếc camera an ninh thông minh trước khu vực cổng nhà. Mẫu camera này không có màn hình hiển thị trực tiếp tích hợp sẵn nhưng có thể quan sát từ xa.", items: [
+            { id: "a", text: "a) Camera an ninh của nhà chú Tuấn hoàn toàn không thuộc nhóm thiết bị nhà thông minh vì nó được lắp đặt ở ngoài không gian cổng.", correct: false, expl: "Vị trí lắp đặt không quy định bản chất thiết bị. Miễn là nó được tích hợp cảm biến, vi điều khiển số và kết nối Internet để theo dõi từ xa, nó chính là một hệ thống thiết bị nhà thông minh (Smart Home)." },
+            { id: "b", text: "b) Chiếc camera này cần được thiết lập kết nối ổn định vào mạng Internet cục bộ (thông qua bộ phát Wi-Fi) để có thể liên tục gửi trạng thái và hình ảnh lên hệ thống đám mây.", correct: true, expl: "Camera cần hạ tầng Internet (đi qua các cục Router Wi-Fi) làm đường ống để truyền tải các đoạn video sắc nét thu được đẩy lên kho lưu trữ trực tuyến (Cloud Server) theo thời gian thực." },
+            { id: "c", text: "c) Do bề mặt camera không có phím bấm hay giao diện cảm ứng, chú Tuấn chỉ có thể thiết lập kết nối cho thiết bị lần đầu tiên bằng cách tháo thẻ nhớ bên trong ra và cắm vào một máy tính để bàn.", correct: false, expl: "Đây là một thao tác rất phức tạp và phi thực tế. Thiết lập cho camera thông minh thường được hiện thực hóa đơn giản bằng cách dùng Ứng dụng quản lý trên di động để quét mã QR in trên tem máy." },
+            { id: "d", text: "d) Trong lúc đang ngồi làm việc tại cơ quan (cách nhà 10 km), chú Tuấn hoàn toàn có thể bật sóng Bluetooth trên điện thoại để kết nối thẳng vào camera và xem hình ảnh người đứng trước cổng.", correct: false, expl: "Bluetooth là sóng kết nối cực ngắn (chỉ hoạt động trong khoảng 10 mét quanh thiết bị). Với khoảng cách địa lý 10 km, điện thoại chú Tuấn bắt buộc phải sử dụng mạng di động (4G/Wi-Fi) và dữ liệu đám mây để xem." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Cô Lê Huyền Sinh thiết lập một hệ thống ổ cắm điện thông minh để thử nghiệm việc lên lịch tự động bật nguồn và tắt nguồn máy chủ cung cấp dữ liệu thi trắc nghiệm trên nền tảng Hành Trình Số.", items: [
+            { id: "a", text: "a) Ổ cắm điện thông minh là một loại thiết bị số mang khả năng nhận lệnh và điều khiển tự động hoá từ xa.", correct: true, expl: "Bên trong cấu tạo vật lý, ổ cắm thông minh chứa chip điều khiển Wi-Fi. Con chip này có chức năng phân tích dòng lệnh từ không gian mạng và điều phối rơ-le để bật tắt dòng điện xoay chiều bên trong." },
+            { id: "b", text: "b) Theo chuẩn kĩ thuật, hệ thống điều khiển các thiết bị điện thông minh hoàn toàn không thể giao tiếp qua ứng dụng web mà bắt buộc người dùng phải mua bảng cảm ứng chuyên dụng gắn lên tường.", correct: false, expl: "Hệ sinh thái thông minh rất linh hoạt. Các lệnh điều khiển hoàn toàn có thể được nạp bằng bảng điện tử gắn tường, qua Ứng dụng trên di động, thao tác trên web, hoặc thậm chí là ra lệnh qua trợ lý ảo giọng nói." },
+            { id: "c", text: "c) Nếu kết nối mạng Internet tại nhà bị đứt hoàn toàn, ứng dụng điều khiển trên smartphone của cô Sinh vẫn có thể tải được cập nhật trạng thái mới nhất của hệ thống ổ cắm điện từ cơ sở dữ liệu trên Cloud.", correct: false, expl: "Cloud (Đám mây) là mạng lưới máy chủ nằm trên Internet toàn cầu. Nếu Router nhà cô bị mất mạng Internet, ổ cắm không thể gửi tín hiệu trạng thái của nó lên đám mây, ứng dụng trên điện thoại sẽ không tải được thông số mới." },
+            { id: "d", text: "d) Việc đăng kí ổ cắm thông minh vào tài khoản hệ thống đám mây (Cloud) đóng vai trò sống còn để thiết bị có thể tiếp nhận lệnh từ phần mềm điều khiển ở bất kì nơi nào có kết nối mạng.", correct: true, expl: "Không có máy chủ đám mây định tuyến ở giữa, Smartphone (sử dụng 4G ngoài đường) sẽ không thể biết vị trí địa chỉ IP nội bộ của ổ cắm ở nhà để giao tiếp. Tài khoản Cloud là chìa khóa kết nối của cả hai bên." }
+        ]}
+    ];
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

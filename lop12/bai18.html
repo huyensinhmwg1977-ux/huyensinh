@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Bài 18 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 18: THỰC HÀNH TỔNG HỢP THIẾT KẾ WEB </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_18'); // Cập nhật ref sang bài 18
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 18: THỰC HÀNH TỔNG HỢP) - ĐÃ FIX MÃ HÓA KÝ TỰ HTML VÀ CỐ ĐỊNH ĐÁP ÁN A
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Dự án trong bài học yêu cầu xây dựng gì?", options: ["A. Trang web giới thiệu câu lạc bộ nhà trường.", "B. Trang web quản lý điểm số của nhà trường.", "C. Trang web bán hàng trực tuyến cho nhà trường.", "D. Trang web chơi game giải trí cho nhà trường."], correct: 0, explanation: "Bài thực hành hướng tới việc tạo một trang web giới thiệu thông tin, hoạt động của các câu lạc bộ ngoại khóa trong trường học." },
+        { id: "d1_2", type: "single", question: "Câu 2: Tệp tin CSS chung thường được lưu với tên gì?", options: ["A. Tệp tin định dạng được lưu tên style css.", "B. Tệp tin định dạng được lưu tên index css.", "C. Tệp tin định dạng được lưu tên sport css.", "D. Tệp tin định dạng được lưu tên music css."], correct: 0, explanation: "Theo chuẩn thiết kế web thông dụng, tệp chứa các quy tắc định dạng chung cho toàn trang thường mang tên là style.css." },
+        { id: "d1_3", type: "single", question: "Câu 3: Trang chủ của website đóng vai trò quan trọng gì?", options: ["A. Chứa thông tin chung và liên kết trang con.", "B. Chứa toàn bộ video bài giảng của giáo viên.", "C. Chứa danh sách mật khẩu của tất cả trò.", "D. Chứa duy nhất một hình ảnh lớn toàn màn."], correct: 0, explanation: "Trang chủ (index.html) là cánh cửa đầu tiên, cung cấp cái nhìn tổng quan và hệ thống điều hướng đến các trang thành viên." },
+        { id: "d1_4", type: "single", question: "Câu 4: Thẻ HTML nào thường dùng để tạo các khối?", options: ["A. Sử dụng thẻ div để tạo khối giao diện.", "B. Sử dụng thẻ img để tạo khối giao diện.", "C. Sử dụng thẻ br để tạo khối giao diện.", "D. Sử dụng thẻ em để tạo khối giao diện."], correct: 0, explanation: "Thẻ &lt;div&gt; (division) là thẻ khối (block-level) chuyên dụng để bao bọc, gom nhóm các phần tử tạo thành layout." },
+        { id: "d1_5", type: "single", question: "Câu 5: Tệp trang chủ của website thường được đặt tên gì?", options: ["A. Trang chủ luôn luôn mang tên là index html.", "B. Trang chủ luôn luôn mang tên là sport html.", "C. Trang chủ luôn luôn mang tên là intro html.", "D. Trang chủ luôn luôn mang tên là style html."], correct: 0, explanation: "Máy chủ web luôn tự động tìm kiếm tệp tin có tên index.html làm trang mặc định khi truy cập vào thư mục website." },
+        { id: "d1_6", type: "single", question: "Câu 6: Bố cục phần đầu trang (header) thường gồm những gì?", options: ["A. Gồm có ảnh biểu ngữ và các câu khẩu hiệu.", "B. Gồm có danh sách dài các bài viết mới.", "C. Gồm có thông tin bản quyền và địa chỉ.", "D. Gồm có danh sách thành viên của câu lạc bộ."], correct: 0, explanation: "Phần Header thường đặt Banner lớn, Logo và Slogan để gây ấn tượng mạnh ngay khi người dùng truy cập." },
+        { id: "d1_7", type: "single", question: "Câu 7: Để chia đều 3 ô, độ rộng mỗi ô là?", options: ["A. Mỗi ô chiếm ba mươi ba phần trăm trang.", "B. Mỗi ô chiếm năm mươi phần trăm trang web.", "C. Mỗi ô chiếm một trăm phần trăm trang web.", "D. Mỗi ô chiếm hai mươi lăm phần trăm trang."], correct: 0, explanation: "Để chia 3 phần đều nhau trên một hàng 100%, mỗi khối sẽ được gán thuộc tính width xấp xỉ 33.33%." },
+        { id: "d1_8", type: "single", question: "Câu 8: Các trang thành viên nên có đặc điểm chung gì?", options: ["A. Tuân theo một phong cách trình bày chung nhất.", "B. Sử dụng các phông nền hoàn toàn khác biệt nhau.", "C. Tuyệt đối không dùng chung một tệp định dạng.", "D. Chỉ chứa toàn văn bản mà không dùng ảnh."], correct: 0, explanation: "Sự đồng nhất về giao diện (UI) giữa trang chủ và trang con tạo trải nghiệm chuyên nghiệp, thống nhất cho người dùng." },
+        { id: "d1_9", type: "single", question: "Câu 9: Để các khối div xếp ngang, ta cần tạo gì?", options: ["A. Cần tạo một lớp bao ngoài để chứa chúng.", "B. Cần tạo một thẻ hình ảnh để chứa chúng.", "C. Cần đổi toàn bộ thẻ div thành thẻ đoạn.", "D. Cần xóa hết tất cả các thẻ div đó đi."], correct: 0, explanation: "Ta cần một thẻ div cha (ví dụ class=\"row\") bao bọc bên ngoài và sử dụng display: flex để ép các thẻ con nằm ngang." },
+        { id: "d1_10", type: "single", question: "Câu 10: Tại sao nên dùng chung một tệp CSS (style.css)?", options: ["A. Giúp tạo phong cách đồng nhất cho toàn trang.", "B. Giúp trang web chạy được mà không cần mạng.", "C. Giúp bảo mật thông tin người dùng an toàn.", "D. Giúp tăng số lượng chữ trên trang web lên."], correct: 0, explanation: "Việc nhúng chung một tệp CSS giúp tái sử dụng mã, quản lý tập trung và đảm bảo mọi trang phụ đều chung một phong cách thiết kế." },
+        { id: "d1_11", type: "single", question: "Câu 11: Nếu không dùng lớp bao ngoài, các thẻ div sẽ?", options: ["A. Các khối tự động xếp theo chiều dọc trang.", "B. Các khối tự động xếp theo chiều ngang trang.", "C. Các khối tự động bị trình duyệt ẩn đi mất.", "D. Các khối tự động chèn lên nhau lộn xộn."], correct: 0, explanation: "Bản chất thẻ div là block-level element, tự động chiếm toàn bộ chiều ngang 100%, do đó chúng sẽ tự xếp chồng lên nhau theo chiều dọc." },
+        { id: "d1_12", type: "single", question: "Câu 12: Lớp Row trong bài học mang ý nghĩa logic gì?", options: ["A. Là một hàng ngang chứa các cột bên trong.", "B. Là một cột dọc chứa các hàng bên trong.", "C. Là một bảng chứa toàn bộ nội dung web.", "D. Là một hình ảnh làm phông nền toàn trang."], correct: 0, explanation: "Thuật ngữ 'Row' (hàng) là khái niệm thiết kế Grid, đóng vai trò như một container ôm trọn và dàn đều các phần tử con theo phương ngang." },
+        { id: "d1_13", type: "single", question: "Câu 13: Bố cục website cần được thực hiện vào lúc nào?", options: ["A. Phải lên ý tưởng trước khi bắt đầu viết mã.", "B. Phải lên ý tưởng sau khi hoàn thành xong mã.", "C. Phải lên ý tưởng sau khi đã đăng trang web.", "D. Không cần lên ý tưởng vì trình duyệt tự xếp."], correct: 0, explanation: "Việc phác thảo bố cục (Wireframe) là bước phân tích tiên quyết để hình dung cấu trúc khối trước khi bắt tay vào gõ dòng code HTML đầu tiên." },
+        { id: "d1_14", type: "single", question: "Câu 14: Việc chia nhiều ô trên cùng một hàng giúp gì?", options: ["A. Tạo sự cân đối hài hòa khi hiển thị web.", "B. Làm cho trang web tải chậm hơn rất nhiều.", "C. Che giấu bớt nội dung không cần thiết đi.", "D. Giảm dung lượng của các tệp tin hình ảnh."], correct: 0, explanation: "Chia lưới (Grid/Flex) giúp giao diện trở nên gọn gàng, cân xứng, tận dụng tối đa không gian trống trên màn hình lớn." },
+        { id: "d1_15", type: "single", question: "Câu 15: Trang biểu mẫu (form) thường được thêm vào để làm gì?", options: ["A. Để học sinh điền thông tin đăng ký tham gia.", "B. Để hiển thị kết quả các trận thi đấu bóng.", "C. Để phát trực tiếp video hoạt động câu lạc bộ.", "D. Để trình chiếu các bức ảnh hoạt động ngoại khóa."], correct: 0, explanation: "Form (Biểu mẫu) được dùng làm cầu nối thu thập dữ liệu nhập vào từ người dùng như: đăng ký, liên hệ, khảo sát..." },
+        { id: "d1_16", type: "single", question: "Câu 16: Các khối có cùng định dạng thì nên xử lý sao?", options: ["A. Cho chúng sử dụng chung một lớp thiết kế.", "B. Tạo cho mỗi khối một tệp thiết kế riêng.", "C. Dùng mã định danh id thay cho lớp class.", "D. Bỏ qua thiết kế để trang web tự động hiện."], correct: 0, explanation: "Thuộc tính class (lớp) được sinh ra để định nghĩa một khuôn mẫu CSS và áp dụng cho nhiều phần tử HTML giống nhau." },
+        { id: "d1_17", type: "single", question: "Câu 17: Banner của trang web thường có đặc điểm nhận diện gì?", options: ["A. Chữ rất to và có màu sắc rất nổi bật.", "B. Chữ rất nhỏ và nằm ẩn ở góc dưới.", "C. Chỉ chứa văn bản đen trắng không hình ảnh.", "D. Là một đoạn video dài một tiếng đồng hồ."], correct: 0, explanation: "Banner là biển quảng cáo của trang web nên cần có tiêu đề thật to, màu sắc tương phản mạnh kèm hình nền bắt mắt." },
+        { id: "d1_18", type: "single", question: "Câu 18: Tệp thethao.html và nghethuat.html đóng vai trò là gì?", options: ["A. Là các trang thành viên phụ của trang chủ.", "B. Là tệp cấu hình máy chủ của trang web.", "C. Là tệp định dạng màu sắc cho trang chủ.", "D. Là cơ sở dữ liệu lưu điểm học sinh trường."], correct: 0, explanation: "Đây là các trang con (subpages) tập trung đi sâu vào thông tin chi tiết của từng mảng chuyên biệt trong dự án." },
+        { id: "d1_19", type: "single", question: "Câu 19: Mã &lt;link rel=\"stylesheet\" href=\"style.css\"&gt; đặt ở tệp HTML để?", options: ["A. Nạp tệp định dạng giao diện cho trang web.", "B. Nạp tệp hình ảnh nền cho toàn trang web.", "C. Nạp tệp video trình chiếu cho toàn trang web.", "D. Nạp tệp âm thanh nền cho toàn trang web."], correct: 0, explanation: "Thẻ &lt;link&gt; là cú pháp chuẩn để nhúng file CSS rời bên ngoài (style.css) vào bên trong tài liệu HTML hiện tại." },
+        { id: "d1_20", type: "single", question: "Câu 20: Mã CSS .block_3 { width: 33.33%; float: left; } có tác dụng?", options: ["A. Chia khối rộng bằng một phần ba màn hình.", "B. Chia khối rộng bằng một phần hai màn hình.", "C. Chia khối rộng bằng một phần tư màn hình.", "D. Chia khối rộng bằng toàn bộ độ rộng màn."], correct: 0, explanation: "Lệnh float: left ép khối nổi về bên trái, kết hợp độ rộng 33.33% giúp tạo ra 3 cột song song trên một dòng 100%." },
+        { id: "d1_21", type: "single", question: "Câu 21: Mã &lt;div class=\"banner\"&gt; &lt;h1&gt;CLB TIN HỌC&lt;/h1&gt; &lt;/div&gt; tạo ra gì?", options: ["A. Tạo khối biểu ngữ có chứa dòng tiêu đề.", "B. Tạo khối đoạn văn có chứa dòng tiêu đề.", "C. Tạo khối hình ảnh có chứa dòng tiêu đề.", "D. Tạo khối bảng biểu có chứa dòng tiêu đề."], correct: 0, explanation: "Mã tạo một thẻ khối div mang lớp banner, bên trong chứa thẻ tiêu đề cấp 1 (h1) biểu thị tên câu lạc bộ." },
+        { id: "d1_22", type: "single", question: "Câu 22: Để gộp lớp Row và lớp Slogan, ta viết HTML thế nào?", options: ["A. Viết là div class bằng row cách slogan nha.", "B. Viết là div class bằng row gạch slogan nha.", "C. Viết là div id bằng row cách slogan nha.", "D. Viết là div class bằng row phẩy slogan nha."], correct: 0, explanation: "HTML hỗ trợ áp dụng nhiều lớp cho một phần tử bằng cách dùng dấu cách, cú pháp chuẩn: class=\"row slogan\"." },
+        { id: "d1_23", type: "single", question: "Câu 23: Mã CSS .banner { background-image: url('bg.jpg'); } thiết lập điều gì?", options: ["A. Lấy tệp ảnh bg jpg làm hình nền khối.", "B. Đổi màu chữ của khối sang thành màu đỏ.", "C. Xóa bỏ hình nền mặc định của khối đó.", "D. Lấy tệp ảnh bg jpg làm viền của khối."], correct: 0, explanation: "Thuộc tính background-image dùng hàm url() để tải bức ảnh bg.jpg và phủ nó làm hình nền đằng sau khối banner." },
+        { id: "d1_24", type: "single", question: "Câu 24: Lệnh CSS .content { display: flex; } giúp thẻ Row làm gì?", options: ["A. Giúp các khối con bên trong nằm hàng ngang.", "B. Giúp các khối con bên trong nằm hàng dọc.", "C. Giúp các khối con bên trong biến mất luôn.", "D. Giúp các khối con bên trong phóng to lên."], correct: 0, explanation: "Công nghệ Flexbox (display: flex) biến thẻ cha thành trục tọa độ linh hoạt, ép các thẻ con bên trong tự động dàn xếp theo chiều ngang." },
+        { id: "d1_25", type: "single", question: "Câu 25: Cho HTML &lt;a href=\"thethao.html\"&gt;CLB Thể thao&lt;/a&gt;. Tác dụng là gì?", options: ["A. Tạo đường dẫn chuyển sang trang web thể thao.", "B. Tạo khối hình ảnh của câu lạc bộ bóng.", "C. Đổi màu sắc đoạn văn bản thành màu xanh.", "D. Chèn tệp âm thanh vào trang web câu lạc bộ."], correct: 0, explanation: "Thẻ &lt;a&gt; (anchor) kết hợp thuộc tính href tạo ra một liên kết siêu văn bản. Khi nhấp vào chữ, trình duyệt sẽ nhảy đến trang thethao.html." },
+        { id: "d1_26", type: "single", question: "Câu 26: Mã CSS .row { width: 100%; clear: both; } có tác dụng?", options: ["A. Hàng chứa bao trọn toàn bộ chiều ngang trang.", "B. Hàng chứa chỉ chiếm một nửa chiều ngang trang.", "C. Hàng chứa tự động đổi màu sắc sang đen.", "D. Hàng chứa chèn lên các phần tử nằm trên."], correct: 0, explanation: "Width 100% giúp hàng giãn tối đa. Lệnh clear: both được dùng để ngắt hiệu ứng trôi nổi (float) từ các khối phía trước, tránh vỡ layout." },
+        { id: "d1_27", type: "single", question: "Câu 27: Để chia phần nội dung thành 2 cột đều nhau, chọn CSS?", options: ["A. Thiết lập chiều rộng cột bằng năm mươi phần.", "B. Thiết lập chiều rộng cột bằng ba ba phần.", "C. Thiết lập chiều rộng cột bằng hai lăm phần.", "D. Thiết lập chiều rộng cột bằng mười lăm phần."], correct: 0, explanation: "Để chia đôi (50-50), mỗi cột sẽ được gán thuộc tính width: 50% trong CSS." },
+        { id: "d1_28", type: "single", question: "Câu 28: Đoạn mã &lt;div id=\"footer\"&gt;Bản quyền 2026&lt;/div&gt; nằm ở vị trí nào?", options: ["A. Nằm ở phần dưới cùng của trang giao diện.", "B. Nằm ở phần trên cùng của trang giao diện.", "C. Nằm ở ngay giữa trung tâm của trang web.", "D. Nằm ở trong cột danh mục bên tay trái."], correct: 0, explanation: "Footer (chân trang) là thành phần chốt lại trang web, chứa thông tin bản quyền và nằm ở vị trí thấp nhất của giao diện." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Đội ngũ truyền thông của Đoàn trường đang xây dựng trang chủ cho website \"Nhịp sống Học đường\".<br>Trưởng nhóm yêu cầu phần Header (đầu trang) phải có một ảnh bìa lớn (banner), và ngay bên dưới là 3 khối vuông nhỏ chứa 3 câu khẩu hiệu (slogan) nằm ngang hàng nhau.<br><div class=\"html-code-block\">/* Tệp style.css */<br>body { margin: 0; font-family: Arial, sans-serif; }<br>.banner {<br>&nbsp;&nbsp;background-image: url('truonghoc.jpg'); height: 300px;<br>&nbsp;&nbsp;text-align: center; color: white; padding-top: 50px;<br>}<br>.row { display: flex; width: 100%; background-color: #f1f1f1; }<br>.block_3 { width: 33.33%; padding: 20px; text-align: center; border-right: 1px solid #ccc; }<br><br>&lt;div class=\"banner\"&gt;<br>&nbsp;&nbsp;&lt;h1&gt;NHỊP SỐNG HỌC ĐƯỜNG&lt;/h1&gt;<br>&lt;/div&gt;<br>&lt;div class=\"row slogan-area\"&gt;<br>&nbsp;&nbsp;&lt;div class=\"block_3\"&gt;Sáng tạo&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"block_3\"&gt;Năng động&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"block_3\"&gt;Hội nhập&lt;/div&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Trong thiết kế website theo chuẩn, thẻ &lt;div&gt; được sử dụng để tạo ra các khối nội dung độc lập nhằm dễ dàng định dạng bố cục.", correct: true, expl: "Thẻ div là thẻ khối cơ bản, cho phép lập trình viên phân chia các vùng không gian độc lập để định dạng thông qua CSS." },
+            { id: "b", text: "b) (TH) Theo bản chất của HTML, nếu không có lớp .row với thuộc tính sắp xếp (như display: flex; hoặc float), 3 khối \"Sáng tạo\", \"Năng động\", \"Hội nhập\" sẽ tự động xếp chồng lên nhau theo chiều dọc.", correct: true, expl: "Do div là block-level, nếu không có lệnh dàn trang (flex/float), chúng tự động đẩy nhau xuống hàng xếp chồng lên nhau." },
+            { id: "c", text: "c) (VD) Khối chứa chữ \"NHỊP SỐNG HỌC ĐƯỜNG\" sẽ có hình nền là tệp ảnh truonghoc.jpg và chiều cao của khối này được thiết lập đúng 300 pixel.", correct: true, expl: "Trong CSS của .banner, có khai báo background-image lấy ảnh truonghoc.jpg và height: 300px chính xác." },
+            { id: "d", text: "d) (VD) Để 3 khối khẩu hiệu nằm đều nhau trên một hàng ngang, thuộc tính width: 33.33% đã chia tổng độ rộng trang web (100%) thành 3 phần bằng nhau chính xác tuyệt đối.", correct: true, expl: "Mã .block_3 sử dụng width: 33.33% giúp chia tỉ lệ 1/3 không gian cho mỗi ô nằm trên hàng (khi dùng flexbox)." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Câu lạc bộ Khoa học đang cần tạo thêm trang web phụ khoahoc.html từ mẫu trang chủ index.html.<br>Để không phải mất công thiết kế lại màu sắc và kiểu chữ, các bạn lập trình viên tiến hành liên kết trang phụ này vào tệp định dạng chung.<br><div class=\"html-code-block\">/* Tệp style.css dùng chung */<br>.header-title { color: darkblue; font-size: 24px; text-transform: uppercase; }<br>.content-box { margin: 15px; padding: 15px; background: #e9ecef; }<br>.footer { text-align: center; font-size: 12px; color: gray; }<br><br>&lt;head&gt;<br>&nbsp;&nbsp;&lt;link rel=\"stylesheet\" href=\"style.css\"&gt;<br>&lt;/head&gt;<br>&lt;body&gt;<br>&nbsp;&nbsp;&lt;div class=\"header-title\"&gt;CLB Khoa Học Máy Tính&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"content-box\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;Khám phá thế giới AI và Robotics.&lt;/p&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"footer\" style=\"color: black;\"&gt;Website được duy trì bởi nhóm Kĩ thuật&lt;/div&gt;<br>&lt;/body&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Tệp index.html thường được quy ước là trang chủ chứa thông tin bao quát, còn khoahoc.html đóng vai trò là một trang thành viên.", correct: true, expl: "index.html là trang gốc mở đầu tiên, các file html khác như khoahoc.html đóng vai trò là subpage chi tiết." },
+            { id: "b", text: "b) (TH) Thẻ &lt;link rel=\"stylesheet\" href=\"style.css\"&gt; có chức năng tải trực tiếp một đoạn video giới thiệu vào nền trang web khoa học.", correct: false, expl: "Thẻ link này dùng để tải bộ mã CSS định dạng, không hề có chức năng tải và phát tệp video âm thanh." },
+            { id: "c", text: "c) (VD) Khối div chứa câu \"Khám phá thế giới AI và Robotics.\" sẽ có lề ngoài (margin) và lề trong (padding) đều là 15 pixel, cùng với nền màu xám nhạt (#e9ecef).", correct: true, expl: "Lớp .content-box định nghĩa rõ ràng margin: 15px; padding: 15px; background: #e9ecef (xám nhạt)." },
+            { id: "d", text: "d) (VD) Dòng chữ \"Website được duy trì bởi nhóm Kĩ thuật\" nằm ở cuối trang sẽ hiển thị màu xám (gray) vì trình duyệt ưu tiên lấy định dạng từ tệp CSS chung style.css hơn là mã style viết trực tiếp trong thẻ.", correct: false, expl: "Sai, nguyên tắc CSS là Inline-style (mã viết trực tiếp trong thẻ) có mức ưu tiên cao nhất, nên chữ sẽ có màu đen (black) chứ không phải xám (gray)." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Ban tổ chức sự kiện \"Gala Chào Tân Học Sinh\" muốn thiết kế phần nội dung chính của trang web chia thành 2 cột: Cột bên trái hiển thị danh sách các tiết mục văn nghệ, cột bên phải hiển thị bảng form điền thông tin đăng ký vé.<br><div class=\"html-code-block\">/* Trích đoạn CSS chia cột */<br>.main-content { display: flex; max-width: 1200px; margin: auto; }<br>.left-col { width: 60%; padding: 20px; background-color: #fff3cd; }<br>.right-col { width: 40%; padding: 20px; background-color: #d4edda; }<br>input[type=\"text\"] { width: 100%; margin-bottom: 10px; }<br><br>&lt;div class=\"main-content\"&gt;<br>&nbsp;&nbsp;&lt;div class=\"left-col\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;h2&gt;Danh sách Tiết mục&lt;/h2&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;ul&gt;&lt;li&gt;Nhảy hiện đại 12A1&lt;/li&gt;&lt;li&gt;Hát đơn ca 10A5&lt;/li&gt;&lt;/ul&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"right-col\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;h2&gt;Đăng ký nhận vé&lt;/h2&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;form&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;input type=\"text\" placeholder=\"Nhập tên của bạn\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;button&gt;Đăng ký ngay&lt;/button&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/form&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Trong dự án, ngoài việc cung cấp thông tin, lập trình viên có thể tạo thêm các trang biểu mẫu (form) để thu thập dữ liệu người dùng (như tên, lớp, câu hỏi...).", correct: true, expl: "Thẻ &lt;form&gt; là công cụ mạnh mẽ dùng để tạo các ô điền dữ liệu tương tác 2 chiều với người dùng." },
+            { id: "b", text: "b) (TH) Việc phân chia tỷ lệ 60% và 40% cho hai cột giúp tổng độ rộng nội dung luôn nằm gọn trong 100% diện tích của hàng chứa, tạo sự cân đối.", correct: true, expl: "Hai thông số 60% và 40% cộng lại đúng bằng 100%, lấp đầy hoàn hảo khoảng trống của thẻ cha .main-content mà không bị vỡ layout." },
+            { id: "c", text: "c) (VD) Cột danh sách tiết mục (cột trái) sẽ chiếm diện tích nhỏ hơn cột biểu mẫu đăng ký (cột phải) do lớp .left-col đang cài đặt width: 60%.", correct: false, expl: "Cột trái 60% lớn hơn cột phải 40%, do đó nó chiếm không gian RỘNG HƠN chứ không phải nhỏ hơn." },
+            { id: "d", text: "d) (VD) Thanh nhập tên (input) bên cột phải sẽ tự động giãn dài ra, chiếm trọn 100% độ rộng của khối .right-col nhờ dòng lệnh CSS tương ứng.", correct: true, expl: "Dòng CSS input[type=\"text\"] { width: 100%; } ép ô điền chữ tự động giãn ra sát lề lấp kín cột 40% bên phải." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Đâu là tệp tin đóng vai trò trang chủ?", options: ["A. Tệp tin mang tên mặc định là index html.", "B. Tệp tin mang tên mặc định là sport html.", "C. Tệp tin mang tên mặc định là music html.", "D. Tệp tin mang tên mặc định là style css."], correct: 0, explanation: "Trình duyệt và máy chủ luôn tìm kiếm index.html đầu tiên làm trang chính (home page)." },
+        { id: "d2_2", type: "single", question: "Câu 2: Tệp chứa các mã định dạng cho web là?", options: ["A. Đó chính là tệp định dạng mang tên style.", "B. Đó chính là tệp văn bản mang tên index.", "C. Đó chính là tệp hình ảnh mang tên banner.", "D. Đó chính là tệp âm thanh mang tên media."], correct: 0, explanation: "Tệp style.css là kho lưu trữ toàn bộ các quy tắc trang trí, màu sắc, bố cục cho website." },
+        { id: "d2_3", type: "single", question: "Câu 3: Thẻ HTML cơ bản nào dùng chia khối web?", options: ["A. Dùng thẻ div bao bọc các nội dung lại.", "B. Dùng thẻ p bao bọc các nội dung lại.", "C. Dùng thẻ h1 bao bọc các nội dung lại.", "D. Dùng thẻ img bao bọc các nội dung lại."], correct: 0, explanation: "Thẻ &lt;div&gt; là viên gạch cơ bản nhất để xây dựng lên cấu trúc các khối hộp trên layout HTML." },
+        { id: "d2_4", type: "single", question: "Câu 4: Theo bài học, website ngoại khóa gồm những trang?", options: ["A. Một trang chủ và nhiều trang của thành viên.", "B. Chỉ duy nhất một trang chứa toàn bộ thông.", "C. Một trang đăng nhập và một trang quản lý.", "D. Một trang văn bản và một trang hình ảnh."], correct: 0, explanation: "Một website hoàn chỉnh thường có sơ đồ gồm 1 trang chủ (index) làm tâm điểm liên kết tới nhiều trang con chi tiết." },
+        { id: "d2_5", type: "single", question: "Câu 5: Phần trên cùng của một trang web gọi là?", options: ["A. Phần đó được gọi là phần đầu trang web.", "B. Phần đó được gọi là phần cuối trang web.", "C. Phần đó được gọi là phần thân trang web.", "D. Phần đó được gọi là phần menu dọc web."], correct: 0, explanation: "Khu vực trên cùng (Header) thường được tận dụng để đặt banner, logo và thanh điều hướng menu." },
+        { id: "d2_6", type: "single", question: "Câu 6: Thành phần slogan trên website mang ý nghĩa gì?", options: ["A. Là những câu khẩu hiệu ngắn gọn ý nghĩa.", "B. Là tên của tệp tin định dạng giao diện.", "C. Là một bức ảnh lớn nằm dưới cùng trang.", "D. Là đoạn mã lập trình của trình duyệt web."], correct: 0, explanation: "Slogan là các đoạn text (khẩu hiệu) ngắn gọn để truyền tải nhanh thông điệp cốt lõi của câu lạc bộ." },
+        { id: "d2_7", type: "single", question: "Câu 7: Để chia màn hình thành 2 nửa, width bằng?", options: ["A. Thiết lập chiều rộng bằng năm mươi phần trăm.", "B. Thiết lập chiều rộng bằng ba mươi phần trăm.", "C. Thiết lập chiều rộng bằng một trăm phần trăm.", "D. Thiết lập chiều rộng bằng hai lăm phần trăm."], correct: 0, explanation: "Lấy 100% chia đôi, ta gán thuộc tính width: 50% cho mỗi khối để chúng chiếm nửa màn hình." },
+        { id: "d2_8", type: "single", question: "Câu 8: Các trang thành viên nên có liên kết tới?", options: ["A. Nên chứa liên kết trỏ về tệp định dạng.", "B. Nên chứa liên kết trỏ về các máy in.", "C. Nên chứa liên kết trỏ về hệ điều hành.", "D. Nên chứa liên kết trỏ về phần cứng máy."], correct: 0, explanation: "Để các trang phụ có chung diện mạo với trang chủ, bắt buộc chúng phải có thẻ &lt;link&gt; trỏ chung về một file CSS định dạng." },
+        { id: "d2_9", type: "single", question: "Câu 9: Chức năng chính của biểu mẫu (form) là gì?", options: ["A. Để học sinh điền dữ liệu gửi lên mạng.", "B. Để tự động phát nhạc khi mở trang web.", "C. Để thay đổi màu sắc của toàn bộ chữ.", "D. Để chuyển văn bản thành âm thanh giọng nói."], correct: 0, explanation: "Form đóng vai trò thu thập Input (tên, email, tin nhắn) của người dùng để lưu trữ và xử lý." },
+        { id: "d2_10", type: "single", question: "Câu 10: Điểm lợi ích lớn nhất khi sử dụng style.css?", options: ["A. Đồng bộ hóa phong cách cho toàn bộ trang.", "B. Tăng dung lượng lưu trữ của máy chủ lên.", "C. Ẩn toàn bộ văn bản của trang web đi.", "D. Ngăn chặn virus xâm nhập vào máy tính cá."], correct: 0, explanation: "Quản lý CSS tập trung giúp tiết kiệm thời gian sửa code, chỉ cần sửa 1 file style.css thì toàn bộ website sẽ thay đổi theo." },
+        { id: "d2_11", type: "single", question: "Câu 11: Bản chất của khối div khi hiển thị là?", options: ["A. Khối hiển thị chiếm trọn chiều ngang màn hình.", "B. Khối hiển thị tự động co lại rất nhỏ.", "C. Khối hiển thị chèn ngang vào dòng văn bản.", "D. Khối hiển thị luôn luôn nằm ở góc phải."], correct: 0, explanation: "Thẻ &lt;div&gt; sinh ra là phần tử cấp khối (Block-level), nó mặc định dãn rộng 100% lấp kín từ lề trái sang lề phải." },
+        { id: "d2_12", type: "single", question: "Câu 12: Tại sao cần lớp Row bao ngoài các khối?", options: ["A. Để ép các khối div nằm ngang hàng nhau.", "B. Để ép các khối div nằm dọc theo trang.", "C. Để đổi màu nền của tất cả khối div.", "D. Để xóa các khối div ra khỏi màn hình."], correct: 0, explanation: "Lớp Row kết hợp với công nghệ display:flex tạo thành bộ khung chứa giữ các khối con bên trong nằm thẳng hàng ngang." },
+        { id: "d2_13", type: "single", question: "Câu 13: Thiết kế layout (bố cục) cần thực hiện khi?", options: ["A. Tiến hành đầu tiên trước khi viết mã lệnh.", "B. Tiến hành sau cùng khi đã viết xong mã.", "C. Chỉ tiến hành khi gặp lỗi hệ thống web.", "D. Không bắt buộc phải thực hiện trong dự án."], correct: 0, explanation: "Bố cục (layout/wireframe) là xương sống. Cần phải vẽ thiết kế trước mới biết cách viết code HTML chia div cho chuẩn." },
+        { id: "d2_14", type: "single", question: "Câu 14: Việc đặt ảnh banner to ở đầu trang nhằm?", options: ["A. Gây ấn tượng mạnh ngay khi mở trang web.", "B. Tiết kiệm dung lượng mạng cho người truy cập.", "C. Chứa toàn bộ nội dung bài viết thật dài.", "D. Thay thế cho toàn bộ mã định dạng css."], correct: 0, explanation: "Header banner là ấn tượng thị giác đầu tiên, quyết định sự hứng thú của người truy cập đối với website." },
+        { id: "d2_15", type: "single", question: "Câu 15: Các khối slogan giống nhau nên được định dạng?", options: ["A. Bằng một lớp class dùng chung cho tất cả.", "B. Bằng các mã id khác nhau cho mỗi khối.", "C. Bằng cách viết mã trực tiếp vào thẻ html.", "D. Bằng cách bỏ trống không dùng mã định dạng."], correct: 0, explanation: "Thay vì lặp code, ta tạo 1 class (vd: .slogan-box) rồi gắn nó vào nhiều thẻ HTML để tái sử dụng giao diện." },
+        { id: "d2_16", type: "single", question: "Câu 16: Trang thethao.html khác index.html ở điểm cơ bản nào?", options: ["A. Thể thao chứa tin chi tiết thay vì chung.", "B. Thể thao không cần dùng mã định dạng html.", "C. Thể thao bắt buộc phải dùng hình ảnh đen.", "D. Thể thao là tệp tin cấu hình hệ thống."], correct: 0, explanation: "Index chứa tin tổng quan lướt qua mọi mảng, còn thethao chỉ tập trung sâu vào nội dung chuyên biệt về thể dục thể thao." },
+        { id: "d2_17", type: "single", question: "Câu 17: Các ô bằng nhau trên cùng một hàng tạo?", options: ["A. Tạo cảm giác cân đối và hài hòa chuyên.", "B. Tạo cảm giác lộn xộn và rất khó nhìn.", "C. Tạo ra lỗi hệ thống trên trình duyệt web.", "D. Tạo ra màn hình đen trắng không có màu."], correct: 0, explanation: "Sự phân chia toán học đối xứng trên Grid giúp giao diện trang web trông chuyên nghiệp và thuận mắt người dùng." },
+        { id: "d2_18", type: "single", question: "Câu 18: Phần Footer (cuối trang) thường chứa thông tin gì?", options: ["A. Bản quyền và các đường dẫn liên kết phụ.", "B. Tiêu đề lớn nhất của toàn bộ trang web.", "C. Các video hoạt động chính của câu lạc bộ.", "D. Biểu mẫu đăng ký tham gia thi đấu thể."], correct: 0, explanation: "Chân trang là khu vực để lại chữ ký (Copyright), thông tin liên hệ và bản đồ điều hướng phụ (Sitemap)." },
+        { id: "d2_19", type: "single", question: "Câu 19: Mã &lt;link rel=\"stylesheet\" href=\"style.css\"&gt; đặt trong thẻ nào?", options: ["A. Cú pháp này phải đặt ở trong thẻ head.", "B. Cú pháp này phải đặt ở trong thẻ body.", "C. Cú pháp này phải đặt ở trong thẻ div.", "D. Cú pháp này phải đặt ở trong thẻ footer."], correct: 0, explanation: "Theo chuẩn kiến trúc HTML, các tệp nhúng cấu hình ngoại vi (như CSS, Font) bắt buộc phải nằm ẩn bên trong thẻ &lt;head&gt;." },
+        { id: "d2_20", type: "single", question: "Câu 20: Mã CSS .col_2 { width: 50%; float: left; } có tác dụng?", options: ["A. Chia khối rộng bằng một nửa của màn hình.", "B. Chia khối rộng bằng một phần ba màn hình.", "C. Chia khối rộng bằng toàn bộ độ rộng màn.", "D. Chia khối rộng bằng một phần tư màn hình."], correct: 0, explanation: "Width 50% cắt đôi không gian theo chiều ngang, và float: left giúp 2 nửa này ôm gọn vào nhau tạo thành 2 cột." },
+        { id: "d2_21", type: "single", question: "Câu 21: Mã &lt;div class=\"footer\"&gt; &lt;p&gt;Liên hệ&lt;/p&gt; &lt;/div&gt; tạo ra khối gì?", options: ["A. Tạo khối phần chân trang chứa đoạn văn bản.", "B. Tạo khối phần đầu trang chứa biểu ngữ to.", "C. Tạo khối menu điều hướng ở cạnh bên trái.", "D. Tạo khối hình ảnh động nằm giữa màn hình."], correct: 0, explanation: "Tạo một khối div mang vai trò đóng làm chân trang, bên trong mang theo một đoạn văn (thẻ p) ghi chữ 'Liên hệ'." },
+        { id: "d2_22", type: "single", question: "Câu 22: HTML: &lt;div class=\"row block_3\"&gt; khai báo này có ý nghĩa?", options: ["A. Gắn phần tử vào cả hai lớp khác nhau.", "B. Gắn phần tử vào một lớp mang tên dài.", "C. Mã bị lỗi do cấm dùng dấu khoảng cách.", "D. Chỉ gắn phần tử vào lớp đứng ở đầu."], correct: 0, explanation: "Cú pháp dùng khoảng trắng trong thẻ class cho phép phần tử được thừa hưởng mã CSS trộn lẫn từ cả lớp 'row' và 'block_3'." },
+        { id: "d2_23", type: "single", question: "Câu 23: CSS .banner { color: yellow; text-align: center; } thiết lập gì?", options: ["A. Chữ màu vàng và tự động canh giữa khối.", "B. Nền màu vàng và tự động canh giữa khối.", "C. Viền màu vàng và tự động canh giữa khối.", "D. Chữ màu đỏ và tự động canh bên trái."], correct: 0, explanation: "Thuộc tính color định dạng mực viết chữ màu vàng, và text-align: center kéo toàn bộ chữ ra giữa tâm khối." },
+        { id: "d2_24", type: "single", question: "Câu 24: Lệnh .row { display: flex; } giúp xử lý vấn đề gì?", options: ["A. Ép các thẻ con nằm dàn đều hàng ngang.", "B. Ép các thẻ con nằm dọc theo màn hình.", "C. Xóa các thẻ con khỏi giao diện trang web.", "D. Phóng to các thẻ con lên gấp đôi kích."], correct: 0, explanation: "Flexbox là công nghệ căn lề thần thánh, giải quyết vấn đề trôi nổi lộn xộn bằng cách ép các thẻ div con vào khuôn nằm dọc hoặc ngang." },
+        { id: "d2_25", type: "single", question: "Câu 25: Cho mã: &lt;img src=\"logo.png\" width=\"100%\"&gt;. Ảnh sẽ hiện ra sao?", options: ["A. Trải dài bằng toàn bộ chiều rộng thẻ chứa.", "B. Trải dài bằng một nửa chiều rộng thẻ chứa.", "C. Hiển thị kích thước ban đầu của tệp ảnh.", "D. Bị biến dạng méo mó không thể nhìn rõ."], correct: 0, explanation: "Width 100% kích hoạt chế độ ảnh Responsive. Bức ảnh sẽ tự động phình to hoặc thu nhỏ cho vừa in khít với kích thước của thẻ hộp bọc ngoài nó." },
+        { id: "d2_26", type: "single", question: "Câu 26: Lệnh .content { padding: 20px; } thêm khoảng trống ở đâu?", options: ["A. Thêm khoảng cách lề bên trong của khối chứa.", "B. Thêm khoảng cách lề bên ngoài của khối chứa.", "C. Tăng độ dày đường viền lên hai mươi px.", "D. Tăng chiều cao của khối lên hai mươi px."], correct: 0, explanation: "Padding là miếng đệm lề TRONG, tạo khoảng không an toàn từ đường viền khối lùi sâu vào lõi chữ bên trong." },
+        { id: "d2_27", type: "single", question: "Câu 27: HTML: &lt;a href=\"index.html\"&gt;Về trang chủ&lt;/a&gt; làm chức năng gì?", options: ["A. Tạo một nút bấm để quay lại trang chính.", "B. Tạo một hình ảnh biểu tượng của ngôi nhà.", "C. Mở ra một tệp video giới thiệu trường học.", "D. Chuyển đổi định dạng văn bản thành màu đen."], correct: 0, explanation: "Dòng mã thiết lập một hyperlink, khi bấm vào văn bản sẽ lập tức chuyển hướng người dùng quay đầu về file index gốc." },
+        { id: "d2_28", type: "single", question: "Câu 28: Trong .block_3 { border-right: 1px solid gray; }, viền nằm đâu?", options: ["A. Chỉ kẻ một đường viền dọc ở bên phải.", "B. Chỉ kẻ một đường viền dọc ở bên trái.", "C. Chỉ kẻ một đường viền ngang ở phía trên.", "D. Kẻ đường viền bao quanh cả bốn cạnh khối."], correct: 0, explanation: "Từ khoá border-right giới hạn bút vẽ CSS chỉ được phép kẻ một vạch ngăn cách màu xám mảnh dẻ ở mép tay phải của khối." },
+        
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Đội tình nguyện Mùa Hè Xanh đang hoàn thiện trang chủ của đội.<br>Để tạo ấn tượng mạnh, phần đầu tiên của trang web sẽ là một tấm ảnh nền lớn có chứa dòng tiêu đề chữ trắng.<br><div class=\"html-code-block\">/* Tệp định dạng CSS của Đội Tình Nguyện */<br>.header-banner {<br>&nbsp;&nbsp;background-image: url('tinhnguyen.png');<br>&nbsp;&nbsp;background-size: cover; height: 400px;<br>&nbsp;&nbsp;display: flex; align-items: center; justify-content: center;<br>}<br>.header-banner h1 {<br>&nbsp;&nbsp;color: white; font-size: 45px; text-shadow: 2px 2px 5px black;<br>}<br><br>&lt;div class=\"header-banner\"&gt;<br>&nbsp;&nbsp;&lt;h1&gt;CHUNG TAY VÌ CỘNG ĐỒNG&lt;/h1&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Banner (biểu ngữ) là phần đồ họa lớn thường đặt ở phần đầu trang (header) để gây chú ý và truyền tải thông điệp chính.", correct: true, expl: "Banner là thuật ngữ chỉ các tấm áp phích/ảnh bìa lớn ở đầu website để thu hút sự chú ý của người truy cập." },
+            { id: "b", text: "b) (TH) Lớp .header-banner đang sử dụng thẻ div trong HTML, đây là một thẻ chuyên dùng để tạo hình ảnh có kích thước siêu nhỏ.", correct: false, expl: "Thẻ &lt;div&gt; dùng tạo các khối layout khổng lồ chứa các phần tử khác, không phải thẻ &lt;img&gt; dùng chuyên chèn hình ảnh nhỏ." },
+            { id: "c", text: "c) (VD) Theo đoạn mã CSS, chiều cao của khối banner này được cố định ở mức 400 pixel và ảnh nền tinhnguyen.png sẽ tự động kéo giãn phủ kín khối (cover).", correct: true, expl: "Đúng theo code: height: 400px; và background-size: cover; giúp ảnh bung to phủ kín diện tích khối." },
+            { id: "d", text: "d) (VD) Dòng chữ \"CHUNG TAY VÌ CỘNG ĐỒNG\" hiển thị trên web sẽ có màu đen bôi đậm, còn hiệu ứng bóng đổ (text-shadow) của nó sẽ có màu trắng để dễ đọc.", correct: false, expl: "Lệnh color: white làm chữ có màu Trắng, còn text-shadow quy định đổ bóng màu Đen (black). Mệnh đề bị nói ngược." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Nhóm làm báo mạng của trường thiết kế một danh mục hiển thị 4 câu lạc bộ (Cờ vua, Bơi lội, Điền kinh, Võ thuật) trên cùng một hàng ngang.<br>Mỗi câu lạc bộ nằm trong một ô vuông có viền và khoảng cách đều nhau.<br><div class=\"html-code-block\">/* CSS chia khối hiển thị */<br>.row-container { display: flex; width: 100%; justify-content: space-between; }<br>.club-box {<br>&nbsp;&nbsp;width: 23%; padding: 15px;<br>&nbsp;&nbsp;background-color: #f8f9fa; border: 1px solid #dee2e6;<br>&nbsp;&nbsp;border-radius: 5px; text-align: center;<br>}<br><br>&lt;div class=\"row-container\"&gt;<br>&nbsp;&nbsp;&lt;div class=\"club-box\"&gt;&lt;h3&gt;CLB Cờ Vua&lt;/h3&gt;&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"club-box\"&gt;&lt;h3&gt;CLB Bơi Lội&lt;/h3&gt;&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"club-box\"&gt;&lt;h3&gt;CLB Điền Kinh&lt;/h3&gt;&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"club-box\"&gt;&lt;h3&gt;CLB Võ Thuật&lt;/h3&gt;&lt;/div&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Để các trang con (ví dụ trang Bơi lội) sử dụng chung được lớp .club-box này, ta cần dùng thẻ &lt;link&gt; để nhúng tệp CSS vào các trang đó.", correct: true, expl: "Thẻ &lt;link rel=\"stylesheet\"&gt; là bắt buộc nếu muốn các file .html khác nhau chia sẻ chung một bộ code CSS." },
+            { id: "b", text: "b) (TH) Việc nhóm sử dụng một lớp CSS chung tên là .club-box cho cả 4 câu lạc bộ giúp tiết kiệm mã lệnh và đảm bảo tính đồng nhất về mặt giao diện.", correct: true, expl: "Sức mạnh của class là giúp tránh việc phải copy/paste lại code css 4 lần, giữ thiết kế đồng đều cho cả 4 ô." },
+            { id: "c", text: "c) (VD) Lớp .row-container sử dụng thuộc tính display: flex; nhằm mục đích ép 4 khối .club-box bên trong phải dàn đều nhau trên cùng một hàng ngang.", correct: true, expl: "Lệnh display: flex là công cụ bố cục hàng/cột, kết hợp với justify-content: space-between giúp 4 hộp chia khoảng cách đều nhau." },
+            { id: "d", text: "d) (VD) Mỗi khối .club-box chiếm chính xác 50% độ rộng của màn hình máy tính vì có tất cả 4 khối được liệt kê trong đoạn mã HTML.", correct: false, expl: "Trong CSS ghi rõ width: 23% cho mỗi hộp, không phải 50%. Bốn khối 23% vừa vặn nằm lọt trong khối tổng 100% (trừ đi khe hở)." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Tại trang Liên hệ của website, người thiết kế chia nội dung phần cuối trang (Footer) thành hai phần: Trái là địa chỉ trường, Phải là một biểu mẫu (form) nhỏ để học sinh gửi góp ý.<br><div class=\"html-code-block\">/* CSS cho Footer */<br>.footer-wrap { background-color: #343a40; color: white; padding: 40px 20px; display: flex; }<br>.col-info { width: 50%; padding-right: 20px; }<br>.col-form { width: 50%; }<br>.btn-submit { background-color: #28a745; color: white; padding: 10px 20px; border: none; }<br><br>&lt;div class=\"footer-wrap\"&gt;<br>&nbsp;&nbsp;&lt;div class=\"col-info\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;h4&gt;Thông tin liên hệ&lt;/h4&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;Trường THPT X, Thành phố Y.&lt;/p&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&nbsp;&nbsp;&lt;div class=\"col-form\"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;h4&gt;Gửi góp ý&lt;/h4&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;form&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;textarea rows=\"3\" style=\"width: 100%;\"&gt;&lt;/textarea&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;button class=\"btn-submit\"&gt;Gửi đi&lt;/button&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/form&gt;<br>&nbsp;&nbsp;&lt;/div&gt;<br>&lt;/div&gt;</div>", items: [
+            { id: "a", text: "a) (NB) Website nhà trường nên có một trang chủ và nhiều trang phụ (như Liên hệ, Thể thao) tuỳ thuộc vào nhu cầu phân chia thông tin.", correct: true, expl: "Kiến trúc trang web tiêu chuẩn bao gồm 1 trang mẹ làm nút giao thông và nhiều trang con chuyên biệt để người dùng dễ tra cứu." },
+            { id: "b", text: "b) (TH) Lớp .footer-wrap sử dụng mã màu #343a40 (một dạng màu tối) làm màu nền và chữ bên trong sẽ có màu trắng (white) để tạo độ tương phản cao.", correct: true, expl: "Cặp màu background: #343a40 (xám than tối) và color: white (trắng) tương trợ nhau tạo độ sắc nét, chống lóa cho Footer." },
+            { id: "c", text: "c) (VD) Cột hiển thị địa chỉ trường (col-info) sẽ rộng gấp đôi cột chứa biểu mẫu góp ý (col-form) do đã được lập trình chia tỷ lệ không đều nhau.", correct: false, expl: "Sai, cả hai class .col-info và .col-form đều được cấu hình CSS với thuộc tính width: 50%, tức là chia đều bằng nhau." },
+            { id: "d", text: "d) (VD) Nút bấm \"Gửi đi\" trong biểu mẫu sẽ có màu nền là xanh lá (#28a745), chữ màu trắng và không có đường viền xung quanh (border: none).", correct: true, expl: "Class .btn-submit có đủ 3 lệnh: background-color: #28a745, color: white, border: none khớp đúng với mô tả." }
+        ]}
+    ];
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
