@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+   /* Khối mã HTML: Chữ màu xanh đậm, to rõ, dễ nhìn */
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; /* Đổi sang màu xanh đậm theo yêu cầu */
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; /* Cỡ chữ code to hơn */
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 11: CHÈN ĐA PHƯƠNG TIỆN </h1>
+      <h2 class="text-lg font-bold text-blue-600 mb-3">Hành Trình Số - Mang tri thức đến mọi người</h2>
+           </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            // Đã cập nhật sang node lưu trữ của bài 11
+            scoresRef = database.ref('bxh_tin_12_11');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 11: CHÈN ĐA PHƯƠNG TIỆN)
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Thẻ nào sau đây được sử dụng để chèn ảnh vào trang web?", options: ["Thẻ html &lt;image&gt;", "Thẻ html &lt;img&gt;", "Thẻ html &lt;pic&gt;", "Thẻ html &lt;src&gt;"], correct: 1, explanation: "Trong ngôn ngữ HTML, thẻ tiêu chuẩn để nhúng hình ảnh là &lt;img&gt; (viết tắt của image). Các thẻ như &lt;image&gt; hay &lt;pic&gt; không tồn tại trong cấu trúc DOM hợp lệ." },
+        { id: "d1_2", type: "single", question: "Câu 2: Định dạng tệp ảnh nào sau đây được hỗ trợ hiển thị trực tiếp trên trang web?", options: ["Định dạng .png, .jpeg", "Định dạng .doc, .docx", "Định dạng .mp3, .flac", "Định dạng .mp4, .webm"], correct: 0, explanation: "Các trình duyệt web hiện đại hỗ trợ render trực tiếp các tệp đồ họa dạng Raster như .png, .jpeg (hoặc .jpg), .gif và .webp." },
+        { id: "d1_3", type: "single", question: "Câu 3: Thuộc tính nào là bắt buộc phải có khi sử dụng thẻ &lt;img&gt;?", options: ["Thuộc tính width", "Thuộc tính height", "Thuộc tính src", "Thuộc tính alt"], correct: 2, explanation: "Thuộc tính src (source - nguồn) là bắt buộc vì nó chứa đường dẫn chỉ định vị trí tệp ảnh để trình duyệt có thể tải về hiển thị." },
+        { id: "d1_4", type: "single", question: "Câu 4: Thẻ nào sau đây được sử dụng để chèn tệp âm thanh vào trang web?", options: ["Thẻ html &lt;audio&gt;", "Thẻ html &lt;sound&gt;", "Thẻ html &lt;music&gt;", "Thẻ html &lt;voice&gt;"], correct: 0, explanation: "HTML5 cung cấp thẻ &lt;audio&gt; chuyên dụng để xử lý và nhúng các luồng tín hiệu âm thanh vào trang web mà không cần dùng đến plugin của bên thứ ba." },
+        { id: "d1_5", type: "single", question: "Câu 5: Định dạng tệp âm thanh nào phổ biến được hầu hết trình duyệt hỗ trợ trực tiếp?", options: ["Định dạng .mp3, .wav", "Định dạng .mp4, .avi", "Định dạng .png, .gif", "Định dạng .pdf, .doc"], correct: 0, explanation: "MP3 là định dạng âm thanh nén có tổn hao phổ biến nhất, trong khi WAV là định dạng không nén, cả hai đều được hỗ trợ nguyên bản (native support) trên mọi trình duyệt hiện nay." },
+        { id: "d1_6", type: "single", question: "Câu 6: HTML sử dụng thẻ nào để chèn tệp tin video vào nội dung trang web?", options: ["Thẻ html &lt;video&gt;", "Thẻ html &lt;movie&gt;", "Thẻ html &lt;media&gt;", "Thẻ html &lt;flash&gt;"], correct: 0, explanation: "Tương tự như âm thanh, từ phiên bản HTML5, W3C đã đưa thẻ &lt;video&gt; vào danh sách thẻ chuẩn để phát trực tiếp các tệp hình ảnh động kèm âm thanh." },
+        { id: "d1_7", type: "single", question: "Câu 7: Khái niệm nào sau đây mô tả đúng nhất về khung nội tuyến (&lt;iframe&gt;)?", options: ["Khung nhìn chứa tài nguyên web khác", "Khung nhìn chứa tệp âm thanh nền", "Khung nhìn chứa bảng dữ liệu lớn", "Khung nhìn chứa danh sách chữ viết"], correct: 0, explanation: "Khung nội tuyến (Inline Frame) giống như một cửa sổ nhỏ được đục thủng trên trang web hiện tại, cho phép tải và hiển thị nguyên vẹn một trang web hoặc tài liệu khác từ bên ngoài vào." },
+        { id: "d1_8", type: "single", question: "Câu 8: HTML sử dụng thẻ nào để tạo ra một khung nội tuyến trong trang hiện tại?", options: ["Thẻ html &lt;iframe&gt;", "Thẻ html &lt;window&gt;", "Thẻ html &lt;frames&gt;", "Thẻ html &lt;object&gt;"], correct: 0, explanation: "Thẻ &lt;iframe&gt; là phần tử cấu trúc được sử dụng để khởi tạo khung nội tuyến. Kích thước và nguồn nạp sẽ được điều khiển bằng các thuộc tính đi kèm bên trong thẻ này." },
+        { id: "d1_9", type: "single", question: "Câu 9: Thẻ con nào dùng để chỉ định nhiều định dạng khác nhau cho tệp video hoặc audio?", options: ["Thẻ con là &lt;source&gt;", "Thẻ con là &lt;format&gt;", "Thẻ con là &lt;plugin&gt;", "Thẻ con là &lt;player&gt;"], correct: 0, explanation: "Do mỗi trình duyệt có thể hỗ trợ các bộ giải mã (codec) khác nhau, thẻ &lt;source&gt; được chèn bên trong thẻ mẹ (&lt;video&gt; hoặc &lt;audio&gt;) để cung cấp nhiều đường dẫn tệp dự phòng (.mp4, .webm, .ogg...)." },
+        { id: "d1_10", type: "single", question: "Câu 10: Nếu dung lượng tệp hình ảnh quá lớn thì sẽ gây ra vấn đề gì khi xem web?", options: ["Tải trang rất chậm khi mạng yếu", "Trang web bị lỗi định dạng cục bộ", "Trình duyệt không thể mở trang web", "Mã nguồn html bị tự động thay đổi"], correct: 0, explanation: "Dung lượng tệp lớn tiêu tốn nhiều băng thông. Ở điều kiện mạng kém, trình duyệt phải mất rất nhiều thời gian để tải xong gói dữ liệu, gây ra hiện tượng trang web load chậm, ảnh hưởng trải nghiệm người dùng." },
+        { id: "d1_11", type: "single", question: "Câu 11: Thuộc tính controls trong thẻ &lt;video&gt; có tác dụng chính là gì?", options: ["Hiển thị nút phát/tạm dừng và âm lượng", "Giúp tệp video tự động phát lại liên tục", "Làm cho video mở rộng toàn màn hình", "Hỗ trợ chỉnh sửa video trực tuyến nhanh"], correct: 0, explanation: "Việc thêm cờ 'controls' vào thẻ yêu cầu trình duyệt cung cấp bộ giao diện người dùng (UI) mặc định bao gồm: thanh trượt thời gian, nút Play/Pause và loa âm lượng." },
+        { id: "d1_12", type: "single", question: "Câu 12: Sử dụng thuộc tính autoplay cho tệp âm thanh sẽ dẫn đến hiện tượng gì?", options: ["Tự động phát nhạc ngay khi hiển thị trang", "Dừng phát nhạc khi người dùng đổi tab mới", "Tải sẵn bài nhạc vào bộ nhớ tạm của máy", "Lặp lại bản nhạc nền liên tục không ngừng"], correct: 0, explanation: "Thuộc tính 'autoplay' can thiệp vào vòng đời tải trang. Ngay khi dữ liệu âm thanh vừa được tải đủ để phát, trình duyệt sẽ tự động kích hoạt luồng âm thanh mà không cần người dùng nhấn nút." },
+        { id: "d1_13", type: "single", question: "Câu 13: Thuộc tính poster trong thẻ &lt;video&gt; được dùng để thực hiện chức năng gì?", options: ["Hiển thị một ảnh đại diện khi chưa chạy video", "Hiển thị văn bản thông báo khi lỗi tải video", "Hiển thị một logo nhỏ ở góc trên bên phải", "Hiển thị các đoạn quảng cáo ngắn tự động"], correct: 0, explanation: "Thuộc tính 'poster' đóng vai trò như một bức ảnh bìa (thumbnail). Bức ảnh này sẽ hiển thị che khung video trong khoảng thời gian tệp đang tải hoặc chờ người dùng bấm Play." },
+        { id: "d1_14", type: "single", question: "Câu 14: Nếu một hình ảnh bị lỗi hiển thị, thuộc tính alt sẽ giúp ích gì cho người dùng?", options: ["Cung cấp đoạn văn bản ngắn để thay thế ảnh", "Làm cho hình ảnh tự động thu nhỏ kích thước", "Bắt buộc trình duyệt phải tải lại ảnh liên tục", "Tự động mở ra một trang web hoàn toàn mới"], correct: 0, explanation: "Thuộc tính 'alt' (Alternative text) rất quan trọng trong thiết kế web. Khi liên kết ảnh bị gãy (lỗi 404), đoạn chữ này sẽ xuất hiện để người đọc biết được nội dung bức ảnh lẽ ra phải là gì." },
+        { id: "d1_15", type: "single", question: "Câu 15: Việc sử dụng đường dẫn tương đối khi chèn ảnh mang lại lợi ích thực tế nào?", options: ["Tránh bị lỗi liên kết khi di chuyển thư mục", "Tăng tốc độ tải trang web nhanh hơn rõ rệt", "Tiết kiệm dung lượng lưu trữ trên máy chủ web", "Nâng cao tính bảo mật cho toàn bộ mã nguồn"], correct: 0, explanation: "Đường dẫn tương đối tham chiếu tệp dựa trên vị trí của file HTML hiện tại. Khi bạn copy cả thư mục dự án sang một máy tính hay tên miền mới, các hình ảnh vẫn sẽ hiển thị mà không bị đứt gãy liên kết." },
+        { id: "d1_16", type: "single", question: "Câu 16: Nếu chỉ thiết lập thuộc tính width cho ảnh thì điều gì sẽ xảy ra với chiều còn lại?", options: ["Chiều cao tự động tính toán theo tỉ lệ ảnh gốc", "Chiều cao của ảnh bị kéo giãn ra tối đa", "Chiều cao mặc định đổi thành giá trị 100px", "Chiều cao của ảnh bị ẩn hoàn toàn khỏi màn hình"], correct: 0, explanation: "Thuật toán hiển thị của CSS Box Model rất thông minh. Khi bạn chỉ ép một chiều (chiều rộng width), nó sẽ tự động nội suy và điều chỉnh chiều cao (height) theo đúng tỉ lệ aspect-ratio của hình để không làm ảnh bị méo." },
+        { id: "d1_17", type: "single", question: "Câu 17: Khung nội tuyến thường được kết hợp với thẻ &lt;a&gt; nhằm mục đích gì?", options: ["Hiển thị nội dung trang liên kết ngay trong iframe", "Tạo một đường liên kết đè lên trên tệp video", "Tự động tải tệp mã nguồn html từ trên mạng về", "Xóa bỏ hoàn toàn đường viền mặc định của khung"], correct: 0, explanation: "Đây là kỹ thuật nhắm mục tiêu (Targeting). Bằng cách đặt tên (name) cho thẻ iframe và gọi tên đó trong thuộc tính target của thẻ &lt;a&gt;, nội dung của link sẽ không mở ở tab mới mà mở thẳng vào không gian của iframe đó." },
+        { id: "d1_18", type: "single", question: "Câu 18: Trình duyệt Google Chrome thường chặn chế độ tự động phát video trừ khi:", options: ["Có thêm thuộc tính tắt tiếng là muted", "Có thêm thuộc tính thay đổi chiều rộng width", "Có thêm thuộc tính thay đổi chiều cao height", "Có thêm thuộc tính liên kết ngoài trang web"], correct: 0, explanation: "Để chống làm phiền người dùng bằng âm thanh bất ngờ, chính sách Autoplay Policy của Chrome quy định: một video chỉ được phép tự động phát (autoplay) nếu nó được gán kèm thuộc tính 'muted' (tắt âm thanh hoàn toàn)." },
+        { id: "d1_19", type: "single", question: "Câu 19: Đoạn mã nào sau đây chèn ảnh với văn bản thay thế đúng cú pháp?", options: ["&lt;img src=\"anh.jpg\" alt=\"hình ảnh\"&gt;", "&lt;img url=\"anh.jpg\" alt=\"hình ảnh\"&gt;", "&lt;img hrf=\"anh.jpg\" alt=\"hình ảnh\"&gt;", "&lt;img file=\"anh.jpg\" alt=\"hình ảnh\"&gt;"], correct: 0, explanation: "Cú pháp chuẩn của W3C cho thẻ ảnh bắt buộc phải đi kèm với cặp thuộc tính lõi: 'src' để tải nguồn ảnh và 'alt' để cung cấp văn bản thay thế." },
+        { id: "d1_20", type: "single", question: "Câu 20: Đoạn mã nào sau đây chèn tệp video có hiển thị thanh điều khiển?", options: ["&lt;video src=\"video.mp4\" controls&gt;", "&lt;video src=\"video.mp4\" setting&gt;", "&lt;video src=\"video.mp4\" display&gt;", "&lt;video src=\"video.mp4\" buttons&gt;"], correct: 0, explanation: "Cờ 'controls' là một thuộc tính boolean. Khi nó xuất hiện trong thẻ &lt;video&gt;, hệ thống sẽ tự động vẽ ra thanh timeline tiến trình, nút bật tắt và thanh âm lượng." },
+        { id: "d1_21", type: "single", question: "Câu 21: Đoạn mã nào chèn tệp âm thanh và cho phép tự động phát nhạc?", options: ["&lt;audio src=\"nhac.mp3\" autoplay&gt;", "&lt;audio src=\"nhac.mp3\" playing&gt;", "&lt;audio src=\"nhac.mp3\" autostart&gt;", "&lt;audio src=\"nhac.mp3\" runnow&gt;"], correct: 0, explanation: "Giống với thẻ video, để âm thanh tự động chạy sau khi mã HTML load xong, ta chèn thêm thuộc tính boolean mang tên 'autoplay' vào bên trong phần tử &lt;audio&gt;." },
+        { id: "d1_22", type: "single", question: "Câu 22: Mã lệnh nào thiết lập kích thước chiều rộng của ảnh là 500 pixel?", options: ["&lt;img src=\"hoa.jpg\" width=\"500\"&gt;", "&lt;img src=\"hoa.jpg\" size=\"500\"&gt;", "&lt;img src=\"hoa.jpg\" wide=\"500\"&gt;", "&lt;img src=\"hoa.jpg\" area=\"500\"&gt;"], correct: 0, explanation: "Để khai báo kích cỡ chiều ngang cho thẻ vật lý trên HTML, ta dùng thuộc tính 'width'. Giá trị '500' được truyền vào sẽ mặc định được trình duyệt hiểu là 500 px (điểm ảnh)." },
+        { id: "d1_23", type: "single", question: "Câu 23: Cú pháp nào sau đây là đúng để chèn một khung nội tuyến vào trang?", options: ["&lt;iframe src=\"trangweb.html\"&gt;&lt;/iframe&gt;", "&lt;iframe url=\"trangweb.html\"&gt;&lt;/iframe&gt;", "&lt;iframe hrf=\"trangweb.html\"&gt;&lt;/iframe&gt;", "&lt;iframe web=\"trangweb.html\"&gt;&lt;/iframe&gt;"], correct: 0, explanation: "Cấu trúc DOM yêu cầu khai báo mở và đóng đầy đủ cho thẻ iframe. Thuộc tính 'src' được dùng để nhập đường dẫn URL của trang web con cần nhúng vào khung." },
+        { id: "d1_24", type: "single", question: "Câu 24: Đoạn mã nào chèn video và cung cấp hình ảnh hiển thị ban đầu khi chưa chạy?", options: ["&lt;video src=\"clip.mp4\" poster=\"anh.jpg\"&gt;", "&lt;video src=\"clip.mp4\" cover=\"anh.jpg\"&gt;", "&lt;video src=\"clip.mp4\" image=\"anh.jpg\"&gt;", "&lt;video src=\"clip.mp4\" backg=\"anh.jpg\"&gt;"], correct: 0, explanation: "Thuộc tính 'poster' là một tính năng đặc biệt của thẻ video, cho phép lập trình viên dán một tấm ảnh tĩnh lên màn hình player chờ cho đến khi video thực sự được khởi động." },
+        { id: "d1_25", type: "single", question: "Câu 25: Đoạn mã nào tạo liên kết mở trang web đích ngay bên trong khung iframe?", options: ["&lt;a href=\"tin_tuc.html\" target=\"khung_nho\"&gt;", "&lt;a href=\"tin_tuc.html\" window=\"khung_nho\"&gt;", "&lt;a href=\"tin_tuc.html\" iframe=\"khung_nho\"&gt;", "&lt;a href=\"tin_tuc.html\" opento=\"khung_nho\"&gt;"], correct: 0, explanation: "Trong HTML, thuộc tính 'target' của thẻ &lt;a&gt; dùng để định hướng kết quả trả về. Nếu đặt giá trị target trùng khớp với tên (name) của một iframe, trang web sẽ được bơm thẳng vào bên trong iframe đó." },
+        { id: "d1_26", type: "single", question: "Câu 26: Cách dùng thẻ &lt;source&gt; nào sau đây đúng để chèn tệp tin âm thanh?", options: ["&lt;audio&gt;&lt;source src=\"bai_hat.mp3\"&gt;&lt;/audio&gt;", "&lt;audio&gt;&lt;file src=\"bai_hat.mp3\"&gt;&lt;/audio&gt;", "&lt;audio&gt;&lt;link src=\"bai_hat.mp3\"&gt;&lt;/audio&gt;", "&lt;audio&gt;&lt;data src=\"bai_hat.mp3\"&gt;&lt;/audio&gt;"], correct: 0, explanation: "Cấu trúc lồng ghép chuẩn: Thẻ container &lt;audio&gt; bao bọc bên ngoài. Bên trong chứa một hoặc nhiều phần tử &lt;source&gt; độc lập để cung cấp đường dẫn tệp (src) cho bộ giải mã của trình duyệt." },
+        { id: "d1_27", type: "single", question: "Câu 27: Mã nào giúp video tự động chạy ngay khi tải nhưng không phát ra tiếng?", options: ["&lt;video src=\"video.mp4\" autoplay muted&gt;", "&lt;video src=\"video.mp4\" autoplay quiet&gt;", "&lt;video src=\"video.mp4\" autostart mute&gt;", "&lt;video src=\"video.mp4\" autostart none&gt;"], correct: 0, explanation: "Để lách qua bộ lọc chặn âm thanh làm phiền của các trình duyệt như Chrome/Safari, ta bắt buộc phải kết hợp đồng thời hai thuộc tính: 'autoplay' (tự chạy) và 'muted' (tắt tiếng thanh)." },
+        { id: "d1_28", type: "single", question: "Câu 28: Mã nào tạo khung iframe với chiều rộng 300px và chiều cao 200px?", options: ["&lt;iframe src=\"goc_nhin.html\" width=\"300\" height=\"200\"&gt;&lt;/iframe&gt;", "&lt;iframe src=\"goc_nhin.html\" size=\"300\" height=\"200\"&gt;&lt;/iframe&gt;", "&lt;iframe src=\"goc_nhin.html\" w=\"300\" h=\"200\"&gt;&lt;/iframe&gt;", "&lt;iframe src=\"goc_nhin.html\" frame=\"300x200\"&gt;&lt;/iframe&gt;"], correct: 0, explanation: "Khung nhìn nội tuyến yêu cầu cung cấp không gian 2D trên trang web. Thuộc tính 'width' cài đặt chiều rộng và 'height' cài đặt chiều cao theo đơn vị điểm ảnh." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Để xây dựng trang chủ giới thiệu trường học, giáo viên yêu cầu học sinh chèn một đoạn video tổng quan về trường và một số hình ảnh hoạt động ngoại khóa để tăng tính sinh động.", items: [
+            { id: "a", text: "a) Học sinh có thể sử dụng thẻ &lt;video&gt; để chèn đoạn video tổng quan vào trang web.", correct: true, expl: "Chính xác. Thẻ &lt;video&gt; là tiêu chuẩn Web hiện đại, giúp nhúng video một cách tự nhiên mà không phụ thuộc vào các plugin kém bảo mật như Flash ngày xưa." },
+            { id: "b", text: "b) Định dạng video chuẩn .mp4 sẽ giúp video hiển thị tốt trên hầu hết các trình duyệt hiện nay.", correct: true, expl: "MP4 (chứa codec H.264) là chuẩn định dạng video có độ tương thích cao nhất trên toàn cầu, chạy mượt mà trên 99% các trình duyệt desktop và mobile." },
+            { id: "c", text: "c) Đoạn mã &lt;video src=\"truong.mp4\" autoplay muted&gt;&lt;/video&gt; giúp video tự chạy không tiếng.", correct: true, expl: "Cú pháp này hoàn toàn hợp lệ. Cờ 'autoplay' ra lệnh tự phát, đi kèm cờ 'muted' tắt tiếng, đáp ứng đúng chính sách bảo vệ người dùng của Chrome/Edge." },
+            { id: "d", text: "d) Mã lệnh &lt;img src=\"anh.jpg\" width=\"100%\" height=\"100%\"&gt; đảm bảo hình ảnh luôn giữ đúng tỉ lệ gốc.", correct: false, expl: "Sai về mặt kỹ thuật giao diện. Việc ép cứng cả 2 chiều width và height thành 100% sẽ bóp méo bức ảnh theo khung chứa bên ngoài, phá vỡ hoàn toàn tỉ lệ gốc (aspect-ratio) của ảnh." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Trong một dự án thiết kế trang web môn Tin học, nhóm học sinh cần tích hợp một tệp nhạc nền không lời định dạng phổ biến và nhúng một trang tài liệu tham khảo trực tiếp từ trang web giáo dục khác.", items: [
+            { id: "a", text: "a) Nhóm học sinh cần sử dụng thẻ đơn &lt;audio&gt; để thực hiện chèn nhạc nền vào trong trang web.", correct: true, expl: "Thẻ &lt;audio&gt; là API chuẩn trong HTML5 được sinh ra để tiếp nhận các tệp tin âm thanh, đáp ứng hoàn hảo yêu cầu chèn nhạc nền." },
+            { id: "b", text: "b) Thẻ &lt;audio&gt; có hỗ trợ thuộc tính poster tương tự như thẻ video để hiển thị hình nền khi đang phát nhạc.", correct: false, expl: "Nhầm lẫn thẻ. Thuộc tính 'poster' (ảnh bìa) là đặc quyền chỉ dành riêng cho thẻ &lt;video&gt;. Thẻ &lt;audio&gt; không xử lý hình ảnh nên không hề có thuộc tính này." },
+            { id: "c", text: "c) Mã lệnh &lt;audio src=\"nhac.mp3\" controls&gt;&lt;/audio&gt; chèn nhạc nền kèm theo các thành phần điều khiển.", correct: true, expl: "Đúng. Cờ boolean 'controls' sẽ gọi giao diện điều khiển (thanh thời gian, nút phát/dừng, âm lượng) hiển thị trên màn hình người dùng." },
+            { id: "d", text: "d) Mã lệnh &lt;iframe src=\"tailieu.html\" width=\"800\" height=\"600\"&gt;&lt;/iframe&gt; dùng để nhúng tài liệu ngoài vào.", correct: true, expl: "Đoạn mã này tuân thủ đúng cấu trúc tạo khung nhìn (iframe) trên HTML. Nó khoét một khoảng trống rộng 800px, cao 600px để nhúng trang 'tailieu.html' vào." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Giáo viên giao bài tập thực hành cho học sinh tạo một liên kết menu lựa chọn, khi người dùng nhấp vào liên kết này thì nội dung chi tiết của bài học sẽ được hiển thị ngay trong một khung nhỏ đặt trên cùng trang web hiện tại.", items: [
+            { id: "a", text: "a) Thẻ &lt;iframe&gt; được sử dụng để tạo ra một khung nhìn chứa tài nguyên web khác trên trang hiện tại.", correct: true, expl: "Định nghĩa này hoàn toàn chuẩn xác. Iframe (Inline Frame) là công cụ duy nhất trong HTML giúp nhúng một trang web độc lập vào bên trong một trang web khác." },
+            { id: "b", text: "b) Bắt buộc phải thiết lập thuộc tính target trực tiếp bên trong thẻ &lt;iframe&gt; để định hướng nội dung hiển thị.", correct: false, expl: "Sai vị trí cú pháp. Thuộc tính 'target' đóng vai trò định hướng mở trang nên nó bắt buộc phải nằm ở thẻ liên kết &lt;a&gt;, chứ không phải nằm ở thẻ &lt;iframe&gt;." },
+            { id: "c", text: "c) Đoạn mã &lt;iframe name=\"khung_baihoc\" src=\"intro.html\"&gt;&lt;/iframe&gt; tạo ra một khung nội tuyến có tên gọi cụ thể.", correct: true, expl: "Thuộc tính 'name' ở đây hoạt động như một mã định danh cục bộ. Việc đặt tên (khung_baihoc) là bước bắt buộc để các liên kết (thẻ a) có thể tìm thấy và trỏ đích vào khung này." },
+            { id: "d", text: "d) Đoạn mã &lt;a href=\"bai1.html\" target=\"khung_baihoc\"&gt;Mở bài học&lt;/a&gt; giúp hiển thị trang bài học bên trong khung đó.", correct: true, expl: "Đây là kỹ thuật Target Iframe rất kinh điển. Khi bấm vào chữ 'Mở bài học', trình duyệt sẽ không tải tab mới mà ném nội dung của tệp 'bai1.html' đè vào vị trí của khung 'khung_baihoc' đang chờ sẵn." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Thẻ nào sau đây chuyên dùng để chèn tập tin âm thanh nền vào trang web?", options: ["Thẻ html &lt;audio&gt;", "Thẻ html &lt;voice&gt;", "Thẻ html &lt;sound&gt;", "Thẻ html &lt;music&gt;"], correct: 0, explanation: "HTML quy định việc nhúng các luồng tín hiệu âm thanh (bài hát, nhạc nền, podcast) phải thông qua vùng chứa chuyên dụng là thẻ &lt;audio&gt;." },
+        { id: "d2_2", type: "single", question: "Câu 2: Định dạng tệp ảnh nào sau đây cần chuyển đổi mới có thể hiển thị được trên web?", options: ["Định dạng ảnh .tiff", "Định dạng ảnh .jpeg", "Định dạng ảnh .webp", "Định dạng ảnh .png"], correct: 0, explanation: "Định dạng TIFF có dung lượng cực lớn và không được hỗ trợ chuẩn hóa trên các trình duyệt web. Bạn phải dùng phần mềm nén nó sang dạng WebP, JPEG hoặc PNG thì mới sử dụng được." },
+        { id: "d2_3", type: "single", question: "Câu 3: Thẻ nào tạo ra một khung nhìn để chứa trang web khác bên trong trang hiện tại?", options: ["Thẻ html &lt;iframe&gt;", "Thẻ html &lt;window&gt;", "Thẻ html &lt;screen&gt;", "Thẻ html &lt;object&gt;"], correct: 0, explanation: "Inline Frame (&lt;iframe&gt;) là một thẻ HTML có chức năng nhúng tài liệu, giúp trang web hiện tại mở một 'cửa sổ' nhỏ kết nối và nạp nội dung của một trang web bên ngoài." },
+        { id: "d2_4", type: "single", question: "Câu 4: Thuộc tính nào dùng để chỉ định đường dẫn của tệp ảnh trong thẻ &lt;img&gt;?", options: ["Thuộc tính src", "Thuộc tính url", "Thuộc tính dir", "Thuộc tính alt"], correct: 0, explanation: "Từ khóa 'src' (viết tắt của chữ Source) lưu giữ tọa độ vật lý của bức ảnh, giúp thuật toán trình duyệt biết phải tìm đến thư mục/link nào để tải hình ảnh đó về máy tính." },
+        { id: "d2_5", type: "single", question: "Câu 5: Trong số các định dạng âm thanh sau, định dạng nào được web hỗ trợ phổ biến?", options: ["Tệp định dạng .mp3", "Tệp định dạng .mp4", "Tệp định dạng .avi", "Tệp định dạng .doc"], correct: 0, explanation: "Trong 4 phương án, MP3 là chuẩn nén tín hiệu âm thanh kỹ thuật số nhẹ và thông dụng nhất thế giới, tương thích tuyệt đối với mọi hệ điều hành và trình duyệt Web." },
+        { id: "d2_6", type: "single", question: "Câu 6: Thuộc tính height trong thẻ chèn ảnh có chức năng xác định yếu tố nào?", options: ["Chiều cao của ảnh", "Chiều rộng của ảnh", "Độ dày viền ảnh", "Độ sáng của ảnh"], correct: 0, explanation: "Thuộc tính 'height' tác động trực tiếp vào bộ khung Box-model của CSS, điều khiển số lượng điểm ảnh (pixels) giới hạn chiều cao vật lý của phần tử ảnh trên màn hình." },
+        { id: "d2_7", type: "single", question: "Câu 7: Hai định dạng tệp video nào phổ biến nhất và được hỗ trợ trên hầu hết trình duyệt?", options: ["Định dạng .mp4, .webm", "Định dạng .mp3, .flac", "Định dạng .png, .jpeg", "Định dạng .doc, .docx"], correct: 0, explanation: "MP4 (nhờ độ phổ biến của codec H264) và WebM (dự án mã nguồn mở siêu nhẹ của Google) là cặp bài trùng đang thống trị việc truyền tải video chất lượng cao trên nền tảng Web." },
+        { id: "d2_8", type: "single", question: "Câu 8: Thẻ HTML nào được thiết kế dành riêng cho việc chèn tệp video vào web?", options: ["Thẻ html &lt;video&gt;", "Thẻ html &lt;movie&gt;", "Thẻ html &lt;watch&gt;", "Thẻ html &lt;media&gt;"], correct: 0, explanation: "Thay thế cho thời đại Flash player phức tạp, HTML5 đã mang đến thẻ &lt;video&gt; thuần túy, giúp nhúng video nhẹ nhàng với độ trễ thấp và bảo mật cực cao." },
+        { id: "d2_9", type: "single", question: "Câu 9: Thuộc tính alt dùng để cung cấp văn bản thay thế trong thẻ chèn ảnh là:", options: ["Không bắt buộc có", "Bắt buộc phải có", "Dùng để mở ảnh", "Dùng để xóa ảnh"], correct: 0, explanation: "Mặc dù chuẩn W3C luôn khuyến nghị lập trình viên nên thêm thẻ 'alt' để tăng chuẩn SEO và hỗ trợ người khiếm thị, nhưng về mặt kĩ thuật, thiếu 'alt' thì bức ảnh vẫn được tải và hiển thị bình thường trên giao diện (nên nó không bị coi là bắt buộc phải có để trang chạy)." },
+        { id: "d2_10", type: "single", question: "Câu 10: Mục đích chính của thuộc tính alt trong thẻ &lt;img&gt; là để giải quyết vấn đề gì?", options: ["Hiện chữ thay thế khi lỗi", "Hiện hiệu ứng lúc cuộn", "Cung cấp kích thước ảnh", "Cung cấp bộ lọc màu ảnh"], correct: 0, explanation: "Khi máy chủ bị rớt mạng hoặc đường dẫn bị sai, ảnh sẽ hiện ra một icon vỡ nhỏ. Đoạn chữ 'alt' lúc này sẽ tràn lên khoảng trống đó, giúp người dùng hiểu bối cảnh bức ảnh là gì." },
+        { id: "d2_11", type: "single", question: "Câu 11: Tốc độ mạng internet chậm sẽ gây ra ảnh hưởng trực tiếp nào đến trang web?", options: ["Ảnh dung lượng lớn khó tải", "Văn bản không thể hiển thị", "Màu nền trang web bị mất", "Không thể cuộn trang web"], correct: 0, explanation: "Văn bản, màu nền hay code xử lí cuộn trang có dung lượng cực nhẹ (vài Kilobytes), trong khi dữ liệu Multimedia (ảnh, video) nặng tới hàng Megabytes. Mạng chậm sẽ gây nghẽn cổ chai ngay lập tức khi tải các ảnh lớn." },
+        { id: "d2_12", type: "single", question: "Câu 12: Nếu thẻ video không có thuộc tính controls thì người dùng sẽ gặp khó khăn gì?", options: ["Không có nút phát/dừng", "Video chạy lặp liên tục", "Hình ảnh bị mờ sương", "Khung hình tự thu nhỏ"], correct: 0, explanation: "Sự vắng mặt của thuộc tính 'controls' sẽ khiến bộ giải mã khóa hoàn toàn giao diện điều hướng (UI). Người xem chỉ thấy một khung hình tĩnh, không có nút Play, nút phóng to hay thanh kéo thời gian." },
+        { id: "d2_13", type: "single", question: "Câu 13: Thẻ source được sử dụng bên trong cặp thẻ video hoặc audio nhằm mục đích gì?", options: ["Chỉ định nhiều định dạng", "Tự động thu nhỏ tệp tin", "Định dạng văn bản trang", "Tạo đường viền cho khung"], correct: 0, explanation: "Để tương thích chéo thiết bị, ta dùng nhiều thẻ &lt;source&gt; bên trong video. Máy Mac sẽ nhặt file mp4 để chạy, còn máy tính Google Chrome có thể ưu tiên nhặt file webm nhẹ hơn. Tính năng này gọi là Multiple Format Support." },
+        { id: "d2_14", type: "single", question: "Câu 14: Thuộc tính target được bổ sung vào thẻ &lt;a&gt; khi dùng với iframe để làm gì?", options: ["Chỉ định nơi mở tài liệu", "Chỉ định màu của liên kết", "Chỉ định font chữ liên kết", "Chỉ định hiệu ứng liên kết"], correct: 0, explanation: "Thuộc tính 'target' trong thẻ Anchor là kim chỉ nam cho hành vi nhấp chuột. Khai báo target='ten_iframe' sẽ ném luồng dữ liệu mới đè thẳng vào khung Iframe thay vì mở sang thẻ tab mới." },
+        { id: "d2_15", type: "single", question: "Câu 15: Tại sao nên ưu tiên sử dụng đường dẫn tương đối khi chèn tệp tin đa phương tiện?", options: ["Tránh lỗi khi dời thư mục", "Tăng cường bảo mật mạng", "Làm ảnh hiển thị rõ nét", "Chuyển đổi định dạng ảnh"], correct: 0, explanation: "Đường dẫn tương đối có cấu trúc linh hoạt theo cụm. Nếu bạn bê nguyên thư mục web từ máy cá nhân lên máy chủ (Server Hosting), các file ảnh vẫn móc nối đúng vào nhau mà không cần sửa lại mã code." },
+        { id: "d2_16", type: "single", question: "Câu 16: Thuộc tính poster của thẻ video mang lại trải nghiệm nào cho người xem web?", options: ["Hiển thị ảnh trước khi chạy", "Hiển thị chữ khi bị lỗi tải", "Hiển thị liên kết trang web", "Hiển thị thanh cuộn video"], correct: 0, explanation: "Poster Image (Ảnh bìa) là giải pháp đồ họa giữ chân người dùng trong lúc đợi video load. Bức ảnh này sẽ che phủ màn đen tĩnh lặng cho tới lúc sự kiện Play được kích hoạt." },
+        { id: "d2_17", type: "single", question: "Câu 17: Một số trình duyệt chỉ cho phép video tự động phát (autoplay) với điều kiện nào?", options: ["Thuộc tính tắt tiếng muted", "Thuộc tính hình nền poster", "Thuộc tính lặp lại looped", "Thuộc tính điều khiển controls"], correct: 0, explanation: "Bộ luật Chromium nghiêm cấm việc nhồi nhét âm thanh đột ngột. Một thẻ video có lệnh tự động chạy (autoplay) sẽ bị khóa vĩnh viễn, trừ khi lập trình viên bổ sung thêm cờ vô hiệu hóa âm thanh (muted)." },
+        { id: "d2_18", type: "single", question: "Câu 18: Nếu thẻ &lt;img&gt; chỉ định thuộc tính height mà bỏ qua width thì kết quả sẽ là gì?", options: ["Chiều rộng tính theo tỉ lệ", "Chiều rộng bị kéo giãn ra", "Hình ảnh bị cắt đi một nửa", "Hình ảnh không hiển thị ra"], correct: 0, explanation: "Khi một cạnh của bức ảnh bị giới hạn (ở đây là height), để đảm bảo ảnh không bị biến dạng, thuật toán Engine của trình duyệt sẽ tự động nội suy thông số cạnh còn lại (width) dựa vào tỉ lệ khung hình thực của bức ảnh." },
+        { id: "d2_19", type: "single", question: "Câu 19: Đoạn mã HTML nào chèn hình ảnh và có hiển thị chữ thay thế đúng chuẩn?", options: ["&lt;img src=\"x.png\" alt=\"hình ảnh\"&gt;", "&lt;img url=\"x.png\" alt=\"hình ảnh\"&gt;", "&lt;img hrf=\"x.png\" alt=\"hình ảnh\"&gt;", "&lt;img file=\"x.png\" alt=\"hình ảnh\"&gt;"], correct: 0, explanation: "Cú pháp hoàn chỉnh cho hình ảnh Web yêu cầu gọi đúng tên thẻ &lt;img&gt;, sử dụng thuộc tính đường dẫn là 'src' và cung cấp thêm chuỗi chú thích dự phòng ở 'alt'." },
+        { id: "d2_20", type: "single", question: "Câu 20: Đoạn mã nào tạo một khung nội tuyến và nạp tài liệu từ tệp \"bai1.html\"?", options: ["&lt;iframe src=\"bai1.html\"&gt;&lt;/iframe&gt;", "&lt;iframe href=\"bai1.html\"&gt;&lt;/iframe&gt;", "&lt;iframe url=\"bai1.html\"&gt;&lt;/iframe&gt;", "&lt;iframe file=\"bai1.html\"&gt;&lt;/iframe&gt;"], correct: 0, explanation: "Thuộc tính quản lý đầu vào (Input path) của đối tượng Iframe chính là 'src' (Source). Khai báo sai tên thuộc tính (như href hay url) sẽ khiến khung hiển thị trắng tinh (Blank frame)." },
+        { id: "d2_21", type: "single", question: "Câu 21: Đoạn mã nào chèn video có đầy đủ thanh điều khiển và một hình ảnh đại diện?", options: ["&lt;video src=\"1.mp4\" controls poster=\"a.jpg\"&gt;", "&lt;video src=\"1.mp4\" buttons image=\"a.jpg\"&gt;", "&lt;video src=\"1.mp4\" options cover=\"a.jpg\"&gt;", "&lt;video src=\"1.mp4\" setting photo=\"a.jpg\"&gt;"], correct: 0, explanation: "Đoạn mã kết hợp chuẩn xác 2 thuộc tính mạnh nhất của Video HTML5: 'controls' để sinh ra bộ UI thanh trượt, và 'poster' đóng vai trò chèn ảnh bìa tĩnh thay thế lúc video đang nghỉ." },
+        { id: "d2_22", type: "single", question: "Câu 22: Cú pháp nào cung cấp hai định dạng dự phòng khác nhau cho tệp âm thanh?", options: ["&lt;audio&gt;&lt;source src=\"a.mp3\"&gt;&lt;source src=\"a.wav\"&gt;&lt;/audio&gt;", "&lt;audio&gt;&lt;file src=\"a.mp3\"&gt;&lt;file src=\"a.wav\"&gt;&lt;/audio&gt;", "&lt;audio&gt;&lt;link src=\"a.mp3\"&gt;&lt;link src=\"a.wav\"&gt;&lt;/audio&gt;", "&lt;audio&gt;&lt;data src=\"a.mp3\"&gt;&lt;data src=\"a.wav\"&gt;&lt;/audio&gt;"], correct: 0, explanation: "Cấu trúc nhánh hình cây (DOM Tree) cho phép mẹ &lt;audio&gt; chứa nhiều con &lt;source&gt;. Trình duyệt đọc từ trên xuống, nếu máy nó không hỗ trợ giải mã file mp3 ở trên, nó sẽ tự lọt xuống dòng dưới lấy file wav để chạy." },
+        { id: "d2_23", type: "single", question: "Câu 23: Cú pháp nào tạo liên kết trang và yêu cầu mở bên trong khung tên là \"frame1\"?", options: ["&lt;a href=\"trang_chu.html\" target=\"frame1\"&gt;", "&lt;a href=\"trang_chu.html\" window=\"frame1\"&gt;", "&lt;a href=\"trang_chu.html\" iframe=\"frame1\"&gt;", "&lt;a href=\"trang_chu.html\" opento=\"frame1\"&gt;"], correct: 0, explanation: "Đây là nguyên lí kết hợp Cross-reference. Cung cấp tham số chuỗi 'frame1' cho thuộc tính 'target' của liên kết, dòng tải trang sẽ bay thẳng vào mục tiêu định sẵn (có tên frame1) trên màn hình." },
+        { id: "d2_24", type: "single", question: "Câu 24: Đoạn mã nào sau đây thay đổi kích thước chiều cao của hình ảnh thành 300 pixel?", options: ["&lt;img src=\"a.jpg\" height=\"300\"&gt;", "&lt;img src=\"a.jpg\" tall=\"300\"&gt;", "&lt;img src=\"a.jpg\" size=\"300\"&gt;", "&lt;img src=\"a.jpg\" high=\"300\"&gt;"], correct: 0, explanation: "Kích thước theo phương trục Y (dọc) của một box HTML được thiết lập thông qua từ khóa 'height'. Tham số 300 truyền vào được đơn vị hóa thành độ cao 300px vật lí." },
+        { id: "d2_25", type: "single", question: "Câu 25: Đoạn mã nào sử dụng thuộc tính style để xóa bỏ đường viền của khung iframe?", options: ["&lt;iframe src=\"a.html\" style=\"border:none;\"&gt;&lt;/iframe&gt;", "&lt;iframe src=\"a.html\" style=\"line:0px;\"&gt;&lt;/iframe&gt;", "&lt;iframe src=\"a.html\" style=\"edge:none;\"&gt;&lt;/iframe&gt;", "&lt;iframe src=\"a.html\" style=\"frame:0;\"&gt;&lt;/iframe&gt;"], correct: 0, explanation: "Iframe mặc định sẽ sinh ra một khung viền nổi xám đen gây xấu giao diện. Để làm cho khung viền tàng hình vào trang, ta dùng lệnh CSS nội tuyến: style='border: none;'." },
+        { id: "d2_26", type: "single", question: "Câu 26: Đoạn mã nào tạo ra khung iframe có kích thước chiều rộng 600 và chiều cao 450?", options: ["&lt;iframe src=\"map.html\" width=\"600\" height=\"450\"&gt;&lt;/iframe&gt;", "&lt;iframe src=\"map.html\" width:600 height:450&gt;&lt;/iframe&gt;", "&lt;iframe src=\"map.html\" w=\"600\" h=\"450\"&gt;&lt;/iframe&gt;", "&lt;iframe src=\"map.html\" size=\"600x450\"&gt;&lt;/iframe&gt;"], correct: 0, explanation: "Trong kĩ thuật dàn trang thuần HTML, bộ đôi cặp từ khóa 'width' (chỉnh bề ngang) và 'height' (chỉnh bề dọc) luôn phải được kẹp giá trị của nó ở trong dấu ngoặc kép đôi." },
+        { id: "d2_27", type: "single", question: "Câu 27: Cú pháp nào sau đây biến một hình ảnh bình thường trở thành một liên kết?", options: ["&lt;a href=\"b.html\"&gt;&lt;img src=\"a.jpg\"&gt;&lt;/a&gt;", "&lt;link href=\"b.html\"&gt;&lt;img src=\"a.jpg\"&gt;&lt;/link&gt;", "&lt;url href=\"b.html\"&gt;&lt;img src=\"a.jpg\"&gt;&lt;/url&gt;", "&lt;nav href=\"b.html\"&gt;&lt;img src=\"a.jpg\"&gt;&lt;/nav&gt;"], correct: 0, explanation: "Bằng thủ thuật Nesting, ta bọc khối đối tượng ảnh &lt;img&gt; lọt thỏm vào bên trong cặp thẻ bắt sự kiện click &lt;a&gt; ... &lt;/a&gt;. Bức ảnh đó sẽ hóa thân thành một Button liên kết diện rộng." },
+        { id: "d2_28", type: "single", question: "Câu 28: Đoạn mã nào chèn video tự động tắt tiếng để đảm bảo trình duyệt chạy ngay?", options: ["&lt;video src=\"v.mp4\" autoplay muted&gt;", "&lt;video src=\"v.mp4\" autostart repeat&gt;", "&lt;video src=\"v.mp4\" playing again&gt;", "&lt;video src=\"v.mp4\" runnow replay&gt;"], correct: 0, explanation: "Thuộc tính 'muted' (tắt âm) giống như một tấm vé thông hành cấp phép cho thuộc tính 'autoplay' hoạt động hợp lệ theo chuẩn bảo vệ người dùng, giúp video nhảy múa ngay khi trang vừa tải." },
+        
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Để thiết kế chuyên mục Giải trí cho trang web câu lạc bộ, học sinh muốn tạo một khu vực nhỏ phát nhạc nền và một đoạn video giới thiệu các hoạt động ngoại khóa nổi bật.", items: [
+            { id: "a", text: "a) Học sinh phải dùng thẻ &lt;audio&gt; để chèn tệp nhạc và thẻ &lt;video&gt; để chèn đoạn giới thiệu.", correct: true, expl: "Cú pháp phân luồng rõ ràng. &lt;audio&gt; lo phần âm thanh đơn thuần, trong khi &lt;video&gt; lo bộ dữ liệu nặng bao gồm cả hình ảnh động và âm thanh đi kèm." },
+            { id: "b", text: "b) Định dạng tệp âm thanh .wav và tệp video .mp4 đều được các trình duyệt hiện nay hỗ trợ phổ biến.", correct: true, expl: "MP4 là chuẩn video toàn cầu, còn WAV là định dạng âm thanh thô không nén cực chất lượng, cả 2 đều nằm trong danh sách hỗ trợ mặc định của Engine trình duyệt Web." },
+            { id: "c", text: "c) Để trình duyệt hiển thị nút phát nhạc kèm thanh điều khiển, học sinh dùng đoạn mã: &lt;audio src=\"nhac.wav\" display&gt;&lt;/audio&gt;.", correct: false, expl: "Mã sai thuộc tính kích hoạt giao diện. Thuộc tính 'display' không có ý nghĩa trong tình huống này. Phải sử dụng lệnh 'controls' thì bộ nút Play/Pause mới hiện ra." },
+            { id: "d", text: "d) Mã lệnh &lt;video src=\"hd.mp4\" poster=\"anh.jpg\" controls&gt;&lt;/video&gt; giúp video có hình đại diện trước khi phát.", correct: true, expl: "Cấu hình này cực kì hoàn hảo. Cờ 'controls' mở khóa thanh điều hướng người dùng, còn 'poster' vẽ bức ảnh tĩnh lên màn chắn trước khi luồng tải video thực sự bắt đầu." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Ban truyền thông trường học muốn xây dựng một trang tin tức, trong đó có một mục chứa nội dung hướng dẫn học tập được nhúng trực tiếp từ một trang web giáo dục mở của Sở.", items: [
+            { id: "a", text: "a) Khung nội tuyến là công cụ phù hợp nhất để hiển thị một tài nguyên web khác ngay trên trang hiện tại.", correct: true, expl: "Khung nội tuyến (Iframe) là kỹ thuật độc tôn trong HTML giải quyết được bài toán mang giao diện nguyên bản của website ngoài nhúng vào trang nhà." },
+            { id: "b", text: "b) Trình duyệt bắt buộc phải luôn tải xong nội dung của khung nội tuyến rồi mới bắt đầu hiển thị các phần khác.", correct: false, expl: "Sai về mặt luồng xử lý (Threading). Iframe hoạt động theo cơ chế chạy không đồng bộ (Asynchronous) ở các thẻ mở rộng. Trình duyệt vẫn render giao diện chính mượt mà trong khi khung Iframe thong thả tải trang web nặng nề ở hậu cảnh." },
+            { id: "c", text: "c) Thẻ được sử dụng để tạo khung nội tuyến là thẻ &lt;iframe&gt; kết hợp bắt buộc với thuộc tính src để chỉ đường dẫn.", correct: true, expl: "Bản chất của &lt;iframe&gt; là một khung nhựa rỗng ruột. Chỉ khi nạp thuộc tính 'src' chứa tọa độ URL, khung nhựa đó mới trở thành cửa sổ kết nối với tài nguyên đích." },
+            { id: "d", text: "d) Đoạn mã &lt;iframe src=\"tuyensinh.html\" width=\"100%\" height=\"500\"&gt;&lt;/iframe&gt; là cú pháp hợp lệ trong thiết kế web.", correct: true, expl: "Cú pháp này tuân thủ chuẩn Web Responsive. Width 100% giúp khung dàn trải linh hoạt theo độ rộng thiết bị (điện thoại hay PC đều dùng được), trong khi Height 500 ép chiều cao khung ở mức 500 pixel ổn định." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Một học sinh đang hoàn thiện trang viết cá nhân về chủ đề danh lam thắng cảnh quê hương và cần chèn thêm các hình ảnh minh họa sống động kèm văn bản mô tả dự phòng khi lỗi mạng.", items: [
+            { id: "a", text: "a) Học sinh có thể sử dụng các tệp hình ảnh có định dạng .png, .jpeg, .gif, .webp để chèn hiển thị trên trang web.", correct: true, expl: "Bốn định dạng này là 4 ông lớn trong giới truyền thông hình ảnh Web. Png, Jpeg lưu dữ liệu tĩnh, Gif cho ảnh động, Webp cho ảnh dung lượng siêu nén." },
+            { id: "b", text: "b) Nếu học sinh chỉ đặt một thuộc tính width cho hình ảnh, trình duyệt sẽ tự động giữ nguyên tỷ lệ của ảnh gốc.", correct: true, expl: "Thuật toán xử lý ma trận ảnh của CSS hoạt động theo tỷ lệ khung hình (Aspect-ratio). Giam chặt chiều ngang (width) thì chiều dọc (height) sẽ tự co giãn linh hoạt để ảnh không bị bẹp." },
+            { id: "c", text: "c) Mã lệnh &lt;img src=\"bien.jpg\" alt=\"Biển xanh\"&gt; sẽ hiển thị dòng chữ 'Biển xanh' khi việc tải tệp hình ảnh bị lỗi.", correct: true, expl: "Tuyệt đối chính xác. Đây là công năng chính của thuộc tính 'alt' (Văn bản thay thế). Nó trám vào khoảng trống báo lỗi để xoa dịu trải nghiệm người dùng." },
+            { id: "d", text: "d) Để ảnh vừa hiển thị làm nền vừa tự động phát nhạc, học sinh sử dụng cú pháp &lt;img src=\"bien.jpg\" sound=\"nhac.mp3\"&gt;.", correct: false, expl: "Sáng tạo sai khuôn khổ. Thẻ &lt;img&gt; chỉ là thành phần đồ họa đơn thuần, nó không có module giải mã âm thanh nên thuộc tính tự chế 'sound' sẽ bị trình duyệt báo lỗi bỏ qua hoàn toàn." }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>

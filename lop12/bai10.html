@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+ /* Khối mã HTML: Chữ màu xanh đậm, to rõ, dễ nhìn */
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; /* Đổi sang màu xanh đậm theo yêu cầu */
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; /* Cỡ chữ code to hơn */
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+
+
+
+   
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-3"> BÀI 10: TẠO LIÊN KẾT </h1>
+           </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            // Đã cập nhật sang node lưu trữ của bài 10
+            scoresRef = database.ref('bxh_tin_12_10');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI (BÀI 10: TẠO LIÊN KẾT)
+=================================================================================================*/
+    const de1_data = [
+        { id: "d1_1", type: "single", question: "Câu 1: Siêu văn bản (hypertext) mang đặc điểm nổi bật nhất nào sau đây?", options: ["Chứa các siêu liên kết tới siêu văn bản khác.", "Chứa các phần mềm bảo mật dữ liệu máy tính.", "Chứa các đoạn mã nguồn hệ điều hành mạng.", "Chứa các tệp tin nén dung lượng vô cùng lớn."], correct: 0, explanation: "Đặc điểm cốt lõi tạo nên sự khác biệt của siêu văn bản chính là khả năng chứa các siêu liên kết (hyperlink), cho phép người dùng điều hướng linh hoạt giữa các trang tài liệu." },
+        { id: "d1_2", type: "single", question: "Câu 2: Thuật ngữ 'hyperlink' trong thiết kế web có nghĩa tiếng Việt là gì?", options: ["Có nghĩa là một siêu liên kết trên trang.", "Có nghĩa là một máy chủ lưu trữ từ xa.", "Có nghĩa là một phần mềm trình duyệt.", "Có nghĩa là một loại ngôn ngữ lập trình."], correct: 0, explanation: "Trong thuật ngữ tin học, 'hyperlink' được dịch chuẩn xác sang tiếng Việt là 'siêu liên kết', đóng vai trò là cầu nối liên kết các trang web lại với nhau." },
+        { id: "d1_3", type: "single", question: "Câu 3: Trong ngôn ngữ HTML, để tạo ra liên kết, ta sử dụng thẻ chuẩn nào?", options: ["Sử dụng thẻ mang kí hiệu đóng mở là &lt;a&gt;.", "Sử dụng thẻ mang kí hiệu đóng mở là &lt;p&gt;.", "Sử dụng thẻ mang kí hiệu đóng mở là &lt;b&gt;.", "Sử dụng thẻ mang kí hiệu đóng mở là &lt;i&gt;."], correct: 0, explanation: "Thẻ &lt;a&gt; (viết tắt của chữ Anchor - mỏ neo) là phần tử chuyên dụng duy nhất trong HTML được sử dụng để khởi tạo các siêu liên kết trên trang web." },
+        { id: "d1_4", type: "single", question: "Câu 4: Thuộc tính nào dùng để cung cấp địa chỉ tài nguyên được liên kết tới?", options: ["Thuộc tính mang tên gọi chuẩn là href.", "Thuộc tính mang tên gọi chuẩn là type.", "Thuộc tính mang tên gọi chuẩn là size.", "Thuộc tính mang tên gọi chuẩn là font."], correct: 0, explanation: "Thuộc tính 'href' (Hypertext Reference) bắt buộc phải đi kèm bên trong thẻ &lt;a&gt; để chỉ định chính xác đường dẫn URL đích mà người dùng sẽ chuyển đến khi nhấp chuột." },
+        { id: "d1_5", type: "single", question: "Câu 5: Đặc điểm cơ bản để nhận diện đường dẫn tuyệt đối (Absolute URL) là gì?", options: ["Bắt buộc phải có chứa giao thức và tên miền.", "Bắt buộc phải được đặt ở trong cặp thẻ &lt;p&gt;.", "Bắt buộc phải sử dụng mã định danh thẻ id.", "Bắt buộc phải trỏ đến một trang cùng thư mục."], correct: 0, explanation: "Đường dẫn tuyệt đối là một địa chỉ hoàn chỉnh, do đó nó luôn phải bao gồm tiền tố giao thức (như http:// hoặc https://) đi kèm với tên miền gốc của website đích." },
+        { id: "d1_6", type: "single", question: "Câu 6: Khi muốn liên kết tới một trang web khác trên Internet, ta dùng loại nào?", options: ["Ta sử dụng đường dẫn loại tuyệt đối.", "Ta sử dụng đường dẫn loại tương đối.", "Ta sử dụng đường dẫn loại ngắn gọn.", "Ta sử dụng đường dẫn loại mã hóa số."], correct: 0, explanation: "Vì trang web đích nằm ở một tên miền hoàn toàn khác trên Internet, hệ thống bắt buộc phải sử dụng đường dẫn tuyệt đối (chứa đầy đủ địa chỉ tên miền) để định tuyến chính xác." },
+        { id: "d1_7", type: "single", question: "Câu 7: Đường dẫn tương đối (Relative URL) được ưu tiên sử dụng trong trường hợp nào?", options: ["Khi liên kết tới tài liệu trên cùng một trang web.", "Khi liên kết tới tài liệu của một hệ thống mạng.", "Khi liên kết tới tài liệu của mạng nước ngoài xa.", "Khi liên kết tới tài liệu trên một trình duyệt mới."], correct: 0, explanation: "Đường dẫn tương đối bỏ qua tên miền, chỉ sử dụng cấu trúc thư mục nội bộ nên rất hiệu quả và ưu tiên dùng cho việc liên kết các tệp tin lưu trữ bên trong cùng một hệ thống website." },
+        { id: "d1_8", type: "single", question: "Câu 8: Để hiển thị một hình ảnh trên trang web, lập trình viên sử dụng thẻ nào?", options: ["Dùng thẻ mang kí hiệu chuẩn là &lt;img&gt;.", "Dùng thẻ mang kí hiệu chuẩn là &lt;anh&gt;.", "Dùng thẻ mang kí hiệu chuẩn là &lt;pic&gt;.", "Dùng thẻ mang kí hiệu chuẩn là &lt;hinh&gt;."], correct: 0, explanation: "Trong ngôn ngữ HTML, thẻ &lt;img&gt; (viết tắt của Image) được quy ước là thẻ độc lập dùng để nhúng và hiển thị các tệp tin đồ họa hình ảnh lên giao diện trình duyệt." },
+        { id: "d1_9", type: "single", question: "Câu 9: Để tạo mã định danh đoạn cho một phần tử, ta dùng thuộc tính gì?", options: ["Dùng thuộc tính mang tên chuẩn là id.", "Dùng thuộc tính mang tên chuẩn là hr.", "Dùng thuộc tính mang tên chuẩn là br.", "Dùng thuộc tính mang tên chuẩn là tr."], correct: 0, explanation: "Thuộc tính 'id' đóng vai trò như một căn cước công dân độc nhất cho một phần tử HTML. Nó giúp đánh dấu vị trí cụ thể trên trang để tạo điểm neo cho liên kết cuộn trang (Anchor link)." },
+        { id: "d1_10", type: "single", question: "Câu 10: Khi nháy chuột vào một liên kết, hệ thống trình duyệt web sẽ làm gì?", options: ["Truy cập đến vị trí văn bản được liên kết tới.", "Tự động tắt ngay màn hình của máy tính đi.", "Khóa bàn phím của người sử dụng máy tính.", "Tự động xóa tệp tin đang mở trên hệ thống."], correct: 0, explanation: "Chức năng cơ bản của trình duyệt là biên dịch sự kiện Click chuột lên liên kết thành một lệnh tải trang, lập tức điều hướng người dùng truy cập vào tài liệu ở đầu ra của đường dẫn." },
+        { id: "d1_11", type: "single", question: "Câu 11: Người dùng đọc siêu văn bản có điểm gì khác với đọc văn bản truyền thống?", options: ["Không cần phải xem tuần tự từ đầu đến phần cuối.", "Bắt buộc phải đọc thật chậm rãi từng dòng chữ một.", "Phải tải toàn bộ tệp tin về máy mới có thể đọc được.", "Không thể phóng to hay thu nhỏ các kích thước chữ."], correct: 0, explanation: "Nhờ sức mạnh của các siêu liên kết, người đọc không bị ép buộc đọc theo đường thẳng tuyến tính trang này qua trang khác, mà có thể nhảy cóc đến các nội dung mình quan tâm một cách ngẫu nhiên." },
+        { id: "d1_12", type: "single", question: "Câu 12: Cấu trúc chung để viết một siêu liên kết hợp lệ trong HTML là như thế nào?", options: ["Mã chuẩn: &lt;a href=\"URL\"&gt;Nội dung liên kết&lt;/a&gt;.", "Mã chuẩn: &lt;p href=\"URL\"&gt;Nội dung liên kết&lt;/p&gt;.", "Mã chuẩn: &lt;b href=\"URL\"&gt;Nội dung liên kết&lt;/b&gt;.", "Mã chuẩn: &lt;i href=\"URL\"&gt;Nội dung liên kết&lt;/i&gt;."], correct: 0, explanation: "Theo chuẩn cú pháp W3C, một liên kết hoàn chỉnh bao gồm thẻ mở &lt;a&gt;, kèm thuộc tính href chứa URL, phần nội dung hiển thị cho người xem, và sau cùng là thẻ đóng &lt;/a&gt;." },
+        { id: "d1_13", type: "single", question: "Câu 13: Dấu hiệu http:// hoặc https:// đứng ở đầu đường dẫn cho biết điều gì?", options: ["Đây là giao thức của một đường dẫn tuyệt đối.", "Đây là tên miền của một đường dẫn tương đối.", "Đây là mã bảo mật của một đường dẫn mạng ẩn.", "Đây là tệp hình ảnh của một đường dẫn cục bộ."], correct: 0, explanation: "Tiền tố http:// hay https:// là tên của các giao thức truyền tải siêu văn bản mạng Internet. Sự xuất hiện của chúng ở đầu chuỗi là dấu hiệu khẳng định đây là một cấu trúc đường dẫn URL tuyệt đối." },
+        { id: "d1_14", type: "single", question: "Câu 14: Khi nào một liên kết được gọi bằng thuật ngữ chuyên ngành là 'liên kết ngoài'?", options: ["Khi nó liên kết tới trang web khác trên Internet.", "Khi nó liên kết tới một tệp tin trong cùng thư mục.", "Khi nó liên kết tới một đoạn khác trong cùng trang.", "Khi nó liên kết tới một hình ảnh trên ổ cứng máy."], correct: 0, explanation: "Liên kết ngoài (External Link) là khái niệm chỉ dòng lưu lượng truy cập rời khỏi giới hạn tên miền hiện tại để điều hướng người dùng đi sang một website hệ thống hoàn toàn độc lập khác." },
+        { id: "d1_15", type: "single", question: "Câu 15: Đặc điểm nào KHÔNG PHẢI là tính chất của một đường dẫn URL tương đối?", options: ["Bắt buộc phải bao gồm các tên miền của website.", "Mô tả cách truy cập từ vị trí tài liệu hiện tại đó.", "Không yêu cầu khai báo giao thức truyền tải mạng.", "Chỉ cần ghi chính xác tên của đường dẫn tệp tin."], correct: 0, explanation: "Đường dẫn tương đối tự động thừa kế tên miền hiện tại, do đó yêu cầu 'bắt buộc phải bao gồm tên miền' là một tính chất hoàn toàn sai đối với loại đường dẫn nội bộ này." },
+        { id: "d1_16", type: "single", question: "Câu 16: Khi đường dẫn không có giao thức ở đầu, trình duyệt sẽ xử lí ra sao?", options: ["Kiểm tra địa chỉ đó trên hệ thống máy chủ hiện tại.", "Tự động kết nối lên hệ thống tìm kiếm của Google.", "Báo lỗi và xóa toàn bộ trang web khỏi màn hình.", "Yêu cầu người dùng phải tự điền tên miền vào đó."], correct: 0, explanation: "Nếu vắng mặt tiền tố giao thức (http/https), công cụ trình duyệt sẽ ngầm tự hiểu đây là đường dẫn tương đối và tự động tìm kiếm tệp tin đó trên chính không gian máy chủ cục bộ đang chạy code." },
+        { id: "d1_17", type: "single", question: "Câu 17: Thuộc tính id (mã định danh đoạn) có một quy tắc vô cùng nghiêm ngặt nào?", options: ["Chỉ được xuất hiện duy nhất một lần trong toàn trang.", "Phải được lặp lại ít nhất ba lần trong toàn bộ trang.", "Không được phép chứa các chữ cái trong tên mã đó.", "Bắt buộc phải trùng tên với tất cả các thẻ HTML khác."], correct: 0, explanation: "Tương tự như số căn cước công dân, giá trị của thuộc tính 'id' có đặc tính định danh phần tử, bắt buộc phải là duy nhất trên toàn bộ file HTML để liên kết có thể nhảy đúng đến mục tiêu không bị nhầm lẫn." },
+        { id: "d1_18", type: "single", question: "Câu 18: Khi liên kết tới tệp tin thuộc thư mục khác, tên các cấp thư mục ngăn cách bởi:", options: ["Ngăn cách nhau bởi một dấu gạch chéo / chuẩn.", "Ngăn cách nhau bởi một dấu gạch ngang - chuẩn.", "Ngăn cách nhau bởi một dấu chấm than ! chuẩn.", "Ngăn cách nhau bởi một dấu sao nhỏ bé * chuẩn."], correct: 0, explanation: "Trong tiêu chuẩn đường dẫn trên hệ điều hành Web, kí tự gạch chéo xuôi (/) được quy định làm dấu phân tách không gian cấp bậc giữa thư mục cha và thư mục con." },
+        { id: "d1_19", type: "single", question: "Câu 19: Giá trị URL (đường dẫn) bên trong thuộc tính href bắt buộc phải được đặt ở đâu?", options: ["Nằm gọn gàng ở bên trong cặp dấu nháy kép \" \".", "Nằm gọn gàng ở bên trong cặp dấu ngoặc đơn ( ).", "Nằm gọn gàng ở bên trong cặp dấu ngoặc vuông [ ].", "Nằm gọn gàng ở bên trong cặp dấu ngoặc nhọn { }."], correct: 0, explanation: "Quy tắc ngữ pháp của chuỗi giá trị thuộc tính HTML quy định: toàn bộ nội dung của đường dẫn phải được bao bọc an toàn bên trong cặp dấu ngoặc kép đôi \"\" hoặc đơn ''." },
+        { id: "d1_20", type: "single", question: "Câu 20: Cho đoạn mã sau:<br><div class=\"html-code-block\">&lt;a href=\"https://vtv.vn\"&gt;Báo VTV&lt;/a&gt;</div>Đoạn mã trên là ví dụ minh họa chính xác cho loại liên kết nào?", options: ["Minh họa cho việc dùng đường dẫn tuyệt đối.", "Minh họa cho việc dùng đường dẫn tương đối.", "Minh họa cho việc tạo mã định danh đoạn văn.", "Minh họa cho việc chèn hình ảnh vào website."], correct: 0, explanation: "Quan sát vào thuộc tính href, ta thấy xuất hiện đầy đủ cấu trúc giao thức mạng 'https://' và tên miền gốc 'vtv.vn'. Do đó, đây là một minh chứng hoàn hảo cho đường dẫn URL tuyệt đối." },
+        { id: "d1_21", type: "single", question: "Câu 21: Bạn An muốn liên kết đến tệp gioithieu.html nằm trong cùng một thư mục. Cú pháp mã nào đúng?", options: ["Mã lệnh đúng: &lt;a href=\"gioithieu.html\"&gt;Giới thiệu&lt;/a&gt;.", "Mã lệnh đúng: &lt;a src=\"gioithieu.html\"&gt;Giới thiệu&lt;/a&gt;.", "Mã lệnh đúng: &lt;a url=\"gioithieu.html\"&gt;Giới thiệu&lt;/a&gt;.", "Mã lệnh đúng: &lt;a id=\"gioithieu.html\"&gt;Giới thiệu&lt;/a&gt;."], correct: 0, explanation: "Khi gọi tệp tin nằm chung cấp thư mục, ta dùng đường dẫn tương đối gọi trực tiếp tên tệp. Kèm với đó là thuộc tính tạo đường dẫn phải dùng đúng từ khóa lệnh 'href' của thẻ neo." },
+        { id: "d1_22", type: "single", question: "Câu 22: Cho đoạn mã sau:<br><div class=\"html-code-block\">&lt;a href=\"tailieu/bai1.html\"&gt;Vào bài 1&lt;/a&gt;</div>Đoạn mã này đang thực hiện kĩ thuật liên kết tới một tệp tin nằm ở đâu?", options: ["Nằm ở một thư mục khác, lùi xuống dưới một cấp.", "Nằm ở chung một thư mục với tài liệu hiện tại đó.", "Nằm ở một máy chủ hoàn toàn khác trên Internet.", "Nằm ở một trang web khác có chung tên miền mạng."], correct: 0, explanation: "Phần tử 'tailieu/' chỉ ra rằng hệ thống cần phải bước vào một thư mục con tên là 'tailieu' (nằm cùng vị trí hiện tại), sau đó lùi sâu xuống một cấp mới có thể gọi được tệp 'bai1.html'." },
+        { id: "d1_23", type: "single", question: "Câu 23: Để liên kết đến vị trí có mã định danh là phan3 trong cùng trang, ta dùng:", options: ["Dùng cú pháp lệnh chuẩn: &lt;a href=\"#phan3\"&gt;", "Dùng cú pháp lệnh chuẩn: &lt;a href=\"*phan3\"&gt;", "Dùng cú pháp lệnh chuẩn: &lt;a href=\"@phan3\"&gt;", "Dùng cú pháp lệnh chuẩn: &lt;a href=\"&amp;phan3\"&gt;"], correct: 0, explanation: "Trong kĩ thuật lập trình Web, kí tự dấu thăng (#) đi theo sau là giá trị id đóng vai trò như một lệnh điều khiển báo hiệu trình duyệt không tải trang mới mà hãy cuộn trực tiếp xuống tọa độ mang id đó." },
+        { id: "d1_24", type: "single", question: "Câu 24: Cho đoạn mã sau:<br><div class=\"html-code-block\">&lt;img src=\"https://anhdep.com/hoa.jpg\"&gt;</div>Hình ảnh này được nhúng vào trang web bằng cách sử dụng loại đường dẫn gì?", options: ["Sử dụng đường dẫn URL dạng tuyệt đối.", "Sử dụng đường dẫn URL dạng tương đối.", "Sử dụng đường dẫn URL dạng cục bộ mạng.", "Sử dụng đường dẫn URL dạng mã hóa số."], correct: 0, explanation: "Thẻ hình ảnh này tiến hành tải ảnh từ một nguồn tài nguyên bên ngoài. Chuỗi URL bắt đầu bằng giao thức 'https' và tên miền rõ ràng nên đây được xếp vào dạng đường dẫn tuyệt đối." },
+        { id: "d1_25", type: "single", question: "Câu 25: Nếu thuộc tính id của tiêu đề là &lt;h1 id=\"top\"&gt;, để tạo nút 'Lên đầu trang', ta viết:", options: ["Lệnh chuẩn là: &lt;a href=\"#top\"&gt;Lên đầu trang&lt;/a&gt;.", "Lệnh chuẩn là: &lt;a id=\"#top\"&gt;Lên đầu trang&lt;/a&gt;.", "Lệnh chuẩn là: &lt;a src=\"#top\"&gt;Lên đầu trang&lt;/a&gt;.", "Lệnh chuẩn là: &lt;a url=\"#top\"&gt;Lên đầu trang&lt;/a&gt;."], correct: 0, explanation: "Để kích hoạt thanh cuộn nhảy về mục tiêu, ta gọi thẻ &lt;a&gt; với thuộc tính href. Tham số truyền vào bắt buộc phải nối thêm dấu thăng (#) ngay phía trước chữ 'top' (tên của định danh id)." },
+        { id: "d1_26", type: "single", question: "Câu 26: Lỗi sai trong đoạn mã &lt;a href=tailieu.html&gt;Bấm vào đây&lt;/a&gt; là gì?", options: ["Thiếu cặp dấu nháy kép bao bọc lấy đường dẫn.", "Bị thiếu mất thẻ đóng cho phần tử liên kết này.", "Viết sai tên thuộc tính quy định đường dẫn liên kết.", "Sử dụng sai thẻ để tạo ra siêu liên kết mạng web."], correct: 0, explanation: "Lỗi vi phạm cú pháp XML cơ bản. Thuộc tính href đã gán giá trị tailieu.html trực tiếp mà không đưa vào không gian an toàn được bảo vệ bởi bộ đôi dấu ngoặc kép \" \"." },
+        { id: "d1_27", type: "single", question: "Câu 27: Cho đoạn mã:<br><div class=\"html-code-block\">&lt;a href=\"khoi12/tinhoc/bai10.html\"&gt;Học bài&lt;/a&gt;</div>Tệp bai10.html này đang nằm ở vị trí nào so với tệp tin chứa đoạn mã trên?", options: ["Nằm thuộc thư mục khác, lùi xuống dưới hai cấp.", "Nằm thuộc thư mục khác, lùi xuống dưới một cấp.", "Nằm ở ngoài màn hình chính của hệ điều hành máy.", "Nằm ở trong cùng một thư mục với tệp tin hiện tại."], correct: 0, explanation: "Nhìn vào đường dẫn ta đếm được 2 dấu gạch chéo (/), đồng nghĩa với việc cỗ máy trình duyệt phải mở thư mục cấp 1 ('khoi12'), tiếp tục mở thư mục cấp 2 ('tinhoc') rồi mới tìm thấy tệp tin. Độ sâu là 2 cấp." },
+        { id: "d1_28", type: "single", question: "Câu 28: Khi tạo một liên kết mà chữ hiển thị trên trang web là 'Sách mới', ta viết chữ đó ở:", options: ["Nằm ở giữa cặp thẻ đóng mở của phần tử liên kết.", "Nằm ở trong cặp dấu nháy kép của thuộc tính thẻ.", "Nằm ở ngay phía trước thẻ mở của phần tử liên kết.", "Nằm ở ngay phía sau thẻ đóng của phần tử liên kết."], correct: 0, explanation: "Khối kiến trúc giao diện người dùng (UI) quy định: Mọi nội dung hình ảnh hay văn bản muốn có khả năng nhấp chuột đều phải được kẹp vào giữa khe hở của phần thẻ mở &lt;a&gt; và phần thẻ đóng &lt;/a&gt;." },
+        
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1: Trong quá trình làm bài tập nhóm môn Tin học, bạn An được giao nhiệm vụ thiết kế trang chủ cho website 'Du lịch Việt Nam'. Bạn ấy đã viết đoạn mã HTML như sau:<br><div class=\"html-code-block\">&lt;a href=\"https://dulich.vn/dalat.html\"&gt;Xem thông tin về Đà Lạt&lt;/a&gt;<br>&lt;br&gt;<br>&lt;a href=\"hinh_anh/bando.html\"&gt;Xem bản đồ các tuyến đường&lt;/a&gt;</div>", items: [
+            { id: "a", text: "a) Thẻ &lt;a&gt; được An sử dụng trong đoạn mã trên có chức năng tạo ra các siêu liên kết (hyperlink).", correct: true, expl: "Chức năng bản lề của thẻ Anchor (&lt;a&gt;) trong ngôn ngữ đánh dấu chính là tạo ra điểm truy cập siêu liên kết điều hướng thông tin mạng." },
+            { id: "b", text: "b) Liên kết thứ nhất (Xem thông tin về Đà Lạt) là một liên kết ngoài và sử dụng đường dẫn tuyệt đối.", correct: true, expl: "Đúng. Cấu trúc của tham số href chứa trực tiếp giao thức https và tên miền mạng (dulich.vn) nên nó đáp ứng 100% định nghĩa của một đường dẫn tuyệt đối." },
+            { id: "c", text: "c) Liên kết thứ hai (Xem bản đồ các tuyến đường) sử dụng đường dẫn tương đối để trỏ tới một tệp tin nằm trong cùng một thư mục với tệp hiện tại.", correct: false, expl: "Nhầm lẫn cấu trúc thư mục. Đường dẫn có chứa tiền tố 'hinh_anh/' nghĩa là tệp bando.html đang nằm ẩn sâu ở một thư mục con lùi xuống một cấp, chứ không nằm lộ thiên cùng cấp với file mã." },
+            { id: "d", text: "d) Nếu An thay đổi thuộc tính href ở dòng thứ hai thành href=\"hinh_anh/bando.jpg\", trình duyệt sẽ báo lỗi vì thẻ &lt;a&gt; chỉ được phép liên kết tới tệp .html, không được phép liên kết tới tệp ảnh.", correct: false, expl: "Sai kiến thức căn bản về URL. Thẻ neo &lt;a&gt; không hề kén chọn định dạng. Nó hoàn toàn có thể trỏ đến ảnh (.jpg), tệp tải về (.pdf, .zip), hoặc video (.mp4) bình thường." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2: Cô giáo yêu cầu lớp 12A tạo một bài báo điện tử rất dài nói về lịch sử máy tính. Để giúp người đọc dễ dàng di chuyển trong bài viết, một nhóm đã thực hiện đoạn mã đánh dấu mục lục như sau:<br><div class=\"html-code-block\">&lt;ul&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;a href=\"#the_he_1\"&gt;Máy tính thế hệ thứ nhất&lt;/a&gt;&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;a href=\"#the_he_2\"&gt;Máy tính thế hệ thứ hai&lt;/a&gt;&lt;/li&gt;<br>&lt;/ul&gt;<br>&lt;h2 id=\"the_he_1\"&gt;Đặc điểm máy tính thế hệ 1&lt;/h2&gt;<br>&lt;p&gt;Sử dụng bóng đèn chân không...&lt;/p&gt;</div>", items: [
+            { id: "a", text: "a) Cú pháp &lt;a href=\"#the_he_1\"&gt; là cách tạo liên kết tới một vị trí khác nằm trong cùng một trang web.", correct: true, expl: "Cú pháp này thiết lập một Internal Link (Liên kết nội bộ trang). Trình duyệt đọc mã băm (#) sẽ biết chỉ cần dịch chuyển thanh cuộn màn hình mà không cần tốn băng thông tải lại toàn bộ Web." },
+            { id: "b", text: "b) Thuộc tính id=\"the_he_1\" đặt trong thẻ &lt;h2&gt; đóng vai trò là mã định danh đoạn, giúp trình duyệt xác định chính xác vị trí cần nhảy tới.", correct: true, expl: "Thuộc tính 'id' hoạt động như một cột mốc tọa độ trên bản đồ. Khi được gắn vào thẻ &lt;h2&gt;, nó ghim cố định một điểm đỗ xe chính xác cho các siêu liên kết thả neo vào." },
+            { id: "c", text: "c) Nếu nhóm vô tình đặt thêm một thẻ khác ở dưới cuối trang cũng có thuộc tính id=\"the_he_1\", hệ thống vẫn sẽ hoạt động bình thường theo quy tắc chuẩn của HTML.", correct: false, expl: "Sự cố chập chờn định tuyến. Theo nguyên lí thiết kế của chuẩn W3C, một ID bắt buộc phải là vật phẩm độc nhất (Unique). Việc khai báo trùng ID sẽ phá vỡ bộ máy định hướng của CSS và JavaScript." },
+            { id: "d", text: "d) Dấu thăng (#) nằm trong thuộc tính href là kí hiệu bắt buộc phải có để báo cho trình duyệt biết đây là một liên kết nhảy đến id trong cùng một trang, chứ không phải mở tệp tin mới.", correct: true, expl: "Chính xác về mặt 문 pháp (Syntax). Dấu thăng (Hash) là tiền tố đặc biệt kích hoạt bộ điều hướng Fragment Identifier, ngăn chặn hành động làm mới tab trình duyệt mặc định." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3: Khi xây dựng thư viện hình ảnh cho trường học, người quản trị mạng muốn ảnh không chỉ để xem mà nhấp vào ảnh sẽ mở ra trang web của trường. Người đó viết đoạn mã:<br><div class=\"html-code-block\">&lt;a href=\"https://thpt-x.edu.vn\"&gt;<br>&nbsp;&nbsp;&lt;img src=\"logo_truong.png\"&gt;<br>&lt;/a&gt;</div>", items: [
+            { id: "a", text: "a) Thẻ &lt;img&gt; trong đoạn mã có tác dụng chèn và hiển thị hình ảnh trên trang web.", correct: true, expl: "Nhiệm vụ trọng tâm của phần tử &lt;img&gt; là xử lí tín hiệu đồ họa đa phương tiện để xuất ra màn hình hình ảnh tương ứng với tệp tin nguồn." },
+            { id: "b", text: "b) Đoạn mã trên minh họa việc lồng thẻ &lt;img&gt; vào bên trong thẻ &lt;a&gt; để biến toàn bộ hình ảnh đó thành một siêu liên kết.", correct: true, expl: "Đây là kĩ thuật bọc đối tượng (Nesting) rất phổ biến. Thẻ liên kết mở ra vùng chọn bắt sự kiện chuột. Bất kì hình ảnh nào nằm lọt thỏm trong vùng chọn đó đều hóa thân thành một nút bấm Click." },
+            { id: "c", text: "c) Đường dẫn logo_truong.png trong thuộc tính src là đường dẫn tuyệt đối, yêu cầu phải có mạng Internet thì mới hiển thị được ảnh.", correct: false, expl: "Đọc sai thuộc tính đường dẫn. Chuỗi văn bản 'logo_truong.png' trơ trọi không có sự chống lưng của http/https hay tên miền, do đó nó thuộc nhóm đường dẫn tương đối cục bộ chạy Offline." },
+            { id: "d", text: "d) Nếu người quản trị muốn liên kết mở ra trang web của Bộ Giáo dục (https://moet.gov.vn) khi nháy vào ảnh, họ chỉ cần thay đổi đường dẫn nằm trong thuộc tính href của thẻ &lt;a&gt;.", correct: true, expl: "Cơ chế module hóa của HTML rất tiện lợi. Tệp hình ảnh hiển thị (src) và địa chỉ điểm đến (href) hoạt động trên 2 luồng độc lập. Chỉ cần can thiệp chỉnh sửa giá trị chuỗi ở href là ta hoàn tất việc đổi hướng xe." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "d2_1", type: "single", question: "Câu 1: Khi xem siêu văn bản (hypertext), người đọc có thể tiếp nhận thông tin theo cách nào?", options: ["Không cần xem tuần tự từ phần đầu đến phần cuối.", "Bắt buộc xem tuần tự từ phần đầu đến phần cuối.", "Chỉ có thể xem được nội dung dạng chữ văn bản.", "Chỉ có thể xem nếu máy tính tải hết các dữ liệu."], correct: 0, explanation: "Đột phá lớn nhất của siêu văn bản là tính phi tuyến. Người dùng có thể thỏa sức bấm vào các đường link màu xanh để bay lượn từ thông tin này sang thông tin khác bất chấp thứ tự bài viết." },
+        { id: "d2_2", type: "single", question: "Câu 2: Một 'tham chiếu để liên kết tới siêu văn bản khác' được gọi là gì?", options: ["Khái niệm này gọi là siêu liên kết mạng.", "Khái niệm này gọi là thiết bị bộ định tuyến.", "Khái niệm này gọi là ngôn ngữ mã hóa web.", "Khái niệm này gọi là bảng dữ liệu cấu trúc."], correct: 0, explanation: "Theo từ điển thuật ngữ chuyên ngành Web, đường dây tham chiếu chỉ đạo thiết bị mở ra một luồng siêu văn bản khác được định danh bằng khái niệm 'siêu liên kết' (hyperlink)." },
+        { id: "d2_3", type: "single", question: "Câu 3: Để trình duyệt hiểu bạn muốn tạo liên kết, bạn dùng cặp thẻ HTML nào?", options: ["Dùng cặp thẻ mang kí hiệu đóng mở là &lt;a&gt;.", "Dùng cặp thẻ mang kí hiệu đóng mở là &lt;p&gt;.", "Dùng cặp thẻ mang kí hiệu đóng mở là &lt;b&gt;.", "Dùng cặp thẻ mang kí hiệu đóng mở là &lt;i&gt;."], correct: 0, explanation: "Máy phân tích dữ liệu DOM của Chrome hay Safari luôn chờ đợi bắt được mã thẻ mở của kí tự &lt;a&gt; (Anchor) để sinh ra khối xử lí liên kết trên màn hình." },
+        { id: "d2_4", type: "single", question: "Câu 4: Địa chỉ (đường dẫn) tham chiếu tới tài liệu được viết ở thuộc tính nào của thẻ &lt;a&gt;?", options: ["Được viết ở thuộc tính có tên gọi là href.", "Được viết ở thuộc tính có tên gọi là type.", "Được viết ở thuộc tính có tên gọi là size.", "Được viết ở thuộc tính có tên gọi là font."], correct: 0, explanation: "Thuộc tính 'href' (còn đọc là Hypertext Reference) là chiếc ổ khóa lưu giữ chứa giá trị là địa chỉ chuỗi URL đích của siêu liên kết đó." },
+        { id: "d2_5", type: "single", question: "Câu 5: Loại đường dẫn nào luôn cung cấp đầy đủ giao thức (http://) và tên miền?", options: ["Đó chính là loại đường dẫn URL tuyệt đối.", "Đó chính là loại đường dẫn URL tương đối.", "Đó chính là loại đường dẫn URL ngẫu nhiên.", "Đó chính là loại đường dẫn URL không dây."], correct: 0, explanation: "Với sự hiện diện đầy đủ thông số gốc rễ bao gồm từ giao thức bảo mật đến Domain Name, đường dẫn URL này cung cấp một tọa độ tuyệt đối không xê dịch bất kể ở máy tính nào." },
+        { id: "d2_6", type: "single", question: "Câu 6: Khi tạo liên kết đến một trang web trên Internet (liên kết ngoài), ta bắt buộc dùng:", options: ["Dùng loại đường dẫn URL dạng tuyệt đối.", "Dùng loại đường dẫn URL dạng tương đối.", "Dùng loại đường dẫn URL dạng mã hóa số.", "Dùng loại đường dẫn URL dạng rút gọn đi."], correct: 0, explanation: "Liên kết ngoài ám chỉ việc vượt biển sang một tên miền lạ trên Internet, hành trình đó yêu cầu cung cấp một 'visa' địa chỉ tuyệt đối hoàn chỉnh từ gốc đến ngọn thì mới truy vấn thành công." },
+        { id: "d2_7", type: "single", question: "Câu 7: Mô tả cách truy cập từ vị trí tài liệu hiện tại là chức năng của loại đường dẫn nào?", options: ["Chức năng chính của đường dẫn tương đối.", "Chức năng chính của đường dẫn tuyệt đối.", "Chức năng chính của đường dẫn mã hóa số.", "Chức năng chính của đường dẫn vật lí cứng."], correct: 0, explanation: "Đường dẫn URL dạng tương đối bỏ qua cái nhìn tổng thể toàn cục, nó đóng vai trò hướng dẫn viên chỉ đường bằng cách dò dẫm đường đi từ chính vị trí thư mục đang đứng (Current Path)." },
+        { id: "d2_8", type: "single", question: "Câu 8: Thẻ HTML nào sau đây chịu trách nhiệm hiển thị một bức ảnh lên trang mạng?", options: ["Thẻ mang kí hiệu chuẩn &lt;img&gt; đảm nhận.", "Thẻ mang kí hiệu chuẩn &lt;a&gt; đảm nhận.", "Thẻ mang kí hiệu chuẩn &lt;p&gt; đảm nhận.", "Thẻ mang kí hiệu chuẩn &lt;h1&gt; đảm nhận."], correct: 0, explanation: "Thẻ HTML5 cung cấp thành phần đồ họa lõi là &lt;img&gt; để trực tiếp render ra thông số điểm ảnh trên giao diện, tạo sức sống hình ảnh cho website." },
+        { id: "d2_9", type: "single", question: "Câu 9: Mỗi phần tử muốn làm đích đến cho một liên kết trong trang thì cần có thuộc tính gì?", options: ["Cần có thuộc tính mã định danh tên là id.", "Cần có thuộc tính đường dẫn mang tên src.", "Cần có thuộc tính định dạng mang tên style.", "Cần có thuộc tính kích thước mang tên width."], correct: 0, explanation: "Để liên kết (Link) nhắm thẳng tên lửa mục tiêu đến một thẻ bất kì, bản thân thẻ đích đó phải được lập trình sẵn một biển số tọa độ mang tên thuộc tính nhận diện 'id'." },
+        { id: "d2_10", type: "single", question: "Câu 10: Để người dùng có thể kích hoạt liên kết trong trang web, họ thường làm thao tác gì?", options: ["Nháy chuột trái vào vị trí đặt liên kết đó.", "Bôi đen toàn bộ dòng chữ chứa liên kết đó.", "Nháy chuột phải vào chỗ trống của trang đó.", "Gõ văn bản đè lên vị trí chứa liên kết đó."], correct: 0, explanation: "Sự kiện thao tác ngầm định của con người trên máy tính đối với siêu liên kết là động tác nháy click nút chuột trái (Left-click). Hành vi này kích hoạt API điều hướng của trình duyệt Web." },
+        { id: "d2_11", type: "single", question: "Câu 11: Trong nội dung của thẻ &lt;a&gt;, văn bản hoặc hình ảnh nằm giữa thẻ mở và thẻ đóng sẽ:", options: ["Là phần tử hiển thị để người dùng nháy chuột vào.", "Là đường dẫn tuyệt đối trỏ đến trang web khác đó.", "Bị ẩn đi không hiển thị trên màn hình máy tính nữa.", "Biến thành một tiêu đề lớn nhất của cả trang web đó."], correct: 0, explanation: "Khối vật liệu cấu tạo kẹp ở giữa vỏ <a>...</a> là phần Content (nội dung hiển thị hữu hình). Trình duyệt sẽ bôi màu xanh và gạch chân văn bản đó để người dùng nhìn thấy mà bấm chuột." },
+        { id: "d2_12", type: "single", question: "Câu 12: Khẳng định nào sau đây ĐÚNG khi nói về 'liên kết ngoài' trong lập trình web?", options: ["Trỏ từ trang web này tới trang web khác trên mạng.", "Trỏ tới một dòng tiêu đề khác nằm trong cùng trang.", "Trỏ tới một tệp tin hình ảnh nằm trên ổ đĩa cục bộ.", "Trỏ tới một tệp tin nhạc được lưu chung một thư mục."], correct: 0, explanation: "Từ 'Ngoài' (External) có hàm ý chỉ sự kết nối vươn ra khỏi vùng lãnh thổ lưu trữ quản lí nội bộ (Localhost/Website server), chạy trên đường mạng Internet rộng lớn để gặp trang web khác." },
+        { id: "d2_13", type: "single", question: "Câu 13: Lợi ích lớn nhất khi sử dụng đường dẫn tương đối cho nội bộ website là gì?", options: ["Không yêu cầu gõ lại giao thức và tên miền trang.", "Giúp cho trang web tự động dịch sang tiếng Việt.", "Làm cho tốc độ mạng Internet nhanh hơn gấp đôi.", "Ngăn chặn sự tấn công của các vi rút độc hại web."], correct: 0, explanation: "Sự tối giản dữ liệu văn bản. Đường dẫn tương đối giúp cấu trúc mã nguồn gọn nhẹ. Đặc biệt lợi hại khi chuyển toàn bộ Website sang tên miền mới, mọi liên kết vẫn sẽ chạy ổn định do không bị trói buộc cứng vào địa chỉ gốc." },
+        { id: "d2_14", type: "single", question: "Câu 14: Khi trình duyệt đọc một đường dẫn KHÔNG có http:// ở đầu, nó sẽ làm gì?", options: ["Nó tự hiểu đây là một đường dẫn tương đối cục bộ.", "Nó tự hiểu đây là đường dẫn tải ứng dụng độc hại.", "Nó tự động báo lỗi cú pháp và tắt trang web đi ngay.", "Nó tự động khóa hệ thống mạng máy tính của bạn."], correct: 0, explanation: "Hành vi Default Behavior của Web Browser quy định nếu tham số chuỗi URL không chứa cụm khóa nhận diện giao thức mạng http/https, luồng điều hướng sẽ tự gán chuỗi đó thành dạng tương đối." },
+        { id: "d2_15", type: "single", question: "Câu 15: Để liên kết tới tài liệu thuộc thư mục khác dưới một cấp, dấu phân cách dùng là:", options: ["Sử dụng kí hiệu chuẩn là dấu gạch chéo /.", "Sử dụng kí hiệu chuẩn là dấu gạch ngang -.", "Sử dụng kí hiệu chuẩn là dấu chấm phẩy ;.", "Sử dụng kí hiệu chuẩn là dấu ngoặc kép \"."], correct: 0, explanation: "Chuẩn đường dẫn quốc tế URI sử dụng kí tự Slash (dấu gạch chéo xuôi /) để biểu diễn thao tác vượt cấp cấu trúc thư mục từ ngoài vào trong." },
+        { id: "d2_16", type: "single", question: "Câu 16: Bước đầu tiên để tạo liên kết nhảy đến một vị trí cụ thể trong cùng một trang là:", options: ["Tạo phần tử có thuộc tính id tại vị trí đích.", "Gõ kí hiệu dấu thăng # vào trước văn bản.", "Sử dụng đường dẫn tuyệt đối của trang web.", "Chèn một hình ảnh mới vào vị trí đích đó."], correct: 0, explanation: "Bản chất kĩ thuật của neo liên kết. Nếu mục tiêu chưa được đóng đinh tọa độ (chưa khai báo thẻ id ở đích đến), thì cái neo (thẻ a) có ném xuống cũng sẽ trượt đi vì không có điểm bám." },
+        { id: "d2_17", type: "single", question: "Câu 17: Tại sao thuộc tính id lại được gọi là 'mã định danh đoạn' của một trang web?", options: ["Vì nó xác định tính duy nhất của một phần tử đó.", "Vì nó giúp trang web đổi sang một màu sắc mới.", "Vì nó có thể lặp lại nhiều lần cho nhiều phần tử.", "Vì nó thay thế hoàn toàn cho thuộc tính liên kết."], correct: 0, explanation: "ID (Identification) luôn luôn sinh ra để đảm bảo việc định danh không bị trùng lặp. Trang web dùng biến môi trường này làm mỏ neo duy nhất định vị được tọa độ cuộn chuột (Scroll position)." },
+        { id: "d2_18", type: "single", question: "Câu 18: Thuộc tính src (source) trong thẻ &lt;img&gt; có nhiệm vụ kĩ thuật quan trọng nào?", options: ["Chỉ ra đường dẫn nơi lưu trữ của tệp tin hình ảnh.", "Chỉ ra độ rộng của hình ảnh khi hiển thị trên màn.", "Chỉ ra mã định danh duy nhất của bức hình ảnh đó.", "Chỉ ra giao thức truyền tải bảo mật của trang web."], correct: 0, explanation: "Thuộc tính 'src' (viết tắt đầy đủ của Nguồn - Source) là cầu nối dữ liệu, nạp thông số tọa độ lưu trữ vật lí vào để thuật toán Render có thể tải từng điểm ảnh về bộ nhớ máy." },
+        { id: "d2_19", type: "single", question: "Câu 19: Liên kết đến một vị trí khác trong cùng một website được gọi tắt bằng thuật ngữ gì?", options: ["Gọi bằng thuật ngữ chuyên ngành là 'liên kết trong'.", "Gọi bằng thuật ngữ chuyên ngành là 'liên kết ngoài'.", "Gọi bằng thuật ngữ chuyên ngành là 'đường dẫn ảo'.", "Gọi bằng thuật ngữ chuyên ngành là 'siêu văn bản'."], correct: 0, explanation: "Thuật ngữ ngành công nghệ Web (SEO) sử dụng cụm từ 'Internal Link' hay 'Liên kết trong' để mô tả các đường dẫn nội bộ kết nối hệ thống các bài viết trực thuộc sở hữu của cùng một website mạng." },
+        { id: "d2_20", type: "single", question: "Câu 20: Nếu muốn liên kết sang trang chủ của Bộ Giáo dục, lập trình viên sử dụng mã nào?", options: ["Cú pháp chuẩn: &lt;a href=\"https://moet.gov.vn\"&gt;Bộ GD&lt;/a&gt;", "Cú pháp chuẩn: &lt;a src=\"https://moet.gov.vn\"&gt;Bộ GD&lt;/a&gt;", "Cú pháp chuẩn: &lt;a url=\"https://moet.gov.vn\"&gt;Bộ GD&lt;/a&gt;", "Cú pháp chuẩn: &lt;a id=\"https://moet.gov.vn\"&gt;Bộ GD&lt;/a&gt;"], correct: 0, explanation: "Website Bộ Giáo dục là một thực thể độc lập bên ngoài, nên sử dụng URL tuyệt đối (https...). Cú pháp duy nhất đáp ứng thuộc tính liên kết là dùng 'href' kết hợp thẻ bao 'a'." },
+        { id: "d2_21", type: "single", question: "Câu 21: Bạn đang sửa tệp index.html. Để liên kết đến tệp lienhe.html chung một thư mục:", options: ["Mã viết đúng là: &lt;a href=\"lienhe.html\"&gt;Liên hệ&lt;/a&gt;.", "Mã viết đúng là: &lt;a href=\"/lienhe.html\"&gt;Liên hệ&lt;/a&gt;.", "Mã viết đúng là: &lt;a src=\"lienhe.html\"&gt;Liên hệ&lt;/a&gt;.", "Mã viết đúng là: &lt;a id=\"lienhe.html\"&gt;Liên hệ&lt;/a&gt;."], correct: 0, explanation: "Do đặc tính 2 tệp nằm ngang hàng (cùng chung thư mục Root), lập trình viên không cần dùng gạch chéo vượt cấp mà gọi luôn thẳng định danh tệp 'lienhe.html' trực tiếp vào thẻ href." },
+        { id: "d2_22", type: "single", question: "Câu 22: Cho đoạn mã sau:<br><div class=\"html-code-block\">&lt;a href=\"hinh_anh/logo.png\"&gt;Xem Logo&lt;/a&gt;</div>Đường dẫn hinh_anh/logo.png phản ánh cấu trúc thư mục như thế nào?", options: ["Tệp logo nằm trong thư mục con lùi xuống một cấp.", "Tệp logo nằm chung cùng cấp thư mục với tệp HTML.", "Tệp logo nằm trên một máy chủ hoàn toàn khác biệt.", "Tệp logo nằm ở thư mục lùi xuống tận hai cấp liền."], correct: 0, explanation: "Cấu trúc thư mục được máy tính đọc ra: từ vị trí file chạy mã, mở cửa một thư mục con cấp dưới mang tên 'hinh_anh', lùi vào đó rồi gọi tệp 'logo.png'." },
+        { id: "d2_23", type: "single", question: "Câu 23: Cú pháp lệnh nào là ĐÚNG để tạo liên kết nhảy đến đoạn văn có id=\"phan_ket\"?", options: ["Mã lệnh viết đúng chuẩn: &lt;a href=\"#phan_ket\"&gt;", "Mã lệnh viết đúng chuẩn: &lt;a href=\"*phan_ket\"&gt;", "Mã lệnh viết đúng chuẩn: &lt;a href=\"@phan_ket\"&gt;", "Mã lệnh viết đúng chuẩn: &lt;a href=\"&amp;phan_ket\"&gt;"], correct: 0, explanation: "Cú pháp bộ phận nhận dạng băm (Hash Identifier) trong URI quy định dùng dấu '#'. Thuộc tính '#phan_ket' sẽ điều hướng cuộn màn hình ngay tắp lự đến tọa độ thẻ có cài mã thẻ id tương ứng." },
+        { id: "d2_24", type: "single", question: "Câu 24: Một học sinh viết mã chèn ảnh:<br><div class=\"html-code-block\">&lt;img src=\"anhdep.jpg\"&gt;</div>Đoạn mã này đang dùng loại đường dẫn nào để tìm ra tệp hình ảnh đó?", options: ["Sử dụng đường dẫn URL dạng tương đối cục bộ.", "Sử dụng đường dẫn URL dạng tuyệt đối mạng xa.", "Sử dụng đường dẫn URL dạng mã hóa bảo mật kĩ.", "Sử dụng đường dẫn URL dạng ẩn danh không tìm."], correct: 0, explanation: "Nguồn ảnh (src) không bắt đầu bằng giao thức web http:// mà là tên thẳng của tập tin. Trình duyệt tự mặc định dùng phương pháp dò tìm dạng tương đối tại cùng vị trí thư mục Local." },
+        { id: "d2_25", type: "single", question: "Câu 25: Lỗi sai cấu trúc trong đoạn mã &lt;a href=\"http://google.com\"&gt;Google là lỗi gì?", options: ["Bị thiếu mất thẻ đóng &lt;/a&gt; ở cuối siêu liên kết.", "Bị thiếu dấu nháy kép bao bọc phần đường dẫn đó.", "Đã sử dụng sai tên của thuộc tính tạo ra liên kết.", "Đã gõ sai giao thức của mạng Internet toàn cầu."], correct: 0, explanation: "Theo chuẩn DOM của HTML, các phần tử mang nội dung khối đều phải tuân thủ nguyên tắc cân bằng. Có mở (&lt;a&gt;) thì bắt buộc phải có khóa đuôi (&lt;/a&gt;) để ngắt hiệu ứng nhấp chuột tại chữ đó." },
+        { id: "d2_26", type: "single", question: "Câu 26: Để bức ảnh hiển thị vừa làm liên kết trỏ tới trang web khác, ta viết mã theo cách:", options: ["Lồng nguyên thẻ &lt;img&gt; vào bên trong của thẻ &lt;a&gt;.", "Lồng nguyên thẻ &lt;a&gt; vào bên trong của thẻ &lt;img&gt;.", "Viết thẻ &lt;img&gt; và thẻ &lt;a&gt; nằm tách rời độc lập.", "Viết thuộc tính src chèn thẳng vào bên trong &lt;a&gt;."], correct: 0, explanation: "Tính chất bao bọc Nesting. Thẻ HTML Anchor (&lt;a&gt;) sẽ phủ hiệu ứng kích hoạt lên tất cả các vật thể chứa bên trong bụng của nó. Ném khối hộp thẻ ảnh (&lt;img&gt;) vào bụng nó sẽ giải bài toán này." },
+        { id: "d2_27", type: "single", question: "Câu 27: Cho đoạn mã:<br><div class=\"html-code-block\">&lt;a href=\"khoi10/hocky1/toan.html\"&gt;Xem điểm&lt;/a&gt;</div>Để truy cập tệp toan.html, hệ thống phải đi qua cấu trúc gồm bao nhiêu thư mục?", options: ["Phải đi lùi qua hai cấp thư mục chứa là khoi10 và hocky1.", "Phải đi lùi qua một cấp thư mục chứa duy nhất là hocky1.", "Hoàn toàn không đi qua thư mục nào vì nằm chung ở đó.", "Phải đi qua đường truyền Internet với giao thức là http."], correct: 0, explanation: "Quy luật Slash(/) bóc tách cấu trúc luồng: Mở cấp thư mục mẹ 'khoi10' (Cấp 1), tiếp tục lùi mở thư mục con 'hocky1' (Cấp 2). Vậy hệ điều hành đã chui lọt qua 2 tầng hầm bảo mật thư mục." },
+        { id: "d2_28", type: "single", question: "Câu 28: Đôi khi đường dẫn tuyệt đối rất dài và khó nhìn trên phần mềm, lập trình viên nên:", options: ["Vẫn bắt buộc phải copy và để chính xác đầy đủ địa chỉ.", "Tự ý xóa bỏ bớt phần giao thức http đi cho thật ngắn.", "Tự ý xóa bỏ bớt tên miền đi để thu gọn cấu trúc lại.", "Thay thế hoàn toàn bằng một đường dẫn tương đối."], correct: 0, explanation: "Đối với truy cập tài nguyên bên ngoài Internet, địa chỉ là bất biến và không được can thiệp xóa bớt. Một li vi phạm thiếu sót ở chuỗi URL sẽ khiến trình duyệt trỏ đến sai địa chỉ (Lỗi 404 Not Found)." },
+        
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1: Một công ty cần nâng cấp giao diện trang báo điện tử của mình. Người lập trình viên phải kết nối các bài báo nằm ở nhiều thư mục khác nhau trên cùng một máy chủ. Anh ấy đã viết cấu trúc mã nguồn HTML như sau:<br><div class=\"html-code-block\">&lt;a href=\"the_thao/bong_da.html\"&gt;Đọc tin Bóng đá&lt;/a&gt;<br>&lt;br&gt;<br>&lt;a href=\"https://baothethao.vn\"&gt;Theo Báo Thể Thao&lt;/a&gt;</div>", items: [
+            { id: "a", text: "a) Trong cấu trúc của thẻ &lt;a&gt;, thuộc tính href đóng vai trò lưu trữ đường dẫn URL trỏ tới tài liệu cần liên kết.", correct: true, expl: "Cú pháp tiêu chuẩn của W3C. 'href' mang định nghĩa là tham chiếu siêu văn bản (Hypertext Reference) dùng để chứa đầu ra chuỗi điểm đến." },
+            { id: "b", text: "b) Liên kết thứ nhất (Đọc tin Bóng đá) là một liên kết trong (internal link), sử dụng đường dẫn tương đối vì tệp bong_da.html nằm trên cùng máy chủ (cùng website).", correct: true, expl: "Đúng với quy chuẩn định nghĩa. Liên kết giữa các file nội bộ chung một ổ đĩa cục bộ server thì đều gọi chung bằng thuật ngữ 'Internal Link' đi kèm kĩ thuật xử lí đường dẫn tương đối." },
+            { id: "c", text: "c) Dấu gạch chéo / trong đường dẫn the_thao/bong_da.html cho biết tệp HTML này đang nằm chung một thư mục, cùng cấp với tệp hiện tại.", correct: false, expl: "Định nghĩa sai cấu trúc thư mục hệ điều hành. Dấu gạch chéo báo hiệu tệp tin này đã bị chuyển sang một phòng phụ khác (thư mục con có tên là the_thao), nên chúng không nằm chung cấp thư mục." },
+            { id: "d", text: "d) Liên kết thứ hai (Theo Báo Thể Thao) bắt buộc phải có phần giao thức https:// đứng ở đầu, nếu thiếu phần này trình duyệt sẽ không thể tìm thấy trang web trên Internet.", correct: true, expl: "Nguyên lí bắt buộc của mạng lưới WWW. Nếu cố tình lược bỏ giao thức truyền tải, máy chủ sẽ hiểu lầm tên miền đó là thư mục cục bộ của máy tính đang chạy và sụp đổ đường dẫn." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2: Trong bài thực hành xây dựng trang web cá nhân, bạn Minh muốn tạo một danh mục lục ở đầu trang. Khi người xem nhấp chuột vào một mục, trang sẽ tự động cuộn nhanh xuống phần thông tin chi tiết nằm tuốt ở phía dưới. Minh đã thử nghiệm với đoạn mã dưới đây:<br><div class=\"html-code-block\">&lt;ul&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;a href=\"#so_thich\"&gt;Sở thích cá nhân&lt;/a&gt;&lt;/li&gt;<br>&nbsp;&nbsp;&lt;li&gt;&lt;a href=\"#hoc_tap\"&gt;Thành tích học tập&lt;/a&gt;&lt;/li&gt;<br>&lt;/ul&gt;<br>&lt;h2 id=\"so_thich\"&gt;1. Sở thích của mình&lt;/h2&gt;<br>&lt;p&gt;Mình thích lập trình và nghe nhạc...&lt;/p&gt;</div>", items: [
+            { id: "a", text: "a) Mã định danh đoạn trong HTML được khai báo bằng thuộc tính id.", correct: true, expl: "Thuộc tính cơ bản của Web. Tên 'id' đại diện cho Identity - cung cấp mã định danh vĩnh viễn và duy nhất cho thẻ mang nó trên cây phả hệ Document Object Model." },
+            { id: "b", text: "b) Việc nhấp chuột vào 'Sở thích cá nhân' sẽ kích hoạt một siêu liên kết, nhưng thay vì tải một trang web mới, nó chỉ di chuyển màn hình đến dòng tiêu đề chứa thẻ &lt;h2&gt; tương ứng.", correct: true, expl: "Đây là hiệu ứng Bookmark/Anchor mỏ neo cực kì tuyệt vời của Web. Trình duyệt không làm mới trạng thái (Refresh) mà chỉ dùng thuật toán kích hoạt hành vi nhảy cuộn (Scroll behavior) xuống mục tiêu trùng ID." },
+            { id: "c", text: "c) Kí hiệu dấu thăng (#) đặt trước chữ so_thich trong thuộc tính href là không cần thiết, có thể xóa đi mà liên kết vẫn hoạt động cuộn trang bình thường.", correct: false, expl: "Xóa dấu (#) là tự gây thảm họa sập tính năng. Nếu không có mã dấu thăng Fragment, trình duyệt sẽ coi 'so_thich' là một tệp file có thật tên là so_thich và điều hướng tải mới tìm file này (dẫn đến lỗi file Not Found)." },
+            { id: "d", text: "d) Để đánh dấu phần 'Thành tích học tập' nằm ở cuối trang, Minh cần tạo một thẻ HTML có chứa thuộc tính id=\"hoc_tap\" đặt tại vị trí đó.", correct: true, expl: "Tương tác qua lại đồng nhất. Liên kết của Minh gọi đến mục tiêu (href='#hoc_tap') nên dưới cuối trang bắt buộc phải thả một cái lưới hứng (ví dụ &lt;div id='hoc_tap'&gt;) thì sự điều hướng neo mới thành công được." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3: Tại câu lạc bộ Tin học, các thành viên đang thảo luận về cách chèn hình ảnh và tạo liên kết cho trang web bán sách trực tuyến. Một bạn đã đưa ra đoạn mã tích hợp như sau để mọi người cùng phân tích:<br><div class=\"html-code-block\">&lt;a href=\"sach_giao_khoa.html\"&gt;<br>&nbsp;&nbsp;&lt;img src=\"anh_bia/toan12.png\"&gt;<br>&lt;/a&gt;</div>", items: [
+            { id: "a", text: "a) Đường dẫn của hình ảnh được chỉ định bởi thuộc tính src (viết tắt của source) nằm bên trong thẻ &lt;img&gt;.", correct: true, expl: "Ngữ nghĩa chuẩn của HTML. Thuộc tính 'src' trong thẻ ảnh làm nhiệm vụ cung ứng nguồn nạp thông tin điểm ảnh để tiến hành quá trình render hình lên màn hình PC." },
+            { id: "b", text: "b) Đoạn mã trên đã sử dụng phương pháp lồng thẻ &lt;a&gt; vào bên trong vùng chứa của thẻ &lt;img&gt;.", correct: false, expl: "Đọc mã sai trật tự phả hệ DOM. Trật tự đúng là: Thẻ neo &lt;a&gt; ôm vùng ngoài mở giới hạn, sau đó ném lồng đối tượng hình ảnh (Image node) vào vùng bụng của mỏ neo đó." },
+            { id: "c", text: "c) Hình ảnh toan12.png sẽ hiển thị trên trang web, và khi người dùng nhấp chuột vào hình ảnh này, hệ thống sẽ mở ra tệp tin sach_giao_khoa.html.", correct: true, expl: "Phân tích chuẩn hành vi Event Click. Hiệu ứng siêu liên kết của thẻ cha (A) bị truyền ép đè xuống phần tử ảnh con (IMG), biến toàn bộ khung hình vật lí đó thành vùng chọn bấm điều hướng." },
+            { id: "d", text: "d) Cả hai đường dẫn được sử dụng trong thuộc tính href và src ở đoạn mã trên đều là đường dẫn tuyệt đối vì chúng mô tả vị trí tệp tin cực kì chi tiết.", correct: false, expl: "Lỗi khái niệm nền tảng kĩ thuật URL. Cả 2 tham số đó đều thiếu thành phần giao thức cốt lõi nền tảng (http://) nên bản chất vật lí của chúng đều là đường dẫn tương đối (Relative Path)." }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
