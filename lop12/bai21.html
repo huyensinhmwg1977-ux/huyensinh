@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Tin Học 12 - Hành Trình Số - Mang tri thức đến mọi người</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { 
+        -webkit-tap-highlight-color: transparent; 
+        -webkit-touch-callout: none !important; 
+        touch-action: manipulation; 
+    }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: background-color 0.1s ease, border-color 0.1s ease; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { background-color: #f0fdfa; border-color: #38bdf8; }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    
+    .btn-tf { transition: background-color 0.1s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):active { transform: scale(0.95); }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+
+    .html-code-block {
+        display: block;
+        background-color: #f8fafc;
+        color: #00008B; 
+        padding: 18px;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        margin-top: 12px;
+        margin-bottom: 12px;
+        overflow-x: auto;
+        border: 2px solid #cbd5e1;
+        border-left: 8px solid #2563eb;
+        font-size: 1.25rem; 
+        line-height: 1.7;
+        font-weight: 700; 
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-20 h-20 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-1xl sm:text-2xl font-bold text-red-500 mb-1"> BÀI 21. HỘI THẢO HƯỚNG NGHIỆP </h1>
+      </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col gap-4">
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full">
+               <label class="block text-xl font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold text-xl" placeholder="12A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-xl font-bold text-red-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 01<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">MÃ ĐỀ 02<br><span class="text-base font-medium text-gray-500">31 Câu (Trắc nghiệm & Đ/S)</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-lg p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-5 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-2xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-xl mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-lg font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-base text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ</div>
+       <div id="progress-text" class="text-2xl font-black text-blue-700">0/31</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2 text-xl"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN:</span> 
+        <span id="timer" class="text-4xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-lg border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp</h3>
+           <p class="text-gray-600 mb-6 font-medium text-xl">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-2xl">0</span>/<span id="confirm-total" class="font-black text-2xl">31</span> câu. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-4 bg-gray-100 text-gray-800 font-extrabold text-xl rounded-xl hover:bg-gray-200 border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl hover:bg-emerald-700 shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backFromReview()" class="px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 text-xl shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 text-xl shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-base text-blue-600 font-bold px-4 py-2 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-base sm:text-lg whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Kết thúc</th>
+         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-2 sm:px-4 py-4 text-center font-extrabold">Chi tiết</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-2xl">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tin_12_20');
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+/*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI ĐƯỢC CẬP NHẬT TỪ BÀI 21 (KÈM GIẢI THÍCH KHOA HỌC & TỈ MỈ)
+=================================================================================================*/
+    const de1_data = [
+        // --- PHẦN I: TRẮC NGHIỆM 1 LỰA CHỌN ---
+        { id: "d1_1", type: "single", question: "Câu 1: Theo gợi ý trong bài học, thời lượng dành cho hội thảo hướng nghiệp là bao lâu?", options: ["Khoảng 1 tiết học (tương đương 45 phút).", "Khoảng 2 tiết học (tương đương 90 phút).", "Khoảng 3 tiết học (tương đương 135 phút).", "Khoảng 4 tiết học (tương đương 180 phút)."], correct: 0, explanation: "Về mặt sư phạm, 1 tiết học (45 phút) là thời lượng tối ưu phù hợp với phân phối chương trình phổ thông, đủ để triển khai các nội dung trọng tâm mà vẫn duy trì được ngưỡng tập trung cao nhất của não bộ học sinh." },
+        { id: "d1_2", type: "single", question: "Câu 2: Ban tổ chức của buổi hội thảo lớp học được gợi ý bao gồm bao nhiêu thành viên?", options: ["Gồm 2 thành viên đại diện cho mỗi nhóm.", "Gồm 3 thành viên đại diện cho mỗi nhóm.", "Gồm 4 thành viên đại diện cho mỗi nhóm.", "Gồm 5 thành viên đại diện cho mỗi nhóm."], correct: 2, explanation: "Cơ cấu 4 thành viên cho ban tổ chức là con số chuẩn mực trong quản trị nhóm nhỏ, đảm bảo phân nhiệm rõ ràng (trưởng ban, thư ký, hậu cần, kỹ thuật) mà không gây cồng kềnh bộ máy." },
+        { id: "d1_3", type: "single", question: "Câu 3: Theo kế hoạch gợi ý, chủ tọa của hội thảo hướng nghiệp bao gồm bao nhiêu người?", options: ["Gồm 2 thành viên do lớp trực tiếp bầu ra.", "Gồm 3 thành viên do ban tổ chức chọn cử.", "Gồm 4 thành viên do giáo viên chỉ định rõ.", "Gồm 5 thành viên do khách mời đề xuất lên."], correct: 1, explanation: "Đoàn chủ tọa 3 người tạo thành cơ chế số lẻ, giúp dễ dàng lấy biểu quyết khi có ý kiến trái chiều và phân chia vai trò điều hành: 1 người điều phối chính, 1 người quản lý thời gian và 1 người tổng hợp câu hỏi." },
+        { id: "d1_4", type: "single", question: "Câu 4: Khi xây dựng bài trình bày, thao tác nào thuộc nội dung của Bước 1?", options: ["Lên mạng tìm kiếm số liệu thực tế.", "Lập dàn ý chi tiết bài trình bày.", "Sử dụng phần mềm tạo trang chiếu.", "Báo cáo thử trước mặt các bạn học."], correct: 1, explanation: "Trong quy trình xây dựng sản phẩm học thuật, Bước 1 luôn là thiết lập bộ khung logic (dàn ý). Thao tác này định tuyến dòng chảy thông tin, tránh việc thu thập dữ liệu lan man ở các bước sau." },
+        { id: "d1_5", type: "single", question: "Câu 5: Tiêu chí đánh giá nào chiếm trọng số cao nhất (40%) đối với điểm của toàn nhóm?", options: ["Nội dung trình bày của cả nhóm.", "Hình thức trình bày của cả nhóm.", "Khả năng trả lời các câu hỏi phụ.", "Số lượng thành viên tham gia nói."], correct: 0, explanation: "Nội dung là cốt lõi của một buổi hội thảo học thuật. Việc chiếm 40% trọng số khẳng định nguyên tắc: Hình thức hay kỹ năng thuyết trình chỉ là công cụ truyền tải, giá trị thông tin chính xác và chiều sâu kiến thức mới là thước đo năng lực cao nhất." },
+        { id: "d1_6", type: "single", question: "Câu 6: Nguồn thông tin nào sau đây được gợi ý để thu thập dữ liệu cho hội thảo?", options: ["Các trang mạng xã hội không xác thực.", "Các mẩu chuyện phiếm của cộng đồng.", "Các báo cáo từ những tổ chức uy tín.", "Các tin đồn truyền miệng chưa kiểm chứng."], correct: 2, explanation: "Thu thập dữ liệu từ các tổ chức uy tín (ví dụ: Tổng cục Thống kê, báo cáo của Bộ TT&TT) đảm bảo tính toàn vẹn (Integrity) và độ tin cậy của thông tin, đây là kỹ năng nền tảng trong nghiên cứu khoa học." },
+        { id: "d1_7", type: "single", question: "Câu 7: Hệ số cá nhân trong đánh giá kết quả hội thảo được xác định bằng công thức nào?", options: ["Tổng điểm cá nhân đem nhân cho 100%.", "Tổng điểm cá nhân đem chia cho 100%.", "Tổng điểm cá nhân đem cộng với 100%.", "Tổng điểm cá nhân đem trừ cho 100%."], correct: 1, explanation: "Hệ số cá nhân = (Tổng điểm cá nhân) / 100. Việc chuẩn hóa điểm số cá nhân (thang 100) về hệ số (xoay quanh mức 1.0) giúp cá thể hóa điểm nhóm một cách công bằng theo thuật toán trọng số." },
+        { id: "d1_8", type: "single", question: "Câu 8: Các nhóm cần nộp bài trình bày cho ban tổ chức hội thảo vào thời điểm nào?", options: ["Gửi bài trước ngày diễn ra đúng 2 ngày.", "Gửi bài ngay khi buổi hội thảo bắt đầu.", "Gửi bài sau khi buổi hội thảo kết thúc.", "Gửi bài trước ngày diễn ra đúng 1 tuần."], correct: 0, explanation: "Thời hạn (Deadline) nộp trước 2 ngày (48 giờ) cung cấp đủ 'thời gian đệm' để Ban tổ chức kiểm tra độ tương thích của file (format, font lỗi) và cấu hình hệ thống máy chiếu, triệt tiêu rủi ro kỹ thuật phút chót." },
+        { id: "d1_9", type: "single", question: "Câu 9: Nội dung nào sau đây là một phần trong dàn ý bài trình bày tại hội thảo?", options: ["Lịch sử phát triển mạng máy tính cổ đại.", "Kỹ năng công nghệ thông tin cần thiết nhất.", "Các thuật toán tối ưu hóa mã nguồn mở.", "Cấu trúc vi mạch phần cứng của máy tính."], correct: 1, explanation: "Chủ đề của bài 21 là 'Hội thảo Hướng nghiệp', do đó nội dung trình bày phải tập trung vào khía cạnh nhân sự, xu hướng việc làm và 'Kỹ năng CNTT cần thiết', chứ không đi sâu vào lý thuyết thuật toán hay phần cứng chuyên sâu." },
+        { id: "d1_10", type: "single", question: "Câu 10: Việc mời thêm các chuyên gia có kinh nghiệm tham gia hội thảo nhằm mục đích gì?", options: ["Để chấm điểm thay cho giáo viên bộ môn.", "Để tài trợ kinh phí tổ chức cho hội thảo.", "Để cung cấp thêm thông tin từ thực tiễn.", "Để thay mặt học sinh thuyết trình bài làm."], correct: 2, explanation: "Chuyên gia đóng vai trò như một 'kênh tham chiếu thực địa'. Họ bù đắp khoảng trống giữa lý thuyết hàn lâm trên ghế nhà trường và bối cảnh vận hành khốc liệt của doanh nghiệp, giúp định hướng nghề nghiệp thực tế hơn." },
+        { id: "d1_11", type: "single", question: "Câu 11: Tại sao ban tổ chức yêu cầu các nhóm phải nộp bài trình bày trước 2 ngày?", options: ["Để có thời gian in ấn toàn bộ thành sách.", "Để gửi trước cho chuyên gia và giáo viên.", "Để loại bỏ bớt các nhóm có bài làm kém.", "Để công bố điểm số trước khi thuyết trình."], correct: 1, explanation: "Việc gửi trước tài liệu (pre-read materials) cho Ban giám khảo và Chuyên gia giúp họ có thời gian thẩm định chéo dữ liệu (cross-check), từ đó chuẩn bị được những câu hỏi phản biện sắc sảo, nâng cao chất lượng học thuật của phiên hỏi đáp." },
+        { id: "d1_12", type: "single", question: "Câu 12: Khi xây dựng bài trình bày, việc sử dụng biểu đồ, bảng biểu mang lại lợi ích gì?", options: ["Giúp bài trình bày nhiều trang chiếu hơn.", "Giúp thông tin trở nên rõ ràng, dễ hiểu.", "Giúp kéo dài thời gian thuyết trình nhóm.", "Giúp thay thế hoàn toàn lời nói báo cáo."], correct: 1, explanation: "Theo nguyên lý trực quan hóa dữ liệu (Data Visualization), bộ não con người xử lý hình ảnh và cấu trúc đồ thị nhanh hơn gấp 60.000 lần so với văn bản dạng text thuần túy. Biểu đồ giúp mã hóa lượng lớn số liệu thành các mẫu (patterns) dễ nhận thức." },
+        { id: "d1_13", type: "single", question: "Câu 13: Mục đích chính của việc 'Báo cáo thử' (Bước 4) trong chuẩn bị hội thảo là gì?", options: ["Để nhận điểm số chính thức từ giáo viên.", "Để phát hiện lỗi và hoàn thiện bài trình bày.", "Để cạnh tranh giải thưởng với các nhóm khác.", "Để khách mời có thể ra về sớm hơn dự kiến."], correct: 1, explanation: "Báo cáo thử (Dry Run) là bước kiểm thử (Testing) cuối cùng trong quy trình. Nó giúp nhóm giả lập môi trường thực tế để đo lường thời gian (Timekeeping), kiểm tra phản xạ sân khấu và tinh chỉnh các 'nút thắt' trong luồng thông tin." },
+        { id: "d1_14", type: "single", question: "Câu 14: Việc đánh giá điểm cá nhân thông qua tiêu chí 'Thái độ tham gia' phản ánh điều gì?", options: ["Sự nghiêm túc và tinh thần làm việc nhóm.", "Trình độ sử dụng phần mềm máy tính giỏi.", "Khả năng thiết kế slide đẹp nhất trong lớp.", "Số lượng câu hỏi mà người đó đã trả lời."], correct: 0, explanation: "Trong bộ kỹ năng thế kỷ 21, làm việc nhóm (Teamwork) là chỉ số EQ quan trọng. Thái độ tham gia đo lường sự cam kết, tính kỷ luật và khả năng hiệp đồng tác chiến của cá nhân trong một dự án tập thể." },
+        { id: "d1_15", type: "single", question: "Câu 15: Tiêu chí 'Trình bày rõ ràng, lôi cuốn' (30%) đòi hỏi báo cáo viên phải có kỹ năng gì?", options: ["Kỹ năng lập trình phần mềm thật xuất sắc.", "Kỹ năng giao tiếp và thuyết trình tự tin.", "Kỹ năng sửa chữa các thiết bị máy chiếu.", "Kỹ năng tính toán các số liệu thật nhanh."], correct: 1, explanation: "Kỹ năng truyền đạt (Communication skills) bao gồm việc làm chủ ngôn ngữ cơ thể, điều tiết cường độ âm thanh (Voice Modulation) và khả năng duy trì giao tiếp bằng mắt (Eye Contact) để tương tác và thuyết phục thính giả." },
+        { id: "d1_16", type: "single", question: "Câu 16: Khi hội thảo kết hợp hình thức trực tuyến, ban tổ chức cần đặc biệt lưu ý vấn đề gì?", options: ["Chuẩn bị nhiều đồ ăn nhẹ cho khách mời.", "Kiểm tra kỹ lưỡng trang thiết bị kĩ thuật.", "Trang trí phòng học bằng nhiều cờ hoa đẹp.", "In thêm nhiều tài liệu giấy cho người học."], correct: 1, explanation: "Mô hình Hybrid (kết hợp Trực tiếp - Trực tuyến) tiềm ẩn rủi ro cực lớn về băng thông mạng, xung đột phần cứng âm thanh (tiếng vọng - echo) và phần mềm kết nối. Do đó, việc kiểm tra thiết bị kỹ thuật (Technical Check) là điều kiện tiên quyết." },
+        { id: "d1_17", type: "single", question: "Câu 17: Vì sao cần phân tích và kiểm chứng thông tin sau khi thu thập ở Bước 2?", options: ["Vì mọi thông tin trên mạng đều hoàn toàn sai.", "Để đảm bảo tính chính xác và độ tin cậy cao.", "Để kéo dài thời gian làm việc nhóm ở lớp.", "Vì giáo viên không cho phép dùng tin mạng."], correct: 1, explanation: "Trong kỷ nguyên bùng nổ thông tin (Data Explosion), dữ liệu thô thường bị pha trộn với tin giả (Fake News) hoặc số liệu lỗi thời. Phân tích và kiểm chứng chéo (Cross-verification) giúp trích xuất ra các 'dữ liệu sạch', bảo vệ tính hàn lâm của báo cáo." },
+        { id: "d1_18", type: "single", question: "Câu 18: Chủ đề hội thảo 'Nhân lực CNTT: cơ hội và thách thức trong kỉ nguyên số' muốn nhấn mạnh điều gì?", options: ["CNTT chỉ có những khó khăn không thể vượt qua.", "CNTT vừa tạo ra việc làm vừa đòi hỏi kỹ năng mới.", "CNTT sẽ nhanh chóng biến mất trong tương lai gần.", "CNTT chỉ dành cho những người có chỉ số IQ cao."], correct: 1, explanation: "Chủ đề mang tính biện chứng: Mặt thuận lợi (Cơ hội) là nhu cầu tuyển dụng khổng lồ, mức lương cao; mặt đối lập (Thách thức) là vòng đời công nghệ cực ngắn (khoảng 2-3 năm), đòi hỏi nhân sự phải nâng cấp kỹ năng liên tục để không bị máy móc đào thải." },
+        { id: "d1_19", type: "single", question: "Câu 19: Nếu nhóm của bạn được phân công tìm hiểu về lĩnh vực Y tế, bạn nên ưu tiên tìm kiếm tài liệu ở đâu?", options: ["Các trang web chính thức của bệnh viện lớn.", "Các diễn đàn chuyên đánh giá về phần cứng.", "Các trang chuyên bán lẻ linh kiện máy tính.", "Các nhóm chat công cộng không rõ danh tính."], correct: 0, explanation: "Theo nguyên tắc trích dẫn nguồn, các cổng thông tin điện tử của bệnh viện nhà nước, bộ y tế (domain .gov hoặc .org) là những tổ chức thẩm quyền (Authority Entities). Dữ liệu từ đây mang tính pháp lý và độ chính xác khoa học tuyệt đối." },
+        { id: "d1_20", type: "single", question: "Câu 20: Bạn là người tổng hợp slide, nhận thấy nội dung chữ quá nhiều. Bạn sẽ xử lý thế nào để phù hợp yêu cầu?", options: ["Chuyển bớt chữ sang phông nhỏ nhất có thể.", "Đọc nhanh hơn khi thuyết trình để kịp giờ.", "Tóm tắt nội dung và chuyển thành sơ đồ khối.", "Chia nhỏ thành 100 trang slide để chứa đủ."], correct: 2, explanation: "Áp dụng định luật 'Tỷ lệ tín hiệu trên nhiễu' (Signal-to-Noise Ratio) trong thiết kế, việc chuyển khối văn bản (Nhiễu) thành từ khóa và sơ đồ khối (Tín hiệu) giúp giảm tải nhận thức (Cognitive Load) cho khán giả, tăng hiệu quả truyền đạt." },
+        { id: "d1_21", type: "single", question: "Câu 21: Trong quá trình báo cáo thử, các thành viên thấy báo cáo viên nói quá nhỏ. Biện pháp khắc phục hiệu quả nhất là gì?", options: ["Đổi ngay sang một chủ đề hoàn toàn mới mẻ.", "Góp ý để bạn đó điều chỉnh âm lượng giọng.", "Bỏ phần thuyết trình, chỉ bật slide cho xem.", "Giao cho giáo viên báo cáo thay cho cả nhóm."], correct: 1, explanation: "Báo cáo thử tạo ra một 'Vòng lặp phản hồi' (Feedback Loop). Nhận diện điểm yếu (âm lượng) và góp ý trực tiếp giúp báo cáo viên tái tinh chỉnh kỹ năng (điều tiết luồng hơi), giải quyết tận gốc vấn đề trước khi lên sân khấu thực." },
+        { id: "d1_22", type: "single", question: "Câu 22: Khi có một chuyên gia ở xa muốn giao lưu, ban tổ chức cần sử dụng giải pháp công nghệ nào?", options: ["Gửi thư tay qua đường bưu điện truyền thống.", "Thiết lập cuộc gọi qua phần mềm họp trực tuyến.", "Yêu cầu chuyên gia gửi tin nhắn qua điện thoại.", "Chỉ ghi âm sẵn câu hỏi rồi phát qua loa lớn."], correct: 1, explanation: "Phần mềm họp trực tuyến (như Zoom, Google Meet) ứng dụng giao thức VoIP và công nghệ truyền phát Video thời gian thực (Real-time streaming), giúp thu hẹp khoảng cách địa lý và tái tạo môi trường giao tiếp tương tác hai chiều (Interactive communication)." },
+        { id: "d1_23", type: "single", question: "Câu 23: Điểm tổng của nhóm là 8.5. Thành viên A có hệ số cá nhân là 1.1. Điểm thực tế của A bằng bao nhiêu?", options: ["Điểm thực tế là 9.35 điểm.", "Điểm thực tế là 8.50 điểm.", "Điểm thực tế là 7.40 điểm.", "Điểm thực tế là 9.60 điểm."], correct: 0, explanation: "Sử dụng công thức phân phối điểm chuẩn hóa: Điểm cá nhân = Điểm nhóm (8.5) x Hệ số (1.1) = 9.35. Thuật toán này định lượng chính xác 'Giá trị thặng dư' mà thành viên A đóng góp cho tập thể, khích lệ sự nỗ lực cá nhân." },
+        { id: "d1_24", type: "single", question: "Câu 24: Một nhóm muốn đạt điểm tối đa ở tiêu chí 'Thảo luận và hỏi đáp', họ cần chuẩn bị những gì?", options: ["Từ chối mọi câu hỏi để tránh trả lời sai sót.", "Chuẩn bị trước các phương án trả lời phản biện.", "Chỉ cần mỉm cười và nhường giáo viên trả lời.", "Đặt ngược lại câu hỏi khó cho người đang hỏi."], correct: 1, explanation: "Dự đoán rủi ro và lập kịch bản dự phòng (Contingency Planning) là phương pháp luận khoa học. Bằng việc phác thảo trước các câu hỏi phản biện (Q&A Mapping), nhóm sẽ kiểm soát được tiến trình tư duy và duy trì sự chủ động tuyệt đối." },
+        { id: "d1_25", type: "single", question: "Câu 25: Nhóm chọn cách biểu diễn 'biểu đồ' để thể hiện mức lương ngành CNTT qua các năm. Điều này áp dụng kỹ năng nào ở Bước 3?", options: ["Kỹ năng lập trình phần mềm quản lý kho.", "Lựa chọn cách biểu diễn thông tin phù hợp.", "Kỹ năng thiết kế bản vẽ kỹ thuật ba chiều.", "Kỹ năng xây dựng cấu trúc cơ sở dữ liệu."], correct: 1, explanation: "Chuỗi dữ liệu thời gian (Time-series data) như 'mức lương qua các năm' yêu cầu việc chuyển đổi thành đồ thị dạng đường (Line chart) hoặc dạng cột (Bar chart). Đây chính là kỹ năng chọn lọc định dạng mã hóa dữ liệu tối ưu nhất cho nhận thức trực quan." },
+        { id: "d1_26", type: "single", question: "Câu 26: Thành viên B hoàn thành công việc đúng hạn nhưng không sáng tạo. Dựa vào bảng đánh giá cá nhân, điểm của B sẽ như thế nào?", options: ["Đạt tối đa điểm phần Thái độ và Nhiệm vụ, thấp phần Sáng tạo.", "Bị trừ hết toàn bộ số điểm vì thiếu đi tính sáng tạo cá nhân.", "Vẫn được chấm điểm tối đa tuyệt đối ở tất cả các hạng mục.", "Bị loại khỏi nhóm ngay lập tức vì không chịu khó sáng tạo."], correct: 0, explanation: "Hệ thống ma trận Rubric đánh giá đa chiều bóc tách năng lực thành các biến số độc lập. Thành viên B đáp ứng biến 'Kỷ luật' và 'Cam kết' (đạt điểm tối đa phần này), nhưng thiếu đi biến 'Đột phá' nên điểm Sáng tạo sẽ tiệm cận 0. Điểm số hoàn toàn tuân theo hệ phân tích tuyến tính." },
+        { id: "d1_27", type: "single", question: "Câu 27: Để dẫn chứng về 'cơ hội việc làm', báo cáo viên đưa ra một mẫu tin tuyển dụng thực tế. Thao tác này giúp bài thuyết trình đạt yếu tố nào?", options: ["Tăng tính hài hước cho cả buổi thuyết trình.", "Tăng tính thuyết phục nhờ dữ liệu thực tế cao.", "Giảm thời lượng báo cáo xuống mức thấp nhất.", "Giúp báo cáo viên không cần học thuộc lòng."], correct: 1, explanation: "Trong nghiên cứu bằng chứng (Evidence-based Research), một dữ liệu thực nghiệm (Empirical Data) - như mẫu tin tuyển dụng thật - có sức mạnh bẻ gãy mọi lập luận sáo rỗng. Nó là mỏ neo niềm tin, tạo ra tính xác thực (Authenticity) cho toàn bộ lập luận." },
+        { id: "d1_28", type: "single", question: "Câu 28: Khi hội thảo chỉ còn 5 phút nhưng vẫn còn 1 nhóm chưa trình bày, chủ tọa nên xử lý như thế nào?", options: ["Yêu cầu nhóm đó tự tóm tắt ngắn gọn trong 5 phút.", "Bỏ qua nhóm đó và kết thúc buổi hội thảo lập tức.", "Tự động lấy điểm của nhóm trình bày trước gán vào.", "Bắt buộc mọi người ở lại thêm 1 giờ đồng hồ nữa."], correct: 0, explanation: "Kỹ năng quản trị rủi ro thời gian (Time-bound Management) đòi hỏi người chủ tọa phải đưa ra quyết định ép xung (Overclocking) quá trình báo cáo. Yêu cầu nén thông tin (Data Compression) vào 5 phút vừa tôn trọng quyền lợi của nhóm, vừa bảo vệ giới hạn tài nguyên thời gian của sự kiện." },
+        
+        // --- PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI ---
+        { id: "d1_II_1", type: "tf_cluster", context: "Câu 1. Để tổ chức buổi hội thảo tại lớp 12A với chủ đề 'Nhân lực CNTT trong Y tế', giáo viên yêu cầu các học sinh tự ứng cử vào ban tổ chức và phân công nhiệm vụ rõ ràng trước 1 tuần.", items: [
+            { id: "a", text: "a)  Ban tổ chức cần thiết lập yêu cầu các nhóm phải nộp bài thuyết trình trước 2 ngày diễn ra hội thảo.", correct: true, expl: "Đúng. Mốc thời gian (T - 48h) là giới hạn kỹ thuật tiêu chuẩn để Ban tổ chức có đủ không gian xử lý các sự cố về định dạng file, tương thích phần mềm và sắp xếp kịch bản trình chiếu liên tục." },
+            { id: "b", text: "b)  Việc ban tổ chức thu thập tài liệu sớm nhằm mục đích gửi trước cho các chuyên gia khách mời có thời gian nghiên cứu.", correct: true, expl: "Đúng. Cung cấp Pre-read documents cho chuyên gia giúp họ lập bản đồ tư duy, chuẩn bị các câu hỏi phản biện sâu sắc, đưa phiên hội thảo chạm đến ngưỡng học thuật thực sự." },
+            { id: "c", text: "c)  Nếu lớp không có máy tính kết nối Internet, ban tổ chức vẫn bắt buộc phải mời chuyên gia ở nước ngoài tham gia theo hình thức trực tuyến để đảm bảo yêu cầu bài học.", correct: false, expl: "Sai. Giải pháp công nghệ phải dựa trên nền tảng hạ tầng thực tế. Nếu mất kết nối Internet, việc ép buộc gọi trực tuyến là tư duy phi logic. Thay vào đó, mời chuyên gia nội bộ hoặc nén video offline là phương án kỹ thuật khả thi hơn." },
+            { id: "d", text: "d)  Trong trường hợp sát giờ diễn ra hội thảo mà máy chiếu bị hỏng, chủ tọa nên hủy luôn buổi hội thảo thay vì in tài liệu giấy phát cho mọi người đọc.", correct: false, expl: "Sai. Một hệ thống quản trị rủi ro tốt (Risk Management) không bao giờ cho phép hủy dự án vì một điểm nghẽn kỹ thuật (Single Point of Failure). Chuyển hướng sang tài liệu giấy hoặc bảng đen (B-Plan) chứng tỏ năng lực ứng biến sinh tồn xuất sắc của nhóm." }
+        ]},
+        { id: "d1_II_2", type: "tf_cluster", context: "Câu 2. Nhóm 1 được giao nhiệm vụ tìm hiểu về 'Cơ hội và thách thức của kỹ sư bảo mật trong ngành tài chính'. Các thành viên đang họp để phân tích thông tin lấy từ mạng xã hội.", items: [
+            { id: "a", text: "a)  Một trong những công việc nhóm cần làm là phân tích, kiểm chứng độ tin cậy của các thông tin vừa thu thập được.", correct: true, expl: "Đúng. Thuật toán kiểm chứng chéo (Fact-checking) là màng lọc bắt buộc để loại bỏ 'Dữ liệu độc hại' (Toxic data) trên mạng xã hội, đảm bảo tính toàn vẹn (Integrity) của báo cáo khoa học." },
+            { id: "b", text: "b)  Thay vì dùng những đoạn văn dài mô tả xu hướng việc làm, nhóm nên sử dụng biểu đồ, sơ đồ để người nghe dễ hình dung.", correct: true, expl: "Đúng. Chuyển đổi dữ liệu chuỗi thành hình thái đồ họa (Data Visualization) giảm thiểu tải lượng nhận thức (Cognitive Load), giúp bộ não thính giả trích xuất Insight (sự thật ngầm hiểu) tức thì." },
+            { id: "c", text: "c)  Để minh chứng cho mức lương của kỹ sư bảo mật, nhóm có thể chụp ảnh các tin đăng tuyển dụng thật trên website uy tín và đưa vào slide.", correct: true, expl: "Đúng. Việc trích xuất một dữ liệu thực nghiệm (Empirical Evidence) từ môi trường thực tế (Screenshot tin tuyển dụng) tạo ra giá trị tham chiếu cao nhất, đập tan mọi nghi ngờ về tính lý thuyết viển vông." },
+            { id: "d", text: "d)  Nhóm nên đưa vào slide ít nhất 50 trang thông tin chi tiết các thuật toán mã hóa của ngành tài chính để bài báo cáo đạt điểm nội dung cao nhất.", correct: false, expl: "Sai. Đây là hội thảo định hướng nghề nghiệp (về cơ hội/nhân sự), không phải luận án tiến sĩ mật mã học. Việc nhồi nhét 50 trang thuật toán vi phạm nghiêm trọng nguyên tắc 'Đúng trọng tâm' (Targeted Content) và vượt quá ngưỡng tiếp thu của học sinh 17 tuổi." }
+        ]},
+        { id: "d1_II_3", type: "tf_cluster", context: "Câu 3. Tại buổi tổng kết hội thảo, ban cán sự tiến hành đánh giá điểm cho từng thành viên trong nhóm 2 dựa vào các tiêu chí cá nhân.", items: [
+            { id: "a", text: "a)  Tiêu chí 'Hoàn thành nhiệm vụ' chiếm trọng số 50% trong tổng điểm đánh giá cá nhân.", correct: false, expl: "Sai. Theo cấu trúc ma trận điểm chuẩn mực được gợi ý, 'Hoàn thành nhiệm vụ' thường chiếm trọng số khoảng 40%. Việc giao 50% sẽ làm mất cân bằng các biến số về Sáng tạo và Thái độ." },
+            { id: "b", text: "b)  Nếu một thành viên không đóng góp ý tưởng mới nào thì hệ số cá nhân của bạn đó chắc chắn sẽ bằng 0.", correct: false, expl: "Sai. Hệ số cá nhân là tổng hòa của nhiều biến số (Nhiệm vụ, Thái độ, Sáng tạo). Dù điểm Sáng tạo bằng 0, nhưng nếu điểm Nhiệm vụ và Thái độ đạt tối đa, hệ số cuối cùng vẫn dao động ở mức 0.7 - 0.8 chứ không thể triệt tiêu về 0." },
+            { id: "c", text: "c)  Bạn Nam đi trễ nhiều lần trong lúc thảo luận nhóm, Nam sẽ bị trừ điểm ở tiêu chí 'Thái độ tham gia'.", correct: true, expl: "Đúng. 'Thái độ tham gia' đo lường trực tiếp bộ chỉ số kỷ luật (Discipline Metrics). Việc đi trễ vi phạm cam kết thời gian (Time Commitment), làm hao hụt tài nguyên của nhóm, việc trừ điểm là phản hồi hệ thống hoàn toàn logic." },
+            { id: "d", text: "d)  Bạn Hoa thuyết trình chính trên bục, do đó Hoa mặc nhiên được nhận toàn bộ 100% điểm thưởng của tiêu chí sáng tạo mà không cần xem xét các thành viên khác.", correct: false, expl: "Sai. Đứng bục chỉ là khâu 'Đầu ra' (Output). Sự sáng tạo có thể nằm ở khâu 'Đầu vào' (Input) do bạn thiết kế slide, hoặc bạn lên kịch bản Q&A. Việc gán toàn bộ quyền lợi cho người thuyết trình phá vỡ thuật toán công bằng của mô hình làm việc nhóm." }
+        ]}
+    ];
+
+    const de2_data = [
+        // --- PHẦN I: TRẮC NGHIỆM 1 LỰA CHỌN ---
+        { id: "d2_1", type: "single", question: "Câu 1: Nhiệm vụ 2 trong bài học có tên gọi chính xác là gì?", options: ["Tổ chức hội thảo hướng nghiệp chung.", "Xây dựng bài trình bày cho hội thảo.", "Lập danh sách khách mời tham gia dự.", "Đánh giá kết quả của từng cá nhân."], correct: 1, explanation: "Theo cấu trúc bài 21, Nhiệm vụ 2 là quy trình cốt lõi mang tính kỹ thuật: 'Xây dựng bài trình bày'. Đây là giai đoạn chuyển hóa toàn bộ dữ liệu thô thành sản phẩm đồ họa kỹ thuật số (slides)." },
+        { id: "d2_2", type: "single", question: "Câu 2: Tiêu chí 'Thái độ tham gia' khi đánh giá cá nhân chiếm trọng số bao nhiêu phần trăm?", options: ["Chiếm trọng số đúng mười phần trăm (10%).", "Chiếm trọng số đúng hai mươi phần trăm (20%).", "Chiếm trọng số đúng ba mươi phần trăm (30%).", "Chiếm trọng số đúng bốn mươi phần trăm (40%)."], correct: 3, explanation: "Thái độ (Attitude) quyết định hiệu suất nhóm. Trọng số 40% khẳng định nguyên tắc nhân sự hiện đại: Kỷ luật, sự hợp tác và tính chủ động quan trọng ngang bằng, thậm chí hơn kỹ năng chuyên môn đơn lẻ." },
+        { id: "d2_3", type: "single", question: "Câu 3: Việc 'Chọn lọc, tổng hợp thông tin' nằm ở bước thứ mấy trong Nhiệm vụ 2?", options: ["Thao tác này nằm ở Bước thứ nhất.", "Thao tác này nằm ở Bước thứ hai.", "Thao tác này nằm ở Bước thứ ba.", "Thao tác này nằm ở Bước thứ tư."], correct: 2, explanation: "Trong quy trình xử lý thông tin tuyến tính: B1(Lập dàn ý) -> B2(Thu thập dữ liệu thô) -> B3(Chọn lọc, tổng hợp và thiết kế). Tại B3, dữ liệu nhiễu bị loại bỏ, chỉ giữ lại 'Tín hiệu' đưa lên Slide." },
+        { id: "d2_4", type: "single", question: "Câu 4: Trong dàn ý gợi ý, phần nội dung nào trình bày về các chức danh phổ biến?", options: ["Phần Cơ hội và thách thức của ngành.", "Phần Vai trò của CNTT trong lĩnh vực.", "Phần Công việc của chuyên viên CNTT.", "Phần Giới thiệu tổng quan về hội thảo."], correct: 2, explanation: "Thuật ngữ 'Chức danh' (Title) gắn liền với mô tả công việc cụ thể (Ví dụ: Kỹ sư Data, Chuyên viên mạng). Do đó, chúng được phân bổ logic vào module nội dung 'Công việc của chuyên viên CNTT'." },
+        { id: "d2_5", type: "single", question: "Câu 5: Tiêu chí 'Nội dung đầy đủ, chính xác' chiếm bao nhiêu phần trăm trong điểm của nhóm?", options: ["Mức độ quan trọng chiếm tỷ lệ 20%.", "Mức độ quan trọng chiếm tỷ lệ 30%.", "Mức độ quan trọng chiếm tỷ lệ 40%.", "Mức độ quan trọng chiếm tỷ lệ 50%."], correct: 2, explanation: "Tính toàn vẹn của dữ liệu (Nội dung) luôn là xương sống của một bài báo cáo khoa học. Trọng số 40% thể hiện ưu tiên tuyệt đối cho chất lượng học thuật so với các hiệu ứng trang trí bên ngoài." },
+        { id: "d2_6", type: "single", question: "Câu 6: Ai là người thực hiện việc điều hành buổi hội thảo theo đúng chương trình?", options: ["Giáo viên bộ môn và nhóm trưởng.", "Ban tổ chức hội thảo và chủ tọa.", "Toàn bộ học sinh trong phòng học.", "Các khách mời chuyên gia từ xa tới."], correct: 1, explanation: "Quản trị luồng công việc (Workflow Management) tại sự kiện thực tế thuộc thẩm quyền của Ban tổ chức (điều phối hạ tầng, thời gian) và Chủ tọa (điều phối nội dung, Q&A). Khách mời hay giáo viên chỉ đóng vai trò cố vấn/đánh giá." },
+        { id: "d2_7", type: "single", question: "Câu 7: Một trong các lĩnh vực được gợi ý để thảo luận trong bài học là gì?", options: ["Lĩnh vực sản xuất mỹ phẩm và làm đẹp.", "Lĩnh vực truyền thông và các giải trí.", "Lĩnh vực thi công xây dựng cầu đường.", "Lĩnh vực nông nghiệp chăn nuôi gia súc."], correct: 1, explanation: "Sự bùng nổ của mạng xã hội, AI tạo sinh và streaming đưa CNTT xâm nhập sâu nhất vào hệ sinh thái 'Truyền thông và giải trí', tạo ra những nhóm nghề định hình tương lai. Đây là một chủ đề có tính ứng dụng số hóa cực cao." },
+        { id: "d2_8", type: "single", question: "Câu 8: Theo bài học, yêu cầu của bước Báo cáo thử là phải làm gì?", options: ["Báo cáo thử và để giáo viên cho điểm.", "Nhận xét, góp ý và hoàn thiện báo cáo.", "Thu thập lại toàn bộ thông tin ban đầu.", "In giấy mời gửi cho ban giám hiệu trường."], correct: 1, explanation: "Báo cáo thử (Beta Testing) không nhằm mục đích lấy điểm, mà để kích hoạt 'vòng lặp sửa lỗi' (Debugging). Thông qua nhận xét chéo, nhóm phát hiện các lỗ hổng logic hoặc lỗi kỹ năng để vá ngay lập tức." },
+        { id: "d2_9", type: "single", question: "Câu 9: Để tính điểm cho từng cá nhân trong nhóm, người ta sử dụng yếu tố nào sau đây?", options: ["Lấy tổng điểm nhóm cộng hệ số cá nhân.", "Lấy tổng điểm nhóm trừ đi hệ số cá nhân.", "Lấy tổng điểm nhóm nhân với hệ số cá nhân.", "Lấy tổng điểm nhóm chia cho hệ số cá nhân."], correct: 2, explanation: "Phép nhân (Điểm nhóm * Hệ số cá nhân) là thuật toán tuyến tính. Hệ số > 1 sẽ kích hoạt hệ số nhân (Multiplier) tạo ra điểm thưởng cho người xuất sắc, trong khi Hệ số < 1 sẽ cấu thành lực cản trừ điểm kẻ lười biếng." },
+        { id: "d2_10", type: "single", question: "Câu 10: Việc lập dàn ý (Bước 1) mang lại tác dụng quan trọng nhất là gì?", options: ["Giúp các thành viên không phải làm thêm slide.", "Định hướng nội dung trọng tâm cho bài báo cáo.", "Để giáo viên chấm điểm trực tiếp vào bản dàn ý.", "Giúp trang trí báo cáo bằng nhiều màu sắc đẹp."], correct: 1, explanation: "Dàn ý hoạt động như một thuật toán tìm đường (Routing Protocol). Nó cung cấp la bàn định vị, giới hạn không gian tìm kiếm (Search Space) giúp nhóm đi thẳng vào lõi vấn đề, chống phân mảnh tư duy." },
+        { id: "d2_11", type: "single", question: "Câu 11: Tiêu chí 'Đóng góp sáng tạo' trong đánh giá cá nhân nhằm khuyến khích hành động nào?", options: ["Chép y nguyên dữ liệu từ mạng Internet.", "Có sáng kiến hay và cách làm việc mới mẻ.", "Đi học đầy đủ và không bao giờ đến muộn.", "Ngồi im lặng lắng nghe các bạn khác nói."], correct: 1, explanation: "Sáng tạo (Innovation) là việc phá vỡ quy trình cũ để tạo ra giá trị thặng dư (ví dụ: tạo infographic đẹp, tìm ra video minh họa đắt giá, code một tool nhỏ). Điểm sáng tạo là phần thưởng cho những 'đột phá hệ thống' này." },
+        { id: "d2_12", type: "single", question: "Câu 12: Khi đưa thông tin vào trang chiếu, tại sao cần lưu ý nêu rõ nguồn gốc tài liệu?", options: ["Để trang slide trông có vẻ dài dòng hơn.", "Để chứng minh tính xác thực và bản quyền.", "Để ban tổ chức dễ dàng sao chép lại bài.", "Để không phải chịu trách nhiệm về nội dung."], correct: 1, explanation: "Ghi rõ trích dẫn (Citation) tuân thủ luật sở hữu trí tuệ quốc tế. Về mặt học thuật, nó kích hoạt cơ chế truy xuất ngược (Traceability), cho phép người nghe xác minh tính minh bạch và độ 'sạch' của nguồn dữ liệu." },
+        { id: "d2_13", type: "single", question: "Câu 13: Việc mời chuyên gia tuyển dụng tham gia hội thảo có lợi ích đặc biệt nào cho học sinh?", options: ["Được tuyển dụng ngay lập tức khi đang đi học.", "Được biết các tiêu chuẩn nhân sự của thực tế.", "Được chuyên gia làm hộ toàn bộ bài tập lớn.", "Được chuyên gia hỗ trợ mua sắm các thiết bị."], correct: 1, explanation: "Chuyên gia HR mang đến lăng kính thị trường khốc liệt. Họ giải mã 'Bộ tiêu chuẩn KPI' và các kỹ năng ngầm (kỹ năng mềm, thái độ) mà không giáo trình lý thuyết nào dạy, giúp học sinh hiệu chỉnh lộ trình phát triển bản thân." },
+        { id: "d2_14", type: "single", question: "Câu 14: Tiêu chí đánh giá 'Thảo luận và hỏi đáp' (30%) kiểm tra năng lực nào của nhóm?", options: ["Năng lực phản biện và nắm vững kiến thức.", "Năng lực lập trình các đoạn mã phức tạp.", "Năng lực thiết kế giao diện phần mềm web.", "Năng lực cài đặt cấu hình máy chủ vật lý."], correct: 0, explanation: "Q&A là phiên kiểm thử độ bền (Stress-test) của bộ não. Việc chống đỡ các câu hỏi xoáy yêu cầu nhóm phải có hệ sinh thái kiến thức sâu rộng, năng lực tư duy logic nhanh và kỹ năng phản biện (Critical Thinking) xuất sắc." },
+        { id: "d2_15", type: "single", question: "Câu 15: Vì sao cần hạn chế số lượng trang chiếu khi thiết kế bài trình bày?", options: ["Vì phần mềm PowerPoint chỉ cho phép tạo 10 trang.", "Để phù hợp với giới hạn thời gian của buổi hội thảo.", "Vì giáo viên không thích nhìn màn hình chiếu nhiều.", "Để tiết kiệm dung lượng lưu trữ trên ổ cứng máy."], correct: 1, explanation: "Theo nguyên tắc thiết kế 10/20/30, số trang tỷ lệ thuận với thời lượng. Với quỹ thời gian eo hẹp của hội thảo học đường (vài phút mỗi nhóm), một tệp slide cồng kềnh sẽ gây tràn bộ nhớ đệm (Buffer Overflow) của người nghe và cháy giáo án." },
+        { id: "d2_16", type: "single", question: "Câu 16: Nhiệm vụ của 'Thư ký' trong nhóm chuẩn bị hội thảo thường là gì?", options: ["Sửa chữa các linh kiện điện tử bị hỏng.", "Ghi chép tiến độ và tổng hợp tài liệu.", "Đứng ra thuyết trình chính trên bục giảng.", "Giao lưu trực tiếp với các chuyên gia."], correct: 1, explanation: "Thư ký là 'Bộ nhớ Log' của nhóm. Họ lưu vết (logging) mọi cuộc họp, theo dõi tiến độ bằng Gantt chart và đóng gói toàn bộ dữ liệu phân mảnh từ các thành viên thành một kho lưu trữ tập trung (Centralized Storage)." },
+        { id: "d2_17", type: "single", question: "Câu 17: Các tin tuyển dụng liên quan đến ngành nghề (Bước 2) cung cấp loại thông tin gì là chủ yếu?", options: ["Công thức toán học phức tạp của lập trình.", "Mức lương và kỹ năng yêu cầu của thị trường.", "Lịch sử hình thành của ngôn ngữ máy tính.", "Các dòng lệnh cài đặt hệ điều hành máy."], correct: 1, explanation: "Bản tin JD (Job Description) là bản đồ thông số kỹ thuật nhân sự. Nó mã hóa chính xác nhu cầu thị trường hiện tại: Phân khúc thu nhập (Mức lương) và ngăn xếp công nghệ bắt buộc phải có (Tech Stack / Kỹ năng)." },
+        { id: "d2_18", type: "single", question: "Câu 18: Lợi ích của việc tổ chức hội thảo theo hình thức kết hợp trực tiếp và trực tuyến là gì?", options: ["Giúp giảm chi phí mua sắm thiết bị âm thanh.", "Có thể kết nối chuyên gia giỏi không thể đến tận nơi.", "Học sinh không cần phải chuẩn bị bài báo cáo nữa.", "Bắt buộc mọi người phải mang theo máy tính xách tay."], correct: 1, explanation: "Mô hình Hybrid phá vỡ rào cản vật lý (Physical Constraints). Bằng việc sử dụng hạ tầng mạng, Ban tổ chức dễ dàng tải (download) luồng kiến thức từ các 'Server chuyên gia' hàng đầu ở bất kỳ múi giờ hay châu lục nào." },
+        { id: "d2_19", type: "single", question: "Câu 19: Để thuyết phục người nghe về rủi ro của việc thiếu nhân lực an ninh mạng, bạn nên dùng cách nào?", options: ["Đưa ra số liệu thống kê thiệt hại do hacker gây ra.", "Dùng một bức tranh phong cảnh thiên nhiên để mô tả.", "Viết một bài thơ dài về các cuộc tấn công mạng.", "Yêu cầu khán giả tự lên mạng tìm kiếm câu trả lời."], correct: 0, explanation: "Dữ liệu định lượng (Quantitative Data) như 'hàng tỷ USD bốc hơi do mã độc' là vũ khí thao túng tâm lý mạnh nhất. Con số thực tế đánh thẳng vào nhận thức logic, tạo ra cảm giác cấp bách (Urgency) không thể chối cãi." },
+        { id: "d2_20", type: "single", question: "Câu 20: Khi một thành viên trong nhóm không chịu nhận việc, thái độ này sẽ làm thay đổi yếu tố nào?", options: ["Làm tăng điểm tiêu chí 'Đóng góp sáng tạo'.", "Làm giảm điểm tiêu chí 'Hoàn thành nhiệm vụ'.", "Không ảnh hưởng gì đến hệ số cá nhân của bạn đó.", "Làm cho tổng điểm của toàn nhóm tăng lên cao hơn."], correct: 1, explanation: "Cấu trúc điểm được lập trình trên một ma trận nhân quả nghiêm ngặt. Việc từ chối tham gia quá trình xử lý (Idle process) khiến biến số 'Hoàn thành nhiệm vụ' bị trả về giá trị 0, kéo theo sự suy sụp của hệ số cá nhân." },
+        { id: "d2_21", type: "single", question: "Câu 21: Nhóm báo cáo bị hỏi một câu hóc búa từ chuyên gia và chưa có đáp án ngay. Họ nên ứng xử ra sao để giữ điểm phần hỏi đáp?", options: ["Tranh cãi gay gắt với chuyên gia để bảo vệ ý kiến.", "Cảm ơn câu hỏi, ghi nhận và xin phép trả lời sau.", "Lờ đi câu hỏi đó và chuyển ngay sang nhóm kế tiếp.", "Yêu cầu chuyên gia không được hỏi những câu khó."], correct: 1, explanation: "Kỹ năng phản hồi học thuật chuyên nghiệp (Professional Protocol): Thừa nhận giới hạn nhận thức hiện tại, đưa câu hỏi vào trạng thái 'Chờ xử lý' (Pending) và phản hồi lịch sự. Điều này bảo vệ uy tín của nhóm tốt hơn việc ngụy tạo câu trả lời lỗi." },
+        { id: "d2_22", type: "single", question: "Câu 22: Giả sử điểm tổng của nhóm là 9.0. Để hệ số cá nhân của bạn C là 0.8, bạn C đã có biểu hiện như thế nào trong lúc làm việc?", options: ["Tham gia rất tích cực và đưa ra vô số sáng kiến mới.", "Hoàn thành xuất sắc nhiệm vụ được giao phó từ đầu.", "Làm việc hời hợt, không đóng góp đầy đủ nhiệm vụ.", "Là nhóm trưởng điều hành xuất sắc mọi công việc."], correct: 2, explanation: "Hệ số < 1.0 (như 0.8) là thuật toán trừng phạt sự trì trệ. Nó chứng minh hệ thống ghi nhận bạn C có tham gia (không phải 0), nhưng hiệu suất đầu ra (Output) thấp, thi hành nhiệm vụ lỗi hoặc thái độ hợp tác dưới ngưỡng trung bình." },
+        { id: "d2_23", type: "single", question: "Câu 23: Ban tổ chức phát hiện bài của nhóm 3 có quá nhiều văn bản sao chép chưa kiểm chứng từ Wikipedia. Ban tổ chức nên làm gì?", options: ["Vẫn giữ nguyên và gửi luôn cho khách mời đọc.", "Yêu cầu nhóm 3 rà soát, đối chiếu và tóm tắt lại.", "Trực tiếp sửa lại toàn bộ bài cho nhóm 3 ngay.", "Hủy bỏ phần thuyết trình của nhóm 3 hôm hội thảo."], correct: 1, explanation: "Wikipedia là mã nguồn mở, độ nhiễu thông tin cực cao. Vai trò của Ban tổ chức là chạy bộ lọc kiểm soát chất lượng (Quality Assurance), đẩy yêu cầu về lại nhóm (return code) để họ tự xử lý lỗi, đảm bảo tính sở hữu sản phẩm." },
+        { id: "d2_24", type: "single", question: "Câu 24: Một báo cáo viên có chất giọng nhỏ nhưng kỹ năng làm slide rất tốt. Nhóm nên phân công như thế nào cho hiệu quả?", options: ["Bắt bạn đó phải vừa bấm slide vừa thuyết trình to.", "Phân công bạn đó điều khiển slide, cử người khác nói.", "Loại bạn đó ra khỏi nhóm vì không biết thuyết trình.", "Nhờ toàn bộ nhóm cùng đồng thanh đọc trang slide."], correct: 1, explanation: "Tối ưu hóa nguồn lực (Resource Allocation): Đặt nhân sự vào đúng module thế mạnh nhất. Việc chuyển bạn này về làm Back-end (điều khiển hệ thống chiếu) và cử nhân sự có 'cấu hình âm thanh' tốt lên làm Front-end (thuyết trình) là chiến thuật hoàn hảo." },
+        { id: "d2_25", type: "single", question: "Câu 25: Nhóm chọn trình bày về CNTT trong 'Tài chính'. Nội dung trọng tâm nào sau đây là sát nhất với chủ đề này?", options: ["Ứng dụng phần mềm chỉnh sửa ảnh chân dung.", "Hệ thống giao dịch ngân hàng và công nghệ bảo mật.", "Các kỹ thuật dựng kỹ xảo điện ảnh cho phim bom tấn.", "Cách lắp đặt camera giám sát cho lớp học phổ thông."], correct: 1, explanation: "Tài chính lõi (Core Banking) sinh sống dựa trên hai dòng máu: Giao dịch số liệu tốc độ cao (Fintech) và Mã hóa chống tin tặc (Security). Phân tích hệ thống ngân hàng là chìa khóa mở khóa toàn bộ chủ đề này." },
+        { id: "d2_26", type: "single", question: "Câu 26: Trong buổi báo cáo thử, các slide chuyển cảnh mất quá nhiều thời gian gây rối mắt. Hành động tiếp theo của nhóm là gì?", options: ["Xóa bỏ hết các hiệu ứng chuyển cảnh thừa thãi.", "Tăng thêm các âm thanh chuyển cảnh thật to.", "Mặc kệ vì điều đó chứng tỏ nhóm rất chuyên nghiệp.", "Thay đổi toàn bộ phông chữ sang màu sắc sặc sỡ."], correct: 0, explanation: "Trong thiết kế UI/UX hiện đại, mọi hiệu ứng không mang mục đích điều hướng luồng thông tin đều được coi là rác kỹ thuật (Animation Bloat). Xóa bỏ chúng giúp giải phóng bộ nhớ RAM thính giác/thị giác, khôi phục tốc độ load cho bài báo cáo." },
+        { id: "d2_27", type: "single", question: "Câu 27: Nếu buổi hội thảo được tổ chức tại hội trường lớn thay vì phòng học, thành viên phụ trách kỹ thuật cần chuẩn bị thêm gì?", options: ["Chuẩn bị thêm nhiều bút bi và sổ tay ghi chép.", "Hệ thống micro, loa phóng thanh và cáp máy chiếu dài.", "Mua thật nhiều hoa quả để trang trí bàn khách mời.", "In thêm thật nhiều đề cương môn học cho học sinh."], correct: 1, explanation: "Scale-up (Mở rộng quy mô) từ phòng học lên Hội trường làm phát sinh bài toán khuyếch đại vật lý. Tín hiệu âm thanh bị suy hao theo không gian, cáp tín hiệu HDMI bị giới hạn độ dài. Việc bổ sung hạ tầng phần cứng (Loa công suất lớn, cáp quang nối dài) là bắt buộc." },
+        { id: "d2_28", type: "single", question: "Câu 28: Cuối buổi hội thảo, lớp muốn tặng điểm thưởng cho chủ tọa vì điều hành xuất sắc. Việc này thể hiện điều gì?", options: ["Vi phạm nghiêm trọng quy chế thi cử của nhà trường.", "Ghi nhận tính chủ động và linh hoạt trong đánh giá.", "Thể hiện sự thiên vị không công bằng giữa các bạn.", "Bắt buộc phải có sự cho phép từ hiệu trưởng nhà trường."], correct: 1, explanation: "Hệ thống đánh giá dựa trên năng lực (Competency-based Assessment) cho phép mở các hàm biến thiên (Bonus Point). Việc ghi nhận cống hiến vượt khung chứng tỏ tư duy quản trị linh hoạt, phản ánh chính xác cấu trúc khen thưởng của xã hội thực." },
+        
+        // --- PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI ---
+        { id: "d2_II_1", type: "tf_cluster", context: "Câu 1. Nhóm 2 tiến hành thu thập dữ liệu về 'Các kĩ năng cần thiết của lập trình viên ứng dụng di động' để chuẩn bị trang chiếu cho buổi hội thảo định hướng nghề nghiệp.", items: [
+            { id: "a", text: "a)  Bước đầu tiên nhóm cần làm là lập dàn ý chi tiết các phần sẽ báo cáo.", correct: true, expl: "Đúng. Khởi tạo một sơ đồ kiến trúc (Blueprint) là bước tiên quyết số 0, giúp giới hạn phạm vi biến số cần tìm kiếm, tiết kiệm RAM tư duy và tránh tình trạng tràn lan dữ liệu." },
+            { id: "b", text: "b)  Nhóm chỉ cần đọc một bài viết trên blog cá nhân giấu tên là đủ cơ sở để kết luận về mức lương trung bình của nghề này.", correct: false, expl: "Sai. Nguồn tin giấu tên (Anonymous Source) vi phạm nguyên tắc truy vết dữ liệu. Để tính mức lương trung bình, hệ thống cần xử lý tập dữ liệu lớn (Big Data) từ các báo cáo thị trường uy tín mới đủ ý nghĩa thống kê." },
+            { id: "c", text: "c)  Để thuyết minh cho phần 'Cơ hội việc làm', nhóm có thể thống kê số lượng tin tuyển dụng lập trình viên iOS/Android trên một nền tảng tìm việc uy tín.", correct: true, expl: "Đúng. Việc đếm số lượng bản ghi JD trên các server việc làm (như TopCV, ITviec) là phương pháp trích xuất dữ liệu định lượng chính xác nhất để minh chứng cho sức nóng của thị trường." },
+            { id: "d", text: "d)  Trong quá trình thiết kế bài thuyết trình bằng phần mềm PowerPoint, nhóm nên giới hạn nội dung chữ trên mỗi trang chiếu và kết hợp thêm từ khóa, hình ảnh trực quan.", correct: true, expl: "Đúng. Ứng dụng quy luật tối giản UI/UX, việc chuyển đổi khối text nặng nề thành các Node (Từ khóa) và Asset đồ họa (Hình ảnh) giúp giảm băng thông tiếp nhận của não bộ khán giả." }
+        ]},
+        { id: "d2_II_2", type: "tf_cluster", context: "Câu 2. Ban tổ chức buổi hội thảo của lớp 12B đang họp để chốt kế hoạch đón khách mời là một cựu học sinh đang làm Kỹ sư dữ liệu tại thành phố khác.", items: [
+            { id: "a", text: "a)  Ban tổ chức có quyền quyết định trực tiếp điểm số cuối cùng của tất cả các nhóm tham gia báo cáo.", correct: false, expl: "Sai. Ban tổ chức nắm quyền Root điều hành tiến trình (System Admin), nhưng quyền ghi đè điểm số (Scoring) thuộc về hệ thống đánh giá đa phương (Giáo viên, Chuyên gia, và điểm chéo các nhóm)." },
+            { id: "b", text: "b)  Do khách mời ở xa, ban tổ chức cần phải chuẩn bị phương án dự phòng về kết nối Internet và nền tảng họp trực tuyến (như Zoom, Google Meet).", correct: true, expl: "Đúng. Triển khai phương án Redundancy (Dự phòng nhân đôi) cho kết nối mạng LAN/Wifi và back-up app gọi video là nguyên tắc sinh tồn cơ bản khi cấu hình hội nghị Hybrid." },
+            { id: "c", text: "c)  Nếu đường truyền mạng bất ngờ bị gián đoạn khi khách mời đang nói, ban tổ chức nên lập tức giải tán hội thảo để đỡ tốn thời gian.", correct: false, expl: "Sai. Việc sập kết nối (Connection Time-out) là sự cố thường kỳ. Lệnh 'giải tán' tương đương việc Format ổ cứng khi mới chỉ bị lag máy. Xử lý chuẩn là kích hoạt phương án B (gọi điện thoại qua loa, hoặc chuyển nhóm khác báo cáo chờ mạng phục hồi)." },
+            { id: "d", text: "d)  Để khách mời hiểu rõ nội dung chương trình, ban tổ chức chỉ cần gửi kịch bản cho họ trước 5 phút khi hội thảo bắt đầu.", correct: false, expl: "Sai. 5 phút không đủ để khởi tạo bộ nhớ đệm (Cache) cho tư duy. Kịch bản (Run-down) cần được Push (gửi) trước ít nhất 1-2 ngày để khách mời đồng bộ hóa dữ liệu (Sync Data) và hiệu chỉnh nội dung phát ngôn." }
+        ]},
+        { id: "d2_II_3", type: "tf_cluster", context: "Câu 3. Bước vào phần báo cáo thử, nhóm 3 trình bày bài báo cáo về lĩnh vực 'Giáo dục số', tuy nhiên bài dài đến 45 trang slide.", items: [
+            { id: "a", text: "a)  Báo cáo thử giúp các thành viên trong nhóm phát hiện ra những vấn đề bất hợp lý để điều chỉnh trước buổi hội thảo chính thức.", correct: true, expl: "Đúng. Quá trình mô phỏng (Simulation) này giúp phát hiện sớm lỗi logic hoặc tràn bộ nhớ thời gian, tiết kiệm hàng loạt tài nguyên uy tín trước khi phiên bản thực tế được biên dịch (Compile)." },
+            { id: "b", text: "b)  Với thời lượng 1 tiết của toàn bộ hội thảo (chia cho 4 nhóm), việc chuẩn bị 45 trang slide là vô cùng lý tưởng để thể hiện nội dung phong phú.", correct: false, expl: "Sai. Phép toán đơn giản: 45 phút chia 4 nhóm = ~10 phút/nhóm. 10 phút chạy 45 trang slide đồng nghĩa với 13 giây/trang. Tốc độ này làm sập toàn bộ hệ thống xử lý hình ảnh của não người nghe." },
+            { id: "c", text: "c)  Nhóm nên lọc bớt nội dung, tập trung vào từ khóa chính và sử dụng sơ đồ tư duy để rút gọn lại số lượng trang chiếu.", correct: true, expl: "Đúng. Đây là thao tác nén file siêu việt (Zip Data). Sơ đồ tư duy (Mindmap) có khả năng nhóm hàng loạt tiểu mục rời rạc thành một kiến trúc duy nhất, tiết kiệm 70% số lượng trang thừa thãi." },
+            { id: "d", text: "d)  Thay vì rút gọn nội dung, nhóm trưởng nên phân công 4 người cùng đọc slide thật nhanh để đảm bảo đọc hết 45 trang trong thời gian quy định.", correct: false, expl: "Sai. Ép xung CPU (nhân sự đọc nhanh) không làm tăng chất lượng đầu ra mà chỉ gây nhiễu loạn luồng thông tin (Audio Distortion). Khán giả không thể bắt kịp gói tin (Packet Loss), làm buổi hội thảo hoàn toàn mất giá trị." }
+        ]}
+    ];
+
+
+
+    
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                
+                currentQuestions.forEach(q => {
+                    if (q.type === 'single') {
+                        let optionsWithIndex = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }));
+                        for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+                        }
+                        q.options = optionsWithIndex.map(o => o.text);
+                        q.correct = optionsWithIndex.findIndex(o => o.isCorrect);
+                    }
+                });
+
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(45 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return currentQuestions.length; 
+    }
+
+    function getAnsweredCount() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] !== undefined) count++;
+            } else if (q.type === 'tf_cluster') {
+                let answeredItems = 0;
+                q.items.forEach(item => {
+                    if (userAnswers[q.id + '_' + item.id] !== undefined) answeredItems++;
+                });
+                if (answeredItems === 4) count++; 
+            }
+        });
+        return count;
+    }
+
+   window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+        }
+        
+        requestAnimationFrame(() => {
+            const pgText = document.getElementById('progress-text');
+            if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+        });
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        let currentType = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type !== currentType) {
+                currentType = q.type;
+                let headerText = ''; let roman = '';
+                if(currentType === 'single') { headerText = 'TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN'; roman = 'I'; }
+                if(currentType === 'tf_cluster') { headerText = 'TRẮC NGHIỆM ĐÚNG/SAI'; roman = 'II'; }
+                
+                html += `<div class="flex items-center gap-3 mt-8 mb-4 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-14 h-14 flex items-center justify-center rounded-xl font-black text-2xl shadow-md">${roman}</span><h3 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 tracking-wide uppercase">${headerText}</h3></div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-blue-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-2xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${q.question}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-xl hover:border-blue-300">
+                            <div class="w-12 h-12 rounded-xl border-2 border-gray-300 flex items-center justify-center text-xl font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="bg-red-50 text-red-700 p-5 rounded-xl font-bold mb-4 border-2 border-red-100 text-2xl leading-relaxed math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-4 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                        <div class="font-bold text-gray-800 flex-1 text-xl math-scroll">${item.text}</div>
+                        <div class="flex gap-3 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnT}">ĐÚNG</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-24 sm:w-28 py-3 rounded-xl font-extrabold text-xl ${btnF}">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+    window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, lop: currentStudent.lop, tenDe: currentStudent.tenDe, maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' ' + quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), deviceId: deviceId,
+            userAnswers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-4">
+            <button onclick="window.goHome()" class="px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-xl">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-2xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-xl font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-8 mb-6 shadow-inner relative text-center">
+            <div class="text-xl text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-3xl text-gray-400">/ 10</span></div>
+            <div class="text-xl font-extrabold text-indigo-600 mt-5 bg-white inline-block px-6 py-3 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">👀 Xem lại bài</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-2xl">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    function getStatusBadge(isCorrect, isUnanswered) {
+        if (isUnanswered) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-yellow-100 text-yellow-800 text-lg font-black rounded-lg border border-yellow-300 shadow-sm">⚠️ BẠN CHƯA LÀM CÂU NÀY</div>`;
+        if (isCorrect) return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-lg font-black rounded-lg border border-emerald-300 shadow-sm">✅ BẠN LÀM ĐÚNG RỒI</div>`;
+        return `<div class="mt-4 mb-2 inline-block px-4 py-2 bg-red-100 text-red-800 text-lg font-black rounded-lg border border-red-300 shadow-sm">❌ BẠN LÀM SAI RỒI</div>`;
+    }
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = (uAns === undefined);
+                let isCorrect = (uAns === q.correct);
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-2xl text-red-600 mb-5 leading-relaxed math-scroll">${q.question}</div>`;
+                html += `<div class="space-y-3">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 text-xl font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 text-xl math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += getStatusBadge(isCorrect, isUnanswered);
+                
+                if (q.explanation) {
+                    let correctLetter = String.fromCharCode(65 + q.correct);
+                    html += `<div class="review-explanation mt-3 pt-3 border-t-2 border-gray-200">
+                        <p class="text-xl font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p>
+                        <p class="text-black font-medium text-xl leading-loose math-scroll">
+                            <span class="font-bold text-red-600 uppercase">👉 Đáp án đúng là: ${correctLetter}</span><br>
+                            ${q.explanation}
+                        </p>
+                    </div>`;
+                }
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-2xl text-indigo-800 mb-5 math-scroll">${q.context}</div>`;
+                html += `<div class="space-y-5">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = (uAns === undefined);
+                    let isCorrect = (uAns === item.correct);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 text-xl math-scroll">${item.text}</div>
+                        <div class="mt-3 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xl font-bold text-gray-500">Bạn chọn: <span class="${isUnanswered ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${isUnanswered ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-2xl ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án: ${ansText} ${iconHtml}</span>
+                        </div>`;
+                        
+                    html += getStatusBadge(isCorrect, isUnanswered);
+                    if(item.expl) {
+                        html += `<div class="review-explanation mt-3 pt-3 text-xl text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải chi tiết:</span><br> ${item.expl}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('result'); };
+    
+    let isReviewingFromLeaderboard = false;
+    
+    window.backFromReview = function() {
+        if (isReviewingFromLeaderboard) {
+            showSection('scores');
+            isReviewingFromLeaderboard = false;
+        } else {
+            window.backToResult();
+        }
+    };
+
+    window.reviewStudentScore = function(scoreId) {
+        const record = allScores.find(x => x.id === scoreId);
+        if (!record) return;
+        
+        currentStudent = { hoTen: record.hoTen, lop: record.lop, tenDe: record.tenDe, maDe: record.maDe };
+        userAnswers = record.userAnswers || {}; 
+        
+        const maDeReview = record.maDe || 'de1';
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[maDeReview])); 
+
+        isReviewingFromLeaderboard = true;
+        window.reviewQuiz();
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-5 text-center font-black text-slate-400 text-lg">#${idx + 1}</td>
+            <td class="px-4 py-5 font-black text-blue-600 text-lg">${s.lop}</td>
+            <td class="px-4 py-5 font-extrabold text-slate-800 text-lg">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-sm px-2 py-1 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-5 text-base font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-5 text-center"><span class="font-black text-3xl ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.startTime}</td>
+            <td class="px-4 py-5 text-center text-slate-500 text-base">${s.endTime}</td>
+            <td class="px-4 py-5 text-right font-black text-orange-600 text-base">${s.duration}</td>
+            <td class="px-4 py-5 text-center">
+                <button onclick="window.reviewStudentScore('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-bold text-base transition-colors border border-indigo-200 shadow-sm cursor-pointer whitespace-nowrap">Xem lại</button>
+            </td>
+        </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
