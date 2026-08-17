@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Tiếng Anh - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      font-size: 18px; 
+      background: linear-gradient(-45deg, #4f46e5, #ec4899, #06b6d4, #10b981);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    
+    input[type="radio"].de-radio:checked + .de-label {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+
+    input[type="radio"].single-radio:checked + .option-label {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .my-score-row {
+      background: linear-gradient(to right, #fdf4ff, #ffffff) !important;
+      border-left: 4px solid #db2777 !important; font-weight: 700 !important;
+      color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10;
+    }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+
+    .review-explanation {
+        color: #059669 !important;
+        font-weight: 500 !important;
+    }
+
+    .btn-tf { transition: all 0.2s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):hover { background-color: #f3f4f6; }
+    
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-indigo-600 mb-3">THI THỬ VÀO 10 TP.HCM</h1>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold" placeholder="9A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-pink-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="flex flex-col gap-4">
+              <label class="cursor-pointer block w-full relative">
+                  <input type="radio" name="chonDe" value="de15" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow flex-shrink-0">15</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide flex-1">ĐỀ THAM KHẢO SỐ 15<br><span class="text-xs font-medium text-gray-500">40 Ý - 10 Điểm</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer block w-full relative">
+                  <input type="radio" name="chonDe" value="de16" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-white flex items-center justify-center font-black text-xl mr-4 shadow flex-shrink-0">16</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide flex-1">ĐỀ THAM KHẢO SỐ 16<br><span class="text-xs font-medium text-gray-500">40 Ý - 10 Điểm</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU THI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-indigo-600 font-extrabold hover:text-indigo-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-indigo-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100" id="progress-container">
+       <div class="text-xs text-indigo-500 font-bold uppercase tracking-wider mb-1">Tiến độ (ý)</div>
+       <div id="progress-text" class="text-xl font-black text-indigo-700">0/40</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm sticky top-2 z-40">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">90:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div class="flex pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="submit-btn" onclick="window.promptSubmit()" class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="confirm-submit-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 transition-opacity">
+       <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center transform transition-all scale-100 mx-4 border-2 border-gray-100">
+           <div class="text-yellow-400 mb-4 flex justify-center">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+               </svg>
+           </div>
+           <h3 class="text-2xl font-black text-gray-800 mb-2 uppercase tracking-wide">Xác nhận nộp bài</h3>
+           <p class="text-gray-600 mb-6 font-medium text-base">Các em mới làm <span id="confirm-answered" class="text-red-600 font-black text-lg">0</span>/<span id="confirm-total" class="font-black text-lg">40</span> thao tác. Có chắc chắn muốn nộp bài không? Những câu chưa làm sẽ bị tính là sai.</p>
+           <div class="flex flex-col gap-3">
+               <button onclick="window.closeConfirmModal()" class="w-full py-3 bg-gray-100 text-gray-800 font-extrabold rounded-xl hover:bg-gray-200 transition-colors border border-gray-200">Quay lại làm tiếp</button>
+               <button onclick="window.executeSubmit()" class="w-full py-3 bg-emerald-600 text-white font-extrabold rounded-xl hover:bg-emerald-700 transition-colors shadow-md">Vẫn Nộp Luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-cyan-500 bg-white overflow-hidden shadow-2xl">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-cyan-50 text-cyan-700 rounded-xl font-bold hover:bg-cyan-100 transition-colors shadow-sm border border-cyan-200">🔙 Quay lại</button>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-blue-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-8 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full shadow-2xl">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Thời gian làm bài</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Hành động</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('anh4'); 
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    // ĐOẠN VĂN NGỮ CẢNH ĐỀ 15
+    const clozeContextDe15 = `<b>Dear parents,</b><br><br>We would like to remind you that school will be closed next Wednesday because of a public (17) ___. There will be no classes on that day, and school will (18) ___ on Monday. We hope you and your family have a relaxing and happy long weekend together. <br><br>This is a good time to (19) ___ a rest and spend meaningful moments with your loved ones. Please remember (20) ___ your child review lessons at home and stay prepared for (21) ___ school activities after the holiday. <br><br>If you have any questions or need support, you can contact the school office (22) ___ phone, email, or in person during working hours.<br><br><b>Thank you and have a great holiday!<br>Best regards,<br>The School Headmaster</b>`;
+    
+    const readingContextDe15 = `<h3 class="text-xl font-bold text-center text-blue-700 mb-2">Speaking with Strangers: A Beginner’s Guide</h3><b>Why start a conversation?</b><p class="text-justify mb-4">We are social creatures. Research shows that even short conversations with people around us can make us feel happier and more connected. Talking to someone you don’t know well may seem scary at first, but it can lead to new friendships and improve your confidence.</p><p class="text-justify mb-4">When chatting with a stranger, try to keep good eye contact and think of a few simple topics before you start talking. You don’t need to be funny or clever—just be kind and interested. A good conversation is not about being perfect; it’s about connecting with others.</p><b>Three tips to get started:</b><ul class="list-disc pl-5 mb-4"><li><b>Ask questions</b> – Don’t worry if your questions are simple. Easy questions like “How was your day?” can still lead to a nice chat.</li><li><b>Don’t skip small talk</b> – Talking about the weather or your surroundings can help you find things in common. Just avoid topics that might cause disagreement, such as politics or personal beliefs.</li><li><b>Know when and how to exit</b> – Be mindful of your conversation partner’s body language and responses – if you’re doing all the work to maintain the chit chat, it might be a sign they’re not interested.</li></ul><b>Next up:</b><p class="text-justify mb-4">Conversation is a skill. Like any, it takes practice. Try saying hello or making a small comment when you’re in line at a coffee shop or supermarket. These little moments are great chances to improve your social confidence.</p>`;
+    
+    const dictContextDe15 = `<b>conflict</b> <i>noun</i><br><br><span class="bg-gray-200 px-1 rounded text-sm">B2</span> /ˈkɒnflɪkt/ <br><b>countable, uncountable</b> a situation in which people, groups or countries disagree strongly or are involved in a serious argument<br><ul class="list-disc pl-5 italic text-gray-700"><li>The violence was the result of political conflicts.</li><li><b>conflict between A and B (over something):</b> a conflict between two cultures</li><li>His task will be to resolve potential conflicts between the British and Scottish governments.</li><li><b>conflict with somebody:</b> The prime minister wants to avoid conflict with the unions.</li><li><b>conflict over something:</b> The government has done nothing to resolve the conflict over nurses' pay.</li><li><b>in conflict with somebody (over something):</b> She found herself in conflict with her parents over her future career.</li></ul>`;
+
+    // BỘ DỮ LIỆU ĐỀ SỐ 15 TP.HCM 2025
+    const de15_data = [
+        { id: "e15_1", type: "single", question: "Question 1. Which word has the underlined part pronounced differently from that of the others?", options: ["A. sw<u>a</u>llow", "B. s<u>a</u>me", "C. p<u>a</u>ge", "D. t<u>a</u>ste"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>A. swallow</b> /ˈswɒləʊ/ → âm /ɒ/<br>- <b>B. same</b> /seɪm/ → âm /eɪ/<br>- <b>C. page</b> /peɪdʒ/ → âm /eɪ/<br>- <b>D. taste</b> /teɪst/ → âm /eɪ/<br>=> Phần gạch chân phương án A phát âm là /ɒ/, còn lại đều phát âm là /eɪ/." },
+        { id: "e15_2", type: "single", question: "Question 2. Which word has the underlined part pronounced differently from that of the others?", options: ["A. increas<u>ed</u>", "B. rush<u>ed</u>", "C. rais<u>ed</u>", "D. miss<u>ed</u>"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>A. increased</b> /ɪnˈkriːst/ → âm /t/<br>- <b>B. rushed</b> /rʌʃt/ → âm /t/<br>- <b>C. raised</b> /reɪzd/ → âm /d/ (do tận cùng là âm hữu thanh /z/)<br>- <b>D. missed</b> /mɪst/ → âm /t/<br>=> Đuôi -ed ở phương án C được phát âm là /d/, còn lại đều phát âm là /t/." },
+        { id: "e15_3", type: "single", question: "Question 3. Which word has a different stress pattern from that of the others?", options: ["A. nutrient", "B. accident", "C. astronaut", "D. consider"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>A. nutrient</b> /ˈnjuːtrɪənt/ (Danh từ - Trọng âm 1)<br>- <b>B. accident</b> /ˈæksɪdənt/ (Danh từ - Trọng âm 1)<br>- <b>C. astronaut</b> /ˈæstrənɔːt/ (Danh từ - Trọng âm 1)<br>- <b>D. consider</b> /kənˈsɪdə(r)/ (Động từ - Trọng âm 2)<br>=> Phương án D có trọng âm rơi vào âm tiết 2, còn lại rơi vào âm tiết 1." },
+        { id: "e15_4", type: "single", question: "Question 4. Which word has a different stress pattern from that of the others?", options: ["A. decide", "B. postpone", "C. delay", "D. bother"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>A. decide</b> /dɪˈsaɪd/ (Trọng âm 2)<br>- <b>B. postpone</b> /pəʊsˈpəʊn/ (Trọng âm 2)<br>- <b>C. delay</b> /dɪˈleɪ/ (Trọng âm 2)<br>- <b>D. bother</b> /ˈbɒðər/ (Trọng âm 1)<br>=> Phương án D có trọng âm rơi vào âm tiết 1, còn lại rơi vào âm tiết 2." },
+        { id: "e15_5", type: "single", question: "Question 5. Rosie: I just visited Cuc Phuong National Park last weekend.\nLiam: That’s amazing! I heard it has a very rich ______.", options: ["A. peak", "B. destination", "C. feature", "D. ecosystem"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Để mô tả sự phong phú của một vườn quốc gia/khu bảo tồn thiên nhiên, ta dùng cụm từ 'rich ecosystem' (hệ sinh thái phong phú đa dạng).<br>- <b>D. ecosystem</b>: hệ sinh thái." },
+        { id: "e15_6", type: "single", question: "Question 6. Henry: What do you know about Vietnam's National Assembly?\nKate: Well, it ______ 500 members elected by the people every five years.", options: ["A. comprises", "B. consists", "C. involves", "D. contains"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Động từ chỉ sự 'bao gồm' các thành viên:<br>- <b>A. comprises</b>: bao gồm (cấu trúc: comprise + tân ngữ) => Hợp lý nhất.<br>- B. consists: gồm có (phải đi kèm giới từ 'of').<br>- C. involves: liên quan đến.<br>- D. contains: chứa đựng (dùng cho vật chứa)." },
+        { id: "e15_7", type: "single", question: "Question 7. Anna: I had already finished all the decorations _______ the guests arrived.\nBen: Wow, that’s impressive! Everything looked perfect.", options: ["A. though", "B. during", "C. when", "D. if"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ta có cấu trúc kết hợp 2 mốc thời gian: <b>Past Perfect + when + Past Simple</b> (Đã làm xong việc gì đó VÀO LÚC một sự việc khác xảy ra).<br>=> Tớ đã trang trí xong hết mọi thứ <i>khi (when)</i> khách đến." },
+        { id: "e15_8", type: "single", question: "Question 8. Hung: Did you go to see the parade yesterday?\nMaya: Yes! I stood near _______ grandstand where the leaders were sitting.", options: ["A. a", "B. the", "C. an", "D. Ø (no article)"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Danh từ 'grandstand' (khán đài) trong câu này đã được xác định cụ thể bởi mệnh đề quan hệ phía sau 'where the leaders were sitting' (nơi các lãnh đạo đang ngồi).<br>=> Khi danh từ đã xác định cụ thể, ta dùng mạo từ <b>the</b>." },
+        { id: "e15_9", type: "single", question: "Question 9. Bella: Your class’s wall newspaper looks amazing!\nRio: Thanks! It took so much time _______ all the drawings and writing.", options: ["A. to finish", "B. finishing", "C. finish", "D. to finishing"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ta có cấu trúc: <b>It takes/took + (somebody) + time + to V</b> (Mất bao nhiêu thời gian để làm gì).<br>=> <b>to finish</b> (Tốn rất nhiều thời gian mới hoàn thành xong...)." },
+        { id: "e15_10", type: "single", question: "Question 10. John: I’ve been stuck in traffic on Main Street for over an hour today!\nKen: Ugh, that’s the worst! This street is always _______ with cars during rush hour.", options: ["A. wide", "B. empty", "C. clear", "D. congested"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ngữ cảnh câu nói về việc bị kẹt xe (stuck in traffic) vào giờ cao điểm (rush hour).<br>=> Cần một tính từ mô tả sự ùn tắc: <b>congested</b> (tắc nghẽn, đông nghịt)." },
+        { id: "e15_11", type: "single", question: "Question 11. Tom: I heard that the government is proposing a new tax.\nEric: Yes, they want to impose a 100% tax on films _______ are produced outside of our country.", options: ["A. whom", "B. who", "C. which", "D. where"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Cần một đại từ quan hệ thay thế cho danh từ chỉ vật 'films' (những bộ phim) và làm chủ ngữ cho động từ 'are produced'.<br>=> Dùng <b>which</b> (hoặc that)." },
+        { id: "e15_12", type: "single", question: "Question 12. Alice: Have you heard about the new gaming technology?\nBen: Yeah, it’s incredible! _______ lets us interact with the game like we’re actually there.", options: ["A. Virtual reality", "B. Podcast", "C. Field", "D. Media"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Công nghệ chơi game cho phép chúng ta tương tác với trò chơi như thể chúng ta đang thực sự ở đó ('like we’re actually there').<br>=> Đó chính là công nghệ <b>Thực tế ảo (Virtual reality)</b>." },
+        { id: "e15_13", type: "single", question: "Question 13. David: I have compiled a list of all the interesting locations that we can visit\nNavy: ______________________________________.", options: ["A. Don’t mention it. It was no trouble at all", "B. Great! Let’s go to as many places as possible", "C. Have a great trip", "D. Oh, no. I think we need more than that"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>David nói: 'Tớ đã tổng hợp một danh sách tất cả những địa điểm thú vị mà tụi mình có thể tham quan'.<br>Phản hồi thể hiện sự hào hứng và đồng tình nhất là: <b>Great! Let’s go to as many places as possible</b> (Tuyệt quá! Mình đi được càng nhiều chỗ càng tốt nha)." },
+        { id: "e15_14", type: "single", question: "Question 14. Doris: _____________________________________?\nSean: I think Zendaya’s outfit was stunning. She really nailed the theme!", options: ["A. Who do you think looked best at the Met Gala this year", "B. Do you want to go shopping this weekend", "C. How long does the Met Gala usually last", "D. What do you think about the weather in New York"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Câu trả lời của Sean là: 'Tớ thấy bộ đồ của Zendaya đẹp xuất sắc luôn. Cô ấy thể hiện rất đúng chủ đề!'.<br>=> Câu hỏi phải liên quan đến thời trang/trang phục của ai đó tại một sự kiện: <b>Who do you think looked best at the Met Gala this year?</b> (Theo cậu thì ai mặc đẹp nhất tại Met Gala năm nay?)" },
+     { id: "e15_15", type: "single", question: "Question 15. You see this sign near a swimming pool. What does the sign say?<br><br><svg viewBox='0 0 100 100' class='w-32 h-32 mx-auto mb-4 drop-shadow-md bg-white rounded-full'><circle cx='50' cy='50' r='45' fill='none' stroke='#ef4444' stroke-width='8'/><line x1='25' y1='78' x2='75' y2='78' stroke='black' stroke-width='4' stroke-linecap='round'/><circle cx='40' cy='32' r='6' fill='black'/><path d='M 40 38 L 35 55' stroke='black' stroke-width='7' stroke-linecap='round'/><path d='M 38 42 L 28 50 L 25 60' fill='none' stroke='black' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/><path d='M 38 42 L 52 48 L 60 40' fill='none' stroke='black' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/><path d='M 35 55 L 45 65 L 55 74' fill='none' stroke='black' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/><path d='M 35 55 L 35 68 L 40 74' fill='none' stroke='black' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/><path d='M 62 36 A 8 8 0 0 1 66 42 M 66 32 A 12 12 0 0 1 72 40' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/><path d='M 18 55 A 8 8 0 0 1 22 62 M 14 58 A 12 12 0 0 1 18 66' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/><line x1='18' y1='18' x2='82' y2='82' stroke='#ef4444' stroke-width='8'/></svg>", options: ["A. You are allowed to run near the pool.", "B. Be careful, the floor is always dry.", "C. Do not walk or run here because it may be slippery.", "D. You must wear special shoes in this area."], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>Phân tích hình ảnh:</b> Biển báo có hình một người đang trượt chân té ngã, nằm trong vòng tròn đỏ gạch chéo (biển báo cấm).<br>- <b>Ý nghĩa:</b> Biển báo này cảnh báo khu vực trơn trượt (thường thấy quanh hồ bơi, sàn ướt) và nghiêm cấm việc đi lại nhanh hoặc chạy nhảy để tránh tai nạn té ngã.<br>=> Do đó, đáp án chính xác là <b>C. Do not walk or run here because it may be slippery</b>." },
+        { id: "e15_16", type: "single", question: "Question 16. What does the sign mean?<br><br><svg viewBox='0 0 240 120' class='w-64 h-32 mx-auto mb-4 drop-shadow-md bg-white rounded-lg'><rect x='4' y='4' width='232' height='112' rx='4' fill='none' stroke='black' stroke-width='2'/><rect x='8' y='8' width='224' height='104' fill='white'/><rect x='8' y='8' width='224' height='30' fill='#f97316'/><line x1='8' y1='38' x2='232' y2='38' stroke='black' stroke-width='1'/><line x1='90' y1='38' x2='90' y2='112' stroke='black' stroke-width='1'/><polygon points='25,12 35,32 15,32' fill='black'/><polygon points='25,15 32,30 18,30' fill='#f97316'/><line x1='25' y1='20' x2='25' y2='25' stroke='black' stroke-width='2'/><circle cx='25' cy='28' r='1' fill='black'/><text x='40' y='30' font-family='Arial, sans-serif' font-weight='900' font-size='22' fill='black' letter-spacing='1'>WARNING</text><circle cx='55' cy='55' r='10' fill='white' stroke='black' stroke-width='4' stroke-dasharray='4 2'/><circle cx='55' cy='55' r='5' fill='none' stroke='black' stroke-width='2'/><circle cx='55' cy='85' r='12' fill='white' stroke='black' stroke-width='5' stroke-dasharray='4 3'/><circle cx='55' cy='85' r='5' fill='none' stroke='black' stroke-width='2'/><path d='M 15 65 L 40 75 L 45 75 L 50 65 L 55 68 L 48 76 L 60 70 L 62 74 L 50 80 L 65 78 L 65 82 L 45 85 L 20 90 Z' fill='black'/><text x='100' y='55' font-family='Arial, sans-serif' font-weight='bold' font-size='15' fill='black'>This machine</text><text x='100' y='72' font-family='Arial, sans-serif' font-weight='bold' font-size='15' fill='black'>starts</text><text x='100' y='89' font-family='Arial, sans-serif' font-weight='bold' font-size='15' fill='black'>automatically.</text><text x='100' y='108' font-family='Arial, sans-serif' font-weight='bold' font-size='12' fill='black'>Keep hands clear.</text></svg>", options: ["A. You should put your hands near the machine when it is working.", "B. You should keep your hands away from the machine.", "C. You should clean your hands while it is running.", "D. You should clean the machine while it is running."], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>Phân tích hình ảnh:</b> Biển báo cảnh báo (WARNING) với dòng chữ <i>'This machine starts automatically. Keep hands clear.'</i> (Máy khởi động tự động. Hãy giữ tay tránh xa). Kèm theo đó là hình ảnh bàn tay có nguy cơ bị cuốn vào bánh răng.<br>- <b>Ý nghĩa:</b> Cảnh báo rằng máy có thể tự động khởi động bất ngờ, tuyệt đối không đưa tay vào hoặc lại gần máy để tránh bị thương.<br>=> Do đó, đáp án chính xác là <b>B. You should keep your hands away from the machine.</b>" },
+        
+        { id: "e15_17", context: clozeContextDe15, type: "single", question: "Question 17. Choose the word that best fits the space (17):", options: ["A. holiday", "B. day", "C. celebration", "D. event"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Nhà trường thông báo đóng cửa (school will be closed) vào thứ Tư tuần sau do có một ngày nghỉ lễ chung của quốc gia.<br>=> Cụm từ cố định: <b>public holiday</b> (ngày nghỉ lễ quốc gia)." },
+        { id: "e15_18", context: clozeContextDe15, type: "single", question: "Question 18. Choose the word that best fits the space (18):", options: ["A. reopen", "B. repeat", "C. return", "D. remind"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Trường học sẽ đóng cửa nghỉ lễ và sau đó sẽ 'mở cửa trở lại' vào thứ Hai.<br>=> Dùng động từ: <b>reopen</b> (mở lại)." },
+        { id: "e15_19", context: clozeContextDe15, type: "single", question: "Question 19. Choose the word that best fits the space (19):", options: ["A. enjoy", "B. take", "C. get", "D. do"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ta có cụm từ cố định: <b>take a rest</b> = nghỉ ngơi.<br>=> 'This is a good time to take a rest' (Đây là thời điểm tốt để nghỉ ngơi)." },
+        { id: "e15_20", context: clozeContextDe15, type: "single", question: "Question 20. Choose the word that best fits the space (20):", options: ["A. helped", "B. helping", "C. help", "D. to help"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Cấu trúc: <b>remember + to V</b> (Nhớ PHẢI làm một việc gì đó như một nhiệm vụ/lời nhắc nhở).<br>=> Please remember <b>to help</b> your child review lessons (Xin hãy nhớ hỗ trợ con em mình ôn bài)." },
+        { id: "e15_21", context: clozeContextDe15, type: "single", question: "Question 21. Choose the word that best fits the space (21):", options: ["A. upcoming", "B. recent", "C. past", "D. near"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Học sinh cần chuẩn bị sẵn sàng cho các hoạt động học tập 'sắp diễn ra' (sau kỳ nghỉ lễ).<br>=> Tính từ phù hợp với tương lai là: <b>upcoming</b> (sắp tới)." },
+        { id: "e15_22", context: clozeContextDe15, type: "single", question: "Question 22. Choose the word that best fits the space (22):", options: ["A. through", "B. by", "C. with", "D. on"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Để chỉ phương tiện liên lạc (điện thoại, email), ta dùng giới từ 'by'.<br>=> <b>by phone, email</b> (qua điện thoại hoặc email)." },
+        
+        { id: "e15_23", context: readingContextDe15, type: "single", question: "Question 23. True or False:\nShort conversations with strangers can make us feel more connected.", options: ["A. True", "B. False"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch câu hỏi:</b> Các cuộc trò chuyện ngắn với người lạ có thể khiến chúng ta cảm thấy gắn kết hơn.<br><b>Kiểm chứng bài đọc:</b> Đoạn 1 ghi: 'Research shows that even short conversations with people around us can make us feel happier and more connected.' (Nghiên cứu cho thấy ngay cả những cuộc trò chuyện ngắn... cũng có thể khiến chúng ta hạnh phúc và kết nối hơn).<br>=> Thông tin <b>Đúng (True)</b>." },
+        { id: "e15_24", context: readingContextDe15, type: "single", question: "Question 24. True or False:\nYou need to be funny and clever to have a good conversation.", options: ["A. True", "B. False"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch câu hỏi:</b> Bạn cần phải hài hước và thông minh để có một cuộc trò chuyện tốt.<br><b>Kiểm chứng bài đọc:</b> Đoạn 2 nhấn mạnh: 'You don’t need to be funny or clever—just be kind and interested.' (Bạn KHÔNG CẦN phải hài hước hay thông minh - chỉ cần chân thành và biết lắng nghe).<br>=> Thông tin bị <b>Sai (False)</b>." },
+        { id: "e15_25", context: readingContextDe15, type: "single", question: "Question 25. True or False:\nIt’s a good idea to avoid talking about personal beliefs when chatting with someone new.", options: ["A. True", "B. False"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch câu hỏi:</b> Tránh nói về những niềm tin cá nhân khi trò chuyện với người mới chắc chắn là một ý tưởng tốt.<br><b>Kiểm chứng bài đọc:</b> Trong phần Tips ghi: 'Just avoid topics that might cause disagreement, such as politics or personal beliefs.' (Hãy tránh những chủ đề dễ gây tranh cãi như chính trị hay niềm tin cá nhân).<br>=> Lời khuyên này hoàn toàn <b>Đúng (True)</b>." },
+        { id: "e15_26", context: readingContextDe15, type: "single", question: "Question 26. True or False:\nIf the other person talks a lot and seems excited, you should stop the conversation.", options: ["A. True", "B. False"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch câu hỏi:</b> Nếu người kia nói nhiều và có vẻ hào hứng, bạn nên dừng cuộc trò chuyện.<br><b>Kiểm chứng bài đọc:</b> Trong Tips ghi: '...if you’re doing all the work to maintain the chit chat, it might be a sign they’re not interested.' (Nếu CHỈ MÌNH BẠN cố gắng duy trì cuộc trò chuyện, đó mới là dấu hiệu họ không quan tâm). Còn nếu đối phương hào hứng thì cuộc nói chuyện đang rất tốt.<br>=> Thông tin <b>Sai (False)</b>." },
+        { id: "e15_27", context: readingContextDe15, type: "single", question: "Question 27. When starting a conversation with a stranger, it’s helpful to __________________.", options: ["A. tell a joke", "B. ask personal questions", "C. ask simple questions", "D. talk only about yourself"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Theo cẩm nang, mẹo đầu tiên để bắt chuyện là: 'Ask questions – Don’t worry if your questions are simple.' (Đặt câu hỏi - Đừng lo nếu câu hỏi của bạn đơn giản).<br>=> Lựa chọn hữu ích nhất là <b>C. ask simple questions</b>." },
+        { id: "e15_28", context: readingContextDe15, type: "single", question: "Question 28. It can be inferred from the skills guide that the writer wants to show ___________________.", options: ["A. the importance of making new friends through conversations", "B. how to start conversations by talking about personal beliefs", "C. the value of connecting with others through simple conversations", "D. the importance of being clever when talking to strangers"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Mục đích xuyên suốt của bài viết là khuyến khích mọi người vượt qua sự e dè để tạo ra sự kết nối thông qua những tương tác nhỏ nhặt ('make us feel happier and more connected', 'A good conversation is not about being perfect; it’s about connecting with others').<br>=> Tác giả muốn cho thấy <b>giá trị của việc kết nối với người khác thông qua các cuộc trò chuyện đơn giản (C)</b>." },
+        
+        { id: "e15_29", type: "short_answer", question: "Question 29. Use the correct form of the word in brackets:\nMany young __________ are bringing Vietnamese fashion to the global stage. (DESIGN)", correct: "designers", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Cần một danh từ chỉ người làm chủ ngữ cho động từ 'are bringing'. Vì có từ 'Many' nên phải ở dạng số nhiều.<br>Từ gốc: Design (Thiết kế) => Danh từ chỉ người: Designer => Số nhiều: <b>designers</b>.<br>=> Nhiều nhà thiết kế trẻ đang đưa thời trang Việt Nam ra thế giới." },
+        { id: "e15_30", type: "short_answer", question: "Question 30. Use the correct form of the word in brackets:\nLife in big cities like Hanoi or Ho Chi Minh City is fast and __________. (DEMAND)", correct: "demanding", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Sau động từ tobe 'is' và nối bởi chữ 'and' (với từ fast), ta cần một Tính từ.<br>Từ gốc: Demand (Đòi hỏi/Yêu cầu) => Tính từ chỉ tính chất khắc nghiệt, áp lực cao là <b>demanding</b>.<br>=> Cuộc sống ở các thành phố lớn rất hối hả và nhiều áp lực." },
+        { id: "e15_31", type: "short_answer", question: "Question 31. Use the correct form of the word in brackets:\nTuan Minh won a prize for his __________ solution to reduce plastic use. (INNOVATE)", correct: "innovative", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Đứng trước danh từ 'solution' (giải pháp) cần một <b>Tính từ</b>.<br>Từ gốc: Innovate (v: đổi mới) => Tính từ mang tính sáng tạo, đổi mới là <b>innovative</b>.<br>=> Tuấn Minh giành giải thưởng cho giải pháp sáng tạo nhằm giảm sử dụng nhựa." },
+        { id: "e15_32", type: "short_answer", question: "Question 32. Use the correct form of the word in brackets:\nSpeeding on crowded streets __________ both the driver and pedestrians. (DANGEROUS)", correct: "endangers", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Chủ ngữ của câu là 'Speeding on crowded streets' (Việc phóng nhanh trên đường đông - V-ing đóng vai trò Chủ ngữ số ít). Vị trí khoảng trống cần một <b>Động từ</b> chia theo ngôi thứ 3 số ít.<br>Từ gốc: Dangerous (adj: nguy hiểm) => Động từ: Endanger (Gây nguy hiểm) => Thêm 's': <b>endangers</b>." },
+        { id: "e15_33", type: "short_answer", question: "Question 33. Use the correct form of the word in brackets:\nWith new technology, the surgery was fast and __________. (PAIN)", correct: "painless", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Cần một tính từ song song với 'fast' để miêu tả về ca phẫu thuật nhờ công nghệ mới.<br>Từ gốc: Pain (n: Nỗi đau) => Tính từ 'không đau đớn' là <b>painless</b>." },
+        { id: "e15_34", type: "short_answer", question: "Question 34. Use the correct form of the word in brackets:\nAfter the storm, many families became __________ and needed urgent help. (HOME)", correct: "homeless", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Sau động từ liên kết 'became' ta cần Tính từ chỉ tình trạng.<br>Sau cơn bão (After the storm), các gia đình sẽ rơi vào cảnh 'không có nhà ở / vô gia cư'.<br>Từ gốc: Home => Tính từ: <b>homeless</b>." },
+        
+        { id: "e15_35", context: dictContextDe15, type: "short_answer", question: "Question 35. Use what you can get from the dictionary entry to complete the sentence with two or three words:\nRussia has been __________ Ukraine since 2022, leading to serious global consequences.", correct: "in conflict with", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch:</b> Nga <i>đang ở trong tình trạng xung đột với</i> Ukraine từ năm 2022, dẫn đến những hệ quả nghiêm trọng.<br>Câu có động từ tobe 'has been' => Cần một trạng thái. Từ điển cung cấp cụm: <b>in conflict with somebody</b> (đang ở trạng thái xung đột với ai đó). => Điền <b>in conflict with</b>." },
+        { id: "e15_36", context: dictContextDe15, type: "short_answer", question: "Question 36. Use what you can get from the dictionary entry to complete the sentence with two or three words:\nIn the 1940s, there was a serious ______________ the struggle for independence and the control of colonial powers.", correct: "conflict between", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch:</b> Vào những năm 1940, đã có một <i>cuộc xung đột nghiêm trọng giữa</i> cuộc đấu tranh giành độc lập và sự kiểm soát của thế lực thực dân.<br>Ngữ cảnh có 2 chủ thể rõ ràng nối với nhau bằng chữ 'and'. Từ điển cung cấp cấu trúc: <b>conflict between A and B</b>. => Điền <b>conflict between</b>." },
+        
+        { id: "e15_37", type: "short_answer", question: "Question 37. Rewrite the sentence:\nUnless people stop cutting down trees, flooding will get worse.\n→ If ____________________", correct: "people don't stop cutting down trees, flooding will get worse", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Kiến thức:</b> Câu điều kiện (Unless = If ... not).<br>Unless people stop... (Trừ khi con người dừng lại...).<br>=> Đổi sang If: Nếu con người KHÔNG dừng lại... (If people don't stop...).<br>=> Đáp án: <b>people don't stop cutting down trees, flooding will get worse</b>." },
+        { id: "e15_38", type: "short_answer", question: "Question 38. Rewrite the sentence:\nWhat about going to Pizza 4P's Saigon Pearl?\n→ Why ____________________", correct: "don't we go to pizza 4p's saigon pearl", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Kiến thức:</b> Cấu trúc Câu đề xuất/Gợi ý.<br>Ta có: <b>What about + V-ing? = Why don't we + V_inf?</b><br>Động từ 'going' đổi về nguyên mẫu là 'go'.<br>=> Đáp án: <b>don't we go to Pizza 4P's Saigon Pearl</b> (nhớ có dấu hỏi chấm ở cuối)." },
+        { id: "e15_39", type: "short_answer", question: "Question 39. Rewrite the sentence:\nAlice refused the offer to join the team.\n→ Alice turned ____________________", correct: "down the offer to join the team", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Kiến thức:</b> Cụm động từ đồng nghĩa.<br>Động từ 'refuse' (từ chối) đồng nghĩa với cụm Phrasal verb: <b>turn down</b>.<br>=> Đáp án: <b>down the offer to join the team</b>." },
+        { id: "e15_40", type: "short_answer", question: "Question 40. Rewrite the sentence:\n\"Will new regulations affect tourism in Greece?\", Emma asked.\n→ Emma wanted to know ____________________", correct: "if new regulations would affect tourism in greece", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Kiến thức:</b> Tường thuật câu hỏi Yes/No.<br>Cấu trúc: <b>S + wanted to know + if/whether + S + V(lùi thì)</b>.<br>Lùi thì: 'Will' lùi thành 'would'.<br>=> Đáp án: <b>if/whether new regulations would affect tourism in Greece</b>." }
+    ];
+
+    // ĐOẠN VĂN NGỮ CẢNH ĐỀ 16
+    const clozeContextDe16 = `<b>Dear Sir/Madam,</b><br><br>I am writing to express my dissatisfaction with the room I stayed in during my recent business trip at your hotel (October 1st–5th, under the name George Butler). The room did not meet the advertised (17) ___, particularly in terms of cleanliness.<br><br>The bathroom had an unpleasant (18) ___, and the bed sheets and pillowcases were stained. This made the stay uncomfortable and raised serious hygiene (19) ___. As a business traveler, I rely on a clean and comfortable room for rest and productivity.<br><br>I kindly request (20) ___ such issues (21) ___ addressed promptly. Ensuring thorough cleaning and proper preparation of rooms will greatly improve the guest experience.<br><br>I hope you will take this feedback seriously and (22) ___ steps to prevent similar situations in the future. I look forward to your response and a suitable resolution.<br><br><b>Yours sincerely,<br>George Butler</b>`;
+    
+    const readingContextDe16 = `<h3 class="text-xl font-bold text-center text-indigo-700 mb-2">Movie Review: Beauty and the Beast (2017)</h3><p class="text-justify mb-4">Released in 2017, Beauty and the Beast is centered around a young eccentric girl named Belle and the habitants of an enchanted castle. When the Beast in the castle takes Belle’s father as his prisoner, Belle takes her father’s place to live out the rest of her days in the castle. At first she finds the Beast unruly but as time continues on, she begins to see the Beast for the human he really is.</p><p class="text-justify mb-4">This adaptation of Beauty and the Beast is equal parts fantasy and musical, which is one of the things I love about this adaptation of the original fairy tale. The fantasy elements are especially brought to life with the spell the Enchantress put on the castle and it’s inhabitants. All of the characters who live in the castle have been transformed into different household objects that can be found in a castle while the Prince is changed into a hideous Beast due to his horrible treatment of a woman whose appearance was very deceiving. The rose also held a special significance to this because if the Beast didn’t learn to love and be loved in return by the time the last rose petal fell, he and the other inhabitants would be stuck the way they are forever. Of course, you already know this if you’ve seen the original film, but I really find it to be a good example of how fantasy comes to life in this story.</p><p class="text-right italic text-sm mt-2">(Adapted from Rainy Day’s Books, Video Games and Other Writings)</p>`;
+    
+    const dictContextDe16 = `<b>solution</b> <i>noun</i><br><br><span class="bg-gray-200 px-1 rounded text-sm">A2</span> /səˈluːʃn/ <br><b>countable</b> a way of solving a problem or dealing with a difficult situation<br><ul class="list-disc pl-5 italic text-gray-700"><li>Attempts to find a solution have failed.</li><li>to propose/offer/provide/develop a solution</li><li>to look for/seek a solution</li><li>It was decided that the <b>only solution</b> was for him to leave the company.</li><li>an easy/innovative solution</li><li>a possible/practical/long-term solution</li><li><b>solution to something:</b> There's no simple solution to this problem.</li><li>the solution to a crisis/an issue</li><li>Will this lead to a <b>peaceful solution</b> of the conflict?</li><li>Technology must become part of the solution, rather than part of the problem.</li></ul>`;
+
+    // BỘ DỮ LIỆU ĐỀ SỐ 16 TP.HCM 2025
+    const de16_data = [
+        { id: "e16_1", type: "single", question: "Question 1. Which word has the underlined part pronounced differently from that of the others?", options: ["A. c<u>o</u>t", "B. h<u>o</u>t", "C. l<u>o</u>t", "D. l<u>o</u>th"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>A. cot</b> /kɒt/ → âm /ɒ/<br>- <b>B. hot</b> /hɒt/ → âm /ɒ/<br>- <b>C. lot</b> /lɒt/ → âm /ɒ/<br>- <b>D. loth</b> /ləʊθ/ → âm /əʊ/<br>=> Từ 'loth' có phần gạch chân phát âm là /əʊ/, các từ còn lại phát âm là /ɒ/." },
+        { id: "e16_2", type: "single", question: "Question 2. Which word has the underlined part pronounced differently from that of the others?", options: ["A. <u>sh</u>out", "B. <u>s</u>ugar", "C. <u>sh</u>are", "D. <u>s</u>urgery"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>A. shout</b> /ʃaʊt/ → âm /ʃ/ (sờ nặng)<br>- <b>B. sugar</b> /ˈʃʊɡər/ → âm /ʃ/<br>- <b>C. share</b> /ʃeər/ → âm /ʃ/<br>- <b>D. surgery</b> /ˈsɜːdʒəri/ → âm /s/ (sờ nhẹ)<br>=> Từ 'surgery' bắt đầu bằng âm /s/, các từ còn lại bắt đầu bằng âm /ʃ/." },
+        { id: "e16_3", type: "single", question: "Question 3. Which word has a different stress pattern from that of the others?", options: ["A. guitar", "B. control", "C. city", "D. export"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>A. guitar</b> /ɡɪˈtɑː(r)/ (Danh từ ngoại lệ nhấn âm 2 do âm cuối dài)<br>- <b>B. control</b> /kənˈtrəʊl/ (Trọng âm 2)<br>- <b>C. city</b> /ˈsɪti/ (Trọng âm 1)<br>- <b>D. export</b> /ɪkˈspɔːt/ (Động từ - Trọng âm 2)<br>=> Từ 'city' nhấn âm 1, các từ còn lại nhấn âm 2." },
+        { id: "e16_4", type: "single", question: "Question 4. Which word has a different stress pattern from that of the others?", options: ["A. introduce", "B. delegate", "C. marvelous", "D. currency"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>- <b>A. introduce</b> /ˌɪntrəˈdjuːs/ (Trọng âm 3)<br>- <b>B. delegate</b> /ˈdelɪɡət/ (Danh từ - Trọng âm 1)<br>- <b>C. marvelous</b> /ˈmɑːvələs/ (Trọng âm 1)<br>- <b>D. currency</b> /ˈkʌrənsi/ (Trọng âm 1)<br>=> Từ 'introduce' có trọng âm rơi vào âm tiết cuối (thứ 3), các từ còn lại nhấn âm 1." },
+        { id: "e16_5", type: "single", question: "Question 5. Tom: Hey, did you go to the movies last night?\nAnna: I wanted to go to the movies, _______ I had to finish my homework.", options: ["A. because", "B. but", "C. despite", "D. because of"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ngữ cảnh thể hiện sự đối lập: Rất muốn đi xem phim (wanted to go) NHƯNG lại phải làm bài tập (had to finish homework).<br>=> Dùng liên từ chỉ sự tương phản: <b>but</b>." },
+        { id: "e16_6", type: "single", question: "Question 6. Tom: I still can't believe what Jack did this morning.\nMark: I know, right? He jumped _______ the river from the bridge and swam to the other side like it was nothing", options: ["A. into", "B. on", "C. at", "D. from"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Để diễn tả hướng chuyển động 'vào bên trong' một không gian (nhảy từ trên cầu xuống sông), ta dùng giới từ <b>into</b>.<br>=> 'jumped into the river' (nhảy xuống sông)." },
+        { id: "e16_7", type: "single", question: "Question 7. Smith: I heard your sister sang at the school concert.\nEmma: Yes, she stood _______ the stage and performed in front of a large audience. She wasn’t even nervous!", options: ["A. in", "B. of", "C. on", "D. at"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Để chỉ vị trí 'trên bề mặt' (đứng trên bục sân khấu), ta dùng giới từ <b>on</b>.<br>=> 'stood on the stage' (đứng trên sân khấu)." },
+        { id: "e16_8", type: "single", question: "Question 8. Sophia: Are we really baking cookies now?\nJake:Yes, but please don’t _______ a mess in the kitchen. I just cleaned it!", options: ["A. have", "B. do", "C. make", "D. catch"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ta có cụm từ cố định (collocation): <b>make a mess</b> = gây bừa bộn, làm lộn xộn.<br>=> 'don’t make a mess in the kitchen' (đừng làm bừa bộn trong bếp nhé)." },
+        { id: "e16_9", type: "single", question: "Question 9. Tom: I couldn’t sleep again last night.\nSarah: Yeah, me too. The boy _______ dog barks all night lives next door. It’s so noisy!", options: ["A. that", "B. whose", "C. which", "D. whom"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Cần một đại từ quan hệ để thể hiện sự sở hữu giữa 'The boy' (Cậu bé) và 'dog' (con chó của cậu ấy).<br>=> Dùng đại từ chỉ sự sở hữu: <b>whose</b>." },
+        { id: "e16_10", type: "single", question: "Question 10. Sana: Why do you think we should use solar panels at school?\nOlivia: Because _______ energy is a key factor in combating climate change. It’s cleaner and better for the planet.", options: ["A. non-renewable", "B. fossil", "C. electronic", "D. renewable"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Solar panels (Tấm pin năng lượng mặt trời) là một dạng của năng lượng tái tạo (sạch và tốt cho hành tinh).<br>=> Dùng tính từ <b>renewable</b> (có thể tái tạo)." },
+        { id: "e16_11", type: "single", question: "Question 11. Mr. Carter: Did you see Ben’s new car?\nDavid: Of course. He’s always eager to show _______ his new car to his friends. It’s kind of funny!", options: ["A. off", "B. up", "C. to", "D. out"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ta có cụm động từ (Phrasal verb): <b>show off</b> = khoe khoang, thể hiện.<br>=> Cậu ấy luôn háo hức khoe (show off) chiếc xe mới với bạn bè." },
+        { id: "e16_12", type: "single", question: "Question 12. Min: I’m trying to eat healthier. \nMia: Let’s try _______. It is food produced by methods complying with the standards of organic farming, so it’s grown without chemicals.", options: ["A. fast food", "B. processed food", "C. organic food", "D. junk food"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Câu sau giải thích: 'Đó là thực phẩm được sản xuất theo phương pháp hữu cơ (organic farming) và không dùng hóa chất (grown without chemicals)'.<br>=> Vậy đó chính là <b>thực phẩm hữu cơ (organic food)</b>." },
+        { id: "e16_13", type: "single", question: "Question 13. Jack: Is it going to rain today?\nJenny: _____________________", options: ["A. No, the forecast says it's sunny all day.", "B. I don’t like rain.", "C. It’s raining tomorrow.", "D. I didn’t bring my umbrella."], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Jack hỏi về dự báo thời tiết: 'Hôm nay trời có mưa không?'.<br>Jenny đáp lại trực tiếp và tự nhiên nhất là: <b>No, the forecast says it's sunny all day.</b> (Không, dự báo nói là trời nắng cả ngày)." },
+        { id: "e16_14", type: "single", question: "Question 14. Anna: What do you think of my new dress?\nKate: _____________________", options: ["A. I haven’t had dinner yet.", "B. It’s not a good time to talk.", "C. I don’t think I know.", "D. It looks great on you! Very stylish."], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Anna hỏi xin ý kiến về chiếc váy mới: 'Bạn nghĩ gì về chiếc váy mới của mình?'.<br>Câu khen ngợi phù hợp ngữ cảnh là: <b>It looks great on you! Very stylish.</b> (Nó trông rất hợp với bạn! Rất phong cách)." },
+        { id: "e16_15", type: "single", question: "Question 15. What does the sign say?<br><br><svg viewBox='0 0 100 100' class='w-32 h-32 mx-auto mb-4 drop-shadow-md'><rect x='10' y='10' width='80' height='80' fill='#0284c7' rx='5'/><path d='M 20 40 L 25 40 L 25 75 L 20 75 Z' fill='white'/><path d='M 75 50 L 80 50 L 80 75 L 75 75 Z' fill='white'/><rect x='25' y='60' width='50' height='8' fill='white'/><path d='M 30 60 L 45 45 L 55 45 L 40 60 Z' fill='white'/><rect x='60' y='15' width='20' height='6' fill='#ef4444'/><rect x='67' y='8' width='6' height='20' fill='#ef4444'/></svg>", options: ["A. There is a nearby medical center.", "B. We should take patients to the hospital.", "C. Hospitals are permitted to build here.", "D. The Red Cross is available."], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Biển báo hình vuông nền xanh có hình chiếc giường bệnh màu trắng và chữ thập đỏ. Đây là biển chỉ dẫn tiện ích.<br>=> Ý nghĩa: Báo hiệu <b>Có một trung tâm y tế/bệnh viện ở gần đây (There is a nearby medical center)</b>." },
+        { id: "e16_16", type: "single", question: "Question 16. What does the notice say?<br><br><svg viewBox='0 0 160 100' class='w-64 h-32 mx-auto mb-4 drop-shadow-md'><rect x='5' y='5' width='150' height='90' fill='#facc15' stroke='white' stroke-width='2'/><rect x='10' y='10' width='140' height='25' fill='black'/><text x='80' y='28' font-family='Arial, sans-serif' font-weight='bold' font-size='18' fill='#facc15' text-anchor='middle'>CAUTION</text><text x='10' y='50' font-family='Arial, sans-serif' font-weight='bold' font-size='14' fill='black'>HOT SURFACE</text><text x='10' y='70' font-family='Arial, sans-serif' font-weight='bold' font-size='18' fill='black'>DO NOT</text><text x='10' y='88' font-family='Arial, sans-serif' font-weight='bold' font-size='18' fill='black'>TOUCH</text><path d='M 130 40 C 120 40, 110 55, 100 65 L 105 70 C 115 60, 125 50, 130 50 C 135 65, 140 80, 145 85 L 150 85 C 145 70, 140 50, 135 40 Z' fill='black'/><defs><linearGradient id='grad1'><stop offset='0%' stop-color='red'/><stop offset='50%' stop-color='yellow'/><stop offset='100%' stop-color='red'/></linearGradient></defs><rect x='100' y='85' width='50' height='5' fill='url(#grad1)'/></svg>", options: ["A. Touch lightly to check the temperature.", "B. Wait until it cools down before touching.", "C. Do not touch the surface.", "D. It’s safe to touch if you’re wearing gloves."], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Biển báo cảnh báo có ghi rõ chữ: 'HOT SURFACE' (Bề mặt rất nóng) và 'DO NOT TOUCH' (TUYỆT ĐỐI KHÔNG CHẠM VÀO).<br>=> Lời cảnh báo trực tiếp là cấm chạm vào bề mặt. Chọn <b>C. Do not touch the surface.</b>" },
+        
+        { id: "e16_17", context: clozeContextDe16, type: "single", question: "Question 17. Choose the word that best fits the space (17):", options: ["A. levels", "B. standards", "C. qualities", "D. conditions"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Tác giả phàn nàn rằng căn phòng khách sạn không đạt được 'tiêu chuẩn' như quảng cáo ('particularly in terms of cleanliness' - đặc biệt là khâu vệ sinh).<br>=> <b>standards</b> (tiêu chuẩn)." },
+        { id: "e16_18", context: clozeContextDe16, type: "single", question: "Question 18. Choose the word that best fits the space (18):", options: ["A. smell", "B. steam", "C. noise", "D. light"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Trong phòng tắm (bathroom) có một thứ gì đó 'unpleasant' (khó chịu).<br>=> Hợp lý nhất là <b>smell</b> (Phòng tắm có mùi rất khó chịu)." },
+        { id: "e16_19", context: clozeContextDe16, type: "single", question: "Question 19. Choose the word that best fits the space (19):", options: ["A. problems", "B. dangers", "C. concerns", "D. symptoms"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Vết bẩn trên ga giường và mùi khó chịu đã làm dấy lên những 'mối lo ngại' nghiêm trọng về vấn đề vệ sinh (hygiene).<br>=> <b>concerns</b> (mối lo ngại)." },
+        { id: "e16_20", context: clozeContextDe16, type: "single", question: "Question 20. Choose the word that best fits the space (20):", options: ["A. that", "B. whose", "C. why", "D. what"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ta có cấu trúc câu giả định: <b>request that + Mệnh đề (S + V)</b> (yêu cầu rằng điều gì đó...).<br>=> 'I kindly request <b>that</b> such issues...'" },
+        { id: "e16_21", context: clozeContextDe16, type: "single", question: "Question 21. Choose the word that best fits the space (21):", options: ["A. is", "B. are", "C. were", "D. be"], correct: 3, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Theo cấu trúc Giả định cách (Subjunctive mood) đi sau động từ 'request that': <b>S + (should) + V_nguyên thể</b>.<br>Ở đây là câu bị động: (should) be addressed. Do đó động từ tobe phải giữ nguyên mẫu là <b>be</b>." },
+        { id: "e16_22", context: clozeContextDe16, type: "single", question: "Question 22. Choose the word that best fits the space (22):", options: ["A. make", "B. do", "C. take", "D. get"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Ta có cụm từ cố định: <b>take steps</b> = thực hiện các bước/biện pháp (để ngăn ngừa tình huống tương tự).<br>=> <b>take</b> steps to prevent similar situations..." },
+        
+        { id: "e16_23", context: readingContextDe16, type: "single", question: "Question 23. True or False:\nThe reviewer had already seen the original version before watching the 2017 adaptation.", options: ["A. True", "B. False"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch câu hỏi:</b> Người đánh giá đã xem phiên bản gốc trước khi xem bản chuyển thể năm 2017.<br><b>Kiểm chứng bài đọc:</b> Đoạn cuối bài review ghi: 'Of course, you already know this if you’ve seen the original film...' (Tất nhiên, bạn đã biết điều này nếu bạn đã xem bộ phim gốc). Điều này cho thấy người đánh giá đã nắm rõ và so sánh với phim gốc.<br>=> Thông tin <b>Đúng (True)</b>." },
+        { id: "e16_24", context: readingContextDe16, type: "single", question: "Question 24. True or False:\nThe reviewer found the fantasy elements unconvincing in the 2017 version.", options: ["A. True", "B. False"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch câu hỏi:</b> Người đánh giá thấy các yếu tố kỳ ảo trong phiên bản 2017 là KHÔNG thuyết phục (unconvincing).<br><b>Kiểm chứng bài đọc:</b> Bài đọc lại khen ngợi: 'The fantasy elements are especially brought to life...' (Các yếu tố kỳ ảo đặc biệt trở nên sống động...).<br>=> Từ 'unconvincing' làm câu hỏi sai bét. <b>Sai (False)</b>." },
+        { id: "e16_25", context: readingContextDe16, type: "single", question: "Question 25. True or False:\nThe use of music is one of the things the reviewer enjoyed about this version.", options: ["A. True", "B. False"], correct: 0, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch câu hỏi:</b> Việc sử dụng âm nhạc là một trong những điều người đánh giá thích ở phiên bản này.<br><b>Kiểm chứng bài đọc:</b> Đoạn 2 ghi: '...equal parts fantasy and musical, which is one of the things I love about this adaptation...' (Bộ phim vừa kỳ ảo vừa mang tính nhạc kịch, đó là một trong những điều tôi rất thích).<br>=> Thông tin <b>Đúng (True)</b>." },
+        { id: "e16_26", context: readingContextDe16, type: "single", question: "Question 26. True or False:\nThe reviewer thinks this adaptation is better than all other versions of the story.", options: ["A. True", "B. False"], correct: 1, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch câu hỏi:</b> Người đánh giá nghĩ rằng bản chuyển thể này TỐT HƠN TẤT CẢ các phiên bản khác của câu chuyện.<br><b>Kiểm chứng bài đọc:</b> Bài đọc chỉ khen ngợi bộ phim ('a good example of how fantasy comes to life'), nhưng KHÔNG HỀ có câu nào khẳng định nó là 'tốt nhất' (better than all other versions). Sự cường điệu này khiến phát biểu sai.<br>=> Thông tin <b>Sai (False)</b>." },
+        { id: "e16_27", context: readingContextDe16, type: "single", question: "Question 27. According to the review, the main strength of Beauty and the Beast (2017) lies in __________.", options: ["A. its realistic action scenes", "B. its humorous dialogue", "C. its blend of fantasy and musical elements", "D. its focus on historical accuracy"], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Reviewer khẳng định rõ ở đầu đoạn 2: 'This adaptation... is equal parts fantasy and musical, which is one of the things I love...' (Bản chuyển thể này cân bằng giữa yếu tố kỳ ảo và nhạc kịch, đó là điều tôi yêu thích).<br>=> Điểm mạnh là <b>sự kết hợp giữa yếu tố kỳ ảo và âm nhạc (C)</b>." },
+        { id: "e16_28", context: readingContextDe16, type: "single", question: "Question 28. Which of the following is NOT mentioned in the review?", options: ["A. The main female character is named Belle.", "B. The enchanted rose plays a key role in the story.", "C. The film includes scenes of battle and war", "D. The castle’s inhabitants were turned into household objects."], correct: 2, explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Tìm chi tiết KHÔNG CÓ trong bài (NOT mentioned):<br>- A có nhắc: 'young eccentric girl named Belle'.<br>- B có nhắc: 'The rose also held a special significance...'<br>- D có nhắc: 'transformed into different household objects...'<br>=> Chỉ có <b>việc bộ phim bao gồm các cảnh chiến đấu và chiến tranh (C)</b> là hoàn toàn không được nhắc đến." },
+        
+        { id: "e16_29", type: "short_answer", question: "Question 29. Use the correct form of the word in brackets:\nYour __________must be typed in 3 copies to hand in for our company. (APPLY)", correct: "application", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Sau tính từ sở hữu 'Your' (của bạn) cần một <b>Danh từ (Noun)</b> làm Chủ ngữ.<br>Từ gốc: Apply (v: nộp đơn) => Danh từ chỉ tờ đơn xin việc là <b>application</b>.<br>=> Đơn xin việc của bạn phải được đánh máy thành 3 bản." },
+        { id: "e16_30", type: "short_answer", question: "Question 30. Use the correct form of the word in brackets:\nTo Americans, it is impolite to ask someone about age, ________and salary. (MARRY)", correct: "marriage", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Cấu trúc liệt kê song song với chữ 'and': age (tuổi tác - danh từ), salary (lương - danh từ). Vậy vị trí trống cũng phải là <b>Danh từ</b>.<br>Từ gốc: Marry (v: kết hôn) => Danh từ tình trạng hôn nhân là <b>marriage</b>." },
+        { id: "e16_31", type: "short_answer", question: "Question 31. Use the correct form of the word in brackets:\nVietnamese athletes performed_______ and won a lot of gold medals. (EXCELLENT)", correct: "excellently", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Đứng sau động từ thường 'performed' (đã biểu diễn/thi đấu) cần một <b>Trạng từ (Adverb)</b> để bổ nghĩa.<br>Từ gốc: Excellent (adj) => Trạng từ là <b>excellently</b> (thi đấu một cách xuất sắc)." },
+        { id: "e16_32", type: "short_answer", question: "Question 32. Use the correct form of the word in brackets:\nThese quick and easy _______ can be effective in the short term, but they have a cost. (SOLVE)", correct: "solutions", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Sau tính từ 'quick and easy' và đại từ chỉ thị số nhiều 'These', ta cần một <b>Danh từ số nhiều</b>.<br>Từ gốc: Solve (v: giải quyết) => Danh từ: Solution => Thêm 's': <b>solutions</b> (những giải pháp)." },
+        { id: "e16_33", type: "short_answer", question: "Question 33. Use the correct form of the word in brackets:\nNowadays, chemicals are ______ into some fruits to reduce decay. (INJECT)", correct: "injected", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Cấu trúc câu Bị động: <b>be + V3/ed</b> (Hóa chất ĐƯỢC tiêm vào...).<br>Từ gốc: Inject (v: tiêm, bơm vào). Đây là động từ có quy tắc nên ta thêm -ed => <b>injected</b>." },
+        { id: "e16_34", type: "short_answer", question: "Question 34. Use the correct form of the word in brackets:\nWriter Ernest Hemingway is known for his __________language and his lively dialogue. (SIMPLIFY)", correct: "simple", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br>Đứng trước danh từ 'language' (ngôn ngữ) cần một <b>Tính từ</b>.<br>Từ gốc: Simplify (v: đơn giản hóa) => Tính từ là <b>simple</b> (ngôn ngữ giản dị, mộc mạc)." },
+        
+        { id: "e16_35", context: dictContextDe16, type: "short_answer", question: "Question 35. Use what you can get from the dictionary entry to complete the sentence with two or three words:\nAfter months of negotiation, both sides finally agreed on a __________ to end the war without further violence.", correct: "peaceful solution", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch:</b> Sau nhiều tháng đàm phán, hai bên cuối cùng đã đồng ý về một <i>giải pháp hòa bình</i> để chấm dứt chiến tranh.<br>Từ điển cung cấp cụm: <b>peaceful solution</b> (phù hợp với ngữ cảnh 'end the war without further violence' - chấm dứt bạo lực). => Điền <b>peaceful solution</b>." },
+        { id: "e16_36", context: dictContextDe16, type: "short_answer", question: "Question 36. Use what you can get from the dictionary entry to complete the sentence with two or three words:\nThe damage to the engine was so serious that the __________ was to replace it entirely.", correct: "only solution", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Dịch:</b> Hư hỏng của động cơ quá nghiêm trọng đến mức <i>giải pháp duy nhất</i> là phải thay mới nó hoàn toàn.<br>Từ điển cung cấp cụm: <b>the only solution</b> (giải pháp duy nhất). => Điền <b>only solution</b>." },
+        
+        { id: "e16_37", type: "short_answer", question: "Question 37. Rewrite the sentence:\nI last saw Bob when I was in Ho Chi Minh City.\n→ I haven't seen ____________________", correct: "bob since i was in ho chi minh city", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Kiến thức:</b> Đổi từ Quá khứ đơn sang Hiện tại hoàn thành.<br>Câu gốc: Lần cuối tôi gặp Bob là khi ở TPHCM (I last saw Bob...).<br>=> Viết lại: Tôi ĐÃ KHÔNG GẶP Bob TỪ KHI ở TPHCM (I haven't seen Bob since...). Chữ 'when' đổi thành 'since'.<br>=> Đáp án: <b>Bob since I was in Ho Chi Minh City</b>." },
+        { id: "e16_38", type: "short_answer", question: "Question 38. Rewrite the sentence:\nThe children couldn't go swimming because the sea was very rough.\n→ The sea was too ____________________", correct: "rough for the children to go swimming", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Kiến thức:</b> Cấu trúc Too... to (Quá... đến nỗi không thể).<br>Biển động mạnh nên bọn trẻ không thể đi bơi.<br>Cấu trúc: <b>S + be + too + adj + (for Object) + to V</b>.<br>=> Biển QUÁ ĐỘNG (too rough) CHO BỌN TRẺ (for the children) ĐỂ ĐI BƠI (to go swimming).<br>=> Đáp án: <b>rough for the children to go swimming</b>." },
+        { id: "e16_39", type: "short_answer", question: "Question 39. Rewrite the sentence:\nAs I get older, I want to travel less.\n→ The older ____________________", correct: "i get, the less i want to travel", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Kiến thức:</b> So sánh kép (The + so sánh hơn, The + so sánh hơn).<br>Khi tôi già đi, tôi ít muốn du lịch hơn.<br>=> CÀNG già đi (The older I get), tôi CÀNG ÍT muốn đi du lịch (the less I want to travel).<br>=> Đáp án: <b>I get, the less I want to travel</b>." },
+        { id: "e16_40", type: "short_answer", question: "Question 40. Rewrite the sentence:\nAlthough I had all the necessary qualifications, they didn’t offer me the job.\n→ Despite____________________", correct: "having all the necessary qualifications, they didn't offer me the job", explanation: "<b>💡 Hướng dẫn chi tiết:</b><br><b>Kiến thức:</b> Mệnh đề Nhượng bộ (Although -> Despite).<br><b>Cấu trúc:</b> Although + S + V => Despite + V-ing / Noun phrase.<br>Vì chủ ngữ 2 vế giống nhau (I), ta đưa động từ 'had' về dạng V-ing là 'having'.<br>=> Đáp án: <b>having all the necessary qualifications, they didn’t offer me the job</b>." }
+    ];
+
+    const testBanks = { de15: de15_data, de16: de16_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) {
+                alert("❌ Lỗi Code HTML: Không tìm thấy ô nhập Họ tên hoặc Lớp.");
+                return;
+            }
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!";
+                    errDiv.classList.remove('hidden');
+                } else {
+                    alert("⚠️ Nhắc học sinh nhập đầy đủ Họ tên và Lớp cô nhé!");
+                }
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                userAnswers = {};
+                window.renderAllQuestions();
+                startTimer(90 * 60); 
+            }
+        } catch (error) {
+            alert("❌ Đã xảy ra lỗi khởi tạo bài thi: " + error.message + ".");
+            console.error(error);
+        }
+    };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        return 40;
+    }
+
+    function getAnsweredCount() {
+        return Object.keys(userAnswers).length;
+    }
+
+    window.handleShortAnswer = function(qId) {
+        const inputEl = document.getElementById('short_input_' + qId);
+        if(!inputEl) return;
+        const val = inputEl.value;
+        if(val.trim() === '') {
+            delete userAnswers[qId];
+        } else {
+            userAnswers[qId] = val;
+        }
+        window.updateProgress();
+    };
+
+    window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+            
+            const btnT = document.getElementById(`btnT_${qId}`);
+            const btnF = document.getElementById(`btnF_${qId}`);
+            if (val === true) {
+                btnT.classList.add('selected'); btnT.classList.remove('bg-white');
+                btnF.classList.remove('selected'); btnF.classList.add('bg-white');
+            } else {
+                btnF.classList.add('selected'); btnF.classList.remove('bg-white');
+                btnT.classList.remove('selected'); btnT.classList.add('bg-white');
+            }
+        } else if (type === 'single') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+        }
+    };
+
+    window.renderAllQuestions = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = '';
+        
+        const sectionMap = {
+            "e15_1": "PHẦN 1. MULTIPLE CHOICE", "e16_1": "PHẦN 1. MULTIPLE CHOICE",
+            "e15_15": "PHẦN 2. SIGNS", "e16_15": "PHẦN 2. SIGNS",
+            "e15_17": "PHẦN 3. CLOZE TEST", "e16_17": "PHẦN 3. CLOZE TEST",
+            "e15_23": "PHẦN 4. READING COMPREHENSION", "e16_23": "PHẦN 4. READING COMPREHENSION",
+            "e15_29": "PHẦN 5. WORD FORM", "e16_29": "PHẦN 5. WORD FORM",
+            "e15_35": "PHẦN 6. SENTENCE TRANSFORMATION", "e16_35": "PHẦN 6. SENTENCE TRANSFORMATION"
+        };
+        currentQuestions.forEach((q) => {
+            if (sectionMap[q.id]) {
+                html += `<div class="mt-12 mb-6 flex flex-row items-center justify-center w-full gap-3 sm:gap-6">
+                    <div class="flex-1 h-0.5 sm:h-1 bg-red-200 rounded-full"></div>
+                    <h3 class="text-xl sm:text-2xl font-black text-red-600 uppercase tracking-widest text-center">${sectionMap[q.id]}</h3>
+                    <div class="flex-1 h-0.5 sm:h-1 bg-red-200 rounded-full"></div>
+                </div>`;
+            }
+            
+            // XỬ LÝ ĐOẠN VĂN NGỮ CẢNH BÀI LUẬN
+            if (q.context) {
+                html += `<div class="bg-indigo-50 text-indigo-900 p-5 rounded-2xl font-medium mb-6 border-2 border-indigo-100 text-base sm:text-lg leading-relaxed text-justify shadow-inner">${q.context}</div>`;
+            }
+
+            html += `<div class="fade-in w-full bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-indigo-100 relative mb-6 hover:shadow-md transition-shadow">`;
+            
+            if (q.type === 'single') {
+                const uAns = userAnswers[q.id];
+                const formattedQuestion = q.question.replace(/\n/g, '<br>');
+                html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight">${formattedQuestion}</p></div></div>`;
+                html += `<div class="space-y-4 md:pl-6 mt-6">`;
+                q.options.forEach((opt, i) => {
+                    const isChecked = (uAns === i) ? 'checked' : '';
+                    html += `<div class="flex items-center">
+                        <input type="radio" id="opt_${q.id}_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                        <label for="opt_${q.id}_${i}" class="option-label w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg cursor-pointer hover:border-indigo-300">
+                            <div class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                            <div class="text-gray-700 leading-relaxed flex-1">${opt}</div>
+                        </label>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="space-y-3 mt-6">`;
+                q.items.forEach((item) => {
+                    const combinedId = q.id + '_' + item.id;
+                    let ans = userAnswers[combinedId];
+                    let btnT = ans === true ? 'selected' : 'bg-white';
+                    let btnF = ans === false ? 'selected' : 'bg-white';
+
+                    html += `<div class="p-4 sm:p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-indigo-200">
+                        <div class="font-bold text-red-600 flex-1 text-base sm:text-lg math-scroll">${item.text}</div>
+                        <div class="flex gap-2 shrink-0">
+                            <button id="btnT_${combinedId}" onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnT}">TRUE</button>
+                            <button id="btnF_${combinedId}" onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnF}">FALSE</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 'short_answer') {
+                let ans = userAnswers[q.id] || "";
+                const formattedQuestion = q.question.replace(/\n/g, '<br>');
+                html += `<div class="bg-gradient-to-r from-red-50 to-orange-50 text-red-600 p-5 rounded-2xl font-bold mb-6 border border-red-100 shadow-sm text-lg sm:text-xl leading-relaxed">${formattedQuestion}</div>`;
+                html += `<div class="mt-4 p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm">
+                     <textarea id="short_input_${q.id}" oncopy="return false" onpaste="return false" oncut="return false" oninput="window.handleShortAnswer('${q.id}')" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 font-bold text-xl outline-none transition-all text-indigo-700" rows="1" placeholder="Nhập câu trả lời của em ở đây...">${ans}</textarea>
+                 </div>`;
+            }
+
+            html += `</div>`;
+        });
+        
+        container.innerHTML = html;
+        window.updateProgress();
+    };
+       
+
+    window.updateProgress = function() {
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.promptSubmit = function() {
+        if (!isQuizStarted) return;
+        const total = getTotalScoreItems();
+        const answered = getAnsweredCount();
+        
+        document.getElementById('confirm-answered').innerText = answered;
+        document.getElementById('confirm-total').innerText = total;
+        
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        const modal = document.getElementById('confirm-submit-modal');
+        modal.classList.add('hidden');
+    };
+
+   window.executeSubmit = function() {
+        window.closeConfirmModal();
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) score += 0.25;
+            } else if (q.type === 'short_answer') {
+                let uVal = (userAnswers[q.id] || "").toString().trim().toLowerCase().replace(/[.,?!]/g, '').replace(/\s+/g, ' ');
+                let cVal = q.correct.toString().trim().toLowerCase().replace(/[.,?!]/g, '').replace(/\s+/g, ' ');
+                if (uVal === cVal) score += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                q.items.forEach(item => { 
+                    if (userAnswers[q.id + '_' + item.id] === item.correct) score += 0.25; 
+                });
+            }
+        });
+
+        score = score.toFixed(2); 
+
+       const record = {
+            hoTen: currentStudent.hoTen, 
+            lop: currentStudent.lop, 
+            maDe: currentStudent.maDe,
+            tenDe: currentStudent.tenDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN') + ' - ' + quizStartTime.toLocaleDateString('vi-VN'), 
+            endTime: quizEndTime.toLocaleTimeString('vi-VN') + ' - ' + quizEndTime.toLocaleDateString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), 
+            deviceId: deviceId,
+            answers: userAnswers
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-indigo-50 border-2 border-indigo-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-indigo-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-indigo-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-pink-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-indigo-100">Thời gian: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem chi tiết</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+   window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+       const sectionMap = {
+            "e15_1": "PHẦN 1. MULTIPLE CHOICE", "e16_1": "PHẦN 1. MULTIPLE CHOICE",
+            "e15_15": "PHẦN 2. SIGNS", "e16_15": "PHẦN 2. SIGNS",
+            "e15_17": "PHẦN 3. CLOZE TEST", "e16_17": "PHẦN 3. CLOZE TEST",
+            "e15_23": "PHẦN 4. READING COMPREHENSION", "e16_23": "PHẦN 4. READING COMPREHENSION",
+            "e15_29": "PHẦN 5. WORD FORM", "e16_29": "PHẦN 5. WORD FORM",
+            "e15_35": "PHẦN 6. SENTENCE TRANSFORMATION", "e16_35": "PHẦN 6. SENTENCE TRANSFORMATION"
+        };
+        currentQuestions.forEach((q) => {
+            if (sectionMap[q.id]) {
+                html += `<div class="mt-12 mb-8 flex flex-row items-center justify-center w-full gap-3 sm:gap-6">
+                    <div class="flex-1 h-1 sm:h-1.5 bg-red-200 rounded-full"></div>
+                    <h3 class="text-2xl sm:text-3xl font-black text-red-600 uppercase tracking-widest text-center drop-shadow-sm">${sectionMap[q.id]}</h3>
+                    <div class="flex-1 h-1 sm:h-1.5 bg-red-200 rounded-full"></div>
+                </div>`;
+            }
+            
+            // XỬ LÝ ĐOẠN VĂN NGỮ CẢNH BÀI LUẬN Ở PHẦN REVIEW
+            if (q.context) {
+                html += `<div class="bg-indigo-50 text-indigo-900 p-5 rounded-2xl font-medium mb-6 border-2 border-indigo-100 text-base sm:text-lg leading-relaxed text-justify shadow-inner">${q.context}</div>`;
+            }
+
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let isUnanswered = (uAns === undefined || uAns === "");
+                let borderColor = isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-red-400 bg-red-50';
+                
+                let feedbackText = isUnanswered ? '⚠️ CÁC EM CHƯA LÀM CÂU NÀY!' : (isCorrect ? '🎉 XUẤT SẮC! CÁC EM LÀM ĐÚNG RỒI!' : '😢 TIẾC QUÁ, CÁC EM LÀM SAI RỒI!');
+                let feedbackColor = isUnanswered ? 'text-orange-600' : (isCorrect ? 'text-emerald-600' : 'text-red-600');
+                
+                const formattedQuestion = q.question.replace(/\n/g, '<br>');
+                
+                html += `<div class="p-6 sm:p-8 border-4 rounded-3xl shadow-md mb-8 flex flex-col ${borderColor}">`;
+                html += `<div class="font-black text-xl sm:text-2xl text-red-600 mb-6 leading-relaxed">${formattedQuestion}</div>`;
+                html += `<div class="space-y-4">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-500 border-2 shadow-sm'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-md ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-500 border-2 shadow-sm'; 
+                        iconHtml = '<div class="text-3xl drop-shadow-md ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border-2 border-slate-200'; }
+
+                    html += `<div class="p-4 rounded-2xl ${optBg} flex items-center gap-4"><div class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/60 text-lg font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-extrabold' : 'font-bold'} text-lg sm:text-xl flex-1">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                html += `<div class="mt-6 pb-6 border-b-2 border-dashed border-gray-300 text-center"><span class="text-xl sm:text-2xl font-black ${feedbackColor}">${feedbackText}</span></div>`;
+                
+                if (q.explanation) {
+                    let cleanExpl = q.explanation.replace(/\]+\]/g, '').trim();
+                    html += `<div class="review-explanation mt-6 pt-2"><p class="font-bold text-lg sm:text-xl leading-loose text-gray-800 bg-white p-5 rounded-2xl border-2 border-emerald-200 shadow-sm">${cleanExpl}</p></div>`;
+                }
+                
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-6 sm:p-8 border-4 border-indigo-300 bg-indigo-50 rounded-3xl shadow-md mb-8">`;
+                html += `<div class="space-y-6">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isCorrect = uAns === item.correct;
+                    let isUnanswered = (uAns === undefined);
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'TRUE' : 'FALSE';
+                    
+                    let feedbackText = isUnanswered ? '⚠️ CÁC EM CHƯA LÀM Ý NÀY!' : (isCorrect ? '🎉 XUẤT SẮC!' : '😢 CHƯA ĐÚNG RỒI!');
+                    let feedbackColor = isUnanswered ? 'text-orange-600' : (isCorrect ? 'text-emerald-600' : 'text-red-600');
+
+                    html += `<div class="p-5 bg-white border-2 border-indigo-200 rounded-2xl shadow-sm flex flex-col">
+                        <div class="font-black text-red-600 text-xl mb-4">${item.text}</div>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-gray-100 pb-4 gap-3">
+                            <span class="text-lg font-bold text-gray-500">Các em chọn: <span class="${uAns === undefined ? 'text-gray-400' : 'text-indigo-600'} font-black uppercase">${uAns === undefined ? 'Chưa trả lời' : (uAns?'True':'False')}</span></span>
+                            <span class="font-black text-xl ${isCorrect ? 'text-emerald-600' : 'text-red-600'}">Đáp án chuẩn: ${ansText} ${iconHtml}</span>
+                        </div>
+                        
+                        <div class="mt-4 pb-4 border-b-2 border-dashed border-gray-200 text-center"><span class="text-xl font-black ${feedbackColor}">${feedbackText}</span></div>
+                        
+                        <div class="review-explanation mt-4 pt-2 text-lg font-medium leading-relaxed">
+                            <div class="font-bold text-gray-800 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">${item.expl.replace(/\]+\]/g, '').trim()}</div>
+                        </div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+            else if (q.type === 'short_answer') {
+                let uValRaw = userAnswers[q.id] || "";
+                let uVal = uValRaw.toString().trim().toLowerCase().replace(/[.,?]/g, '').replace(/\s+/g, ' ');
+                let cVal = q.correct.toString().trim().toLowerCase().replace(/[.,?]/g, '').replace(/\s+/g, ' ');
+                let isCorrect = (uVal === cVal);
+                let isUnanswered = (uValRaw.toString().trim() === "");
+                let borderColor = isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-red-400 bg-red-50';
+                
+                let feedbackText = isUnanswered ? '⚠️ CÁC EM CHƯA LÀM CÂU NÀY!' : (isCorrect ? '🎉 XUẤT SẮC! CÁC EM LÀM ĐÚNG RỒI!' : '😢 TIẾC QUÁ, CÁC EM LÀM SAI RỒI!');
+                let feedbackColor = isUnanswered ? 'text-orange-600' : (isCorrect ? 'text-emerald-600' : 'text-red-600');
+                
+                const formattedQuestion = q.question.replace(/\n/g, '<br>');
+
+                html += `<div class="p-6 sm:p-8 border-4 rounded-3xl shadow-md mb-8 flex flex-col ${borderColor}">`;
+                html += `<div class="font-black text-xl sm:text-2xl text-red-600 mb-6 leading-relaxed">${formattedQuestion}</div>`;
+                
+                html += `<div class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div class="flex-1 p-5 bg-white border-2 border-gray-200 rounded-2xl min-w-0 shadow-sm"><span class="block text-sm font-black text-gray-500 uppercase mb-2">Học sinh nhập:</span><span class="text-2xl font-black ${isCorrect ? 'text-emerald-600' : 'text-red-600'} block break-words">${uValRaw || '(Trống)'}</span></div>
+                    <div class="flex-1 p-5 bg-emerald-100 border-2 border-emerald-400 rounded-2xl min-w-0 shadow-sm"><span class="block text-sm font-black text-emerald-800 uppercase mb-2">ĐÁP ÁN CHUẨN LÀ:</span><span class="text-2xl font-black text-emerald-700 block break-words">${q.correct}</span></div>
+                </div>`;
+                
+                html += `<div class="mt-4 pb-6 border-b-2 border-dashed border-gray-300 text-center"><span class="text-xl sm:text-2xl font-black ${feedbackColor}">${feedbackText}</span></div>`;
+                
+                if (q.explanation) {
+                    let cleanExpl = q.explanation.replace(/\]+\]/g, '').trim();
+                    html += `<div class="review-explanation pt-4 border-t-2 border-emerald-200"><p class="font-medium text-base leading-loose">${cleanExpl}</p></div>`;
+                }
+                
+                html += `</div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { 
+        if(window.reviewSource === 'scores') {
+            showSection('scores');
+        } else {
+            showSection('result'); 
+        }
+    };
+
+    window.viewStudentDetail = function(scoreId) {
+        const s = allScores.find(item => item.id === scoreId);
+        if (!s) return;
+        currentStudent = { hoTen: s.hoTen, lop: s.lop, maDe: s.maDe, tenDe: s.tenDe };
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[s.maDe] || testBanks['de15']));
+        userAnswers = s.answers || {};
+        window.reviewSource = 'scores';
+        window.reviewQuiz();
+        showSection('review');
+    };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (b.diem - a.diem) || (a.lop.localeCompare(b.lop)));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+            <td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td>
+            <td class="px-4 py-4 font-black text-indigo-600 text-sm">${s.lop}</td>
+            <td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td>
+            <td class="px-4 py-4 text-xs font-bold text-indigo-500"><span class="bg-indigo-50 border border-indigo-100 px-2 py-1 rounded-md">${s.tenDe}</span></td>
+            <td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+            <td class="px-4 py-4 text-center text-slate-500 text-xs">${s.startTime}</td>
+            <td class="px-4 py-4 text-center text-pink-600 font-bold text-xs">${s.duration}</td>
+            <td class="px-4 py-4 text-center"><button onclick="window.viewStudentDetail('${s.id}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-1 rounded-md text-xs font-bold transition">Xem bài</button></td>
+            </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.executeSubmit();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
