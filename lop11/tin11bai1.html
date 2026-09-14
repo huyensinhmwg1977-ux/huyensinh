@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Tin Học 11 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstaticom/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstaticom/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- 1. MÃ GA4 GỐC (Kết nối với Google Analytics) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NSJCVSL9RM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-NSJCVSL9RM'); 
+</script>
+
+<!-- 2. MÃ NHỊP TIM 30 GIÂY -->
+<script>
+  setInterval(function() {
+    if (!document.hidden) { 
+      gtag('event', 'keep_alive', {
+        'event_category': 'Engagement',
+        'event_label': 'Học sinh đang làm bài',
+        'non_interaction': false
+      });
+    }
+  }, 30000); 
+</script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:not(.disabled):hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    input[type="radio"].de-radio:checked + .de-label { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-color: #0ea5e9; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3); }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+    input[type="radio"].single-radio:checked + .option-label { background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); color: white; border-color: transparent; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .my-score-row { background: linear-gradient(to right, #fdf4ff, #ffffff) !important; border-left: 4px solid #db2777 !important; font-weight: 700 !important; color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10; }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+    .disabled-option { opacity: 0.8; pointer-events: none !important; }
+    #feedback-modal { z-index: 9999; }
+    #feedback-modal-content { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-tf { transition: all 0.2s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):hover { background-color: #f3f4f6; }
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-red-700 mb-3">ÔN TẬP TIN HỌC 11 <br><span class="text-xl text-gray-600">(Bài 2: Thực hành HĐH)</span></h1>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="11A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-blue-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ĐỀ SỐ 1<br><span class="text-xs font-medium text-gray-500">Ôn tập hệ điều hành</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ĐỀ SỐ 2<br><span class="text-xs font-medium text-gray-500">Ôn tập hệ điều hành</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU LÀM BÀI </button>
+     </div>
+     
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     <div class="flex items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100">
+      
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+
+
+
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <div class="text-right bg-blue-50 px-4 py-2 rounded-xl border border-blue-100" id="progress-container">
+       <div class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Tiến độ (ý)</div>
+       <div id="progress-text" class="text-xl font-black text-blue-700">0</div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-gray-500 hover:bg-gray-600 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+   <div id="feedback-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
+       <div class="bg-blue-50 border-4 border-blue-300 rounded-3xl w-full max-w-3xl shadow-2xl transform scale-95 opacity-0 flex flex-col" id="feedback-modal-content">
+           <div class="p-6 sm:p-8 flex-grow overflow-y-auto max-h-[85vh]">
+               <div id="feedback-header" class="text-center mb-4"></div>
+               <div id="feedback-body" class="text-black font-extrabold text-lg leading-relaxed text-left"></div>
+           </div>
+           <div class="p-4 bg-white border-t-2 border-blue-100 rounded-b-2xl">
+               <button onclick="window.closeFeedbackModal()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-xl rounded-xl shadow hover:shadow-lg transform hover:-translate-y-1 transition-all uppercase tracking-wider">Đã hiểu & Tiếp tục ➔</button>
+           </div>
+       </div>
+   </div>
+
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 id="review-title" class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Tổng TG</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Thao tác</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdasia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            // Cập nhật đường dẫn Database lưu thành v2 để lưu đầy đủ thông tin (đáp án, chi tiết ngày giờ...)
+            scoresRef = database.ref('bxh_tinhoc11_bai2_v2'); 
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    /*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI MỚI - TIN HỌC 11 (BÀI 2)
+    =================================================================================================*/
+    const de1_data = [
+        { id: "1_1", type: "single", question: "Trong hệ điều hành Windows, biểu tượng (icon) của một tệp ứng dụng thường được sử dụng nhằm mục đích gì?", options: [" Mở giao diện cài đặt lại hệ điều hành", " Kích hoạt ứng dụng hoặc phần mềm đó", " Xoá vĩnh viễn tệp tin khỏi bộ nhớ đĩa", " Xem chi tiết mã nguồn của chương trình"], correct: 1, explanation: "Nháy đúp chuột vào biểu tượng tệp ứng dụng là thao tác cơ bản để kích hoạt và chạy phần mềm tương ứng." },
+        { id: "1_2", type: "single", question: "Trên giao diện của File Explorer, vùng chức năng nào làm nhiệm vụ hiển thị chi tiết các tệp và thư mục con?", options: [" Vùng lệnh (Ribbon) ở phía trên cùng", " Vùng điều hướng (Navigation pane)", " Vùng nội dung chính (Main content)", " Thanh trạng thái (Status bar) dưới cùng"], correct: 2, explanation: "Vùng nội dung chính của File Explorer là nơi hiển thị các tệp tin và thư mục con bên trong thư mục hiện hành đang chọn." },
+        { id: "1_3", type: "single", question: "Theo kiến trúc lưu trữ đĩa cứng, 1 liên cung (cluster) thông thường được cấu thành từ bao nhiêu cung (sector)?", options: [" Chính xác gồm 2 cung", " Chính xác gồm 4 cung", " Chính xác gồm 8 cung", " Chính xác gồm 16 cung"], correct: 2, explanation: "Đĩa cứng thường đọc ghi theo đơn vị liên cung (cluster), mỗi liên cung thông thường gồm 8 cung (sector)." },
+        { id: "1_4", type: "single", question: "Thanh trạng thái (Status bar) trên hệ điều hành Ubuntu thường được đặt ở vị trí nào trên màn hình nền mặc định?", options: [" Trải dài dọc theo cạnh bên trái màn hình", " Trải dài dọc theo cạnh bên phải màn hình", " Trải dài ngang theo cạnh dưới của màn hình", " Trải dài ngang theo cạnh trên của màn hình"], correct: 3, explanation: "Trên Ubuntu, thanh trạng thái (Status bar) thường nằm trải dài ở góc trên cùng của màn hình." },
+        { id: "1_5", type: "single", question: "Công cụ nào trong thẻ Tools của cửa sổ Properties ổ đĩa được thiết kế chuyên biệt để tìm và sửa lỗi đĩa?", options: [" Công cụ Optimize", " Công cụ Check disk", " Công cụ Disk Cleanup", " Công cụ Format drive"], correct: 1, explanation: "Nút lệnh Check (Check disk) trong tab Tools dùng để phát hiện và tự động sửa các lỗi liên kết ổ đĩ" },
+        { id: "1_6", type: "single", question: "Để thực hiện thao tác nháy đúp chuột (double-click), người dùng cần thao tác như thế nào trên thiết bị trỏ?", options: [" Nhấn nhanh nút trái chuột một lần duy nhất", " Nhấn nhanh nút trái chuột hai lần liên tiếp", " Nhấn nhanh nút phải chuột hai lần liên tiếp", " Nhấn giữ nút trái chuột và di chuyển con trỏ"], correct: 1, explanation: "Nháy đúp chuột là thao tác nhấn nhanh nút chuột trái 2 lần liên tiếp." },
+        { id: "1_7", type: "single", question: "Trên hệ điều hành mã nguồn mở Ubuntu, tên phần mềm mặc định được dùng để quản lí tệp và thư mục là gì?", options: [" Files (hoặc Nautilus)", " File Explorer Ubuntu", " Ubuntu File Manager", " Directory Commander"], correct: 0, explanation: "Trên Ubuntu, tiện ích quản lí tệp tin mặc định là Files (tên gọi khác là Nautilus)." },
+        { id: "1_8", type: "single", question: "Mỗi cung (sector) trên các thế hệ đĩa cứng từ tính truyền thống thường có dung lượng lưu trữ cơ bản là bao nhiêu?", options: [" Chính xác là 128 byte", " Chính xác là 256 byte", " Chính xác là 512 byte", " Chính xác là 1024 byte"], correct: 2, explanation: "Một cung (sector) tiêu chuẩn trên đĩa cứng truyền thống lưu trữ 512 byte dữ liệu." },
+        { id: "1_9", type: "single", question: "Trong tiện ích danh bạ của điện thoại di động, người dùng có thể lưu trữ tối đa bao nhiêu số điện thoại cho mỗi một người?", options: [" Chỉ duy nhất một số điện thoại", " Tối đa là hai số điện thoại khác nhau", " Tối đa là ba số điện thoại khác nhau", " Có thể lưu nhiều số điện thoại khác nhau"], correct: 3, explanation: "Tiện ích Danh bạ hiện đại cho phép lưu nhiều số điện thoại khác nhau (Cơ quan, Di động, Nhà...) cho cùng một liên hệ." },
+        { id: "1_10", type: "single", question: "Để kiểm tra danh sách các phần mềm đã tải về và cài đặt trên điện thoại thông minh, người dùng truy cập vào đâu?", options: [" Mở ứng dụng Danh bạ liên lạc", " Mở chức năng Quản lí ứng dụng", " Mở tiện ích Đồng hồ đếm ngược", " Mở ứng dụng Ghi âm giọng nói"], correct: 1, explanation: "Chức năng Quản lí ứng dụng trong phần Cài đặt cho phép kiểm tra danh sách các app đã tải." },
+        { id: "1_11", type: "single", question: "Việc các tệp tin lưu trữ bị phân mảnh (fragmentation) trên ổ đĩa từ tính sẽ dẫn đến hiện tượng kĩ thuật nào sau đây?", options: [" Đầu từ đọc/ghi phải di chuyển cơ học liên tục qua lại giữa các đường ghi khác nhau", " Hệ điều hành tự động xoá bỏ các liên cung phân mảnh để giải phóng dung lượng đĩa", " Nhiệt độ của bộ vi xử lí trung tâm (CPU) tăng đột biến gây khởi động lại hệ thống", " Tốc độ truyền tải dữ liệu qua cổng USB bị giới hạn xuống mức thấp nhất có thể"], correct: 0, explanation: "Sự phân mảnh làm các cluster của một tệp nằm rải rác, khiến đầu từ vật lý phải di chuyển nhiều lần làm chậm tốc độ đọ" },
+        { id: "1_12", type: "single", question: "Khái niệm \"Bad sector\" (cung bị hỏng) trên ổ đĩa cứng được hiểu chính xác nhất là tình trạng như thế nào?", options: [" Là hiện tượng tệp tin hệ thống bị virus máy tính phá hoại không thể phục hồi", " Là phần hư hỏng vật lí trên đĩa từ khiến dữ liệu tại đó không thể đọc hoặc ghi", " Là khi hai tệp tin khác nhau cùng lúc tranh chấp ghi dữ liệu vào một liên cung", " Là tình trạng ổ đĩa báo đầy dung lượng mặc dù người dùng chưa lưu trữ nhiều"], correct: 1, explanation: "Bad sector là các khu vực bị lỗi/hỏng hóc vật lý trên bề mặt đĩa khiến hệ thống không thể đọc/ghi được dữ liệu ở vị trí đó." },
+        { id: "1_13", type: "single", question: "Tiện ích hợp mảnh đĩa (Defragment/Optimize) KHÔNG mang lại tác dụng tối ưu hiệu suất đối với loại ổ cứng nào dưới đây?", options: [" Ổ đĩa cứng từ tính chuẩn HDD", " Ổ đĩa mềm chuẩn Floppy disk", " Ổ đĩa thể rắn chuẩn SSD", " Ổ đĩa quang chuẩn CD/DVD"], correct: 2, explanation: "SSD không sử dụng cấu trúc đĩa quay và đầu từ cơ học, vì vậy việc dồn phân mảnh không có tác dụng và còn làm giảm tuổi thọ của ổ SS" },
+        { id: "1_14", type: "single", question: "Theo thuật ngữ kĩ thuật hệ thống, đoạn dữ liệu \"mồ côi\" trên ổ cứng xuất hiện khi xảy ra hiện tượng gì?", options: [" Khi tệp tin không được cấp quyền quản trị để mở hoặc chỉnh sửa nội dung bên trong", " Khi tệp tin chứa dữ liệu vô tình bị người dùng di chuyển nhầm sang một phân vùng khác", " Khi một hoặc nhiều liên cung vô tình bị mất thông tin liên kết với tệp tin gốc của chúng", " Khi hệ điều hành tự động cách li các đoạn mã độc lập nghi ngờ là virus máy tính"], correct: 2, explanation: "Lỗi đứt gãy liên kết file sẽ khiến dữ liệu còn nằm trên đĩa nhưng không thuộc về một file cụ thể nào (lost clusters)." },
+        { id: "1_15", type: "single", question: "Thao tác nháy đúp chuột trái vào một tệp có đuôi mở rộng là .docx trên hệ điều hành Windows thường sẽ có kết quả gì?", options: [" Mở cửa sổ cấu hình thuộc tính của tệp đó", " Chuyển đổi tệp đó sang dạng văn bản thô", " Mở tệp đó bằng phần mềm soạn thảo Word", " Đổi tên tệp đó thành một định dạng khác"], correct: 2, explanation: "Nháy đúp sẽ gọi lệnh mở. Tệp .docx được liên kết mặc định với phần mềm Microsoft Wor" },
+        { id: "1_16", type: "single", question: "Bảng chọn ngữ cảnh (context menu) xuất hiện khi nhấn chuột phải vào một tệp tin thông thường cung cấp loại lệnh gì?", options: [" Chỉ bao gồm các lệnh điều chỉnh độ sáng màn hình hiển thị", " Các lệnh có thể thực hiện với riêng đối tượng vừa được chọn", " Các lệnh tắt nguồn hoặc khởi động lại máy tính nhanh chóng", " Chỉ cung cấp duy nhất khả năng mở và xem trước tệp tin đó"], correct: 1, explanation: "Context menu chứa các thao tác (Copy, Cut, Rename, Properties...) tác động trực tiếp vào đối tượng đang được trỏ chuột vào." },
+        { id: "1_17", type: "single", question: "Cơ chế phân nhóm trong tiện ích Danh bạ điện thoại di động được tổ chức theo cấu trúc liên kết logic như thế nào?", options: [" Một nhóm chứa nhiều liên hệ và một liên hệ có thể thuộc nhiều nhóm", " Một nhóm chứa nhiều liên hệ nhưng mỗi liên hệ chỉ thuộc đúng một nhóm", " Một nhóm chỉ được chứa tối đa 10 liên hệ do giới hạn bộ nhớ của máy", " Mỗi số điện thoại chỉ có thể được tạo thành một nhóm hoàn toàn độc lập"], correct: 0, explanation: "Trong danh bạ thông minh, 1 contact có thể add vào Group A, Group B đồng thời." },
+        { id: "1_18", type: "single", question: "Khả năng đếm thời gian với độ chính xác đến 1% giây của tiện ích đồng hồ thông minh đặc biệt hữu ích trong lĩnh vực nào?", options: [" Đo lường thời gian đun sôi nước trong nấu ăn hàng ngày", " Ghi nhận chính xác thành tích kỉ lục trong các giải thể thao", " Hẹn giờ đánh thức người dùng đi làm vào mỗi buổi sáng", " Đo khoảng thời gian tải xong một tệp tin lớn từ Internet"], correct: 1, explanation: "Đồng hồ bấm giờ thể thao (Stopwatch) có độ chính xác phần trăm giây rất cần thiết cho việc đo kỉ lục thi đấu." },
+        { id: "1_19", type: "single", question: "Tính năng \"Tạo lối tắt\" (Create shortcut) có thể được hiểu là hành động thiết lập một đối tượng có bản chất như thế nào?", options: [" Tạo một bản sao chép hoàn chỉnh với dung lượng tương đương tệp gốc", " Tạo một đường dẫn ảo trỏ nhanh đến vị trí lưu trữ của tệp tin hoặc ứng dụng", " Thiết lập một phân vùng ẩn trên ổ cứng để bảo vệ tệp tin khỏi bị sao chép", " Chuyển đổi tệp tin gốc thành một ứng dụng tự chạy độc lập trên Windows"], correct: 1, explanation: "Shortcut thực chất là một liên kết (đường dẫn ảo) trỏ đến file thực thi gốc để truy cập nhanh từ ngoài Desktop." },
+        { id: "1_20", type: "single", question: "Mục đích chính của việc gỡ bỏ các ứng dụng không cần thiết thông qua tiện ích Quản lí ứng dụng trên điện thoại là gì?", options: [" Tự động cập nhật các ứng dụng còn lại lên phiên bản phần mềm mới nhất", " Tăng dung lượng lưu trữ khả dụng và tối ưu hoá bộ nhớ tạm của thiết bị", " Khôi phục lại trạng thái phần cứng của thiết bị về dạng cài đặt gốc xuất xưởng", " Chuyển đổi toàn bộ dữ liệu ứng dụng sang thẻ nhớ ngoài mà không bị lỗi"], correct: 1, explanation: "Gỡ ứng dụng (Uninstall) sẽ giải phóng không gian bộ nhớ trong của thiết bị để có chỗ lưu trữ dữ liệu khá" },
+        { id: "1_21", type: "single", question: "Sau một thời gian dài sử dụng, chiếc máy tính để bàn của bạn khởi động hệ điều hành rất chậm và phát ra tiếng ổ cứng quay rền. Dựa trên kiến thức quản trị ổ đĩa HDD, thao tác ưu tiên nào sau đây giúp cải thiện tình hình?", options: [" Vào Properties ổ đĩa cứng, chọn tab Tools và chạy công cụ Optimize để dồn phân mảnh", " Vào Properties ổ đĩa cứng, chọn tab General và đổi tên nhãn ổ đĩa thành một tên khác ngắn hơn", " Tiến hành format (định dạng lại) phân vùng ổ đĩa chứa hệ điều hành để làm sạch máy tính", " Mở tiện ích File Explorer, chọn toàn bộ các tệp tin cũ và nén lại thành một tập tin RAR duy nhất"], correct: 0, explanation: "Triệu chứng chậm và ổ quay rền trên HDD là biểu hiện của việc dữ liệu phân tán, cần sử dụng công cụ Optimize để dồn phân mảnh." },
+        { id: "1_22", type: "single", question: "Một giáo viên nhận thấy thư mục chứa điểm thi của lớp bị lỗi, hệ thống thông báo dữ liệu không thể truy xuất do sai lệch cấu trúc liên kết tệp. Công cụ hệ thống nào của Windows cần được sử dụng để khắc phục?", options: [" Tính năng Disk Cleanup để xoá bỏ các dữ liệu sai lệch đó đi", " Công cụ Check disk trong phần Tools của Properties ổ đĩa", " Chức năng System Restore để đưa máy tính về ngày hôm qua", " Công cụ Optimize nhằm tổ chức lại dữ liệu cơ học trên đĩa cứng"], correct: 1, explanation: "Lỗi cấu trúc thư mục, đứt gãy liên kết (File system error) cần công cụ Check disk (chkdsk) để quét và sửa lại bảng định dạng." },
+        { id: "1_23", type: "single", question: "Bạn muốn giải phóng không gian bộ nhớ trong của chiếc điện thoại di động vì cảnh báo \"Bộ nhớ đầy\". Thao tác nhanh gọn và an toàn nhất mà bạn có thể làm thông qua hệ điều hành là gì?", options: [" Vào mục Cài đặt -> Quản lí ứng dụng và tiến hành gỡ cài đặt các phần mềm ít dùng", " Tải thêm phần mềm chống phân mảnh đĩa cứng về để nén toàn bộ dữ liệu điện thoại", " Nhấn nút Nguồn và nút Tăng âm lượng để khởi động lại máy nhằm giải phóng RAM", " Xoá bỏ hoàn toàn tài khoản Google đang đồng bộ danh bạ liên lạc trên thiết bị di động"], correct: 0, explanation: "Vào quản lí ứng dụng và gỡ bớt app là cách an toàn và dọn dẹp dung lượng triệt để nhất." },
+        { id: "1_24", type: "single", question: "Đề bài yêu cầu bạn nhắc nhở lớp họp trực tuyến vào 19h00 tối Thứ 6 hàng tuần. Bạn nên thao tác như thế nào trên điện thoại để việc này diễn ra tự động và chính xác nhất?", options: [" Sử dụng tính năng Đồng hồ bấm giờ thể thao, bắt đầu bấm từ lúc này và tính toán ra thời gian", " Mở phần Báo thức trong ứng dụng Đồng hồ, tạo báo thức lúc 19h00 và chọn lặp lại vào mỗi Thứ 6", " Thêm một số điện thoại có tên \"Họp lớp trực tuyến\" vào Danh bạ để hệ thống tự động nhận diện báo giờ", " Mở trình duyệt web, tìm kiếm từ khoá \"Nhắc nhở họp lớp 19h00 Thứ 6\" để máy chủ Google tự động nhớ"], correct: 1, explanation: "Ứng dụng đồng hồ có chức năng báo thức lặp lại, cho phép set giờ cố định vào những thứ nhất định trong tuần." },
+        { id: "1_25", type: "single", question: "Giả sử cần gửi tin nhắn chúc Tết đồng loạt đến tổ chuyên môn gồm 15 giáo viên. Để thao tác nhanh mà không phải chọn thủ công từng người, người dùng thiết bị di động nên khai thác tiện ích nào?", options: [" Đặt lịch trên ứng dụng Đồng hồ để máy tự động phát âm thanh lời chúc Tết", " Tạo một nhóm mới gồm 15 liên hệ trong tiện ích Danh bạ để gửi tin nhắn một lần", " Sử dụng tính năng Chia đôi màn hình để kéo thả tin nhắn cho 15 người cùng lúc", " Tải thêm một ứng dụng quản lí tệp tin bên thứ ba để biên dịch tin nhắn văn bản"], correct: 1, explanation: "Tính năng Nhóm (Groups) trong danh bạ hỗ trợ hành động gửi tin nhắn SMS hàng loạt đến tất cả các thành viên trong nhóm." },
+        { id: "1_26", type: "single", question: "Trong quá trình sử dụng Ubuntu, để đổi tên một tập tin mà không cần nháy nút phải chuột chọn lệnh \"Rename\", người dùng có thể nháy chọn tập tin đó rồi ấn phím tắt nào?", options: [" Nhấn phím F1 trên bàn phím", " Nhấn phím F2 trên bàn phím", " Nhấn tổ hợp phím Ctrl + R", " Nhấn phím Delete trên bàn phím"], correct: 1, explanation: "Phím F2 là phím tắt tiêu chuẩn trên cả Windows và Ubuntu dùng để thực hiện lệnh đổi tên đối tượng đang chọn." },
+        { id: "1_27", type: "single", question: "Nếu bạn muốn kiểm tra xem có tệp tin rác nào của các phiên bản cập nhật hệ điều hành cũ còn sót lại chiếm dung lượng ổ đĩa hay không, bạn nên tìm và chạy công cụ nào trong Properties của ổ đĩa C?", options: [" Chọn tab Tools và nháy lệnh Optimize", " Chọn tab Tools và nháy lệnh Check disk", " Chọn tab General và nháy lệnh Disk Cleanup", " Chọn tab Security và nháy lệnh Advanced edit"], correct: 2, explanation: "Disk Cleanup trong tab General có khả năng dọn dẹp các tệp tạm thời, thùng rác, và cả Windows Update thừ" },
+        { id: "1_28", type: "single", question: "Đang mở thư mục hình ảnh bằng File Explorer, bạn muốn hiển thị chi tiết phần đuôi mở rộng (ví dụ .jpg, .png) của các tệp ảnh đó. Thao tác này có thể thực hiện thông qua thẻ lệnh (Ribbon) nào phía trên cùng?", options: [" Thẻ View (chọn ô File name extensions)", " Thẻ Home (chọn ô Select all items)", " Thẻ Share (chọn ô Advanced sharing)", " Thẻ File (chọn ô Change folder options)"], correct: 0, explanation: "Thẻ View chứa các tùy chọn hiển thị. Check vào 'File name extensions' sẽ làm hiện đuôi mở rộng của tệp tin." },
+        { id: "1_II_1", type: "tf_cluster", context: "Bạn Minh đang sử dụng một máy tính để bàn có ổ cứng từ tính (HDD) đã cũ và một chiếc USB cá nhân. Gần đây, máy tính truy xuất dữ liệu rất chậm, Minh quyết định lên mạng tìm hiểu về cách tổ chức lưu trữ dữ liệu và sử dụng các tiện ích tối ưu hoá đĩa của Windows. Hãy đánh giá tính ĐÚNG/SAI của các nhận định sau:", items: [
+            { id: "a", text: "a) Đĩa cứng ghi dữ liệu theo các đường tròn đồng tâm gọi là đường ghi (track).", correct: true, expl: "Cấu trúc đĩa cứng vật lí lưu trữ theo các vòng track đồng tâm." },
+            { id: "b", text: "b) Mỗi cung (sector) trên đĩa cứng từ tính thông thường có khả năng lưu trữ được 1024 byte dữ liệu.", correct: false, expl: "Mỗi sector trên ổ đĩa từ truyền thống thường chỉ có 512 byte." },
+            { id: "c", text: "c) Việc hợp mảnh đĩa cứng (Defragment) có tác dụng giúp các liên cung của một tệp được ghi liên tục, hạn chế việc phải di chuyển đầu từ.", correct: true, expl: "Quá trình này sắp xếp lại các phần bị chia cắt của file để đầu từ không phải nhảy nhiều nơi khi đọ" },
+            { id: "d", text: "d) Để khắc phục triệt để tình trạng chiếc USB đọc dữ liệu chậm do sử dụng lâu ngày, Minh bắt buộc phải chạy chức năng Optimize.", correct: false, expl: "USB là bộ nhớ flash (không có đĩa quay), việc chạy Optimize không cải thiện được nhiều, đôi khi còn làm giảm tuổi thọ bộ nhớ." }
+        ]},
+        { id: "1_II_2", type: "tf_cluster", context: "Cô giáo Hạnh vừa chuyển sang sử dụng một chiếc điện thoại thông minh mới. Để phục vụ công việc giảng dạy môn Thể dục và liên lạc với phụ huynh lớp chủ nhiệm, cô Hạnh bắt đầu khai thác các tiện ích quản lí danh bạ và đồng hồ trên hệ điều hành di động. Đánh giá tính ĐÚNG/SAI của các nhận định sau:", items: [
+            { id: "a", text: "a) Tiện ích danh bạ trên điện thoại thông minh cho phép cô Hạnh thêm mới, chỉnh sửa, xóa bỏ và chia sẻ thông tin liên lạ", correct: true, expl: "Đây là các chức năng cơ bản của một ứng dụng Quản lí liên hệ." },
+            { id: "b", text: "b) Tiện ích đồng hồ trên thiết bị di động phổ thông hiện nay của cô chỉ có thể đếm thời gian với độ chính xác tối đa đến 1 giây.", correct: false, expl: "Tiện ích đồng hồ thể thao (Stopwatch) có thể đếm chính xác đến phần trăm giây (1/100s)." },
+            { id: "c", text: "c) Trong ứng dụng quản lí danh bạ, một số điện thoại của phụ huynh có thể được cô Hạnh gán đồng thời vào nhiều nhóm khác nhau.", correct: true, expl: "Cơ chế quản lý hiện nay cho phép một liên hệ nằm ở nhiều Tag/Group khác nhau." },
+            { id: "d", text: "d) Để theo dõi và đo lường kỉ lục chạy nước rút 50m trong hội thao của trường, tính năng bấm giờ thể thao trên điện thoại hoàn toàn đáp ứng tốt về mặt kĩ thuật đo lường cho cô Hạnh.", correct: true, expl: "Với độ chính xác 1/100s, Stopwatch trên điện thoại đủ tiêu chuẩn đo thời gian chạy bộ phổ thông." }
+        ]},
+        { id: "1_II_3", type: "tf_cluster", context: "Trong tiết thực hành Tin học 11, bạn An được giao nhiệm vụ khám phá giao diện của hệ điều hành Windows trên máy tính nhà trường. An tiến hành quan sát các thanh công cụ và thực hiện thao tác kiểm tra thuộc tính của một số thư mục chứa bài tập. Hãy đánh giá tính ĐÚNG/SAI:", items: [
+            { id: "a", text: "a) Thanh công việc (Taskbar) trên hệ điều hành Windows thường được An dùng để xem biểu tượng của các phần mềm đang hoạt động hoặc được ghim sẵn.", correct: true, expl: "Taskbar là thanh hiển thị ứng dụng đang chạy và các lối tắt truy cập nhanh." },
+            { id: "b", text: "b) Thao tác nháy đúp chuột trái vào một biểu tượng thư mục bất kì trên màn hình sẽ giúp An mở ra cửa sổ Properties (Thuộc tính) của thư mục đó.", correct: false, expl: "Nháy đúp chuột trái sẽ mở thư mục lên. Để xem Properties phải bấm chuột phải rồi chọn Properties." },
+            { id: "c", text: "c) Thanh trạng thái (Status bar) trên hệ điều hành cung cấp cho An các thông tin hoạt động theo thời gian thực như trạng thái kết nối mạng, mức pin.", correct: true, expl: "Khu vực Notification Area (góc phải dưới) hiển thị pin, mạng, giờ." },
+            { id: "d", text: "d) Khi An muốn kiểm tra xem thư mục lưu trữ giáo án môn Tin học chiếm chính xác bao nhiêu byte trên ổ đĩa cứng, thao tác nhanh nhất là nháy nút phải chuột vào thư mục đó và chọn lệnh Properties.", correct: true, expl: "Bảng Properties cung cấp chính xác Size và Size on disk của toàn bộ nội dung thư mụ" }
+        ]},
+        { id: "1_II_4", type: "tf_cluster", context: "Máy tính xách tay của thầy Sơn đột nhiên gặp sự cố khi đang mở các tệp giáo án điện tử; hệ thống liên tục báo lỗi do hỏng liên kết dữ liệu, không thể đọc được nội dung. Thầy Sơn đang áp dụng các kiến thức về tiện ích hệ thống để chẩn đoán và khắc phụ Đánh giá tính ĐÚNG/SAI:", items: [
+            { id: "a", text: "a) Lỗi vật lí trên ổ đĩa khiến một số cung từ tính vĩnh viễn không thể đọc hoặc ghi được dữ liệu thường được gọi là \"bad sector\".", correct: true, expl: "Đây là định nghĩa chuẩn của cung bị hỏng trên đĩ" },
+            { id: "b", text: "b) Tiện ích kiểm tra đĩa (Check disk) có thể được thầy Sơn khởi chạy trực tiếp bằng cách mở File Explorer, sau đó nháy đúp chuột trái hai lần liên tiếp vào phân vùng ổ đĩa cần kiểm tr", correct: false, expl: "Nháy đúp sẽ gọi lệnh Mở ổ đĩ Cần phải click chuột phải -> Properties -> Tools -> Check." },
+            { id: "c", text: "c) Tình trạng \"chồng chéo\" dữ liệu ổ đĩa của thầy Sơn xảy ra khi hệ thống phát hiện có nhiều tệp tin khác nhau cùng liên kết sai đến một hoặc một vài liên cung (cluster) trên đĩ", correct: true, expl: "Cross-linked clusters là hiện tượng nhiều tệp trỏ đến cùng một không gian vùng nhớ." },
+            { id: "d", text: "d) Khi hệ điều hành báo lỗi không thể truy cập vào một tệp trình chiếu do lỗi liên kết dữ liệu, thầy Sơn nên ưu tiên sử dụng lệnh Optimize thay vì lệnh Check disk để khôi phục lại tập tin.", correct: false, expl: "Lỗi đứt gãy cấu trúc (File system error) cần dùng Check Disk, Optimize không có chức năng vá lỗi liên kết." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "2_1", type: "single", question: "Trên giao diện mặc định của hệ điều hành Windows, Thanh công việc (Taskbar) thường được bố trí ở vị trí nào?", options: [" Nằm trải dài dọc theo cạnh bên trái màn hình", " Nằm trải dài ngang ở dưới cùng màn hình", " Nằm trải dài dọc theo cạnh bên phải màn hình", " Nằm trải dài ngang ở trên cùng màn hình"], correct: 1, explanation: "Thanh công việc Taskbar ở phiên bản Windows truyền thống luôn nằm ở dưới cùng của màn hình nền." },
+        { id: "2_2", type: "single", question: "Nút Start (hoặc biểu tượng hệ điều hành) trên thanh công việc có chức năng chính là gì?", options: [" Để thay đổi ngay lập tức hình nền của máy tính", " Mở trình đơn chứa danh mục các ứng dụng và cài đặt", " Gỡ bỏ triệt để hệ điều hành hiện tại khỏi máy tính", " Bật hoặc tắt kết nối Wifi của toàn bộ hệ thống mạng"], correct: 1, explanation: "Nút Start dùng để truy cập vào menu khởi động, nơi chứa tất cả các phần mềm đã cài đặt và tuỳ chọn hệ thống." },
+        { id: "2_3", type: "single", question: "Khi định dạng dữ liệu trên đĩa từ, khái niệm \"Đường ghi\" (Track) được mô tả có hình dạng vật lí như thế nào?", options: [" Là những đường thẳng song song với nhau trên mặt đĩa", " Là những đường zig-zag chạy từ tâm ra mép ngoài đĩa", " Là các đường tròn đồng tâm trải đều trên bề mặt đĩa", " Là một đường xoắn ốc liên tục duy nhất giống đĩa than"], correct: 2, explanation: "Khác với đĩa quang (đường xoắn ốc), ổ HDD ghi theo các track có dạng là các đường tròn đồng tâm." },
+        { id: "2_4", type: "single", question: "Tiện ích nào sau đây được tích hợp sẵn trong Windows nhằm khắc phục sự cố đọc/ghi chậm do dữ liệu phân tán?", options: [" Tiện ích Disk Cleanup", " Tiện ích System Restore", " Tiện ích Optimize (Defragment)", " Tiện ích Check Disk (Chkdsk)"], correct: 2, explanation: "Optimize / Defragment giúp sắp xếp lại các gói dữ liệu bị rời rạc trên đĩa cứng về sát nhau." },
+        { id: "2_5", type: "single", question: "Để dọn dẹp các tệp tin rác không còn sử dụng trên hệ thống Windows, người dùng có thể kích hoạt tiện ích nào?", options: [" Tiện ích Disk Cleanup", " Tiện ích Optimize Drives", " Tiện ích Task Manager", " Tiện ích Windows Defender"], correct: 0, explanation: "Disk cleanup dọn dẹp tệp tạm thời, file rác bộ nhớ, các file update đã cũ." },
+        { id: "2_6", type: "single", question: "Theo thông số kĩ thuật thông thường, ứng dụng Đồng hồ trên smartphone hiện đại có thể đo đếm thời gian với độ chính xác đến bao nhiêu?", options: [" Một phần mười giây (0.1s)", " Một phần trăm giây (0.01s)", " Một phần nghìn giây (0.001s)", " Một phần triệu giây (0.000001s)"], correct: 1, explanation: "Đồng hồ bấm giờ thể thao thường hiển thị tới 2 số lẻ thập phân (1/100 giây)." },
+        { id: "2_7", type: "single", question: "Theo kiến trúc quản lí tệp tin, lỗi liên cung bị mất thông tin trỏ đến tệp gốc được giới chuyên môn gọi là hiện tượng gì?", options: [" Tình trạng chồng chéo liên cung (Cross-linked clusters)", " Tình trạng dữ liệu mồ côi (Lost clusters / Orphaned data)", " Tình trạng hỏng hóc vật lí trên đĩa (Bad sectors)", " Tình trạng thiếu không gian phân vùng (Out of space)"], correct: 1, explanation: "Dữ liệu mồ côi (orphaned) là khi cluster vẫn báo có dữ liệu nhưng hệ điều hành không tìm thấy tên file quản lý." },
+        { id: "2_8", type: "single", question: "Thao tác nào trên con chuột máy tính được sử dụng để hiển thị một trình đơn ngữ cảnh (context menu) cho một đối tượng?", options: [" Nhấn một lần bằng nút chuột trái", " Nhấn hai lần liên tiếp bằng nút chuột trái", " Nhấn một lần bằng nút chuột phải", " Nhấn đồng thời cả hai nút trái và phải"], correct: 2, explanation: "Phím phải chuột luôn mở ra Context menu chứa các lệnh dành riêng cho đối tượng đó." },
+        { id: "2_9", type: "single", question: "Trong cửa sổ File Explorer, phân vùng \"Navigation pane\" (vùng bên trái) có chức năng chính để hiển thị nội dung gì?", options: [" Nội dung văn bản chi tiết bên trong tệp tin đang được chọn", " Cây thư mục hệ thống và các ổ đĩa dùng để điều hướng nhanh", " Toàn bộ lịch sử các thao tác đã thực hiện trong 30 ngày qua", " Danh sách các phím tắt bàn phím được hỗ trợ bởi ứng dụng"], correct: 1, explanation: "Navigation Pane giúp bạn duyệt qua cây thư mục, ổ đĩa, Desktop, This PC nhanh chóng." },
+        { id: "2_10", type: "single", question: "Muốn xem tổng quan thông tin về dung lượng đã sử dụng và còn trống của một ổ đĩa trên máy tính, ta cần thực hiện thao tác gì?", options: [" Nháy đúp chuột trái vào ổ đĩa để mở giao diện quản lí tệp", " Nháy nút phải chuột vào ổ đĩa và lựa chọn mục Properties", " Chọn ổ đĩa, sau đó nhấn phím F2 trên bàn phím máy tính", " Chọn ổ đĩa và dùng phím Print Screen để chụp màn hình lại"], correct: 1, explanation: "Bảng Properties của ổ đĩa sẽ hiển thị biểu đồ tròn dung lượng đã dùng (Used space) và còn trống (Free space)." },
+        { id: "2_11", type: "single", question: "Dưới góc độ vật lí, lí do chính khiến việc hợp mảnh đĩa (Defragment) làm tăng tốc độ truy xuất dữ liệu là gì?", options: [" Xoá bỏ các phần mềm chạy ngầm làm chậm hệ thống", " Nén tất cả các tệp tin lại thành định dạng ZIP dung lượng nhỏ", " Tăng tốc độ quay của động cơ ổ cứng lên mức cực đại cho phép", " Sắp xếp lại dữ liệu liên tục giúp đầu từ giảm phải di chuyển cơ học"], correct: 3, explanation: "Dữ liệu được đặt liên tục thành hàng sẽ giúp đầu từ quét qua một lần là đọc xong file, không phải nhảy cơ học liên tụ" },
+        { id: "2_12", type: "single", question: "Sự cố \"chồng chéo\" dữ liệu (cross-linked clusters) xảy ra trên hệ thống tệp tin khi có điều kiện gì xuất hiện?", options: [" Khi hai phân vùng ổ đĩa cứng được gộp lại thành một vùng bộ nhớ duy nhất", " Khi đĩa cứng bị mất điện đột ngột trong lúc hệ điều hành đang khởi động lại", " Khi có ít nhất hai tệp tin hệ thống khác nhau cùng liên kết trỏ đến một liên cung", " Khi bề mặt đĩa từ tính bị trầy xước vật lí nghiêm trọng gây hỏng hoàn toàn khu vực đó"], correct: 2, explanation: "Lỗi này xảy ra khi bản ghi hệ thống nhầm lẫn 2 file có chung một phần đuôi." },
+        { id: "2_13", type: "single", question: "Khi thực hiện lệnh xoá một thư mục gốc chứa nhiều thư mục con bên trong, hậu quả kĩ thuật nào sau đây sẽ xảy ra?", options: [" Thư mục gốc bị xoá, nhưng các thư mục con được di chuyển ra ngoài Desktop", " Thư mục gốc bị xoá, toàn bộ các tệp và thư mục con bên trong cũng bị xoá theo", " Hệ điều hành sẽ tự động ngăn chặn thao tác xoá và yêu cầu xóa thư mục con trước", " Chỉ có các tệp tin bị xoá, cấu trúc rỗng của các thư mục con vẫn được giữ nguyên"], correct: 1, explanation: "Hành động xóa một thư mục cha sẽ đồng thời xóa mọi nhánh dữ liệu bên trong nó." },
+        { id: "2_14", type: "single", question: "Trong tiện ích Danh bạ của điện thoại thông minh, loại dữ liệu cá nhân nào sau đây thường có thể được lưu trữ và đồng bộ?", options: [" Tên người liên hệ, số điện thoại, địa chỉ thư điện tử, ngày sinh, ghi chú cá nhân", " Toàn bộ lịch sử các giao dịch chuyển khoản ngân hàng của người có trong danh bạ", " Dữ liệu nhịp tim và các chỉ số sức khỏe sinh học của người có tên trong danh bạ", " Toàn bộ các mật khẩu truy cập mạng xã hội của số liên lạc đang được lưu giữ đó"], correct: 0, explanation: "Danh bạ thông minh hỗ trợ lưu email, vị trí, công ty, ngày sinh... bên cạnh số điện thoại." },
+        { id: "2_15", type: "single", question: "Trên hệ điều hành Ubuntu, biểu tượng \"Activities\" có chức năng gợi mở tương đương nhất với thành phần nào trên Windows?", options: [" Tiện ích Disk Cleanup", " Biểu tượng Thùng rác (Recycle Bin)", " Nút Start (Trình đơn hệ thống)", " Công cụ Task Manager"], correct: 2, explanation: "Nút Activities trên Ubuntu mở ra môi trường hiển thị tất cả các ứng dụng, khu vực làm việc ảo và thanh tìm kiếm giống như phím Start của Windows." },
+        { id: "2_16", type: "single", question: "Khi thiết lập một báo thức định kì vào khung giờ 6:00 sáng cho các ngày từ Thứ 2 đến Thứ 6, ứng dụng đồng hồ sẽ hoạt động như thế nào?", options: [" Người dùng vẫn phải vào bật lại báo thức này mỗi tối trước khi đi ngủ mới có tác dụng", " Điện thoại sẽ báo thức đúng 6:00 sáng mỗi ngày bất kể đó là ngày thường hay cuối tuần", " Báo thức sẽ tự động kích hoạt vào đúng 6:00 sáng các ngày trong tuần đã chọn mà không cần thao tác lại", " Điện thoại sẽ tự động mở đài FM hoặc phát video âm nhạc ngẫu nhiên trên YouTube để đánh thức"], correct: 2, explanation: "Tính năng báo thức lặp lại (Repeat) giúp tự động hóa quá trình thông báo mà không cần đặt thủ công mỗi ngày." },
+        { id: "2_17", type: "single", question: "Tính năng đếm ngược thời gian (Timer) trong ứng dụng đồng hồ đặc biệt thiết thực nhất để ứng dụng vào tình huống nào sau đây?", options: [" Ghi lại kỉ lục thời gian vận động viên hoàn thành đường chạy marathon 42 km", " Cài đặt hẹn thời gian 15 phút đếm lùi để báo thời điểm luộc xong một quả trứng", " Xem lịch để tính toán có bao nhiêu ngày nữa sẽ đến sự kiện sinh nhật của người thân", " Lưu lại tổng thời gian sử dụng các ứng dụng mạng xã hội của người dùng mỗi ngày"], correct: 1, explanation: "Timer là chức năng đếm lùi về 0 dùng rất tốt trong nấu ăn, giải lao." },
+        { id: "2_18", type: "single", question: "Đối với ổ đĩa cứng gặp sự cố \"bad sector\", tiện ích Check disk (Kiểm tra đĩa) thực hiện quá trình khắc phục theo cơ chế nào?", options: [" Phục hồi nguyên trạng vật lí của bề mặt đĩa từ bằng cách tăng điện áp xử lí", " Đánh dấu các cung bị hỏng để hệ điều hành bỏ qua, không ghi dữ liệu mới lên đó", " Tự động xoá toàn bộ dữ liệu trên ổ đĩa để định dạng lại các sector từ đầu", " Sử dụng trí tuệ nhân tạo để sửa lỗi bề mặt đĩa mà không cần thay thế phần cứng"], correct: 1, explanation: "Lỗi Bad Sector là hư hỏng vật lý (trầy xước đĩa), chkdsk không thể làm lành đĩa mà chỉ chốt nó lại để tránh lưu dữ liệu vào chỗ đó." },
+        { id: "2_19", type: "single", question: "Quá trình hợp mảnh (Optimize) cho một đĩa cứng dung lượng 2TB có thể tiêu tốn hàng giờ đồng hồ nguyên nhân chủ yếu là do đâu?", options: [" Do bộ vi xử lí CPU phải thực thi các thuật toán giải mã file vô cùng phức tạp", " Do card đồ họa của máy tính không có đủ dung lượng bộ nhớ VRAM tương ứng", " Do đầu từ phải thực hiện việc đọc, di chuyển và sắp xếp lại khối lượng vật lí dữ liệu cực lớn", " Do đường truyền mạng Internet bị chậm, hệ thống không thể tải thuật toán tối ưu từ đám mây"], correct: 2, explanation: "Dồn phân mảnh phải copy hàng loạt block dữ liệu nhỏ, xóa chỗ cũ và dán vào chỗ mới liên tục qua đầu từ cơ học nên tốn cực kì nhiều thời gian." },
+        { id: "2_20", type: "single", question: "Trong trường hợp thư mục có hàng trăm tệp tài liệu, để mở nhanh một tệp văn bản có chứa từ \"Bao_cao\", người dùng có thể thao tác tiện lợi nhất bằng cách nào?", options: [" Nháy đúp mở từng tệp một để kiểm tra nội dung bên trong có chữ \"Bao_cao\" hay không", " Dùng chuột cuộn chậm qua danh sách hàng trăm tệp tin và cố gắng tìm kiếm bằng mắt thường", " Nhập từ khoá \"Bao_cao\" vào ô công cụ Tìm kiếm (Search) ở góc trên bên phải của File Explorer", " Xóa bớt các tệp không cần thiết đi cho đến khi tệp \"Bao_cao\" xuất hiện ở hàng đầu tiên"], correct: 2, explanation: "Thanh Search box là công cụ mạnh mẽ tìm kiếm tức thời các tập tin dựa trên kí tự tên." },
+        { id: "2_21", type: "single", question: "Một giáo viên muốn nhắn tin thông báo thay đổi lịch học đến toàn bộ học sinh lớp 11A gồm 45 người. Cách sử dụng tiện ích di động nào sau đây là thông minh và tối ưu nhất?", options: [" Lướt danh bạ, tìm từng tên học sinh một và gửi cùng một nội dung tin nhắn lặp lại 45 lần", " Sử dụng tiện ích báo thức của Đồng hồ, nhập 45 số điện thoại vào ô ghi chú của báo thức đó", " Tạo một nhóm liên hệ mang tên \"Học sinh 11A\" trong Danh bạ, và gửi tin nhắn đến toàn bộ nhóm này", " Viết một tờ thông báo dán ở bảng tin trường học thay vì gửi tin nhắn qua thiết bị di động cá nhân"], correct: 2, explanation: "Phân loại nhóm (Group) giúp việc thực hiện các lệnh hàng loạt (Broadcast sms/email) trở nên dễ dàng." },
+        { id: "2_22", type: "single", question: "Khi cần mở một tập tin tài liệu Word (.docx) nhưng phát hiện chuột bị liệt phím nhấn bên trái, bạn có thể áp dụng tổ hợp phím nào sau khi dùng phím Tab di chuyển khung chọn đến tệp tin đó?", options: [" Nhấn phím Enter trên bàn phím máy tính", " Nhấn phím F5 trên bàn phím máy tính", " Nhấn tổ hợp phím Ctrl + P trên bàn phím", " Nhấn tổ hợp phím Alt + F4 trên bàn phím"], correct: 0, explanation: "Phím Enter trên Windows tương đương với thao tác nháy đúp chuột trái (Open)." },
+        { id: "2_23", type: "single", question: "Trong giờ học thể dục, để đánh giá chính xác thời gian một học sinh chạy bền hoàn thành 4 vòng sân, công cụ nào trên điện thoại di động là phù hợp nhất?", options: [" Tính năng Báo thức định kì hàng ngày trong ứng dụng Đồng hồ", " Tính năng Bấm giờ thể thao (Stopwatch) trong ứng dụng Đồng hồ", " Tính năng Đếm ngược thời gian (Timer) trong ứng dụng Đồng hồ", " Tính năng Quản lí mức sử dụng pin trong hệ điều hành điện thoại"], correct: 1, explanation: "Stopwatch / Bấm giờ được thiết kế để đếm tiến độ thời gian diễn ra một sự kiện bắt đầu từ số 0." },
+        { id: "2_24", type: "single", question: "Đang thiết kế slide bài giảng, giáo viên gặp tình trạng không thể hiển thị bảng chọn Properties (Thuộc tính) của tệp ảnh vì chuột hỏng phím phải. Giải pháp sử dụng phím tắt nào sau đây thay thế cho thao tác nháy nút phải chuột?", options: [" Sử dụng tổ hợp phím Ctrl + Z trên bàn phím", " Sử dụng tổ hợp phím Shift + F10 (hoặc phím Menu)", " Sử dụng tổ hợp phím Windows + D trên bàn phím", " Sử dụng phím khoảng trắng (Spacebar) trên bàn phím"], correct: 1, explanation: "Tổ hợp phím Shift + F10 hoặc phím context menu (cạnh nút Ctrl bên phải) sẽ mô phỏng việc bấm chuột phải." },
+        { id: "2_25", type: "single", question: "Ngay khi cắm ổ đĩa USB của bạn vào máy tính của trường học, hệ điều hành Windows hiện lên bảng thông báo yêu cầu \"Scan and fix\". Theo bạn, thông báo này có ý nghĩa tương đương với việc hệ điều hành muốn chạy công cụ gì?", options: [" Công cụ Optimize nhằm dồn phân mảnh không gian trống trên USB", " Công cụ Disk Cleanup nhằm xoá các tệp tin rác bên trong thiết bị", " Công cụ Check disk nhằm quét và tự tự động sửa các lỗi liên kết dữ liệu", " Công cụ Format nhằm xoá vĩnh viễn toàn bộ định dạng bộ nhớ của USB"], correct: 2, explanation: "Thông báo Scan and fix là do Windows nhận diện hệ thống file trên USB có vấn đề, và nó gợi ý chạy chkdsk (Check Disk)." },
+        { id: "2_26", type: "single", question: "Màn hình nền (Desktop) của máy tính bạn hiện đang chứa quá lộn xộn các tệp văn bản. Để không gian gọn gàng hơn, bạn nên thực hiện thao tác quản lí thư mục nào sau đây?", options: [" Bấm tổ hợp phím Shift + Delete để dọn dẹp và xoá bỏ tất cả các tệp văn bản lộn xộn đi", " Tạo một thư mục mới có tên \"Tai_lieu\", quét chọn các tệp văn bản và kéo thả di chuyển vào đó", " Đổi đuôi mở rộng của toàn bộ các tệp văn bản đó thành định dạng tệp tin ảnh để hệ thống ẩn đi", " Mở ứng dụng Control Panel và gỡ cài đặt phần mềm Microsoft Word để các tệp này tự động biến mất"], correct: 1, explanation: "Tạo folder và Move (di chuyển) vào trong là phương pháp phân loại dữ liệu logic cơ bản nhất." },
+        { id: "2_27", type: "single", question: "Chiếc điện thoại thông minh của bạn liên tục cảnh báo về tình trạng \"Sắp hết dung lượng lưu trữ\". Để nhanh chóng tìm ra ứng dụng nào đang chiếm bộ nhớ nhiều nhất và xử lí, bạn phải truy cập vào phần nào?", options: [" Mở tiện ích Máy tính cầm tay (Calculator) và tính toán xem điện thoại còn bao nhiêu % pin", " Truy cập vào Cài đặt (Settings), tìm mở mục Quản lí ứng dụng và sắp xếp ứng dụng theo kích thước", " Truy cập vào ứng dụng Đồng hồ và xóa toàn bộ các bộ hẹn giờ đếm ngược đã từng thiết lập trước đó", " Xoá mọi liên hệ đã lưu trữ trong tiện ích Quản lí danh bạ để lấy lại hàng Gigabyte không gian trống"], correct: 1, explanation: "Phần quản lý ứng dụng cho phép sort app theo dung lượng để bạn biết đâu là phần mềm cần giải phóng bộ nhớ nhất." },
+        { id: "2_28", type: "single", question: "Một máy tính hiện đại được trang bị 1 ổ đĩa SSD chứa hệ điều hành và 1 ổ đĩa cứng từ tính HDD cũ để lưu trữ dữ liệu dung lượng lớn. Theo khuyến cáo vận hành, người dùng nên lên lịch sử dụng công cụ Optimize (Defragment) định kì cho phân vùng ổ đĩa nào?", options: [" Chỉ nên thực hiện Optimize định kì đối với phân vùng của ổ đĩa từ tính HDD", " Chỉ nên thực hiện Optimize định kì đối với phân vùng của ổ đĩa thể rắn SSD", " Bắt buộc phải thực hiện Optimize đồng thời cho tất cả các phân vùng mỗi ngày", " Không nên sử dụng công cụ Optimize cho bất kì phân vùng nào để bảo vệ máy"], correct: 0, explanation: "SSD không dùng đầu từ cơ học nên ghi phân mảnh không ảnh hưởng tới tốc độ đọc, đồng thời dồn mảnh nhiều còn làm tốn chu kỳ ghi của SS" },
+        { id: "2_II_1", type: "tf_cluster", context: "Nhóm của bạn Lan đang thực hành môn Tin học về chủ đề \"Quản lí tệp và thư mục cơ bản\". Các bạn tiến hành trao đổi, thực hành sao chép, di chuyển và thao tác với các tệp tin bài tập trên hệ điều hành máy tính. Đánh giá tính ĐÚNG/SAI:", items: [
+            { id: "a", text: "a) Thao tác nháy đúp chuột (nhấn nhanh phím chuột trái 2 lần) vào biểu tượng một tệp tin chương trình sẽ gửi lệnh cho hệ điều hành kích hoạt phần mềm đó.", correct: true, expl: "Cơ chế mở phần mềm cơ bản trên các HĐH." },
+            { id: "b", text: "b) Giao diện của tiện ích File Explorer được thiết kế cho phép nhóm của Lan có thể thay đổi tên hiển thị (Rename) của một thư mục con một cách dễ dàng.", correct: true, expl: "Bằng nút phải chuột hoặc phím F2, việc đổi tên rất dễ dàng." },
+            { id: "c", text: "c) Khi tiến hành lệnh di chuyển (Sử dụng lệnh Cut và Paste) một thư mục từ ổ đĩa D sang ổ đĩa E, bản sao của thư mục đó vẫn được giữ nguyên tại ổ đĩa ", correct: false, expl: "Lệnh Cut là di chuyển hoàn toàn, không lưu lại bản gốc ở vị trí cũ." },
+            { id: "d", text: "d) Để sao chép nhanh một tệp tin trên hệ điều hành Ubuntu sang một thư mục khác, Lan chỉ cần nháy nút phải chuột vào tệp tin đó và bắt buộc phải dùng lệnh \"Move to...\".", correct: false, expl: "Lệnh \"Move to\" là di chuyển. Phải dùng Copy hoặc kéo thả trong chế độ sao chép." }
+        ]},
+        { id: "2_II_2", type: "tf_cluster", context: "Máy tính của Nam dạo này thường xuyên báo lỗi khi mở các thư mục cũ và tốc độ sao chép file rất chậm. Nam lên mạng tìm kiếm thông tin về cách nhận diện và xử lí các sự cố đĩa cứng như phân mảnh hay lỗi cung từ. Đánh giá tính ĐÚNG/SAI:", items: [
+            { id: "a", text: "a) Cơ chế lưu trữ phân mảnh (fragmentation) không làm mất dữ liệu nhưng gây ra hiện tượng giảm tốc độ truy xuất tổng thể của máy tính.", correct: true, expl: "Đúng với nguyên lý tốn thời gian di chuyển đầu từ." },
+            { id: "b", text: "b) Việc khắc phục hiện tượng bad sector (hỏng hóc trên bề mặt từ tính) hoàn toàn có thể được Nam thực hiện thành công bằng cách cập nhật phiên bản mới của phần mềm diệt virus.", correct: false, expl: "Lỗi phần cứng không thể sửa bằng phần mềm cập nhật." },
+            { id: "c", text: "c) Lỗi \"chồng chéo dữ liệu\" xảy ra khi cấu trúc tệp tin bị sai lệch, khiến hệ điều hành ghi nhận nhiều tệp tin khác nhau cùng định tuyến đến một liên cung (cluster) duy nhất.", correct: true, expl: "Đây là định nghĩa của cross-linked clusters." },
+            { id: "d", text: "d) Khi Nam cố gắng sao chép một thư mục bài giảng nhưng hệ thống liên tục báo lỗi do đứt gãy liên kết (corrupted files), bước can thiệp phần mềm đầu tiên nên làm là chạy công cụ Check disk.", correct: true, expl: "Check disk (Chkdsk) sẽ cố gắng thu hồi và nối lại các mạch liên kết file bị hỏng." }
+        ]},
+        { id: "2_II_3", type: "tf_cluster", context: "Do chiếc điện thoại thông minh liên tục báo bộ nhớ đầy và hoạt động chậm chạp, bạn Mai quyết định dọn dẹp lại thiết bị bằng các tiện ích hệ thống như Quản lí ứng dụng, đồng thời thiết lập lại các báo thức để tối ưu thời gian cá nhân. Đánh giá tính ĐÚNG/SAI:", items: [
+            { id: "a", text: "a) Ứng dụng \"Quản lí ứng dụng\" (App Management) được cài đặt trên thiết bị di động có chức năng duy nhất là kích hoạt tính năng làm mát và tự động dọn dẹp bộ nhớ RAM.", correct: false, expl: "Chức năng chính là xóa app, quản lý thông báo, quản lý quyền hạn truy cập..." },
+            { id: "b", text: "b) Tiện ích đồng hồ trên điện thoại của Mai hiện nay tích hợp đa dạng chức năng bao gồm xem giờ, báo thức, đếm ngược thời gian và bấm giờ thể thao.", correct: true, expl: "Ứng dụng Clock mặc định luôn có 4 tab chức năng này." },
+            { id: "c", text: "c) Tính năng báo thức lặp lại trong ứng dụng đồng hồ cho phép Mai định tuyến các chu kì thời gian cụ thể (như từ Thứ Hai đến Thứ Sáu) để phần mềm tự động kích hoạt thông báo.", correct: true, expl: "Thuộc tính lặp lại (Repeat) có thể tùy biến các ngày trong tuần." },
+            { id: "d", text: "d) Khi gặp tình trạng điện thoại báo hết dung lượng cài đặt, Mai không thể can thiệp xoá các ứng dụng trực tiếp trên máy mà phải kết nối với máy tính cá nhân để dùng lệnh gỡ bỏ qua cáp.", correct: false, expl: "Người dùng hoàn toàn có thể xóa các ứng dụng ở phần Cài Đặt trên thiết bị." }
+        ]},
+        { id: "2_II_4", type: "tf_cluster", context: "Để chuẩn bị cho bài thuyết trình sắp tới, bạn Cường kết nối máy tính xách tay với thiết bị ngoại vi (máy chiếu), đồng thời dùng các công cụ dọn dẹp ổ đĩa để hệ thống hoạt động trơn tru hơn. Đánh giá tính ĐÚNG/SAI:", items: [
+            { id: "a", text: "a) Cơ chế \"Plug and Play\" (Cắm và chạy) là một bước tiến quan trọng giúp hệ điều hành của Cường có thể nhận diện ngay lập tức phần lớn các thiết bị ngoại vi hiện đại khi được kết nối.", correct: true, expl: "Cơ chế PnP giải quyết được vấn đề cài driver thủ công như ngày xư" },
+            { id: "b", text: "b) Công cụ Disk Cleanup trên hệ điều hành Windows được Cường truy cập bằng cách nháy nút phải chuột vào ổ đĩa, chọn Properties, và thường nằm trong thẻ chức năng General.", correct: true, expl: "Đúng theo đường dẫn tiêu chuẩn của Windows." },
+            { id: "c", text: "c) Toàn bộ không gian khả dụng của bộ nhớ RAM và tốc độ quay đo bằng vòng/phút của đĩa cứng HDD là hai thông số duy nhất quyết định đến trải nghiệm sử dụng trơn tru của một hệ điều hành.", correct: false, expl: "Còn phụ thuộc nhiều vào CPU, phần mềm, vi mạch đồ họ" },
+            { id: "d", text: "d) Khi Cường cắm một chiếc máy chiếu thế hệ mới có hỗ trợ giao thức kết nối tiêu chuẩn vào máy tính cài sẵn Windows 10/11, máy tính có thể tự động xuất hình ảnh ngay mà không đòi hỏi đĩa CD cài đặt trình điều khiển rời.", correct: true, expl: "Các máy chiếu phổ thông hiện nay cắm qua HDMI/VGA kết hợp Plug&Play sẽ nhận tín hiệu màn hình ngay lập tứ" }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) return;
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Các em học sinh nhớ nhập đầy đủ Họ tên và Lớp nhé!";
+                    errDiv.classList.remove('hidden');
+                } else alert("⚠️ Nhập đầy đủ Họ tên và Lớp!");
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                currentQuestions = JSON.parse(JSON.stringify(testBanks[maDe]));
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                currentIdx = 0;
+                userAnswers = {};
+                window.renderQuestion();
+                startTimer(45 * 60); 
+            }
+        } catch (error) { console.error(error); }
+    };
+
+    window.prevQuestion = function() { if (currentIdx > 0) { currentIdx--; window.renderQuestion(); } };
+    window.nextQuestion = function() { if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); } };
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.items.length;
+            else count += 1;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() { return Object.keys(userAnswers).length; }
+
+    window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            const parts = qIsplit('_'); 
+            const mainQId = parts.slice(0, parts.length - 1).join('_'); 
+            const itemId = parts[parts.length - 1]; 
+            const q = currentQuestions.find(i => i.id === mainQId);
+            const item = q.items.find(i => i.id === itemId);
+            window.showFeedbackModal(item, val, 'tf');
+        } else if (type === 'single') {
+            if (userAnswers[qId] !== undefined) return;
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            const q = currentQuestions[currentIdx];
+            window.showFeedbackModal(q, val, 'single');
+        }
+    };
+
+    window.showFeedbackModal = function(qOrItem, uAns, type = 'single') {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        const header = document.getElementById('feedback-header');
+        const body = document.getElementById('feedback-body');
+        
+        if(!modal || !content) return; 
+
+        let isCorrect = false; let correctOptText = ''; let userChoiceText = '';
+        let explanation = qOrItem.explanation || qOrItem.expl || "Chưa có lời giải chi tiết.";
+
+        if (type === 'single') {
+            isCorrect = (uAns === qOrItem.correct);
+            correctOptText = qOrItem.options[qOrItem.correct];
+            userChoiceText = String.fromCharCode(65 + uAns);
+        } else if (type === 'tf') {
+            isCorrect = (uAns === qOrItem.correct);
+            correctOptText = qOrItem.correct ? "ĐÚNG" : "SAI";
+            userChoiceText = uAns ? "ĐÚNG" : "SAI";
+        }
+        
+        let bgColor = isCorrect ? 'emerald' : 'red';
+        let statusTitle = isCorrect ? 'Chính xác!' : 'Bạn làm sai rồi!';
+        let emoji = isCorrect ? '🎉' : '💡';
+
+        header.innerHTML = `<div class="text-6xl mb-4 animate-bounce">${emoji}</div><h3 class="text-3xl font-black text-${bgColor}-600 uppercase tracking-widest drop-shadow-sm">${statusTitle}</h3>`;
+        
+        body.innerHTML = `<p class="mb-4 text-${bgColor}-800 text-xl font-bold text-center">Em đã chọn: <span class="bg-${bgColor}-100 text-${bgColor}-700 px-3 py-1 rounded-lg">${userChoiceText}</span></p>
+                          <div class="p-5 bg-white border-4 border-${bgColor}-100 rounded-2xl shadow-inner mt-4 text-center">
+                              <p class="text-${bgColor}-700 font-extrabold text-lg mb-2">ĐÁP ÁN CHUẨN LÀ:</p>
+                              <p class="text-2xl text-black drop-shadow-sm font-black">${correctOptText}</p>
+                          </div>`;
+        
+        body.innerHTML += `<div class="mt-6"><div class="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-t-xl font-black uppercase text-sm border-b-4 border-blue-500">📖 Giải chi tiết:</div><div class="p-5 bg-white border-2 border-blue-200 rounded-b-2xl rounded-tr-2xl shadow-sm text-black font-medium text-base md:text-lg leading-loose math-scroll">${explanation}</div></div>`;
+
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    };
+
+    window.closeFeedbackModal = function() {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        if(!modal) return;
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = `<div class="fade-in w-full">`;
+        
+        if (q.type === 'single') {
+            const hasAnswered = userAnswers[q.id] !== undefined;
+            const uAns = userAnswers[q.id];
+            
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">CÂU HỎI TRẮC NGHIỆM</h3></div>`;
+            html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight"><span class="text-blue-600">Câu ${currentIdx + 1}:</span> ${q.question}</p></div></div>`;
+            html += `<div class="space-y-4 md:pl-6 mt-6">`;
+            q.options.forEach((opt, i) => {
+                const isChecked = (uAns === i) ? 'checked' : '';
+                const disabledClass = hasAnswered ? 'disabled-option' : '';
+                html += `<div class="flex items-center">
+                    <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} ${hasAnswered ? 'disabled' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                    <label for="opt_${i}" class="option-label ${disabledClass} w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg cursor-pointer">
+                        <div class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                        <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                    </label>
+                </div>`;
+            });
+            html += `</div>`;
+            
+        } 
+        else if (q.type === 'tf_cluster') {
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">TRẮC NGHIỆM ĐÚNG/SAI</h3></div>`;
+            html += `<div class="bg-red-50 text-red-700 p-4 rounded-xl font-bold mb-4 border-2 border-red-100 text-lg sm:text-xl leading-relaxed math-scroll"><span class="text-blue-600">Câu ${currentIdx + 1}:</span> ${q.context}</div>`;
+            html += `<div class="space-y-3 mt-6">`;
+            q.items.forEach((item) => {
+                const combinedId = q.id + '_' + item.id;
+                let ans = userAnswers[combinedId];
+                let btnT = ans === true ? 'selected' : ''; 
+                let btnF = ans === false ? 'selected' : ''; 
+
+                html += `<div class="p-4 sm:p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                    <div class="font-bold text-gray-800 flex-1 text-base sm:text-lg math-scroll">${item.text}</div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnT}">ĐÚNG</button>
+                        <button onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnF}">SAI</button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        } 
+        html += `</div>`;
+        container.innerHTML = html;
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        const pBtn = document.getElementById('prev-btn');
+        const nBtn = document.getElementById('next-btn');
+        const sBtn = document.getElementById('submit-btn');
+        if(pBtn) pBtn.style.display = (currentIdx === 0) ? 'none' : 'block';
+        if(nBtn) nBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        if(sBtn) sBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.submitQuiz = function() {
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+        let totalMax = 11; // 28 * 0.25 (7) + 4 * 1.0 (4) = 11 Điểm.
+        // Quy đổi ra thang 10
+        
+        let rawScore = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) rawScore += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                let c = 0;
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) c++; });
+                if (c === 1) rawScore += 0.1;
+                else if (c === 2) rawScore += 0.25;
+                else if (c === 3) rawScore += 0.5;
+                else if (c === 4) rawScore += 1.0;
+            }
+        });
+
+        score = ((rawScore / totalMax) * 10).toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, 
+            lop: currentStudent.lop, 
+            tenDe: currentStudent.tenDe, 
+            maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN'), 
+            startDate: quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), 
+            deviceId: deviceId,
+            answers: userAnswers // Lưu lại đáp án của học sinh
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, recorduration); });
+        } else {
+            window.showModalResult(score, recorduration);
+        }
+    };
+
+    window.showModalResult = function(score, dur) {
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        
+        // Cập nhật tiêu đề trang xem lại theo học sinh hiện tại
+        const reviewTitle = document.getElementById('review-title');
+        if (reviewTitle) reviewTitle.innerText = `👀 Bài làm của: ${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại & Giải chi tiết</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+
+    // Hàm gọi khi ấn nút Xem lại từ bảng điểm
+    window.viewStudentReview = function(id) {
+        const record = allScores.find(s => s.id === id);
+        if (!record) return;
+        
+        if (!recoranswers) {
+            alert("Bài làm này thuộc phiên bản cũ, không có dữ liệu đáp án chi tiết để xem lại!");
+            return;
+        }
+
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[recormaDe || 'de1']));
+        userAnswers = recoranswers;
+        
+        const reviewTitle = document.getElementById('review-title');
+        if (reviewTitle) reviewTitle.innerText = `👀 Bài làm của: ${recorhoTen} - Lớp ${recorlop}`;
+        
+        window.reviewQuiz();
+    };
+
+    window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isCorrect = uAns === q.correct;
+                let borderColor = isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50';
+                
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor}">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-red-600 mb-4 leading-relaxed math-scroll"><span class="text-blue-600">Câu ${idx + 1}:</span> ${q.question}</div>`;
+                html += `<div class="space-y-2">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2'; 
+                        iconHtml = '<div class="text-2xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅</div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2'; 
+                        iconHtml = '<div class="text-2xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌</div>';
+                    } else { optBg = 'bg-white text-slate-700 border border-slate-200'; }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3"><div class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm flex-shrink-0">${String.fromCharCode(65 + i)}</div><div class="${(q.correct === i || uAns === i) ? 'font-semibold' : 'font-medium'} flex-1 math-scroll">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                if (q.explanation) html += `<div class="review-explanation mt-4 pt-4 border-t-2 border-gray-200"><p class="text-sm font-black uppercase tracking-widest text-blue-600 mb-2">💡 Giải chi tiết:</p><p class="text-black font-medium text-base leading-loose math-scroll">${q.explanation}</p></div>`;
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border-2 border-indigo-200 bg-indigo-50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-indigo-800 mb-4 math-scroll"><span class="text-blue-600">Câu ${idx + 1}:</span> ${q.context}</div>`;
+                html += `<div class="space-y-4">`;
+                q.items.forEach(item => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isCorrect = uAns === item.correct;
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+
+                    html += `<div class="p-4 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                        <div class="font-bold text-gray-800 math-scroll">${item.text}</div>
+                        <div class="mt-2 flex items-center justify-between border-b border-gray-100 pb-2">
+                            <span class="text-sm font-bold text-gray-500">Bạn chọn: <span class="${uAns === undefined ? 'text-gray-400' : 'text-blue-600'} font-black uppercase">${uAns === undefined ? 'Chưa trả lời' : (uAns?'Đúng':'Sai')}</span></span>
+                            <span class="font-black text-lg ${isCorrect ? 'text-emerald-500' : 'text-red-500'}">Đáp án chuẩn: ${ansText} ${iconHtml}</span>
+                        </div>
+                        <div class="review-explanation mt-2 pt-2 text-sm text-gray-700 font-medium leading-relaxed math-scroll"><span class="text-indigo-500 font-bold uppercase">Giải thích:</span><br> ${item.expl}</div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('scores'); };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (lop.localeCompare(lop)) || (diem - diem));
+        
+        tbody.innerHTML = sortemap((s, idx) => `
+            <tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+                <td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td>
+                <td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td>
+                <td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td>
+                <td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td>
+                <td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+                <td class="px-4 py-4 text-center text-slate-500 text-xs font-bold leading-tight">${s.startTime} <br> <span class="text-[10px] text-gray-400">${s.startDate || '--/--/----'}</span></td>
+                <td class="px-4 py-4 text-center font-black text-orange-600 text-xs">${s.duration}</td>
+                <td class="px-4 py-4 text-center">
+                    <button onclick="window.viewStudentReview('${s.id}')" class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-200 transition-colors text-xs shadow-sm whitespace-nowrap">👀 Xem lại</button>
+                </td>
+            </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
