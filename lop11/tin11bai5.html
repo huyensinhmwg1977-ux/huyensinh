@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="vi" class="w-full h-full m-0 p-0">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Ôn Tập Tin Học 11 - Bài 5 - Hành Trình Số</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- 1. MÃ GA4 GỐC -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NSJCVSL9RM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-NSJCVSL9RM'); 
+</script>
+
+<!-- 2. MÃ NHỊP TIM -->
+<script>
+  setInterval(function() {
+    if (!document.hidden) { 
+      gtag('event', 'keep_alive', {
+        'event_category': 'Engagement',
+        'event_label': 'Học sinh đang làm bài',
+        'non_interaction': false
+      });
+    }
+  }, 30000); 
+</script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none !important; }
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+    body { 
+      font-family: 'Be Vietnam Pro', sans-serif; 
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    #app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+    .option-label { transition: all 0.2s ease-in-out; cursor: pointer; border-color: #e2e8f0; }
+    .option-label:not(.disabled):hover { transform: translateX(6px); background-color: #f0fdfa; border-color: #38bdf8; box-shadow: 0 4px 6px -1px rgba(56, 189, 248, 0.1); }
+    input[type="radio"].de-radio:checked + .de-label { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-color: #0ea5e9; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3); }
+    input[type="radio"].de-radio:checked + .de-label .de-icon { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; }
+    input[type="radio"].single-radio:checked + .option-label { background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); color: white; border-color: transparent; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+    input[type="radio"].single-radio:checked + .option-label div:first-child { background-color: rgba(255,255,255,0.25); border-color: transparent; color: white; }
+    input[type="radio"].single-radio:checked + .option-label div:last-child { color: white; }
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .my-score-row { background: linear-gradient(to right, #fdf4ff, #ffffff) !important; border-left: 4px solid #db2777 !important; font-weight: 700 !important; color: #9d174d !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; z-index: 10; }
+    .my-score-row td { padding-top: 16px; padding-bottom: 16px; }
+    button:active { transform: scale(0.96); }
+    .disabled-option { opacity: 0.8; pointer-events: none !important; }
+    #feedback-modal { z-index: 9999; }
+    #feedback-modal-content { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-tf { transition: all 0.2s ease; border-width: 2px; }
+    .btn-tf.selected { background-color: #2563eb; color: white; border-color: #1d4ed8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-tf:not(.selected) { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+    .btn-tf:not(:disabled):hover { background-color: #f3f4f6; }
+    .math-scroll { overflow-x: auto; min-width: 0; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+    .math-scroll::-webkit-scrollbar { display: none; }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="p-0 sm:p-4 md:p-8 transition-all">
+   
+   <!-- MÀN HÌNH ĐĂNG NHẬP -->
+   <div id="login-section" class="w-full max-w-md mx-auto fade-in flex flex-col justify-center flex-grow">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start shadow-2xl border-t-8 border-indigo-600 bg-white">
+     <div class="text-center mb-6 pt-4 sm:pt-0">
+      <div class="flex items-center justify-center w-24 h-24 mx-auto mb-4 rounded-full border-4 border-yellow-400 bg-red-600 shadow-lg transform transition-transform hover:scale-105">
+          <span class="text-white font-black text-4xl tracking-tighter">HS</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-red-700 mb-3">ÔN TẬP TIN HỌC 11 <br><span class="text-xl text-gray-600">(Bài 5: Kết nối máy tính với các thiết bị số)</span></h1>
+     </div>
+      <div id="login-form" class="space-y-4">
+      <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:flex-1">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Họ và tên</label> 
+               <input type="text" id="hoTen" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="Nhập họ tên...">
+          </div>
+          <div class="w-full sm:w-1/3">
+               <label class="block text-sm font-bold text-gray-700 mb-1">Lớp</label> 
+               <input type="text" id="lop" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-semibold" placeholder="11A1">
+          </div>
+      </div>
+      
+      <div class="pt-4 pb-2">
+        <label class="block text-sm font-bold text-blue-600 mb-3">📚 Vui lòng chọn mã đề thi:</label>
+          <div class="grid grid-cols-1 gap-4">
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de1" class="hidden de-radio" checked>
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-black text-xl mr-4 shadow">1</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ĐỀ SỐ 1<br><span class="text-xs font-medium text-gray-500">Ôn tập Bài 5</span></div>
+                  </div>
+              </label>
+              <label class="cursor-pointer">
+                  <input type="radio" name="chonDe" value="de2" class="hidden de-radio">
+                  <div class="de-label flex items-center p-4 border-2 border-gray-200 rounded-2xl transition-all w-full bg-white shadow-sm">
+                      <div class="de-icon w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 text-white flex items-center justify-center font-black text-xl mr-4 shadow">2</div>
+                      <div class="de-text text-gray-800 font-extrabold text-xl tracking-wide">ĐỀ SỐ 2<br><span class="text-xs font-medium text-gray-500">Ôn tập Bài 5</span></div>
+                  </div>
+              </label>
+          </div>
+      </div>
+
+      <div id="login-error" class="hidden bg-red-100 border border-red-300 text-red-700 font-bold text-sm p-3 rounded-xl text-center shadow-sm"></div>
+
+      <button type="button" onclick="window.startQuizAction()" id="start-btn" class="w-full py-4 mt-6 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all text-xl tracking-wide"> 🚀 BẮT ĐẦU LÀM BÀI </button>
+     </div>
+     
+     <div class="mt-4 text-center pb-8 sm:pb-0">
+         <button onclick="window.viewScoresAction()" id="view-scores-btn" type="button" class="text-red-600 font-extrabold hover:text-red-800 hover:underline transition-colors text-lg mt-2">🏆 Xem bảng xếp hạng</button>
+     </div>
+    </div>
+   </div>
+
+   <!-- MÀN HÌNH LÀM BÀI -->
+   <div id="quiz-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow relative border-t-8 border-blue-500 bg-white shadow-2xl">
+     
+     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex items-center gap-3">
+       <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 border-yellow-400 bg-red-600 shadow-sm flex-shrink-0">
+           <span class="text-white font-black text-xl tracking-tighter">HS</span>
+       </div>
+       <div>
+        <h2 id="quiz-title" class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đề Kiểm Tra</h2>
+        <p id="student-info" class="text-sm font-bold text-gray-500 mt-1 uppercase tracking-wide"></p>
+       </div>
+      </div>
+
+      <!-- KHOẢNG ĐIỀU HƯỚNG VÀ TIẾN ĐỘ -->
+      <div class="flex items-center gap-2 self-end sm:self-auto w-full sm:w-auto justify-end">
+        <!-- NÚT BẢNG TRẠNG THÁI MỚI -->
+        <button onclick="window.showNavigator()" class="bg-indigo-50 text-indigo-700 font-extrabold text-sm px-4 py-2 rounded-xl border-2 border-indigo-200 shadow-sm hover:bg-indigo-100 transition-all">
+            📑 Trạng thái làm bài
+        </button>
+
+        <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 text-center" id="progress-container">
+            <div class="text-[10px] sm:text-xs text-blue-500 font-bold uppercase tracking-wider mb-0.5">Tiến độ (ý)</div>
+            <div id="progress-text" class="text-lg sm:text-xl font-black text-blue-700 leading-none">0</div>
+        </div>
+      </div>
+     </div>
+     
+     <div id="timer-banner" class="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-red-100 rounded-2xl flex items-center justify-between shadow-sm">
+        <span class="text-red-800 font-extrabold flex items-center gap-2"><span class="text-2xl animate-pulse">⏰</span> THỜI GIAN CÒN LẠI:</span> 
+        <span id="timer" class="text-3xl font-black text-red-600 font-mono tracking-wider drop-shadow-sm">45:00</span>
+     </div>
+
+     <div id="question-container" class="mb-8 flex-grow w-full max-w-full"></div>
+     
+     <div id="network-error" class="hidden bg-red-100 text-red-700 p-4 rounded-xl mt-4 text-center font-bold text-sm border-2 border-red-300 mb-4 shadow-sm"></div>
+
+    <div id="nav-buttons" class="flex gap-4 pt-4 sm:pt-6 border-t-2 border-gray-100 mt-auto pb-4 sm:pb-0">
+        <button id="prev-btn" onclick="window.prevQuestion()" class="flex-1 py-4 bg-gray-500 hover:bg-gray-600 text-white font-bold text-xl rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 hidden">⬅ Câu trước</button> 
+        
+        <button id="next-btn" onclick="window.nextQuestion()" class="flex-1 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">Tiếp theo ➔</button> 
+        
+        <!-- NÚT NỘP BÀI -->
+        <button id="submit-btn" onclick="window.submitQuiz()" class="flex-1 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-2xl shadow-lg hover:shadow-xl hidden transition-all transform hover:-translate-y-1">✅ NỘP BÀI NGAY</button>
+     </div>
+    </div>
+   </div>
+
+<!-- MODAL CẢNH BÁO CHƯA LÀM HẾT BÀI -->
+   <div id="warning-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-[9999]">
+       <div class="bg-white border-t-8 border-red-500 rounded-3xl w-full max-w-md shadow-2xl transform transition-all flex flex-col overflow-hidden">
+           <div class="bg-red-50 p-6 flex flex-col items-center text-center border-b-2 border-red-100">
+               <div class="text-6xl mb-4 animate-bounce">⚠️</div>
+               <h3 class="text-2xl font-black text-red-600 uppercase tracking-wide">Cảnh báo!</h3>
+               <p class="text-red-500 font-bold mt-1">Em chưa hoàn thành bài thi</p>
+           </div>
+           <div class="p-6 text-center">
+               <p class="text-gray-700 text-lg font-semibold mb-2">Em mới làm được <span id="warning-answered" class="text-blue-600 font-black text-xl px-2 py-1 bg-blue-50 rounded-lg"></span> ý.</p>
+               <p class="text-gray-600 font-medium">Còn <span id="warning-missing" class="text-red-500 font-black text-xl px-2 py-1 bg-red-50 rounded-lg border border-red-100"></span> ý em chưa làm hoặc chưa chọn đáp án.</p>
+               <p class="mt-4 text-sm text-gray-500 italic font-medium">Em có chắc chắn muốn nộp bài ngay không?</p>
+           </div>
+           <div class="p-4 bg-gray-50 flex gap-3 border-t-2 border-gray-100">
+               <button onclick="window.closeWarningModal()" class="flex-1 py-3 bg-white text-gray-700 border-2 border-gray-300 font-bold text-base sm:text-lg rounded-xl hover:bg-gray-100 transition-all shadow-sm">🔙 Quay lại</button>
+               <button onclick="window.executeSubmit()" class="flex-1 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold text-base sm:text-lg rounded-xl shadow-md hover:shadow-lg transition-all">✅ Nộp bài luôn</button>
+           </div>
+       </div>
+   </div>
+
+   <!-- MODAL PHẢN HỒI KHI CHỌN ĐÁP ÁN -->
+   <div id="feedback-modal" class="fixed inset-0 hidden flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-[9999]">
+       <div class="bg-blue-50 border-4 border-blue-300 rounded-3xl w-full max-w-3xl shadow-2xl transform scale-95 opacity-0 flex flex-col" id="feedback-modal-content">
+           <div class="p-6 sm:p-8 flex-grow overflow-y-auto max-h-[85vh]">
+               <div id="feedback-header" class="text-center mb-4"></div>
+               <div id="feedback-body" class="text-black font-extrabold text-lg leading-relaxed text-left"></div>
+           </div>
+           <div class="p-4 bg-white border-t-2 border-blue-100 rounded-b-2xl">
+               <button onclick="window.closeFeedbackModal()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-xl rounded-xl shadow hover:shadow-lg transform hover:-translate-y-1 transition-all uppercase tracking-wider">Đã hiểu & Tiếp tục ➔</button>
+           </div>
+       </div>
+   </div>
+
+   <!-- MODAL BẢNG TRẠNG THÁI LÀM BÀI (MỚI) -->
+   <div id="navigator-modal" class="fixed inset-0 hidden bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+       <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl border-t-8 border-indigo-500">
+           <div class="p-5 border-b-2 border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-3xl">
+               <h3 class="text-2xl font-black text-indigo-700 tracking-wide flex items-center gap-2">
+                   📑 TRẠNG THÁI LÀM BÀI
+               </h3>
+               <button onclick="window.closeNavigator()" class="text-gray-400 hover:text-red-500 transition-colors bg-white border-2 border-gray-200 rounded-full w-10 h-10 flex items-center justify-center font-black text-xl shadow-sm">✖</button>
+           </div>
+           <div class="p-6 overflow-y-auto" id="navigator-grid-container">
+               <!-- Nội dung bảng lưới được sinh ra tự động từ JS -->
+           </div>
+           <div class="p-4 border-t-2 border-gray-100 bg-gray-50 rounded-b-3xl text-center flex justify-center gap-4 text-sm font-bold">
+               <div class="flex items-center gap-2"><div class="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div> Chưa làm</div>
+               <div class="flex items-center gap-2"><div class="w-4 h-4 bg-blue-500 border-2 border-blue-600 rounded"></div> Đã làm (Trắc nghiệm)</div>
+               <div class="flex items-center gap-2"><div class="w-4 h-4 bg-indigo-500 border-2 border-indigo-600 rounded"></div> Đã làm (Đúng/Sai)</div>
+           </div>
+       </div>
+   </div>
+
+   <!-- MÀN HÌNH KẾT QUẢ NỘP BÀI -->
+   <div id="result-section" class="w-full max-w-2xl mx-auto hidden fade-in flex flex-col justify-center flex-grow pb-8">
+    <div class="glass-card rounded-none sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-start border-t-8 border-green-500 bg-white shadow-2xl" id="result-content">
+    </div>
+   </div>
+
+   <!-- MÀN HÌNH XEM LẠI BÀI LÀM -->
+   <div id="review-section" class="w-full max-w-4xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-indigo-500 bg-white overflow-hidden">
+     <div class="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between mb-6 pb-4 border-b-2 border-gray-100 gap-4">
+      <div class="flex gap-2">
+          <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+          <button onclick="window.backToResult()" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200">🔙 Quay lại</button>
+      </div>
+      <h2 id="review-title" class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">👀 Xem Lại Bài Làm</h2>
+     </div>
+     <div id="review-content" class="space-y-6 w-full max-w-full"></div>
+    </div>
+   </div>
+
+   <!-- MÀN HÌNH BẢNG XẾP HẠNG -->
+   <div id="scores-section" class="w-full max-w-6xl mx-auto hidden flex-grow flex flex-col">
+    <div class="glass-card rounded-none sm:rounded-3xl p-4 sm:p-8 flex flex-col flex-grow border-t-8 border-orange-500 bg-white w-full max-w-full">
+     <div class="mb-6 flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-gray-100 pb-4">
+      <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200">🏠 Trang chủ</button>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">🏆 BẢNG XẾP HẠNG</h2>
+     </div>
+     <div class="mb-3 text-center sm:hidden">
+         <span class="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full border border-blue-200 animate-pulse inline-block">👉 Vuốt sang ngang để xem hết bảng điểm 👈</span>
+     </div>
+     <div class="overflow-x-auto rounded-xl border border-slate-200 flex-grow shadow-inner bg-white/50 w-full">
+      <table class="w-full text-xs sm:text-sm whitespace-nowrap min-w-max">
+       <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <tr>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">#</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
+         <th class="px-3 sm:px-4 py-4 text-left font-extrabold">Họ tên</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Đề thi</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Bắt đầu</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Tổng TG</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Thao tác</th>
+        </tr>
+       </thead>
+       <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
+      </table>
+      <div id="no-scores" class="text-center py-12 hidden text-gray-500 font-bold text-lg">Chưa có dữ liệu nộp bài 🥲</div>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <script>
+    let database = null;
+    let scoresRef = null;
+    let currentIdx = 0;
+
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4ou3Fu8IxAPYV347pHKT1jtPxQe5TBM4",
+            authDomain: "hanhtrinhso-e3368.firebaseapp.com",
+            databaseURL: "https://hanhtrinhso-e3368-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hanhtrinhso-e3368",
+            storageBucket: "hanhtrinhso-e3368.firebasestorage.app",
+            messagingSenderId: "1046142513655",
+            appId: "1:1046142513655:web:5c7bb3a47ee90ac279fef2"
+        };
+        if (typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            scoresRef = database.ref('bxh_tinhoc11_bai5'); 
+        }
+    } catch(err) { console.error("Lỗi Firebase:", err); }
+
+    let isQuizStarted = false; 
+
+    /*================================================================================================
+      DATA NGÂN HÀNG CÂU HỎI MỚI - TIN HỌC 11 (BÀI 5: Kết nối máy tính với thiết bị số)
+    =================================================================================================*/
+    const de1_data = [
+        { id: "5_1_1", type: "single", question: "Cổng kết nối phổ biến nhất để cắm chuột và bàn phím là gì?", options: ["Cổng kết nối đa năng USB.", "Cổng kết nối màn hình VGA.", "Cổng xuất âm thanh ra loa.", "Cổng truyền tải mạng lưới LAN."], correct: 0, explanation: "Cổng USB (Universal Serial Bus) là cổng phổ biến nhất để cắm các thiết bị ngoại vi như chuột, bàn phím." },
+        { id: "5_1_2", type: "single", question: "Chuẩn kết nối không dây nào thường dùng cho tai nghe?", options: ["Chuẩn kết nối không dây Bluetooth.", "Chuẩn kết nối cáp quang biển.", "Chuẩn kết nối cổng mạng RJ45.", "Chuẩn kết nối xuất hình HDMI."], correct: 0, explanation: "Bluetooth là chuẩn kết nối không dây tầm ngắn, thường dùng cho tai nghe, loa không dây." },
+        { id: "5_1_3", type: "single", question: "Thiết bị số nào sau đây dùng để thu nhận âm thanh?", options: ["Thiết bị thu âm mi cờ rô.", "Thiết bị hiển thị màn hình nền.", "Thiết bị in ấn văn bản giấy.", "Thiết bị trình chiếu phim cỡ lớn."], correct: 0, explanation: "Micro (Microphone) là thiết bị thu nhận âm thanh, chuyển đổi âm thanh thành tín hiệu số." },
+        { id: "5_1_4", type: "single", question: "Cổng HDMI truyền tải những loại tín hiệu nào?", options: ["Truyền cả hình ảnh và âm thanh.", "Chỉ truyền duy nhất hình ảnh video.", "Chỉ truyền duy nhất âm thanh loa.", "Truyền điện năng cho quạt quay mát."], correct: 0, explanation: "Cổng HDMI (High-Definition Multimedia Interface) có khả năng truyền tải đồng thời cả hình ảnh và âm thanh chất lượng cao." },
+        { id: "5_1_5", type: "single", question: "Trình điều khiển (Driver) có chức năng chính là gì?", options: ["Giúp máy tính nhận diện thiết bị.", "Giúp máy tính xóa bỏ toàn bộ.", "Giúp máy tính phát nhạc thật to.", "Giúp máy tính làm mát ổ cứng."], correct: 0, explanation: "Driver là phần mềm trung gian giúp hệ điều hành nhận diện và giao tiếp được với thiết bị ngoại vi." },
+        { id: "5_1_6", type: "single", question: "Để kết nối điện thoại với máy tính chép dữ liệu, dùng cáp gì?", options: ["Sử dụng loại dây cáp cổng USB.", "Sử dụng loại dây cáp cổng VGA.", "Sử dụng loại dây cáp nối mạng.", "Sử dụng loại dây cáp cắm nguồn."], correct: 0, explanation: "Cáp USB thường được dùng để sạc và truyền tải dữ liệu giữa điện thoại và máy tính." },
+        { id: "5_1_7", type: "single", question: "Cổng Audio jack 3.5mm trên máy tính dùng để làm gì?", options: ["Dùng để cắm loa hoặc tai nghe.", "Dùng để cắm con chuột máy tính.", "Dùng để cắm bàn phím gõ chữ.", "Dùng để cắm thiết bị lưu trữ."], correct: 0, explanation: "Cổng Audio 3.5mm là cổng tiêu chuẩn để xuất âm thanh ra loa hoặc tai nghe." },
+        { id: "5_1_8", type: "single", question: "Máy ảnh kỹ thuật số là thiết bị có chức năng gì?", options: ["Dùng để chụp hình và quay phim.", "Dùng để in văn bản ra giấy.", "Dùng để phát âm thanh cực lớn.", "Dùng để cung cấp nguồn điện lưới."], correct: 0, explanation: "Máy ảnh kỹ thuật số dùng để thu nhận hình ảnh/video và lưu trữ dưới dạng tín hiệu số." },
+        { id: "5_1_9", type: "single", question: "Vì sao khi cắm thiết bị mới vào, máy tính cần thời gian chờ?", options: ["Để hệ thống tìm và cài driver.", "Để hệ thống xóa hết mọi file.", "Để hệ thống xóa sạch dữ liệu.", "Để hệ thống tăng nhiệt độ chip."], correct: 0, explanation: "Máy tính cần thời gian để nhận diện thiết bị mới và tự động tìm, cài đặt trình điều khiển (driver) phù hợp." },
+        { id: "5_1_10", type: "single", question: "Ưu điểm của việc kết nối thiết bị qua Bluetooth so với dùng cáp?", options: ["Không bị vướng víu bởi dây cáp.", "Truyền điện năng cực kỳ mạnh mẽ.", "Có tốc độ chép file siêu nhanh.", "Không bao giờ bị mất tín hiệu."], correct: 0, explanation: "Bluetooth giúp kết nối không dây, mang lại sự gọn gàng, tiện lợi, không bị vướng víu bởi dây cáp." },
+        { id: "5_1_11", type: "single", question: "Sự khác biệt lớn nhất giữa cổng HDMI và cổng VGA là gì?", options: ["Cổng HDMI xuất hình kèm âm thanh.", "Cổng VGA xuất hình kèm âm thanh.", "Cổng HDMI chỉ xuất mỗi âm thanh.", "Cổng VGA chỉ dùng cắm chuột quang."], correct: 0, explanation: "VGA chỉ truyền được hình ảnh, trong khi HDMI truyền được cả hình ảnh sắc nét và âm thanh." },
+        { id: "5_1_12", type: "single", question: "Khi cắm cáp điện thoại vào máy tính, tùy chọn \"Chỉ sạc\" nghĩa là?", options: ["Máy tính không thể chép dữ liệu.", "Máy tính có thể chép dữ liệu.", "Máy tính bị nhiễm vi rút ngay.", "Máy tính tự động tắt màn hình."], correct: 0, explanation: "Tùy chọn 'Chỉ sạc' (Charge only) sẽ ngắt kết nối truyền dữ liệu, máy tính không thể truy cập bộ nhớ điện thoại." },
+        { id: "5_1_13", type: "single", question: "Tại sao máy in đã cắm cáp USB vào máy nhưng vẫn không in được?", options: ["Do máy tính chưa cài đúng driver.", "Do máy tính có dung lượng lớn.", "Do máy tính đang mở nhạc to.", "Do máy tính gắn nhiều chuột quang."], correct: 0, explanation: "Máy in cần có đúng driver do nhà sản xuất cung cấp thì máy tính mới gửi được lệnh in chính xác." },
+        { id: "5_1_14", type: "single", question: "Quá trình \"ghép nối\" (pairing) Bluetooth yêu cầu điều kiện gì?", options: ["Hai thiết bị phải xác nhận mã.", "Hai thiết bị phải cắm chung dây.", "Hai thiết bị phải tắt nguồn hẳn.", "Hai thiết bị phải dùng chung sạc."], correct: 0, explanation: "Ghép nối (Pairing) yêu cầu hai thiết bị phải xác nhận mã hoặc đồng ý kết nối để đảm bảo an toàn." },
+        { id: "5_1_15", type: "single", question: "Thiết bị số giao tiếp với máy tính thông qua những chuẩn nào?", options: ["Thông qua đường có dây và không dây.", "Thông qua đường điện áp cực kỳ cao.", "Thông qua đường ống dẫn nước sạch sẽ.", "Thông qua đường truyền âm thanh của loa."], correct: 0, explanation: "Thiết bị số giao tiếp với máy tính qua hai phương thức chính: có dây (cáp USB, HDMI...) và không dây (Bluetooth, Wi-Fi...)." },
+        { id: "5_1_16", type: "single", question: "Khi điện thoại kết nối chép file với máy tính, nó đóng vai trò gì?", options: ["Trở thành một chiếc ổ lưu trữ.", "Trở thành vi xử lý trung tâm.", "Trở thành bộ nguồn cung cấp điện.", "Trở thành quạt làm mát hệ thống."], correct: 0, explanation: "Khi truyền dữ liệu, bộ nhớ điện thoại hoạt động như một ổ đĩa lưu trữ ngoài (USB flash drive) đối với máy tính." },
+        { id: "5_1_17", type: "single", question: "Bạn muốn trình chiếu bài thuyết trình lên Tivi đời mới, bạn dùng cáp nào?", options: ["Cắm cáp xuất hình chuẩn cổng HDMI.", "Cắm cáp cấp nguồn cho máy tính.", "Cắm cáp kết nối mạng cục bộ.", "Cắm cáp truyền âm thanh vào loa."], correct: 0, explanation: "Tivi đời mới sử dụng cổng HDMI để nhận tín hiệu hình ảnh và âm thanh chất lượng cao từ laptop." },
+        { id: "5_1_18", type: "single", question: "Để chuyển ảnh từ máy ảnh số sang máy tính nhanh nhất, bạn nên?", options: ["Lấy thẻ nhớ cắm vào đầu đọc.", "In bức ảnh ra rồi chụp lại.", "Dùng keo dán máy ảnh vào bàn.", "Gửi qua đường bưu điện bằng thư."], correct: 0, explanation: "Rút thẻ nhớ ra và cắm vào đầu đọc thẻ trên máy tính là cách chép ảnh tốc độ cao và ổn định nhất." },
+        { id: "5_1_19", type: "single", question: "Đang họp online nhưng mic của laptop bị hỏng, bạn có thể:", options: ["Cắm thêm tai nghe có chứa micro.", "Cắm thêm một con chuột không dây.", "Cắm thêm ổ cứng chứa nhiều phim.", "Cắm thêm bàn phím cơ đắt tiền."], correct: 0, explanation: "Tai nghe có kèm micro (headset) cắm qua cổng 3.5mm hoặc USB có thể thay thế micro hỏng của laptop." },
+        { id: "5_1_20", type: "single", question: "Muốn gửi 1 file ảnh từ điện thoại sang laptop mà không có cáp?", options: ["Bật kết nối không dây Bluetooth lên.", "Tắt nguồn điện thoại rồi bật lại.", "Rút phích cắm điện của laptop ra.", "Bật đèn pin của điện thoại lên."], correct: 0, explanation: "Bluetooth là giải pháp kết nối không dây tầm gần phổ biến để gửi file giữa điện thoại và máy tính." },
+        { id: "5_1_21", type: "single", question: "Mua máy in mạng không dây, bạn cần làm gì để in từ laptop?", options: ["Kết nối chung một mạng không dây.", "Cắm dây USB nối trực tiếp lại.", "Dùng cáp màn hình nối vào nhau.", "Tắt kết nối Internet của laptop đi."], correct: 0, explanation: "Máy in mạng cần được kết nối vào cùng một mạng Wi-Fi/LAN với laptop để có thể nhận lệnh in không dây." },
+        { id: "5_1_22", type: "single", question: "Điện thoại không báo sạc pin khi cắm vào máy tính, lỗi do đâu?", options: ["Dây cáp kết nối đang bị hỏng.", "Màn hình máy tính đang quá sáng.", "Bàn phím máy tính không hoạt động.", "Con chuột quang hết pin hoàn toàn."], correct: 0, explanation: "Dây cáp kết nối có thể bị đứt ngầm hoặc hỏng lõi sạc khiến điện thoại không nhận được dòng điện." },
+        { id: "5_1_23", type: "single", question: "Bạn cắm USB vào nhưng máy tính không hiện ổ đĩa, cần làm gì?", options: ["Rút ra và thử cắm cổng khác.", "Đập mạnh chiếc ổ USB xuống bàn.", "Xóa hết phần mềm trong máy tính.", "Tắt máy tính đi không dùng nữa."], correct: 0, explanation: "Nên thử rút USB ra và cắm sang cổng USB khác trên máy tính để kiểm tra xem cổng cũ có bị lỗi không." },
+        { id: "5_1_24", type: "single", question: "Khi kết nối tai nghe Bluetooth với máy tính nhưng không nghe thấy tiếng:", options: ["Kiểm tra xem chọn đúng loa chưa.", "Rút ổ cứng của máy tính ra.", "Cắm cáp mạng vào tai nghe ngay.", "Đập vỡ tai nghe mua cái mới."], correct: 0, explanation: "Windows có thể chưa tự động chuyển âm thanh sang tai nghe, bạn cần vào cài đặt âm thanh chọn đúng đầu ra (Output) là tai nghe Bluetooth." },
+        { id: "5_II_1", type: "tf_cluster", context: "Bạn Lan muốn có một đĩa CD chứa driver (trình điều khiển) để tự cài đặt cho chiếc máy in cá nhân mới mua ở nhà.", items: [
+            { id: "a", text: "Trình điều khiển (Driver) là phần mềm giúp hệ điều hành máy tính giao tiếp và điều khiển được thiết bị ngoại vi như máy in.", correct: true, expl: "Trình điều khiển đóng vai trò cầu nối, giúp hệ điều hành 'hiểu' và ra lệnh cho phần cứng." },
+            { id: "b", text: "Cổng USB là chuẩn kết nối có dây thông dụng nhất hiện nay để gắn máy in cá nhân vào máy tính.", correct: true, expl: "Cổng USB là tiêu chuẩn toàn cầu cho các thiết bị ngoại vi như máy in, chuột, bàn phím." },
+            { id: "c", text: "Máy in và máy tính chỉ cần cắm cáp USB nối vật lý vào nhau là sẽ tự động in được ngay lập tức mà không bao giờ cần cài đặt thêm phần mềm nào.", correct: false, expl: "Máy in luôn cần có trình điều khiển (Driver) tương thích thì máy tính mới có thể giao tiếp và gửi lệnh in được." },
+            { id: "d", text: "Khi máy in bị kẹt giấy vật lý ở bên trong, Lan chỉ cần dùng đĩa CD chứa driver cài lại phần mềm vào máy tính là giấy sẽ tự động chạy ra.", correct: false, expl: "Kẹt giấy là sự cố cơ học vật lý, phải dùng tay tháo gỡ trực tiếp tại máy in chứ phần mềm không thể giải quyết." }
+        ]},
+        { id: "5_II_2", type: "tf_cluster", context: "Bạn Hoa muốn có một đĩa CD chứa các video hướng dẫn kết nối điện thoại thông minh (smartphone) với máy tính bàn của bạn Bình để chép nhạc.", items: [
+            { id: "a", text: "Cáp VGA là loại cáp chuyên dụng thường được dùng để sạc pin và chép nhạc từ điện thoại thông minh sang máy tính.", correct: false, expl: "Cáp VGA chỉ dùng để truyền tín hiệu hình ảnh ra màn hình/máy chiếu, không dùng để sạc hay chép dữ liệu." },
+            { id: "b", text: "Bluetooth là chuẩn kết nối không dây tầm gần, cho phép truyền dữ liệu số giữa điện thoại và máy tính mà không cần dùng cáp.", correct: true, expl: "Bluetooth được thiết kế chính xác cho mục đích kết nối không dây khoảng cách ngắn." },
+            { id: "c", text: "Khi cắm cáp USB nối điện thoại với máy tính, nếu trên màn hình điện thoại Hoa chọn chế độ 'Chỉ sạc' (Charge only), máy tính sẽ không thể truy cập vào bộ nhớ để chép nhạc được.", correct: true, expl: "Chế độ 'Chỉ sạc' ngắt hoàn toàn kết nối dữ liệu để bảo vệ an toàn thông tin trên điện thoại." },
+            { id: "d", text: "Để gửi một thư mục nhạc nặng tới 10GB từ điện thoại qua máy tính bàn một cách nhanh nhất, Hoa nên sử dụng kết nối Bluetooth thay vì dùng dây cáp USB 3.0.", correct: false, expl: "Băng thông của Bluetooth rất hẹp nên truyền file lớn sẽ cực kỳ chậm. Dùng cáp USB 3.0 sẽ nhanh hơn gấp hàng chục lần." }
+        ]},
+        { id: "5_II_3", type: "tf_cluster", context: "Bạn Mai muốn có một đĩa CD chứa các tệp báo cáo. Khi đến lớp, Mai cần kết nối máy tính xách tay của mình với chiếc máy chiếu (projector) trên bục giảng để thuyết trình.", items: [
+            { id: "a", text: "Cổng HDMI và cổng VGA là hai loại cổng giao tiếp xuất hình ảnh phổ biến nhất để kết nối máy tính với máy chiếu.", correct: true, expl: "Đây là 2 chuẩn xuất hình thông dụng nhất trên các dòng laptop và máy chiếu hiện nay." },
+            { id: "b", text: "Máy chiếu (Projector) là một thiết bị số ngoại vi đóng vai trò hiển thị (thiết bị đầu ra) của hệ thống máy tính.", correct: true, expl: "Máy chiếu thực hiện chức năng Output (đầu ra), đưa hình ảnh từ máy tính hiển thị lên màn chiếu lớn." },
+            { id: "c", text: "Cáp HDMI có ưu điểm vượt trội hơn cáp VGA truyền thống ở chỗ nó có thể truyền tải đồng thời cả tín hiệu hình ảnh sắc nét và tín hiệu âm thanh trên cùng một sợi dây.", correct: true, expl: "HDMI ra đời để truyền tải đa phương tiện (cả Audio và Video chất lượng cao) qua một cáp duy nhất." },
+            { id: "d", text: "Nếu màn hình máy chiếu chiếu lên bảng bị mờ tối do bóng đèn chiếu dùng lâu ngày bị bám bụi bẩn bên trong, Mai chỉ cần tải phần mềm tăng độ sáng trên máy tính cài vào là máy chiếu sẽ sáng rõ y như mới.", correct: false, expl: "Bóng đèn mờ, bám bụi là hao mòn vật lý phần cứng. Bạn phải vệ sinh hoặc thay bóng đèn, phần mềm không thể can thiệp." }
+        ]},
+        { id: "5_II_4", type: "tf_cluster", context: "Bạn Khang muốn có một đĩa CD chứa phần mềm ghi âm chuyên nghiệp để làm podcast. Khang quyết định mua thêm một chiếc tai nghe không dây có kèm micro Bluetooth để thu âm cho tiện lợi.", items: [
+            { id: "a", text: "Tai nghe Bluetooth yêu cầu bắt buộc phải cắm cáp quang hoặc cáp đồng vào thân máy tính thì mới có thể truyền tải được âm thanh.", correct: false, expl: "Bluetooth là công nghệ truyền tải qua sóng vô tuyến không dây, hoàn toàn không cần cáp vật lý." },
+            { id: "b", text: "Microphone (Micro) là thiết bị đầu ra, có chức năng phát nhạc to lên cho cả căn phòng cùng nghe.", correct: false, expl: "Micro là thiết bị đầu vào (Input) dùng để thu âm thanh. Thiết bị phát nhạc ra là Loa (Speaker)." },
+            { id: "c", text: "Để sử dụng được tai nghe Bluetooth với máy tính, máy tính của Khang phải có linh kiện phát sóng Bluetooth và hai thiết bị phải thực hiện thao tác 'ghép nối' (pairing) xác nhận với nhau.", correct: true, expl: "Quá trình pairing (ghép nối) là bắt buộc để hai thiết bị Bluetooth nhận diện và xác thực quyền kết nối với nhau." },
+            { id: "d", text: "Sau khi ghép nối Bluetooth thành công nhưng Khang thu âm không thấy có tín hiệu tiếng, Khang cần mở phần cài đặt âm thanh (Sound settings) trên Windows để kiểm tra xem thiết bị đầu vào (Input) đã được chọn đúng tên micro của tai nghe hay chưa.", correct: true, expl: "Hệ điều hành có thể vẫn đang chọn micro mặc định của laptop, nên người dùng cần thao tác chuyển nguồn Input thủ công." }
+        ]}
+    ];
+
+    const de2_data = [
+        { id: "5_2_1", type: "single", question: "Thiết bị nào sau đây dùng để hiển thị hình ảnh?", options: ["Màn hình máy tính để bàn.", "Bàn phím gõ chữ văn bản.", "Con chuột máy tính quang học.", "Chiếc tai nghe phát âm thanh."], correct: 0, explanation: "Màn hình máy tính là thiết bị đầu ra (Output device) chuyên dụng để hiển thị hình ảnh." },
+        { id: "5_2_2", type: "single", question: "Chuẩn kết nối không dây phổ biến dùng cho chuột là?", options: ["Dùng chuẩn kết nối sóng Bluetooth.", "Dùng chuẩn kết nối cáp mạng.", "Dùng chuẩn kết nối dây quang.", "Dùng chuẩn kết nối cổng xuất."], correct: 0, explanation: "Bluetooth là chuẩn kết nối không dây tầm ngắn rất phổ biến cho chuột, bàn phím không dây." },
+        { id: "5_2_3", type: "single", question: "Cổng VGA trên thân máy tính thường có màu gì?", options: ["Cổng này thường có màu xanh.", "Cổng này thường có màu trắng.", "Cổng này thường có màu vàng.", "Cổng này thường có màu hồng."], correct: 0, explanation: "Cổng VGA trên mainboard hoặc card màn hình thường có chuẩn màu xanh dương (blue) đặc trưng." },
+        { id: "5_2_4", type: "single", question: "Loại kết nối nào sau đây không sử dụng dây dẫn?", options: ["Kết nối qua sóng vô tuyến.", "Kết nối qua cáp mạng LAN.", "Kết nối qua dây cáp USB.", "Kết nối qua cáp xuất hình."], correct: 0, explanation: "Sóng vô tuyến (như Wi-Fi, Bluetooth) truyền tín hiệu trong không gian mà không cần dây dẫn vật lý." },
+        { id: "5_2_5", type: "single", question: "Camera trên máy tính được xếp vào loại thiết bị gì?", options: ["Đây là thiết bị thu hình.", "Đây là thiết bị phát nhạc.", "Đây là thiết bị in giấy.", "Đây là thiết bị làm mát."], correct: 0, explanation: "Camera (Webcam) là thiết bị đầu vào (Input), có nhiệm vụ thu nhận hình ảnh bên ngoài vào máy tính." },
+        { id: "5_2_6", type: "single", question: "Khe cắm thẻ nhớ trên thân laptop dùng để làm gì?", options: ["Đọc dữ liệu từ thẻ nhớ.", "Phát âm thanh ra loa ngoài.", "Thu nhận tín hiệu của chuột.", "Xuất hình ảnh lên máy chiếu."], correct: 0, explanation: "Khe cắm thẻ nhớ (SD card reader) giúp máy tính đọc và ghi dữ liệu trực tiếp lên thẻ nhớ." },
+        { id: "5_2_7", type: "single", question: "Thiết bị nào vừa là thiết bị đầu vào vừa đầu ra?", options: ["Chiếc màn hình có cảm ứng.", "Chiếc bàn phím gõ văn bản.", "Chiếc loa phát âm thanh lớn.", "Chiếc máy quét văn bản giấy."], correct: 0, explanation: "Màn hình cảm ứng vừa hiển thị thông tin (đầu ra) vừa nhận thao tác chạm của người dùng (đầu vào)." },
+        { id: "5_2_8", type: "single", question: "Cáp mạng LAN được sử dụng chủ yếu để làm gì?", options: ["Dùng để kết nối mạng lưới.", "Dùng để truyền tải hình ảnh.", "Dùng để sạc pin thiết bị.", "Dùng để xuất âm thanh loa."], correct: 0, explanation: "Cáp mạng LAN (dây mạng) dùng để kết nối các máy tính với nhau hoặc kết nối máy tính với Internet." },
+        { id: "5_2_9", type: "single", question: "Khi máy tính không nhận USB, nguyên nhân phổ biến nhất là?", options: ["Thiếu trình điều khiển thiết bị.", "Bàn phím máy tính hỏng nút.", "Màn hình máy tính hết điện.", "Con chuột quang bị hết pin."], correct: 0, explanation: "Thiếu hoặc lỗi trình điều khiển (Driver) khiến máy tính không thể nhận diện được ổ USB vừa cắm." },
+        { id: "5_2_10", type: "single", question: "Tốc độ truyền dữ liệu của cổng USB 3.0 so với 2.0?", options: ["Chuẩn mới có tốc độ nhanh.", "Chuẩn mới có tốc độ chậm.", "Hai chuẩn có tốc độ bằng.", "Chuẩn mới không truyền được file."], correct: 0, explanation: "USB 3.0 có tốc độ truyền tải dữ liệu nhanh hơn gấp nhiều lần (lên đến 5Gbps) so với chuẩn USB 2.0 cũ." },
+        { id: "5_2_11", type: "single", question: "Để chiếu màn hình laptop lên Tivi không dây, ta dùng gì?", options: ["Chia sẻ màn hình không dây.", "Cắm cáp mạng vào thân máy.", "Sử dụng đĩa quang sao chép.", "Gắn thêm một chiếc thẻ nhớ."], correct: 0, explanation: "Chia sẻ màn hình không dây (như Miracast, Chromecast, AirPlay) giúp chiếu màn hình lên Smart TV qua Wi-Fi." },
+        { id: "5_2_12", type: "single", question: "Thiết bị nào có khả năng số hóa hình ảnh từ giấy?", options: ["Đó là chiếc máy quét ảnh.", "Đó là chiếc máy in màu.", "Đó là chiếc loa phát nhạc.", "Đó là chiếc màn hình cong."], correct: 0, explanation: "Máy quét (Scanner) giúp chuyển đổi văn bản, hình ảnh trên giấy thành các tệp tin số hóa (PDF, JPG)." },
+        { id: "5_2_13", type: "single", question: "Cổng HDMI dần thay thế cổng VGA vì lý do chủ yếu nào?", options: ["Truyền được âm thanh và hình.", "Chỉ truyền được mỗi hình ảnh.", "Có kích thước to lớn hơn.", "Truyền được dòng điện cực mạnh."], correct: 0, explanation: "Cổng HDMI tiện lợi hơn hẳn vì truyền được cả video độ nét cao và âm thanh số trên cùng một sợi cáp." },
+        { id: "5_2_14", type: "single", question: "Khi gắn ổ cứng di động vào máy, nó được quản lý sao?", options: ["Quản lý như một ổ đĩa.", "Quản lý như một con chuột.", "Quản lý như một màn hình.", "Quản lý như một máy chiếu."], correct: 0, explanation: "Ổ cứng di động cắm qua cổng USB sẽ được hệ điều hành nhận diện và quản lý như một ổ đĩa bổ sung (ổ D, E...)." },
+        { id: "5_2_15", type: "single", question: "Đặc điểm nổi bật của cổng USB Type-C hiện đại là gì?", options: ["Hỗ trợ truyền dữ liệu nhanh.", "Chỉ hỗ trợ cắm bàn phím.", "Không thể truyền tải dòng điện.", "Chỉ dùng để xuất hình ảnh."], correct: 0, explanation: "USB Type-C hỗ trợ truyền dữ liệu tốc độ cực cao, xuất hình ảnh và cả sạc điện năng công suất lớn." },
+        { id: "5_2_16", type: "single", question: "Nếu máy in báo \"Offline\", máy tính và máy in có trạng thái gì?", options: ["Mất kết nối với máy tính.", "Đang in rất nhiều giấy tờ.", "Đã nhận đủ lệnh in giấy.", "Đang kết nối cực kỳ tốt."], correct: 0, explanation: "Trạng thái 'Offline' báo hiệu máy tính đã bị mất kết nối vật lý hoặc mạng với máy in." },
+        { id: "5_2_17", type: "single", question: "Bạn muốn ghép 2 màn hình vào 1 máy tính để làm việc?", options: ["Cắm cáp vào cổng xuất hình.", "Cắm cáp vào cổng âm thanh.", "Cắm cáp vào cổng mạng LAN.", "Cắm cáp vào cổng cấp nguồn."], correct: 0, explanation: "Mỗi màn hình cần được cắm vào một cổng xuất hình (VGA, HDMI, DisplayPort) trên máy tính." },
+        { id: "5_2_18", type: "single", question: "Máy tính chỉ có Type-C nhưng bạn cần cắm USB cũ (Type-A)?", options: ["Mua cổng chuyển đổi đa năng.", "Dùng kéo cắt đứt dây cáp.", "Gắn trực tiếp vào màn hình.", "Cắm vào lỗ cắm tai nghe."], correct: 0, explanation: "Cổng chuyển đổi đa năng (Hub/Adapter) từ Type-C sang Type-A giúp kết nối các thiết bị USB đời cũ." },
+        { id: "5_2_19", type: "single", question: "Điện thoại đầy bộ nhớ, bạn muốn chuyển ảnh sang máy tính bàn?", options: ["Dùng cáp kết nối để chép.", "Rút điện máy tính ra ngay.", "Tháo ổ cứng điện thoại ra.", "Xóa hết hệ điều hành máy."], correct: 0, explanation: "Cáp kết nối USB giúp truyền tải file ảnh nặng từ bộ nhớ điện thoại sang ổ cứng máy tính an toàn." },
+        { id: "5_2_20", type: "single", question: "Cắm tai nghe vào nhưng tiếng vẫn phát ra loa ngoài của laptop?", options: ["Cần chọn lại đầu ra loa.", "Cần đập vỡ chiếc loa ngoài.", "Cần tháo pin của máy tính.", "Cần xóa sạch dữ liệu máy."], correct: 0, explanation: "Bạn cần vào mục Sound Settings trên Windows để chọn lại thiết bị đầu ra (Playback/Output) là chiếc tai nghe." },
+        { id: "5_2_21", type: "single", question: "Cần sao chép 50GB phim sang máy của bạn bè cực kỳ nhanh?", options: ["Dùng ổ cứng di động chép.", "Gửi qua phần mềm nhắn tin.", "Dùng đĩa mềm loại cũ chép.", "In phim ra giấy đưa bạn."], correct: 0, explanation: "Ổ cứng di động có dung lượng lớn và tốc độ chép cao (qua USB 3.0/Type-C) là giải pháp nhanh nhất cho 50GB dữ liệu." },
+        { id: "5_2_22", type: "single", question: "Chuột không dây không di chuyển được dù đã bật công tắc on?", options: ["Do thiết bị đã hết pin.", "Do màn hình quá sáng màu.", "Do bàn phím bị kẹt nút.", "Do loa đang phát nhạc to."], correct: 0, explanation: "Chuột không dây dùng nguồn điện từ viên pin gắn trong, nếu bật công tắc mà không sáng đèn thường là do hết pin." },
+        { id: "5_2_23", type: "single", question: "Trình bày Powerpoint nhưng máy chiếu báo \"No Signal\" (Không tín hiệu)?", options: ["Kiểm tra lại cáp xuất hình.", "Kiểm tra lại dây mạng LAN.", "Tăng âm lượng loa to lên.", "Đổi con chuột máy tính mới."], correct: 0, explanation: "No Signal nghĩa là máy chiếu không nhận được tín hiệu hình ảnh, cần kiểm tra lại dây cáp VGA/HDMI có bị lỏng không." },
+        { id: "5_2_24", type: "single", question: "Bạn muốn hát Karaoke trên máy tính bằng loa thùng cỡ siêu lớn?", options: ["Cắm dây xuất âm thanh ra.", "Cắm dây xuất hình ảnh ra.", "Cắm dây vào cổng mạng lưới.", "Cắm dây cấp nguồn cho máy."], correct: 0, explanation: "Để âm thanh phát ra loa thùng, bạn cần cắm cáp âm thanh (Audio jack 3.5mm) từ máy tính sang amply/loa." },
+        { id: "5_2_II_1", type: "tf_cluster", context: "Bạn Cúc muốn có một đĩa CD chứa bộ cài đặt phần mềm chỉnh sửa ảnh để chép vào thẻ nhớ của máy ảnh kĩ thuật số.", items: [
+            { id: "a", text: "Thẻ nhớ là một thiết bị chuyên dùng để hiển thị hình ảnh ra bên ngoài giống như máy chiếu.", correct: false, expl: "Thẻ nhớ chỉ là linh kiện lưu trữ dữ liệu (bộ nhớ flash), nó không có màn hình hay ống kính để tự hiển thị hình ảnh." },
+            { id: "b", text: "Máy ảnh kĩ thuật số thuộc nhóm thiết bị số có khả năng thu nhận và số hóa hình ảnh tự nhiên.", correct: true, expl: "Cảm biến của máy ảnh thu nhận ánh sáng quang học và biến đổi thành dữ liệu nhị phân (số hóa) để lưu trữ." },
+            { id: "c", text: "Cúc không thể dùng đĩa CD để cắm trực tiếp vào máy ảnh kĩ thuật số vì máy ảnh không có ổ đọc đĩa quang.", correct: true, expl: "Máy ảnh chỉ giao tiếp qua khe cắm thẻ nhớ hoặc cáp kết nối, không hỗ trợ đọc đĩa CD/DVD." },
+            { id: "d", text: "Để truyền hình ảnh từ thẻ nhớ sang máy tính một cách nhanh nhất, Cúc phải dán chặt thẻ nhớ lên màn hình máy tính để nó tự động quét quang học.", correct: false, expl: "Thẻ nhớ phải được cắm vào đầu đọc thẻ (Card Reader) và kết nối vào cổng USB hoặc khe đọc thẻ trên máy tính." }
+        ]},
+        { id: "5_2_II_2", type: "tf_cluster", context: "Bạn Hương muốn có một đĩa CD chứa phim để chiếu lên màn hình Tivi lớn trong phòng khách cho gia đình xem. Bố của Hương hướng dẫn dùng cáp HDMI để nối laptop với Tivi.", items: [
+            { id: "a", text: "Cổng HDMI là chuẩn giao tiếp vật lý thông dụng để kết nối các thiết bị xuất hình ảnh.", correct: true, expl: "HDMI hiện là tiêu chuẩn số 1 để xuất hình ảnh độ phân giải cao ra màn hình lớn." },
+            { id: "b", text: "Tivi thông minh được xếp vào nhóm thiết bị đầu ra của hệ thống khi kết nối với máy tính.", correct: true, expl: "Khi nhận tín hiệu từ laptop, Tivi đóng vai trò như một chiếc màn hình phụ (thiết bị Output)." },
+            { id: "c", text: "Việc sử dụng cáp HDMI sẽ giúp Hương truyền tải được cả hình ảnh sắc nét và âm thanh của bộ phim từ laptop sang Tivi trên cùng một sợi dây.", correct: true, expl: "Khả năng truyền tải luồng đa phương tiện (Video + Audio) chung một cáp là điểm mạnh nhất của HDMI." },
+            { id: "d", text: "Nếu cáp HDMI bị đứt bên trong, Hương chỉ cần tải một phần mềm vá lỗi đường truyền cài vào máy tính là cáp sẽ tự động liền lại và chạy tốt.", correct: false, expl: "Dây cáp bị đứt là hỏng hóc vật lý phần cứng, phần mềm không thể kết nối lại mạch điện tử bị đứt." }
+        ]},
+        { id: "5_2_II_3", type: "tf_cluster", context: "Bạn Hùng muốn có một đĩa CD chứa trình điều khiển (Driver) cho chiếc bàn phím cơ mới mua. Bạn Kiên cho biết hiện nay đa số bàn phím đều cắm qua cổng USB nên không cần cài đĩa.", items: [
+            { id: "a", text: "Cổng USB là chuẩn giao tiếp rất phổ biến dùng để kết nối chuột, bàn phím và ổ cứng ngoài với máy tính.", correct: true, expl: "USB (Universal Serial Bus) sinh ra để chuẩn hóa cổng kết nối cho mọi thiết bị ngoại vi thông dụng." },
+            { id: "b", text: "Bàn phím cơ là một loại thiết bị đầu vào, giúp người dùng đưa thông tin hoặc lệnh điều khiển vào máy tính.", correct: true, expl: "Bàn phím tiếp nhận lực gõ vật lý và chuyển thành tín hiệu ký tự nạp vào hệ thống (Input)." },
+            { id: "c", text: "Mọi thiết bị khi cắm qua cổng USB đều bắt buộc người dùng phải tự tay viết mã lệnh lập trình thì máy tính mới nhận diện được.", correct: false, expl: "Cổng USB hỗ trợ công nghệ Plug-and-Play (Cắm là chạy). Hệ điều hành sẽ tự động nhận diện và nạp driver mà người dùng không cần lập trình." },
+            { id: "d", text: "Nếu bàn phím bị liệt một nút bấm do kẹt bụi bẩn vật lý, Hùng chỉ cần cài đặt lại trình điều khiển (Driver) là nút đó sẽ tự động sạch sẽ và gõ được bình thường.", correct: false, expl: "Kẹt phím do bụi là lỗi cơ học. Phải dùng dụng cụ tháo nút (keypuller) để vệ sinh vật lý, cài đặt phần mềm không có tác dụng." }
+        ]},
+        { id: "5_2_II_4", type: "tf_cluster", context: "Bạn Nga muốn có một đĩa CD chứa các bài hát để sao chép vào máy nghe nhạc MP3 của mình qua cáp xuất hình (chuẩn VGA).", items: [
+            { id: "a", text: "Cáp VGA là loại cáp sinh ra với mục đích chuyên dùng để chép dữ liệu âm thanh và sạc pin cho máy nghe nhạc.", correct: false, expl: "Cáp VGA chỉ có chức năng duy nhất là truyền tín hiệu hình ảnh (Video), không truyền được data file hay điện năng sạc." },
+            { id: "b", text: "Máy nghe nhạc MP3 đóng vai trò là một thiết bị đầu vào giống hệt như con chuột hay bàn phím máy tính.", correct: false, expl: "Máy nghe nhạc chủ yếu đóng vai trò là bộ nhớ lưu trữ ngoài (khi chép dữ liệu) hoặc thiết bị đầu ra (khi phát nhạc)." },
+            { id: "c", text: "Để chép dữ liệu từ máy tính sang máy nghe nhạc MP3, Nga cần sử dụng cáp truyền dữ liệu phù hợp (thường là cáp USB) thay vì dùng cáp VGA.", correct: true, expl: "Giao thức truyền tải tệp tin thông dụng nhất giữa thiết bị di động và máy tính là qua cáp USB." },
+            { id: "d", text: "Khi cắm đúng cáp USB, bộ nhớ của máy nghe nhạc MP3 sẽ xuất hiện trên máy tính như một ổ đĩa lưu trữ ngoài, cho phép Nga sao chép file nhạc vào đó dễ dàng.", correct: true, expl: "Hệ điều hành sẽ mount (gắn) bộ nhớ của máy MP3 như một USB Flash Drive thông thường." }
+        ]}
+    ];
+
+    const testBanks = { de1: de1_data, de2: de2_data };
+    let currentQuestions = [];
+    let deviceId = '';
+    let allScores = [];
+    let currentStudent = {};
+    let userAnswers = {};
+    let timerInterval;
+    let quizStartTime, quizEndTime;
+    
+    window.startQuizAction = function() {
+        try {
+            const errDiv = document.getElementById('login-error');
+            if(errDiv) errDiv.classList.add('hidden');
+            
+            const nameEl = document.getElementById('hoTen');
+            const lopEl = document.getElementById('lop');
+            
+            if (!nameEl || !lopEl) return;
+            
+            const name = nameEl.value.trim();
+            const lop = lopEl.value.trim();
+            const checkedRadio = document.querySelector('input[name="chonDe"]:checked');
+            
+            if (!name || !lop) {
+                if(errDiv) {
+                    errDiv.innerText = "⚠️ Các em học sinh nhớ nhập đầy đủ Họ tên và Lớp nhé!";
+                    errDiv.classList.remove('hidden');
+                } else alert("⚠️ Nhập đầy đủ Họ tên và Lớp!");
+                return;
+            }
+            
+            if (name && lop && checkedRadio) {
+                const maDe = checkedRadio.value;
+                const tenDe = checkedRadio.nextElementSibling.querySelector('.de-text').innerText.split('\n')[0].trim();
+                currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
+                
+                // Trộn vị trí các đáp án trong câu trắc nghiệm Single
+                let bankCopy = JSON.parse(JSON.stringify(testBanks[maDe]));
+                bankCopy.forEach(q => {
+                    if(q.type === 'single') {
+                        const originalCorrectText = q.options[q.correct];
+                        const shuffledArr = q.options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }))
+                                                      .sort(() => Math.random() - 0.5);
+                        q.options = shuffledArr.map(x => x.text);
+                        q.correct = shuffledArr.findIndex(x => x.isCorrect);
+                    }
+                });
+                currentQuestions = bankCopy;
+                
+                quizStartTime = new Date();
+                
+                setTimeout(() => { isQuizStarted = true; }, 1000);
+                showSection('quiz');
+                
+                const titleEl = document.getElementById('quiz-title');
+                const infoEl = document.getElementById('student-info');
+                if (titleEl) titleEl.innerText = currentStudent.tenDe;
+                if (infoEl) infoEl.innerText = `${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+                
+                currentIdx = 0;
+                userAnswers = {};
+                window.renderQuestion();
+                startTimer(45 * 60); 
+            }
+        } catch (error) { console.error(error); }
+    };
+
+    window.prevQuestion = function() { if (currentIdx > 0) { currentIdx--; window.renderQuestion(); } };
+    window.nextQuestion = function() { if (currentIdx < currentQuestions.length - 1) { currentIdx++; window.renderQuestion(); } };
+
+    // =========================================================================
+    // HIỂN THỊ BẢNG TRẠNG THÁI LÀM BÀI (NAVIGATOR)
+    // =========================================================================
+    window.showNavigator = function() {
+        const grid = document.getElementById('navigator-grid-container');
+        let html = '<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">';
+        
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'single') {
+                let ans = userAnswers[q.id];
+                let isDone = ans !== undefined;
+                let ansText = isDone ? String.fromCharCode(65 + ans) : '...';
+                
+                let bgClass = isDone 
+                    ? 'bg-blue-500 text-white border-blue-600 shadow-md hover:bg-blue-600' 
+                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-100 border-dashed';
+                
+                html += `<button onclick="window.jumpToQuestion(${idx})" class="p-2 rounded-xl border-2 font-bold flex flex-col items-center justify-center transition-all transform hover:scale-105 ${bgClass}">
+                            <span class="text-[10px] sm:text-xs opacity-90 uppercase tracking-wider mb-1">Câu ${idx + 1}</span>
+                            <span class="text-xl sm:text-2xl font-black leading-none">${ansText}</span>
+                         </button>`;
+            } else if (q.type === 'tf_cluster') {
+                html += `<div class="col-span-full mt-4 mb-2 flex items-center gap-2">
+                            <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg text-sm font-black uppercase tracking-wider">Câu ${idx + 1} (Đúng/Sai)</span>
+                            <div class="h-px bg-indigo-100 flex-1"></div>
+                         </div>`;
+                q.items.forEach((item, iItem) => {
+                    let ans = userAnswers[q.id + '_' + item.id];
+                    let isDone = ans !== undefined;
+                    let ansText = isDone ? (ans ? 'Đ' : 'S') : '...';
+                    
+                    let bgClass = isDone 
+                        ? 'bg-indigo-500 text-white border-indigo-600 shadow-md hover:bg-indigo-600' 
+                        : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-100 border-dashed';
+                        
+                    let letter = ['A', 'B', 'C', 'D'][iItem];
+                    
+                    html += `<button onclick="window.jumpToQuestion(${idx})" class="p-2 rounded-xl border-2 font-bold flex flex-col items-center justify-center transition-all transform hover:scale-105 ${bgClass}">
+                                <span class="text-[10px] sm:text-xs opacity-90 uppercase tracking-wider mb-1">Ý ${letter}</span>
+                                <span class="text-xl sm:text-2xl font-black leading-none">${ansText}</span>
+                             </button>`;
+                });
+            }
+        });
+        
+        html += '</div>';
+        grid.innerHTML = html;
+        document.getElementById('navigator-modal').classList.remove('hidden');
+    };
+
+    window.closeNavigator = function() {
+        document.getElementById('navigator-modal').classList.add('hidden');
+    };
+
+    window.jumpToQuestion = function(idx) {
+        currentIdx = idx;
+        window.renderQuestion();
+        window.closeNavigator();
+    };
+    // =========================================================================
+
+    window.viewScoresAction = function() {
+        const btn = document.getElementById('view-scores-btn') || document.createElement('button'); 
+        btn.innerText = "⏳ Đang tải dữ liệu...";
+        if (database) {
+            scoresRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                allScores = data ? Object.keys(data).map(key => ({...data[key], id: key})) : [];
+                window.renderScores();
+                btn.innerText = "🏆 Xem bảng xếp hạng";
+                showSection('scores');
+            });
+        }
+    };
+
+    window.goHome = function() {
+        if(document.getElementById('hoTen')) document.getElementById('hoTen').value = ''; 
+        if(document.getElementById('lop')) document.getElementById('lop').value = ''; 
+        clearInterval(timerInterval);
+        showSection('login');
+    };
+
+    function getTotalScoreItems() {
+        let count = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'tf_cluster') count += q.items.length;
+            else count += 1;
+        });
+        return count; 
+    }
+
+    function getAnsweredCount() { return Object.keys(userAnswers).length; }
+
+    window.selectAnswer = function(qId, val, type) {
+        if (type === 'tf') {
+            if (userAnswers[qId] !== undefined) return; 
+            
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            const parts = qId.split('_'); 
+            const mainQId = parts.slice(0, parts.length - 1).join('_'); 
+            const itemId = parts[parts.length - 1]; 
+            const q = currentQuestions.find(i => i.id === mainQId);
+            const item = q.items.find(i => i.id === itemId);
+            window.showFeedbackModal(item, val, 'tf');
+        } else if (type === 'single') {
+            if (userAnswers[qId] !== undefined) return;
+            userAnswers[qId] = val;
+            window.updateProgress();
+            window.renderQuestion();
+            const q = currentQuestions[currentIdx];
+            window.showFeedbackModal(q, val, 'single');
+        }
+    };
+
+    window.showFeedbackModal = function(qOrItem, uAns, type = 'single') {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        const header = document.getElementById('feedback-header');
+        const body = document.getElementById('feedback-body');
+        
+        if(!modal || !content) return; 
+
+        let isCorrect = false; let correctOptText = ''; let userChoiceText = '';
+        let explanation = "";
+
+        if (type === 'single') {
+            isCorrect = (uAns === qOrItem.correct);
+            correctOptText = qOrItem.options[qOrItem.correct];
+            userChoiceText = String.fromCharCode(65 + uAns);
+            
+            let correctLetter = String.fromCharCode(65 + qOrItem.correct);
+            let baseExpl = qOrItem.explanation || qOrItem.expl || "Chưa có lời giải chi tiết.";
+            explanation = `<div class='mb-3 text-red-600 text-lg font-black'>Đáp án đúng là ${correctLetter}. ${correctOptText}</div>${baseExpl}`;
+            
+        } else if (type === 'tf') {
+            isCorrect = (uAns === qOrItem.correct);
+            correctOptText = qOrItem.correct ? "ĐÚNG" : "SAI";
+            userChoiceText = uAns ? "ĐÚNG" : "SAI";
+            explanation = qOrItem.explanation || qOrItem.expl || "Chưa có lời giải chi tiết.";
+        }
+        
+        let bgColor = isCorrect ? 'emerald' : 'red';
+        let statusTitle = isCorrect ? 'Chính xác!' : 'Bạn làm sai rồi!';
+        let emoji = isCorrect ? '🎉' : '💡';
+
+        header.innerHTML = `<div class="text-6xl mb-4 animate-bounce">${emoji}</div><h3 class="text-3xl font-black text-${bgColor}-600 uppercase tracking-widest drop-shadow-sm">${statusTitle}</h3>`;
+        
+        body.innerHTML = `<p class="mb-4 text-${bgColor}-800 text-xl font-bold text-center">Em đã chọn: <span class="bg-${bgColor}-100 text-${bgColor}-700 px-3 py-1 rounded-lg">${userChoiceText}</span></p>
+                          <div class="p-5 bg-white border-4 border-${bgColor}-100 rounded-2xl shadow-inner mt-4 text-center">
+                              <p class="text-${bgColor}-700 font-extrabold text-lg mb-2">ĐÁP ÁN CHUẨN LÀ:</p>
+                              <p class="text-2xl text-black drop-shadow-sm font-black">${correctOptText}</p>
+                          </div>`;
+        
+        body.innerHTML += `<div class="mt-6"><div class="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-t-xl font-black uppercase text-sm border-b-4 border-blue-500">📖 Giải chi tiết:</div><div class="p-5 bg-white border-2 border-blue-200 rounded-b-2xl rounded-tr-2xl shadow-sm text-black font-medium text-base md:text-lg leading-loose math-scroll">${explanation}</div></div>`;
+
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    };
+
+    window.closeFeedbackModal = function() {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-modal-content');
+        if(!modal) return;
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    };
+
+    window.renderQuestion = function() {
+        if (!currentQuestions || currentQuestions.length === 0) return;
+        const q = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        if(!container) return;
+
+        let html = `<div class="fade-in w-full">`;
+        
+        if (q.type === 'single') {
+            const hasAnswered = userAnswers[q.id] !== undefined;
+            const uAns = userAnswers[q.id];
+            
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">I</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">CÂU HỎI TRẮC NGHIỆM</h3></div>`;
+            html += `<div class="flex gap-4 mb-5"><div class="w-full math-scroll"><p class="text-lg sm:text-xl font-bold text-red-600 mt-1 leading-snug tracking-tight"><span class="text-blue-600">Câu ${currentIdx + 1}:</span> ${q.question}</p></div></div>`;
+            html += `<div class="space-y-4 md:pl-6 mt-6">`;
+            q.options.forEach((opt, i) => {
+                const isChecked = (uAns === i) ? 'checked' : '';
+                const disabledClass = hasAnswered ? 'disabled-option' : '';
+                html += `<div class="flex items-center">
+                    <input type="radio" id="opt_${i}" name="q_${q.id}" value="${i}" class="hidden single-radio" ${isChecked} ${hasAnswered ? 'disabled' : ''} onchange="window.selectAnswer('${q.id}', ${i}, 'single')">
+                    <label for="opt_${i}" class="option-label ${disabledClass} w-full p-4 border-2 border-gray-200 rounded-2xl flex items-center gap-4 bg-white shadow-sm font-bold text-lg cursor-pointer">
+                        <div class="w-10 h-10 rounded-xl border-2 border-gray-300 flex items-center justify-center text-base font-black text-gray-400 flex-shrink-0 bg-gray-50">${String.fromCharCode(65 + i)}</div>
+                        <div class="text-gray-700 leading-relaxed math-scroll flex-1">${opt}</div>
+                    </label>
+                </div>`;
+            });
+            html += `</div>`;
+            
+        } 
+        else if (q.type === 'tf_cluster') {
+            html += `<div class="flex items-center gap-3 mb-6 border-b-2 border-blue-100 pb-3"><span class="bg-gradient-to-br from-blue-400 to-cyan-500 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xl shadow-md">II</span><h3 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-wide uppercase">TRẮC NGHIỆM ĐÚNG/SAI</h3></div>`;
+            html += `<div class="bg-red-50 text-red-700 p-4 rounded-xl font-bold mb-4 border-2 border-red-100 text-lg sm:text-xl leading-relaxed math-scroll"><span class="text-blue-600">Câu ${currentIdx + 1}:</span> ${q.context}</div>`;
+            html += `<div class="space-y-3 mt-6">`;
+           q.items.forEach((item, index) => {
+                const combinedId = q.id + '_' + item.id;
+                let ans = userAnswers[combinedId];
+                
+                let hasAnswered = ans !== undefined; 
+                let btnT = ans === true ? 'selected' : ''; 
+                let btnF = ans === false ? 'selected' : ''; 
+                
+                let disabledAttr = hasAnswered ? 'disabled' : '';
+                let disabledClass = hasAnswered ? 'opacity-50 cursor-not-allowed' : '';
+                
+                let letter = ['a', 'b', 'c', 'd'][index];
+
+                html += `<div class="p-4 sm:p-5 border-2 border-gray-100 rounded-2xl bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-blue-200">
+                    <div class="font-bold text-gray-800 flex-1 text-base sm:text-lg math-scroll"><span class="text-blue-600 mr-1">${letter})</span> ${item.text}</div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="window.selectAnswer('${combinedId}', true, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnT} ${disabledClass}" ${disabledAttr}>ĐÚNG</button>
+                        <button onclick="window.selectAnswer('${combinedId}', false, 'tf')" class="btn-tf w-20 sm:w-24 py-2 sm:py-3 rounded-xl font-extrabold ${btnF} ${disabledClass}" ${disabledAttr}>SAI</button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        } 
+        html += `</div>`;
+        container.innerHTML = html;
+        window.updateNav();
+        window.updateProgress();
+    };
+
+    window.updateNav = function() {
+        const pBtn = document.getElementById('prev-btn');
+        const nBtn = document.getElementById('next-btn');
+        const sBtn = document.getElementById('submit-btn');
+        if(pBtn) pBtn.style.display = (currentIdx === 0) ? 'none' : 'block';
+        if(nBtn) nBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'none' : 'block';
+        if(sBtn) sBtn.style.display = (currentIdx === currentQuestions.length - 1) ? 'block' : 'none';
+    };
+
+    window.updateProgress = function() {
+        const pgText = document.getElementById('progress-text');
+        if(pgText) pgText.innerText = `${getAnsweredCount()}/${getTotalScoreItems()}`;
+    };
+
+    function formatDuration(sec) {
+        const m = Math.floor(sec / 60); const s = sec % 60;
+        return `${m}p ${s}s`;
+    }
+
+    window.submitQuiz = function() {
+        let answered = getAnsweredCount();
+        let total = getTotalScoreItems();
+        
+        // Cảnh báo nếu chưa làm xong
+        if (answered < total) {
+            let missing = total - answered;
+            document.getElementById('warning-answered').innerText = `${answered}/${total}`;
+            document.getElementById('warning-missing').innerText = missing;
+            document.getElementById('warning-modal').classList.remove('hidden');
+            return; 
+        }
+
+        window.executeSubmit();
+    };
+
+    window.closeWarningModal = function() {
+        document.getElementById('warning-modal').classList.add('hidden');
+    };
+
+    // Hàm thực thi nộp bài
+    window.executeSubmit = function() {
+        document.getElementById('warning-modal').classList.add('hidden');
+
+        if (!isQuizStarted) return; 
+        isQuizStarted = false; 
+        quizEndTime = new Date();
+        clearInterval(timerInterval);
+        
+        let score = 0;
+        let totalMax = 10; // ĐÃ SỬA THÀNH 10 (Đảm bảo điểm gốc đúng 0.25)
+        
+        let rawScore = 0;
+        currentQuestions.forEach(q => {
+            if (q.type === 'single') {
+                if (userAnswers[q.id] === q.correct) rawScore += 0.25;
+            } else if (q.type === 'tf_cluster') {
+                let c = 0;
+                q.items.forEach(item => { if (userAnswers[q.id + '_' + item.id] === item.correct) c++; });
+                if (c === 1) rawScore += 0.1;
+                else if (c === 2) rawScore += 0.25;
+                else if (c === 3) rawScore += 0.5;
+                else if (c === 4) rawScore += 1.0;
+            }
+        });
+
+        score = ((rawScore / totalMax) * 10).toFixed(2); 
+
+        const record = {
+            hoTen: currentStudent.hoTen, 
+            lop: currentStudent.lop, 
+            tenDe: currentStudent.tenDe, 
+            maDe: currentStudent.maDe,
+            diem: parseFloat(score),
+            startTime: quizStartTime.toLocaleTimeString('vi-VN'), 
+            startDate: quizStartTime.toLocaleDateString('vi-VN'),
+            endTime: quizEndTime.toLocaleTimeString('vi-VN'),
+            duration: formatDuration(Math.floor((quizEndTime - quizStartTime) / 1000)),
+            thoiGian: new Date().toISOString(), 
+            deviceId: deviceId,
+            answers: userAnswers 
+        };
+        
+        if(database) {
+            scoresRef.push(record, () => { window.showModalResult(score, record.duration); });
+        } else {
+            window.showModalResult(score, record.duration);
+        }
+    };
+
+  window.showModalResult = function(score, dur) {
+        // --- BẢN VÁ LỖI: Buộc đóng TẤT CẢ các lớp phủ đen (modal) đang mở ---
+        document.querySelectorAll('#warning-modal, #feedback-modal, #navigator-modal').forEach(modal => {
+            modal.classList.add('hidden');
+        });
+
+        // Ẩn các màn hình khác
+        ['login', 'quiz', 'scores', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+
+        // Hiển thị màn hình kết quả
+        const resEl = document.getElementById('result-section');
+        if(resEl) resEl.classList.remove('hidden');
+        const contentEl = document.getElementById('result-content');
+        
+        const reviewTitle = document.getElementById('review-title');
+        if (reviewTitle) reviewTitle.innerText = `👀 Bài làm của: ${currentStudent.hoTen} - Lớp ${currentStudent.lop}`;
+
+        if(contentEl) contentEl.innerHTML = `
+        <div class="flex justify-start mb-2">
+            <button onclick="window.goHome()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-sm border border-gray-200 text-sm">🏠 Trang chủ</button>
+        </div>
+        <div class="text-center">
+            <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+            <h3 class="text-2xl sm:text-3xl font-black text-emerald-600 mb-2">Hoàn thành bài thi!</h3>
+            <p class="text-gray-600 mb-6 mt-2"><span class="font-extrabold text-blue-700 text-lg sm:text-xl uppercase tracking-wider">${currentStudent.hoTen} - Lớp ${currentStudent.lop}</span><br><span class="text-sm font-bold text-gray-400 mt-1 block">${currentStudent.tenDe}</span></p>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 mb-6 shadow-inner relative text-center">
+            <div class="text-sm text-blue-500 font-extrabold mb-2 uppercase tracking-widest">ĐIỂM SỐ CỦA BẠN</div>
+            <div class="text-6xl sm:text-7xl font-black text-blue-600 drop-shadow-sm">${score} <span class="text-2xl text-gray-400">/ 10</span></div>
+            <div class="text-base sm:text-lg font-extrabold text-indigo-600 mt-4 bg-white inline-block px-5 py-2 rounded-full shadow-sm border border-blue-100">Thời gian làm bài: ${dur}</div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button onclick="window.reviewQuiz()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">👀 Xem lại & Giải chi tiết</button>
+            <button onclick="window.viewScoresAction()" class="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-extrabold shadow-sm hover:shadow-md transition-colors text-lg">🏆 Bảng điểm</button>
+        </div>`;
+    };
+    window.viewStudentReview = function(id) {
+        const record = allScores.find(s => s.id === id);
+        if (!record) return;
+        
+        if (!record.answers) {
+            alert("Bài làm này thuộc phiên bản cũ, không có dữ liệu đáp án chi tiết để xem lại!");
+            return;
+        }
+
+        currentQuestions = JSON.parse(JSON.stringify(testBanks[record.maDe || 'de1']));
+        userAnswers = record.answers;
+        
+        const reviewTitle = document.getElementById('review-title');
+        if (reviewTitle) reviewTitle.innerText = `👀 Bài làm của: ${record.hoTen} - Lớp ${record.lop}`;
+        
+        window.reviewQuiz();
+    };
+
+  window.reviewQuiz = function() {
+        showSection('review');
+        const container = document.getElementById('review-content');
+        if(!container) return;
+        let html = '';
+
+        currentQuestions.forEach((q, idx) => {
+            if (q.type === 'single') {
+                let uAns = userAnswers[q.id];
+                let isUnanswered = uAns === undefined;
+                let isCorrect = uAns === q.correct;
+                
+                let borderColor = isUnanswered ? 'border-gray-300 bg-gray-50' : (isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50');
+                
+                // Thẻ trạng thái sẽ được mang xuống phần gợi ý
+                let statusMsg = isUnanswered ? '<span class="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-sm font-black uppercase tracking-wider shadow-sm border border-gray-300">⚪ Bạn chưa làm</span>' : 
+                                (isCorrect ? '<span class="bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-xl text-sm font-black uppercase tracking-wider shadow-sm border border-emerald-300">✅ Trả lời đúng</span>' : 
+                                '<span class="bg-red-100 text-red-800 px-3 py-1.5 rounded-xl text-sm font-black uppercase tracking-wider shadow-sm border border-red-300">❌ Trả lời sai</span>');
+                
+                html += `<div class="p-4 sm:p-6 border-2 rounded-2xl shadow-sm mb-6 ${borderColor} transition-all">`;
+                
+                html += `<div class="mb-5">
+                            <div class="font-bold text-lg sm:text-xl text-blue-900 math-scroll"><span class="text-blue-600">Câu ${idx + 1}:</span> ${q.question}</div>
+                         </div>`;
+                         
+                html += `<div class="space-y-2">`;
+                
+                q.options.forEach((opt, i) => {
+                    let optBg = ''; let iconHtml = '';
+                    if (q.correct === i) {
+                        optBg = 'bg-emerald-100 text-emerald-900 border-emerald-400 border-2 font-bold'; 
+                        iconHtml = '<div class="text-xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">✅ <span class="text-xs sm:text-sm font-bold text-emerald-700 ml-1 hidden sm:inline"></span></div>';
+                    } else if (uAns === i && !isCorrect) {
+                        optBg = 'bg-red-100 text-red-900 line-through border-red-400 border-2 font-bold text-opacity-70'; 
+                        iconHtml = '<div class="text-xl drop-shadow-sm ml-auto pl-2 flex-shrink-0">❌ <span class="text-xs sm:text-sm font-bold text-red-700 ml-1 hidden sm:inline">(Bạn chọn)</span></div>';
+                    } else { 
+                        optBg = 'bg-white text-slate-700 border border-slate-200'; 
+                    }
+
+                    html += `<div class="p-3 rounded-xl ${optBg} flex items-center gap-3"><div class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/50 text-sm font-black shadow-sm flex-shrink-0 border border-gray-200">${String.fromCharCode(65 + i)}</div><div class="flex-1 math-scroll text-[15px] sm:text-base">${opt}</div>${iconHtml}</div>`;
+                });
+                html += `</div>`;
+                
+                let correctLetter = String.fromCharCode(65 + q.correct);
+                let correctText = q.options[q.correct];
+                let baseExpl = q.explanation || q.expl || "";
+                
+                html += `<div class="review-explanation mt-5 pt-4 border-t-2 border-gray-200/60">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                                <div class="flex items-center gap-2"><span class="text-xl">💡</span><span class="text-sm font-black uppercase tracking-widest text-indigo-600">Trạng thái & Gợi ý:</span></div>
+                                <div class="shrink-0">${statusMsg}</div>
+                            </div>
+                            <div class="text-slate-800 font-medium text-base leading-relaxed math-scroll p-4 bg-white/70 rounded-xl border border-gray-200 shadow-inner">
+                                <div class='mb-2 text-emerald-700 font-bold bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-100 inline-block'>🎯 Đáp án đúng là: ${correctLetter}. ${correctText}</div>
+                                <div class="mt-2 text-gray-700">${baseExpl}</div>
+                            </div>
+                         </div>`;
+                html += `</div>`;
+            } 
+            else if (q.type === 'tf_cluster') {
+                html += `<div class="p-4 sm:p-6 border-2 border-indigo-200 bg-indigo-50/50 rounded-2xl shadow-sm mb-6">`;
+                html += `<div class="font-bold text-lg sm:text-xl text-indigo-900 mb-5 math-scroll"><span class="text-blue-600">Câu ${idx + 1}:</span> ${q.context}</div>`;
+                html += `<div class="space-y-4">`;
+                q.items.forEach((item, index) => {
+                    let uAns = userAnswers[q.id + '_' + item.id];
+                    let isUnanswered = uAns === undefined;
+                    let isCorrect = uAns === item.correct;
+                    
+                    let iconHtml = isCorrect ? '✅' : '❌';
+                    let ansText = item.correct ? 'ĐÚNG' : 'SAI';
+                    let letter = ['a', 'b', 'c', 'd'][index];
+                    
+                    let statusBadge = isUnanswered ? '<span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs font-black uppercase shadow-sm border border-gray-300">⚪ Chưa làm</span>' : 
+                          (isCorrect ? '<span class="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-xs font-black uppercase shadow-sm border border-emerald-300">✅ Đúng</span>' : 
+                                       '<span class="bg-red-200 text-red-800 px-2 py-0.5 rounded text-xs font-black uppercase shadow-sm border border-red-300">❌ Sai</span>');
+                                       
+                    let userChoiceText = isUnanswered ? '<span class="text-gray-400 font-bold">Chưa chọn</span>' : 
+                                         (uAns ? '<span class="text-blue-700 font-black">ĐÚNG</span>' : '<span class="text-blue-700 font-black">SAI</span>');
+
+                    html += `<div class="p-4 bg-white border ${isUnanswered ? 'border-gray-200' : (isCorrect ? 'border-emerald-300' : 'border-red-300')} rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div class="font-bold text-gray-800 math-scroll mb-3 text-[15px] sm:text-base"><span class="text-indigo-600 mr-1 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 shadow-sm">${letter}</span> ${item.text}</div>
+                        
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-y border-gray-100 py-3 gap-3 bg-gray-50/50 px-3 rounded-lg mt-2">
+                            <div class="text-sm font-medium text-gray-600 flex items-center gap-2">
+                                Bạn chọn: ${userChoiceText} <span class="text-gray-300 hidden sm:inline">|</span> ${statusBadge}
+                            </div>
+                            <div class="font-black text-base sm:text-lg ${isCorrect ? 'text-emerald-600' : 'text-red-500'} bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-sm">
+                                Đáp án chuẩn: ${ansText} ${iconHtml}
+                            </div>
+                        </div>
+                        
+                        <div class="review-explanation mt-3 pt-2 text-sm text-gray-700 font-medium leading-relaxed math-scroll">
+                            <span class="text-indigo-600 font-bold uppercase flex items-center gap-1 mb-2"><span class="text-base">💡</span> Gợi ý giải thích:</span>
+                            <div class="bg-indigo-50/40 p-3 rounded-lg border border-indigo-100">${item.expl}</div>
+                        </div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+        });
+        container.innerHTML = html;
+    };
+
+    window.backToResult = function() { showSection('scores'); };
+
+    window.renderScores = function() {
+        const tbody = document.getElementById('scores-tbody');
+        if(!tbody) return;
+        if (allScores.length === 0) { tbody.innerHTML = ''; document.getElementById('no-scores').classList.remove('hidden'); return; }
+        const noScore = document.getElementById('no-scores');
+        if(noScore) noScore.classList.add('hidden');
+        
+        const sorted = [...allScores].sort((a, b) => (a.lop.localeCompare(b.lop)) || (b.diem - a.diem));
+        
+        tbody.innerHTML = sorted.map((s, idx) => `
+            <tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-slate-50'} transition-colors border-b border-slate-100">
+                <td class="px-4 py-4 text-center font-black text-slate-400 text-sm">#${idx + 1}</td>
+                <td class="px-4 py-4 font-black text-blue-600 text-sm">${s.lop}</td>
+                <td class="px-4 py-4 font-extrabold text-slate-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td>
+                <td class="px-4 py-4 text-xs font-bold text-blue-500"><span class="bg-blue-50 border border-blue-100 px-2 py-1 rounded-md">${s.tenDe}</span></td>
+                <td class="px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-emerald-600' : 'text-red-500'}">${s.diem}</span></td>
+                <td class="px-4 py-4 text-center text-slate-500 text-xs font-bold leading-tight">${s.startTime} <br> <span class="text-[10px] text-gray-400">${s.startDate || '--/--/----'}</span></td>
+                <td class="px-4 py-4 text-center font-black text-orange-600 text-xs">${s.duration}</td>
+                <td class="px-4 py-4 text-center">
+                    <button onclick="window.viewStudentReview('${s.id}')" class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-200 transition-colors text-xs shadow-sm whitespace-nowrap">👀 Xem lại</button>
+                </td>
+            </tr>`).join('');
+    };
+
+    function showSection(id) {
+        ['login', 'quiz', 'scores', 'result', 'review'].forEach(s => {
+            const el = document.getElementById(s+'-section');
+            if(el) el.classList.add('hidden');
+        });
+        const tgt = document.getElementById(id+'-section');
+        if(tgt) tgt.classList.remove('hidden');
+    }
+
+    function startTimer(seconds) {
+        const display = document.getElementById('timer');
+        if(!display) return;
+        let remaining = seconds;
+        timerInterval = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const s = (remaining % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            if (remaining <= 0) window.submitQuiz();
+        }, 1000);
+    }
+
+    try {
+        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', 'dev_' + Math.random().toString(36).substr(2) + Date.now());
+        deviceId = localStorage.getItem('deviceId');
+    } catch (e) { deviceId = 'dev_temp_' + Math.random().toString(36).substr(2); }
+  </script>
+ </body>
+</html>
