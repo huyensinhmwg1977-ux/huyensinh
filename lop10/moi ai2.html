@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình Số | Trợ lý AI Cỏ Dại</title>
+    <style>
+        :root {
+            --primary-color: #117a65;
+            --secondary-color: #f39c12;
+            --bg-color: #f9f9f9;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .ai-chat-btn {
+            position: fixed; bottom: 30px; right: 30px; background-color: var(--secondary-color); color: white;
+            border: none; border-radius: 50px; padding: 15px 25px; font-size: 16px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; z-index: 1000;
+        }
+        .ai-chat-btn:hover { transform: scale(1.05); }
+
+        .chat-window {
+            position: fixed; bottom: 90px; right: 30px; width: 380px; height: 550px;
+            background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; overflow: hidden; z-index: 1000;
+        }
+        .chat-header {
+            background: var(--primary-color); color: white; padding: 15px; font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .close-chat { cursor: pointer; font-size: 18px; background: none; border: none; color: white; }
+        
+        .chat-body { 
+            flex: 1; padding: 15px; overflow-y: auto; background: var(--bg-color); 
+            display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth;
+        }
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 14.5px; line-height: 1.5; word-wrap: break-word; }
+        .msg-ai { background: white; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        .msg-user { background: var(--primary-color); color: white; align-self: flex-end; border-bottom-right-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        .chat-footer { padding: 12px; border-top: 1px solid #eee; display: flex; background: white; align-items: center; }
+        .chat-footer input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 20px; outline: none; transition: 0.2s; }
+        .chat-footer input:focus { border-color: var(--primary-color); }
+        .chat-footer button { 
+            background: var(--secondary-color); color: white; border: none; 
+            padding: 10px 18px; margin-left: 10px; border-radius: 20px; 
+            cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        .chat-footer button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .typing-indicator { 
+            font-size: 13px; color: #888; font-style: italic; display: none; 
+            align-self: flex-start; margin-left: 10px; padding: 5px;
+        }
+        .site-footer-note {
+            text-align: center; font-size: 11px; color: #999; padding: 5px; background: #fff; border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<button class="ai-chat-btn" onclick="toggleChat()">🤖 Trợ lý AI Cỏ Dại</button>
+
+<div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+        <span>🤖 Trợ lý Hành Trình Số</span>
+        <button class="close-chat" onclick="toggleChat()">✖</button>
+    </div>
+    <div class="chat-body" id="chatBody">
+        <div class="message msg-ai">Chào bạn! Mình là trợ lý AI trên Hành Trình Số. Mình có thể giúp gì cho bạn hôm nay?</div>
+    </div>
+    <div class="typing-indicator" id="typingIndicator">Trợ lý đang suy nghĩ...</div>
+    <div class="chat-footer">
+        <input type="text" id="userInput" placeholder="Nhập câu hỏi tại đây..." onkeypress="handleKeyPress(event)">
+        <button id="sendBtn" onclick="sendMessage()">Gửi</button>
+    </div>
+    <div class="site-footer-note">Website học tập và giải trí của cô Lê Huyền Sinh</div>
+</div>
+
+<script>
+   const GEMINI_API_KEY = 'AQ.Ab8RN6IzhcYF5wQ2Iim0piBdrD5sMONIfVrOF4tPFBj8yO-G6g';
+    let isWaiting = false; 
+
+    function toggleChat() {
+        const chatWin = document.getElementById('chatWindow');
+        chatWin.style.display = chatWin.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter' && !isWaiting) sendMessage();
+    }
+
+    async function sendMessage() {
+        if (isWaiting) return;
+        
+        const input = document.getElementById('userInput');
+        const message = input.value.trim();
+        if (!message) return;
+
+        appendMessage(message, 'msg-user');
+        input.value = '';
+        isWaiting = true;
+        
+        const sendBtn = document.getElementById('sendBtn');
+        const typingInd = document.getElementById('typingIndicator');
+        
+        sendBtn.disabled = true;
+        typingInd.style.display = 'block';
+        typingInd.innerText = 'Trợ lý đang suy nghĩ...';
+        scrollToBottom();
+
+        // Khôi phục về mô hình gemini-1.5-flash ổn định nhất cho lượng truy cập lớn
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const payload = { contents: [{ parts: [{ text: message }] }] };
+
+        const maxRetries = 3;
+        let attempt = 0;
+
+        while (attempt < maxRetries) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMsg = data.error?.message || "";
+                    // Nếu lỗi do quá tải (high demand) hoặc rate limit
+                    if (errorMsg.includes("high demand") || response.status === 429 || response.status === 503) {
+                        attempt++;
+                        if (attempt < maxRetries) {
+                            typingInd.innerText = `Máy chủ đang đông, tự động thử lại lần ${attempt}...`;
+                            await new Promise(res => setTimeout(res, 2000)); // Đợi 2 giây rồi gửi lại
+                            continue;
+                        }
+                    }
+                    throw new Error(errorMsg || "Lỗi kết nối tới máy chủ AI.");
+                }
+
+                // Nhận phản hồi thành công
+                const aiResponseText = data.candidates[0].content.parts[0].text;
+                typingInd.style.display = 'none';
+                appendMessage(aiResponseText, 'msg-ai');
+                break; // Thoát vòng lặp khi thành công
+
+            } catch (error) {
+                if (attempt >= maxRetries - 1 || !error.message.includes("high demand")) {
+                    typingInd.style.display = 'none';
+                    appendMessage("Xin lỗi, hệ thống hiện đang quá tải do có nhiều học sinh truy cập. Bạn vui lòng thử lại sau vài phút nhé.", 'msg-ai');
+                    console.error("Lỗi Gemini API:", error);
+                    break;
+                }
+                attempt++;
+            }
+        }
+
+        isWaiting = false;
+        sendBtn.disabled = false;
+        document.getElementById('userInput').focus();
+    }
+
+    function appendMessage(text, className) {
+        const chatBody = document.getElementById('chatBody');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${className}`;
+        
+        let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        formattedText = formattedText.replace(/\n/g, '<br>');
+        
+        msgDiv.innerHTML = formattedText;
+        chatBody.appendChild(msgDiv);
+        scrollToBottom();
+    }
+
+    function scrollToBottom() {
+        const chatBody = document.getElementById('chatBody');
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+</script>
+</body>
+</html>
