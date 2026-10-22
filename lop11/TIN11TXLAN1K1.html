@@ -187,8 +187,7 @@
          <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Lớp</th>
          <th class="px-3 sm:px-4 py-4 text-left font-extrabold w-full">Họ tên</th>
          <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Điểm</th>
-         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Thời gian</th>
-         <th class="px-3 sm:px-4 py-4 text-right font-extrabold">Tổng TG</th>
+         <th class="px-3 sm:px-4 py-4 text-center font-extrabold">Ngày thi</th>
         </tr>
        </thead>
        <tbody id="scores-tbody" class="bg-white/80 divide-y divide-gray-100"></tbody>
@@ -434,7 +433,7 @@
     let quizStartTime, quizEndTime;
 
     document.addEventListener("DOMContentLoaded", function() {
-        if (localStorage.getItem('tin11chude1') === 'true') {
+        if (localStorage.getItem('tin11chude111') === 'true') {
             const startBtn = document.getElementById('start-btn');
             const errDiv = document.getElementById('login-error');
             startBtn.disabled = true;
@@ -459,7 +458,7 @@
     window.startQuizAction = function() {
         const errDiv = document.getElementById('login-error');
         
-        if (localStorage.getItem('tin11chude1') === 'true') {
+        if (localStorage.getItem('tin11chude111') === 'true') {
             errDiv.innerHTML = "⚠️ Thiết bị này đã hoàn thành bài thi. Không thể tiếp tục!";
             errDiv.classList.remove('hidden');
             return;
@@ -477,7 +476,7 @@
 
         const isDe1 = Math.random() < 0.5;
         const maDe = isDe1 ? 'de1' : 'de2';
-        const tenDe = isDe1 ? 'Đề : Hệ điều hành và phần cứng' : 'Đề : Hệ điều hành và phần cứng';
+        const tenDe = isDe1 ? 'Đề 1: Hệ điều hành và phần cứng' : 'Đề 2: Hệ điều hành và phần cứng';
         
         currentStudent = { hoTen: name, lop: lop, maDe: maDe, tenDe: tenDe };
         
@@ -538,7 +537,7 @@
         document.getElementById('lop').value = ''; 
         clearInterval(timerInterval);
         
-        if (localStorage.getItem('tin11chude1') === 'true') {
+        if (localStorage.getItem('tin11chude111') === 'true') {
             const startBtn = document.getElementById('start-btn');
             startBtn.disabled = true;
             startBtn.innerText = "🔒 BẠN ĐÃ LÀM BÀI RỒI";
@@ -603,7 +602,7 @@
         if (!isQuizStarted && !isPenalizing) return; 
         isQuizStarted = false; 
         
-        localStorage.setItem('tin11chude1', 'true');
+        localStorage.setItem('tin11chude111', 'true');
         
         quizEndTime = new Date();
         clearInterval(timerInterval);
@@ -667,12 +666,8 @@
             return words[words.length - 1].toLowerCase();
         };
 
-        // SẮP XẾP: LỚP (viết hoa) -> TÊN -> HỌ VÀ TÊN ĐẦY ĐỦ
+        // SẮP XẾP THEO TÊN (Alphabet) -> HỌ VÀ TÊN ĐẦY ĐỦ
         const sorted = [...allScores].sort((a, b) => {
-            const lopA = (a.lop || '').toUpperCase();
-            const lopB = (b.lop || '').toUpperCase();
-            if (lopA !== lopB) return lopA.localeCompare(lopB);
-            
             const tenA = getTen(a.hoTen);
             const tenB = getTen(b.hoTen);
             if (tenA !== tenB) return tenA.localeCompare(tenB);
@@ -681,20 +676,24 @@
         });
 
         tbody.innerHTML = sorted.map((s, idx) => {
-            // ĐỊNH DẠNG THỜI GIAN: BẮT ĐẦU VÀ NGÀY THI VÀO CÙNG MỘT CỘT
-            let timeStr = s.startTime;
+            // ĐỊNH DẠNG THỜI GIAN: CHỈ HIỂN THỊ NGÀY/THÁNG/NĂM
+            let timeStr = "Chưa cập nhật";
             if (s.thoiGian) {
                 const dt = new Date(s.thoiGian);
-                timeStr = dt.toLocaleTimeString('vi-VN') + ' - ' + dt.toLocaleDateString('vi-VN');
+                timeStr = dt.toLocaleDateString('vi-VN');
             }
+
+            // Xử lý an toàn các biến
+            const safeLop = (s.lop || '').toUpperCase();
+            const safeHoTen = s.hoTen || 'Chưa rõ tên';
+            const safeDiem = s.diem !== undefined ? s.diem : 0;
 
             return `<tr class="${s.deviceId === deviceId ? 'my-score-row' : 'hover:bg-gray-50'} transition-colors border-b border-gray-100">
                 <td class="px-3 sm:px-4 py-4 text-center font-black text-gray-400 text-sm">#${idx + 1}</td>
-                <td class="px-3 sm:px-4 py-4 font-black text-blue-600 text-sm">${(s.lop || '').toUpperCase()}</td>
-                <td class="px-3 sm:px-4 py-4 font-extrabold text-gray-800 text-sm">${s.hoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td>
-                <td class="px-3 sm:px-4 py-4 text-center"><span class="font-black text-lg ${s.diem >= 5 ? 'text-green-600' : 'text-red-500'}">${s.diem}</span></td>
+                <td class="px-3 sm:px-4 py-4 font-black text-blue-600 text-sm">${safeLop}</td>
+                <td class="px-3 sm:px-4 py-4 font-extrabold text-gray-800 text-sm">${safeHoTen} ${s.deviceId === deviceId ? '<span class="ml-2 bg-pink-500 text-white text-[10px] px-2 rounded-md">Bạn</span>' : ''}</td>
+                <td class="px-3 sm:px-4 py-4 text-center"><span class="font-black text-lg ${safeDiem >= 5 ? 'text-green-600' : 'text-red-500'}">${safeDiem}</span></td>
                 <td class="px-3 sm:px-4 py-4 text-center text-gray-500 text-xs">${timeStr}</td>
-                <td class="px-3 sm:px-4 py-4 text-right font-black text-orange-600 text-xs">${s.duration}</td>
             </tr>`;
         }).join('');
     };
